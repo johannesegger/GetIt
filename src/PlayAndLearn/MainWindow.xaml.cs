@@ -15,5 +15,7 @@ namespace PlayAndLearn
         {
             AvaloniaXamlLoader.Load(this);
         }
+
+        public Canvas Scene => this.FindControl<Canvas>("Scene");
     }
 }
