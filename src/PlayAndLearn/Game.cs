@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using Avalonia;
@@ -8,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using PlayAndLearn.Models;
+using PlayAndLearn.Utils;
 
 namespace PlayAndLearn
 {
@@ -15,7 +17,7 @@ namespace PlayAndLearn
     {
         private static MainWindow mainWindow;
 
-        private static void ShowScene()
+        public static void ShowScene()
         {
             using (var signal = new ManualResetEventSlim())
             {
@@ -37,28 +39,49 @@ namespace PlayAndLearn
             }
         }
 
-        public static void ShowDefaultScene()
+        public static IDisposable AddSprite(Player sprite)
         {
-            ShowScene();
-
+            var addedSprite = new SingleAssignmentDisposable();
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                var knightControl = new Image();
-                mainWindow.Scene.Children.Add(knightControl);
-                Canvas.SetLeft(knightControl, mainWindow.Scene.Bounds.Width / 2 - knightControl.Width / 2);
-                Canvas.SetTop(knightControl, mainWindow.Scene.Bounds.Height / 2 - knightControl.Height / 2);
-                var knight = Knight.Create();
-                var d = knight.Costume
+                var spriteControl = new Image();
+                mainWindow.Scene.Children.Add(spriteControl);
+                var d = new CompositeDisposable();
+
+                sprite
+                    .IdleCostume
                     .ObserveOn(AvaloniaScheduler.Instance)
                     .Subscribe(path =>
                     {
-                        knightControl.Source = new Bitmap(path);
-                        knightControl.Width = knightControl.Source.PixelWidth;
-                        knightControl.Height = knightControl.Source.PixelHeight;
-                        knightControl.RenderTransform = new ScaleTransform(0.1, 0.1);
-                    });
+                        spriteControl.Source = new Bitmap(path);
+                        spriteControl.Width = sprite.Size.Width;
+                        spriteControl.Height = sprite.Size.Height;
+                    })
+                    .DisposeWith(d);
+
+                sprite
+                    .Changed(p => p.Position)
+                    .ObserveOn(AvaloniaScheduler.Instance)
+                    .Subscribe(position =>
+                    {
+                        var center = new Position(
+                            (int)(mainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2),
+                            (int)(mainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2));
+                        Canvas.SetLeft(spriteControl, center.X + position.X);
+                        Canvas.SetBottom(spriteControl, center.Y + position.Y);
+                    })
+                    .DisposeWith(d);
+
+                addedSprite.Disposable = d;
 
             }).Wait();
+
+            return addedSprite;
+        }
+
+        public static void SleepSeconds(double seconds)
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(seconds));
         }
     }
 }
