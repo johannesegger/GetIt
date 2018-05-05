@@ -10,11 +10,11 @@
     <EmbeddedResource Include="**\*.xaml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <Content Include="Models\**\*.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Models\**\*.png" />
+    <EmbeddedResource Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AForge.Imaging" Version="2.2.5" />
     <PackageReference Include="Avalonia" Version="0.6.1" />
     <PackageReference Include="Avalonia.Desktop" Version="0.6.0" />
     <PackageReference Include="PropertyChanged.Fody" Version="2.5.4" />

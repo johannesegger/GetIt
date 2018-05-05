@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Logging.Serilog;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -44,31 +45,71 @@ namespace PlayAndLearn
             var addedSprite = new SingleAssignmentDisposable();
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                var spriteControl = new Image();
+                var spriteControl = new Image { ZIndex = 10 };
                 mainWindow.Scene.Children.Add(spriteControl);
                 var d = new CompositeDisposable();
+
+                var center = new Position(
+                    mainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2,
+                    mainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2
+                );
 
                 sprite
                     .IdleCostume
                     .ObserveOn(AvaloniaScheduler.Instance)
-                    .Subscribe(path =>
+                    .Subscribe(costumeStreamFactory =>
                     {
-                        spriteControl.Source = new Bitmap(path);
+                        using (var costume = costumeStreamFactory())
+                        {
+                            spriteControl.Source = new Bitmap(costume);
+                        }
                         spriteControl.Width = sprite.Size.Width;
                         spriteControl.Height = sprite.Size.Height;
                     })
                     .DisposeWith(d);
 
-                sprite
-                    .Changed(p => p.Position)
+                Observable
+                    .CombineLatest(
+                        sprite
+                            .Changed(p => p.Position)
+                            .Select(p => new Position(p.X + center.X, p.Y + center.Y)),
+                        sprite.Changed(p => p.Pen),
+                        (position, pen) => (position, pen)
+                    )
                     .ObserveOn(AvaloniaScheduler.Instance)
-                    .Subscribe(position =>
+                    .Subscribe(((Position position, Models.Pen pen) p) =>
                     {
-                        var center = new Position(
-                            (int)(mainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2),
-                            (int)(mainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2));
-                        Canvas.SetLeft(spriteControl, center.X + position.X);
-                        Canvas.SetBottom(spriteControl, center.Y + position.Y);
+                        if (p.pen != null)
+                        {
+                            var currentPosition = new Position(
+                                Canvas.GetLeft(spriteControl),
+                                Canvas.GetBottom(spriteControl));
+                            var line = new Line
+                            {
+                                StartPoint = new Point(
+                                    currentPosition.X + sprite.Size.Width / 2,
+                                    mainWindow.Scene.Bounds.Height - currentPosition.Y - sprite.Size.Height / 2),
+                                EndPoint = new Point(
+                                    p.position.X + sprite.Size.Width / 2,
+                                    mainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
+                                Stroke = new SolidColorBrush(p.pen.Color),
+                                StrokeThickness = p.pen.Weight,
+                                ZIndex = 5
+                            };
+                            mainWindow.Scene.Children.Add(line);
+                        }
+
+                        Canvas.SetLeft(spriteControl, p.position.X);
+                        Canvas.SetBottom(spriteControl, p.position.Y);
+                    })
+                    .DisposeWith(d);
+
+                sprite
+                    .Changed(p => p.Direction)
+                    .ObserveOn(AvaloniaScheduler.Instance)
+                    .Subscribe(direction =>
+                    {
+                        spriteControl.RenderTransform = new RotateTransform(360 - direction);
                     })
                     .DisposeWith(d);
 
@@ -79,9 +120,9 @@ namespace PlayAndLearn
             return addedSprite;
         }
 
-        public static void SleepSeconds(double seconds)
+        public static void SleepMilliseconds(double value)
         {
-            Thread.Sleep(TimeSpan.FromSeconds(seconds));
+            Thread.Sleep(TimeSpan.FromMilliseconds(value));
         }
     }
 }

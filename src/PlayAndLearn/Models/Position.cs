@@ -4,13 +4,18 @@ namespace PlayAndLearn.Models
 {
     public sealed class Position
     {
-        public Position(int x, int y)
+        public Position(double x, double y)
         {
             X = x;
             Y = y;
         }
 
-        public int X { get; }
-        public int Y { get; }
+        public double X { get; }
+        public double Y { get; }
+
+        public override string ToString()
+        {
+            return $"({X:F2}, {Y:F2})";
+        }
     }
 }
