@@ -1,11 +1,10 @@
-using AForge.Imaging;
-using Avalonia.Media;
+using PlayAndLearn.Utils;
 
 namespace PlayAndLearn.Models
 {
     public sealed class Pen
     {
-        public Pen(double weight, Color color)
+        public Pen(double weight, RGB color)
         {
             Weight = weight;
             Color = color;
@@ -13,14 +12,11 @@ namespace PlayAndLearn.Models
 
         public double Weight { get; }
 
-        public Color Color { get; }
+        public RGB Color { get; }
 
-        public Pen WithHueShift(int shift)
+        public Pen WithHueShift(double shift)
         {
-            var hsl = HSL.FromRGB(new RGB(Color.R, Color.G, Color.B, Color.A));
-            hsl.Hue += shift;
-            var rgb = hsl.ToRGB();
-            return new Pen(Weight, new Color(rgb.Alpha, rgb.Red, rgb.Green, rgb.Blue));
+            return new Pen(Weight, Color.ToHSL().AddHue(shift).ToRGB());
         }
     }
 }

@@ -92,7 +92,7 @@ namespace PlayAndLearn
                                 EndPoint = new Point(
                                     p.position.X + sprite.Size.Width / 2,
                                     mainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
-                                Stroke = new SolidColorBrush(p.pen.Color),
+                                Stroke = new SolidColorBrush(new Color(0xFF, p.pen.Color.Red, p.pen.Color.Green, p.pen.Color.Blue)),
                                 StrokeThickness = p.pen.Weight,
                                 ZIndex = 5
                             };
