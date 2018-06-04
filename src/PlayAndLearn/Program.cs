@@ -92,7 +92,11 @@ while (n < 800)
     Player.SleepMilliseconds(10);
 }";
             var script = CSharpScript.Create(code, options);
-            var state = new State(new Models.Size(400, 400), new Code(script, canExecute: false), Turtle.CreateDefault());
+            var state = new State(
+                new Models.Size(400, 400),
+                new Code(script, canExecute: false),
+                Turtle.CreateDefault()
+            );
             return (state, Cmd.None<Message>());
         }
 
