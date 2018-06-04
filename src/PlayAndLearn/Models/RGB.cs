@@ -1,7 +1,7 @@
 namespace PlayAndLearn
 {
     [Equals]
-    public class RGB
+    public sealed class RGB
     {
         public RGB(byte red, byte green, byte blue)
         {

@@ -16,11 +16,18 @@ namespace PlayAndLearn.Models
         public static Player CreateDefault() => new Player(
             new Size(50, 50),
             new Position(0, 0),
-            Observable.Return<Func<Stream>>(
-                () => Assembly
-                    .GetExecutingAssembly()
-                    .GetManifestResourceStream(@"PlayAndLearn.Models.Turtle.default.png")
-            )
+            ReadEmbeddedResource("Models.Turtle.default.png")
         );
+        
+        private static byte[] ReadEmbeddedResource(string name)
+        {
+            var asm = Assembly.GetExecutingAssembly();
+            using (var sourceStream = asm.GetManifestResourceStream($"{asm.GetName().Name}.{name}"))
+            using (var targetStream = new MemoryStream())
+            {
+                sourceStream.CopyTo(targetStream);
+                return targetStream.ToArray();
+            }
+        }
     }
 }

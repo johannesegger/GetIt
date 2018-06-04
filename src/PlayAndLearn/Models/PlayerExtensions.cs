@@ -1,42 +1,43 @@
 using System;
+using Elmish.Net;
 
 namespace PlayAndLearn.Models
 {
     public static class PlayerExtensions
     {
-        public static void Move(this Player player, double x, double y)
+        public static Player Move(this Player player, double x, double y)
         {
-            player.Position = new Position(player.Position.X + x, player.Position.Y + y);
+            return player.With(p => p.Position, new Position(player.Position.X + x, player.Position.Y + y));
         }
 
-        public static void MoveRight(this Player player, int steps) => player.Move(steps, 0);
+        public static Player MoveRight(this Player player, int steps) => player.Move(steps, 0);
 
-        public static void MoveLeft(this Player player, int steps) => player.Move(-steps, 0);
+        public static Player MoveLeft(this Player player, int steps) => player.Move(-steps, 0);
 
-        public static void MoveUp(this Player player, int steps) => player.Move(0, steps);
+        public static Player MoveUp(this Player player, int steps) => player.Move(0, steps);
 
-        public static void MoveDown(this Player player, int steps) => player.Move(0, -steps);
+        public static Player MoveDown(this Player player, int steps) => player.Move(0, -steps);
 
-        public static void Go(this Player player, int steps)
+        public static Player Go(this Player player, int steps)
         {
             var directionRadians = player.Direction / 180 * Math.PI;
-            player.Move(
+            return player.Move(
                 Math.Cos(directionRadians) * steps,
                 Math.Sin(directionRadians) * steps
             );
         }
 
-        public static void Rotate(this Player player, double angleInDegrees)
+        public static Player Rotate(this Player player, double angleInDegrees)
         {
-            player.Direction += angleInDegrees;
+            return player.With(p => p.Direction, player.Direction + angleInDegrees);
         }
 
-        public static void TurnUp(this Player player) => player.Direction = 90;
+        public static Player TurnUp(this Player player) => player.With(p => p.Direction, 90);
 
-        public static void TurnRight(this Player player) => player.Direction = 0;
+        public static Player TurnRight(this Player player) => player.With(p => p.Direction, 0);
 
-        public static void TurnDown(this Player player) => player.Direction = 270;
+        public static Player TurnDown(this Player player) => player.With(p => p.Direction, 270);
 
-        public static void TurnLeft(this Player player) => player.Direction = 180;
+        public static Player TurnLeft(this Player player) => player.With(p => p.Direction, 180);
     }
 }
