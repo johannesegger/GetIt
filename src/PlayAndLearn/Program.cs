@@ -98,7 +98,6 @@ while (n < 800)
 
         private static (State, Cmd<Message>) Update(Message message, State state)
         {
-            Debug.WriteLine("== Update");
             return message.Match(
                 (Message.ChangeSceneSize m) =>
                 {
