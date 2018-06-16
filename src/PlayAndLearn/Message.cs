@@ -10,10 +10,13 @@ namespace PlayAndLearn
     public class Message : OneOfBase<
         Message.ChangeSceneSize,
         Message.ChangeCode,
-        Message.EnableCodeExecution,
-        Message.CompilationError,
-        Message.CompilationException,
-        Message.ExecuteCode>
+        Message.CompileCode,
+        Message.StartCodeExecution,
+        Message.ContinueCodeExecution,
+        Message.ResetPlayerPosition,
+        Message.StartDragPlayer,
+        Message.DragPlayer,
+        Message.StopDragPlayer>
     {
         public class ChangeSceneSize : Message
         {
@@ -35,31 +38,43 @@ namespace PlayAndLearn
             public string Code { get; }
         }
 
-        public class EnableCodeExecution : Message
+        public class CompileCode : Message
         {
         }
 
-        public class CompilationError : Message
+        public class StartCodeExecution : Message
         {
-            public CompilationError(IEnumerable<Diagnostic> errors)
+        }
+
+        public class ContinueCodeExecution : Message
+        {
+        }
+
+        public class ResetPlayerPosition : Message
+        {
+        }
+
+        public class StartDragPlayer : Message
+        {
+            public StartDragPlayer(Position position)
             {
-                Errors = errors.ToList();
+                Position = position;
             }
 
-            public IReadOnlyCollection<Diagnostic> Errors { get; }
+            public Position Position { get; }
         }
 
-        public class CompilationException : Message
+        public class DragPlayer : Message
         {
-            public CompilationException(Exception exception)
+            public DragPlayer(Position position)
             {
-                Exception = exception;
+                Position = position;
             }
 
-            public Exception Exception { get; }
+            public Position Position { get; }
         }
 
-        public class ExecuteCode : Message
+        public class StopDragPlayer : Message
         {
         }
     }

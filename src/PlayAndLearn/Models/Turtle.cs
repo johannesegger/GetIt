@@ -16,7 +16,9 @@ namespace PlayAndLearn.Models
         public static Player CreateDefault() => new Player(
             new Size(50, 50),
             new Position(0, 0),
-            ReadEmbeddedResource("Models.Turtle.default.png")
+            direction: 0,
+            pen: null,
+            idleCostume: ReadEmbeddedResource("Models.Turtle.default.png")
         );
         
         private static byte[] ReadEmbeddedResource(string name)
