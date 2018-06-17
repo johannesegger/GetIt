@@ -275,7 +275,7 @@ namespace PlayAndLearn
                                         .Attach(Canvas.LeftProperty, center.X + state.Player.Position.X - state.Player.Size.Width / 2)
                                         .Attach(Canvas.BottomProperty, center.Y + state.Player.Position.Y - state.Player.Size.Height / 2),
                                     VNode.Create<TextBlock>()
-                                        .Set(p => p.Text, $"X: {state.Player.Position.X} - Y: {state.Player.Position.Y} - ∠: {state.Player.Direction}°")
+                                        .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
                                         .Set(p => p.Foreground, Brushes.Gray)
                                         .Attach(Canvas.BottomProperty, 10)
                                         .Attach(Canvas.RightProperty, 10))
