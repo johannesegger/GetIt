@@ -199,7 +199,9 @@ namespace PlayAndLearn
                 },
                 (Message.ResetPlayerPosition _) =>
                 {
-                    var newState = state.With(p => p.Player.Position, new Position(0, 0));
+                    var newState = state
+                        .With(p => p.Player.Position, new Position(0, 0))
+                        .With(p => p.Player.Direction, 0);
                     return (newState, Cmd.None<Message>());
                 },
                 (Message.StartDragPlayer m) =>
