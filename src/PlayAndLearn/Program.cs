@@ -262,11 +262,6 @@ namespace PlayAndLearn
                                         .Set(p => p.Height, state.Player.Size.Height)
                                         .Set(p => p.RenderTransform, new RotateTransform(360 - state.Player.Direction))
                                         .Subscribe(p => Observable
-                                            .FromEventPattern<RoutedEventArgs>(
-                                                h => p.DoubleTapped += h,
-                                                h => p.DoubleTapped -= h)
-                                            .Subscribe(_ => dispatch(new Message.ResetPlayerPosition())))
-                                        .Subscribe(p => Observable
                                             .FromEventPattern<PointerPressedEventArgs>(
                                                 h => p.PointerPressed += h,
                                                 h => p.PointerPressed -= h)
@@ -277,6 +272,11 @@ namespace PlayAndLearn
                                     VNode.Create<TextBlock>()
                                         .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
                                         .Set(p => p.Foreground, Brushes.Gray)
+                                        .Subscribe(p => Observable
+                                            .FromEventPattern<RoutedEventArgs>(
+                                                h => p.DoubleTapped += h,
+                                                h => p.DoubleTapped -= h)
+                                            .Subscribe(_ => dispatch(new Message.ResetPlayerPosition())))
                                         .Attach(Canvas.BottomProperty, 10)
                                         .Attach(Canvas.RightProperty, 10))
                                 .Subscribe(p => Observable
