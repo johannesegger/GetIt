@@ -23,7 +23,7 @@ namespace PlayAndLearn.Models
         {
             Size = size;
             Position = position;
-            Direction = direction;
+            Direction = (direction % 360 + 360) % 360;
             Pen = pen;
             IdleCostume = idleCostume;
         }
