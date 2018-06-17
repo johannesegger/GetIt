@@ -109,12 +109,14 @@ namespace PlayAndLearn.Models
                         .Text;
                     if (Equals(actualIdentifier, nameof(State.Player)))
                     {
-                        return SyntaxFactory.YieldStatement(
-                            SyntaxKind.YieldReturnStatement,
-                            SyntaxFactory.AssignmentExpression(
-                                SyntaxKind.SimpleAssignmentExpression,
-                                SyntaxFactory.IdentifierName(actualIdentifier),
-                                n));
+                        return SyntaxFactory
+                            .YieldStatement(
+                                SyntaxKind.YieldReturnStatement,
+                                SyntaxFactory.AssignmentExpression(
+                                    SyntaxKind.SimpleAssignmentExpression,
+                                    SyntaxFactory.IdentifierName(actualIdentifier),
+                                    n))
+                            .WithSemicolonToken(node.SemicolonToken);
                     }
                 }
                 return node;
