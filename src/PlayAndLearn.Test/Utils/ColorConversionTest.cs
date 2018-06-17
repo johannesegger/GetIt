@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using FsCheck.Xunit;
+using PlayAndLearn.Models;
 using PlayAndLearn.Utils;
 using Xunit;
 

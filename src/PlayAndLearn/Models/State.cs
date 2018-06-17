@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using LanguageExt;
 
 namespace PlayAndLearn.Models
@@ -10,7 +11,8 @@ namespace PlayAndLearn.Models
             Option<UserScript> script,
             Option<ExecutionState> executionState,
             Player player,
-            Option<Position> previousDragPosition)
+            Option<Position> previousDragPosition,
+            IImmutableList<VisualLine> lines)
         {
             SceneSize = sceneSize;
             Code = code;
@@ -18,6 +20,7 @@ namespace PlayAndLearn.Models
             ExecutionState = executionState;
             Player = player;
             PreviousDragPosition = previousDragPosition;
+            Lines = lines;
         }
 
         public Size SceneSize { get; }
@@ -26,6 +29,7 @@ namespace PlayAndLearn.Models
         public Option<ExecutionState> ExecutionState { get; }
         public Player Player { get; }
         public Option<Position> PreviousDragPosition { get; }
+        public IImmutableList<VisualLine> Lines { get; }
     }
 
     public static class StateExtensions

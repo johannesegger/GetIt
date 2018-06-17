@@ -7,14 +7,14 @@ namespace PlayAndLearn.Utils
     {
         public static IVNode<T> Attach<T, TProp>(
             this IVNode<T> vNode,
-            AttachedProperty<TProp> attachedProperty,
+            AvaloniaProperty<TProp> property,
             TProp value)
             where T : AvaloniaObject
         {
             return new VNode<T>(node =>
             {
                 var o = vNode.Materialize(node);
-                o.Resource.SetValue(attachedProperty, value);
+                o.Resource.SetValue(property, value);
                 return o;
             });
         }

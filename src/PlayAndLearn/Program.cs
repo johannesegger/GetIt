@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
@@ -8,6 +9,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -97,9 +99,14 @@ namespace PlayAndLearn
 
 //     Player.SleepMilliseconds(10);
 // }";
-            var code = @"for (int i = 1; i < 10; i++)
+            var code = @"Player.GoTo(0, -100);
+Player.TurnOnPen();
+Player.SetPenColor(new RGB(0xFF, 0x00, 0xFF));
+for (int i = 0; i < 60; i++)
 {
-    Player.Go(i * 5);
+    Player.SetPenWeight((i % 5) + 1);
+    Player.Rotate(6);
+    Player.Go(5);
 }";
             var state = new State(
                 sceneSize: new Models.Size(400, 400),
@@ -107,7 +114,8 @@ namespace PlayAndLearn
                 script: None,
                 executionState: None,
                 player: Turtle.CreateDefault(),
-                previousDragPosition: None);
+                previousDragPosition: None,
+                lines: ImmutableList<VisualLine>.Empty);
             return (state, Cmd.OfMsg<Message>(new Message.ChangeCode(code)));
         }
 
@@ -169,6 +177,15 @@ namespace PlayAndLearn
                                 if (enumerator.MoveNext())
                                 {
                                     var newState = state.With(p => p.Player, (Player)enumerator.Current);
+                                    if (state.Player.Pen.IsOn && state.Player.Position != newState.Player.Position)
+                                    {
+                                        var line = new VisualLine(
+                                            state.Player.Position,
+                                            newState.Player.Position,
+                                            state.Player.Pen.Color,
+                                            state.Player.Pen.Weight);
+                                        newState = newState.With(p => p.Lines, newState.Lines.Add(line));
+                                    }
                                     var cmd = Cmd.OfSub<Message>(async dispatch =>
                                     {
                                         await Task.Delay(TimeSpan.FromMilliseconds(20));
@@ -233,7 +250,6 @@ namespace PlayAndLearn
 
         private static IVNode<MainWindow> View(State state, Dispatch<Message> dispatch)
         {
-            var center = new Position(state.SceneSize.Width / 2, state.SceneSize.Height / 2);
             return VNode.Create<MainWindow>()
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "Play and Learn")
@@ -253,32 +269,7 @@ namespace PlayAndLearn
                             VNode.Create<Canvas>()
                                 .Set(p => p.Background, Brushes.WhiteSmoke)
                                 .Set(p => p.MinWidth, 100)
-                                .SetCollection(
-                                    p => p.Children,
-                                    VNode.Create<Image>()
-                                        .Set(p => p.ZIndex, 10)
-                                        .Set(p => p.Source, new Bitmap(new MemoryStream(state.Player.IdleCostume)))
-                                        .Set(p => p.Width, state.Player.Size.Width)
-                                        .Set(p => p.Height, state.Player.Size.Height)
-                                        .Set(p => p.RenderTransform, new RotateTransform(360 - state.Player.Direction))
-                                        .Subscribe(p => Observable
-                                            .FromEventPattern<PointerPressedEventArgs>(
-                                                h => p.PointerPressed += h,
-                                                h => p.PointerPressed -= h)
-                                            .Select(e => e.EventArgs.GetPosition(p.Parent).ToPosition(p.Parent))
-                                            .Subscribe(position => dispatch(new Message.StartDragPlayer(position))))
-                                        .Attach(Canvas.LeftProperty, center.X + state.Player.Position.X - state.Player.Size.Width / 2)
-                                        .Attach(Canvas.BottomProperty, center.Y + state.Player.Position.Y - state.Player.Size.Height / 2),
-                                    VNode.Create<TextBlock>()
-                                        .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
-                                        .Set(p => p.Foreground, Brushes.Gray)
-                                        .Subscribe(p => Observable
-                                            .FromEventPattern<RoutedEventArgs>(
-                                                h => p.DoubleTapped += h,
-                                                h => p.DoubleTapped -= h)
-                                            .Subscribe(_ => dispatch(new Message.ResetPlayerPosition())))
-                                        .Attach(Canvas.BottomProperty, 10)
-                                        .Attach(Canvas.RightProperty, 10))
+                                .SetCollection(p => p.Children, GetCanvasItems(state, dispatch))
                                 .Subscribe(p => Observable
                                     .FromEventPattern(
                                         h => p.LayoutUpdated += h,
@@ -310,19 +301,31 @@ namespace PlayAndLearn
                                 .Attach(Grid.ColumnProperty, 2)
                                 .SetCollection(
                                     p => p.Children,
-                                    VNode.Create<Button>()
-                                        .Set(p => p.Content, "Run ▶")
-                                        .Set(p => p.IsEnabled, state.CanExecuteScript())
-                                        .Set(p => p.Foreground, state.CanExecuteScript() ? Brushes.GreenYellow : Brushes.OrangeRed)
-                                        .Set(p => p.Margin, new Thickness(10, 5))
+                                    VNode.Create<Border>()
+                                        .Set(p => p.BorderThickness, new Thickness(1))
+                                        .Set(p => p.BorderBrush, Brushes.White)
                                         .Set(p => p.HorizontalAlignment, HorizontalAlignment.Left)
-                                        .Subscribe(p => Observable
-                                            .FromEventPattern<RoutedEventArgs>(
-                                                h => p.Click += h,
-                                                h => p.Click -= h
-                                            )
-                                            .Subscribe(_ => dispatch(new Message.StartCodeExecution()))
-                                        )
+                                        .Set(p => p.Margin, new Thickness(0, 5))
+                                        .Attach(
+                                            ToolTip.TipProperty,
+                                            state.Script
+                                                .Bind(script => Optional(script.AsT1))
+                                                .Bind(compiledCode => compiledCode.HasErrors ? Some(compiledCode.Diagnostics) : None)
+                                                .MatchUnsafe(
+                                                    list => string.Join(Environment.NewLine, list),
+                                                    () => null))
+                                        .Set(
+                                            p => p.Child,
+                                            VNode.Create<Button>()
+                                                .Set(p => p.Content, "Run ▶")
+                                                .Set(p => p.IsEnabled, state.CanExecuteScript())
+                                                .Set(p => p.Foreground, state.CanExecuteScript() ? Brushes.GreenYellow : Brushes.OrangeRed)
+                                                .Subscribe(p => Observable
+                                                    .FromEventPattern<RoutedEventArgs>(
+                                                        h => p.Click += h,
+                                                        h => p.Click -= h
+                                                    )
+                                                    .Subscribe(_ => dispatch(new Message.StartCodeExecution()))))
                                         .Attach(DockPanel.DockProperty, Dock.Top),
                                     VNode.Create<TextBox>()
                                         .Set(p => p.Text, state.Code)
@@ -380,6 +383,46 @@ namespace PlayAndLearn
                                 )
                         )
                 );
+        }
+
+        private static IEnumerable<IVNode> GetCanvasItems(State state, Dispatch<Message> dispatch)
+        {
+            var center = new Position(state.SceneSize.Width / 2.0, state.SceneSize.Height / 2.0);
+            yield return VNode.Create<Image>()
+                .Set(p => p.ZIndex, 10)
+                .Set(p => p.Source, new Bitmap(new MemoryStream(state.Player.IdleCostume)))
+                .Set(p => p.Width, state.Player.Size.Width)
+                .Set(p => p.Height, state.Player.Size.Height)
+                .Set(p => p.RenderTransform, new RotateTransform(360 - state.Player.Direction))
+                .Subscribe(p => Observable
+                    .FromEventPattern<PointerPressedEventArgs>(
+                        h => p.PointerPressed += h,
+                        h => p.PointerPressed -= h)
+                    .Select(e => e.EventArgs.GetPosition(p.Parent).ToPosition(p.Parent))
+                    .Subscribe(position => dispatch(new Message.StartDragPlayer(position))))
+                .Attach(Canvas.LeftProperty, center.X + state.Player.Position.X - state.Player.Size.Width / 2)
+                .Attach(Canvas.BottomProperty, center.Y + state.Player.Position.Y - state.Player.Size.Height / 2);
+
+            yield return VNode.Create<TextBlock>()
+                .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
+                .Set(p => p.Foreground, Brushes.Gray)
+                .Subscribe(p => Observable
+                    .FromEventPattern<RoutedEventArgs>(
+                        h => p.DoubleTapped += h,
+                        h => p.DoubleTapped -= h)
+                    .Subscribe(_ => dispatch(new Message.ResetPlayerPosition())))
+                .Attach(Canvas.BottomProperty, 10)
+                .Attach(Canvas.RightProperty, 10);
+
+            foreach (var line in state.Lines)
+            {
+                yield return VNode.Create<Line>()
+                    .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
+                    .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
+                    .Set(p => p.Stroke, new SolidColorBrush(line.Color.ToColor()))
+                    .Set(p => p.StrokeThickness, line.Weight)
+                    .Set(p => p.ZIndex, 5);
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ namespace PlayAndLearn.Models
             new Size(50, 50),
             new Position(0, 0),
             direction: 0,
-            pen: null,
+            pen: Pen.CreateDefault(),
             idleCostume: ReadEmbeddedResource("Models.Turtle.default.png")
         );
         

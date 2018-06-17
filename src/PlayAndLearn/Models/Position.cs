@@ -2,6 +2,7 @@ using System;
 
 namespace PlayAndLearn.Models
 {
+    [Equals]
     public sealed class Position
     {
         public Position(double x, double y)
