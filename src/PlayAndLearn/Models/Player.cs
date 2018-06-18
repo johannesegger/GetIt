@@ -1,10 +1,3 @@
-using System;
-using System.IO;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Reflection;
-using Avalonia.Media.Imaging;
-
 namespace PlayAndLearn.Models
 {
     public sealed class Player

@@ -1,11 +1,5 @@
-using System;
 using System.IO;
-using System.Linq;
-using System.Reactive.Linq;
 using System.Reflection;
-using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
-using Portable.Xaml;
 
 namespace PlayAndLearn.Models
 {

@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace PlayAndLearn.Utils
 {
