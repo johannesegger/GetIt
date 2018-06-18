@@ -172,7 +172,7 @@ for (int i = 0; i < 60; i++)
                                 if (enumerator.MoveNext())
                                 {
                                     var newState = state.With(p => p.Player, (Player)enumerator.Current);
-                                    if (state.Player.Pen.IsOn && state.Player.Position != newState.Player.Position)
+                                    if (state.Player.Pen.IsOn && !state.Player.Position.Equals(newState.Player.Position))
                                     {
                                         var line = new VisualLine(
                                             state.Player.Position,
@@ -269,14 +269,11 @@ for (int i = 0; i < 60; i++)
                                     .FromEventPattern(
                                         h => p.LayoutUpdated += h,
                                         h => p.LayoutUpdated -= h)
-                                    .Subscribe(e =>
-                                    {
-                                        var newSize = new Models.Size(
-                                            (int)Math.Round(p.Bounds.Size.Width),
-                                            (int)Math.Round(p.Bounds.Size.Height)
-                                        );
-                                        dispatch(new Message.ChangeSceneSize(newSize));
-                                    }))
+                                    .Select(e => new Models.Size(
+                                        (int)Math.Round(p.Bounds.Size.Width),
+                                        (int)Math.Round(p.Bounds.Size.Height)))
+                                    .Where(size => !size.Equals(state.SceneSize))
+                                    .Subscribe(size => dispatch(new Message.ChangeSceneSize(size))))
                                 .Subscribe(p => state.PreviousDragPosition
                                     .Some(previousDragPosition => Observable
                                         .FromEventPattern<PointerEventArgs>(
@@ -414,7 +411,14 @@ for (int i = 0; i < 60; i++)
                 yield return VNode.Create<Line>()
                     .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
                     .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
-                    .Set(p => p.Stroke, new SolidColorBrush(line.Color.ToColor()))
+                    .Set(
+                        p => p.Stroke,
+                        new SolidColorBrush(line.Color.ToColor()),
+                        EqualityComparer.Create((IBrush b) =>
+                        {
+                            var color = ((SolidColorBrush)b).Color;
+                            return new { color.A, color.R, color.G, color.B };
+                        }))
                     .Set(p => p.StrokeThickness, line.Weight)
                     .Set(p => p.ZIndex, 5);
             }
