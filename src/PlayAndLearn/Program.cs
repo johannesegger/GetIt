@@ -94,14 +94,18 @@ namespace PlayAndLearn
 
 //     Player.SleepMilliseconds(10);
 // }";
-            var code = @"Player.GoTo(0, -100);
-Player.TurnOnPen();
-Player.SetPenColor(new RGB(0xFF, 0x00, 0xFF));
-for (int i = 0; i < 60; i++)
+            var code = @"for (var i = 0; i < 20; i++)
 {
-    Player.SetPenWeight((i % 5) + 1);
-    Player.Rotate(6);
-    Player.Go(5);
+    Player.TurnOffPen();
+    Player.GoTo(0, -100 + 20 * i);
+    Player.TurnOnPen();
+    Player.SetPenColor(new RGB(0xFF, 0x00, 0xFF));
+    for (int j = 0; j < 60; j++)
+    {
+        Player.SetPenWeight((j % 5) + 1);
+        Player.Rotate(6);
+        Player.Go(5);
+    }
 }";
             var state = new State(
                 sceneSize: new Models.Size(400, 400),
@@ -409,18 +413,11 @@ for (int i = 0; i < 60; i++)
             foreach (var line in state.Lines)
             {
                 yield return VNode.Create<Line>()
-                    .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
-                    .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
-                    .Set(
-                        p => p.Stroke,
-                        new SolidColorBrush(line.Color.ToColor()),
-                        EqualityComparer.Create((IBrush b) =>
-                        {
-                            var color = ((SolidColorBrush)b).Color;
-                            return new { color.A, color.R, color.G, color.B };
-                        }))
-                    .Set(p => p.StrokeThickness, line.Weight)
-                    .Set(p => p.ZIndex, 5);
+                    .SetConstant(p => p.StartPoint = new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
+                    .SetConstant(p => p.EndPoint = new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
+                    .SetConstant(p => p.Stroke = new SolidColorBrush(line.Color.ToColor()))
+                    .SetConstant(p => p.StrokeThickness = line.Weight)
+                    .SetConstant(p => p.ZIndex = 5);
             }
         }
     }
