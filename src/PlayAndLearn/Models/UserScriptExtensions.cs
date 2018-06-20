@@ -75,22 +75,25 @@ namespace PlayAndLearn.Models
                 .WithBody(
                     SyntaxFactory.Block(
                         root
-                            .ChildNodes()
-                            .Cast<GlobalStatementSyntax>()
+                            .Members
+                            .OfType<GlobalStatementSyntax>()
                             .Select(p => p.Statement)
                     )
                 );
             var newRoot = root
                 .WithMembers(
                     SyntaxFactory.List(
-                        new MemberDeclarationSyntax[]
-                        {
-                            method,
-                            SyntaxFactory.GlobalStatement(
-                                SyntaxFactory.ExpressionStatement(
-                                    SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName("Run")),
-                                    SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)))
-                        }))
+                        root
+                            .Members
+                            .Where(p => !(p is GlobalStatementSyntax))
+                            .Concat(new MemberDeclarationSyntax[]
+                            {
+                                method,
+                                SyntaxFactory.GlobalStatement(
+                                    SyntaxFactory.ExpressionStatement(
+                                        SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName("Run")),
+                                        SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)))
+                            })))
                 .NormalizeWhitespace();
             return new UserScript.ParsedCode(tree.WithRootAndOptions(newRoot, tree.Options));
         }
