@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -17,8 +21,10 @@ using Avalonia.Logging.Serilog;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Rendering;
 using Avalonia.Threading;
 using Elmish.Net;
+using Elmish.Net.VDom;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Scripting;
@@ -65,15 +71,48 @@ namespace PlayAndLearn
                 .UsePlatformDetect()
                 .LogToDebug()
                 .SetupWithoutStarting();
-            var proxy = new Proxy { Window = new MainWindow() };
-            ElmishApp.Run(Init(), Update, View, AvaloniaScheduler.Instance, () => proxy.Window);
-            proxy.Window.Show();
-            appBuilder.Instance.Run(proxy.Window);
+
+            var proxy = new Proxy();
+            var renderLoop = AvaloniaLocator.Current.GetService<IRenderLoop>();
+            var requestAnimationFrame = Observable
+                .FromEventPattern<EventArgs>(
+                    h => renderLoop.Tick += h,
+                    h => renderLoop.Tick -= h)
+                .Select(_ => Unit.Default);
+            ElmishApp.Run(
+                requestAnimationFrame,
+                Init(),
+                Update,
+                View,
+                TaskPoolScheduler.Default,
+                AvaloniaScheduler.Instance,
+                () => proxy.Window);
+
+            var cts = new CancellationTokenSource();
+            proxy.WindowChanged.Subscribe(window =>
+            {
+                window.Show();
+                window.Closed += (s, e) => cts.Cancel();
+            });
+            appBuilder.Instance.Run(cts.Token);
         }
 
         private class Proxy
         {
-            public Window Window { get; set; }
+            private readonly Subject<Window> windowChanged = new Subject<Window>();
+            private Window _window;
+
+            public IObservable<Window> WindowChanged => windowChanged.AsObservable();
+
+            public Window Window
+            {
+                get => _window;
+                set
+                {
+                    _window = value;
+                    windowChanged.OnNext(value);
+                }
+            }
         }
 
         private static (State, Cmd<Message>) Init()
@@ -247,28 +286,28 @@ namespace PlayAndLearn
         private static FontFamily FiraCode =
             "resm:PlayAndLearn.Fonts.FiraCode.FiraCode-*.ttf?assembly=PlayAndLearn#Fira Code";
 
-        private static IVNode<MainWindow> View(State state, Dispatch<Message> dispatch)
+        private static IVDomNode<MainWindow> View(State state, Dispatch<Message> dispatch)
         {
-            return VNode.Create<MainWindow>()
+            return VDomNode.Create<MainWindow>()
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "Play and Learn")
                 .Set(
                     p => p.Content,
-                    VNode.Create<Grid>()
-                        .SetCollection(
+                    VDomNode.Create<Grid>()
+                        .SetChildNodes(
                             p => p.ColumnDefinitions,
-                            VNode.Create<ColumnDefinition>()
+                            VDomNode.Create<ColumnDefinition>()
                                 .Set(p => p.Width, new GridLength(state.SceneSize.Width, GridUnitType.Pixel)),
-                            VNode.Create<ColumnDefinition>()
+                            VDomNode.Create<ColumnDefinition>()
                                 .Set(p => p.Width, GridLength.Auto),
-                            VNode.Create<ColumnDefinition>()
+                            VDomNode.Create<ColumnDefinition>()
                                 .Set(p => p.Width, new GridLength(1, GridUnitType.Star)))
-                        .SetCollection(
+                        .SetChildNodes(
                             p => p.Children,
-                            VNode.Create<Canvas>()
+                            VDomNode.Create<Canvas>()
                                 .Set(p => p.Background, Brushes.WhiteSmoke)
                                 .Set(p => p.MinWidth, 100)
-                                .SetCollection(p => p.Children, GetCanvasItems(state, dispatch))
+                                .SetChildNodes(p => p.Children, GetCanvasItems(state, dispatch))
                                 .Subscribe(p => Observable
                                     .FromEventPattern(
                                         h => p.LayoutUpdated += h,
@@ -291,13 +330,13 @@ namespace PlayAndLearn
                                         h => p.PointerReleased += h,
                                         h => p.PointerReleased -= h)
                                     .Subscribe(_ => dispatch(new Message.StopDragPlayer()))),
-                            VNode.Create<GridSplitter>()
+                            VDomNode.Create<GridSplitter>()
                                 .Attach(Grid.ColumnProperty, 1),
-                            VNode.Create<DockPanel>()
+                            VDomNode.Create<DockPanel>()
                                 .Attach(Grid.ColumnProperty, 2)
-                                .SetCollection(
+                                .SetChildNodes(
                                     p => p.Children,
-                                    VNode.Create<Border>()
+                                    VDomNode.Create<Border>()
                                         .Set(p => p.BorderThickness, new Thickness(1))
                                         .Set(p => p.BorderBrush, Brushes.White)
                                         .Set(p => p.HorizontalAlignment, HorizontalAlignment.Left)
@@ -312,7 +351,7 @@ namespace PlayAndLearn
                                                     () => null))
                                         .Set(
                                             p => p.Child,
-                                            VNode.Create<Button>()
+                                            VDomNode.Create<Button>()
                                                 .Set(p => p.Content, "Run ▶")
                                                 .Set(p => p.IsEnabled, state.CanExecuteScript())
                                                 .Set(p => p.Foreground, state.CanExecuteScript() ? Brushes.GreenYellow : Brushes.OrangeRed)
@@ -323,16 +362,18 @@ namespace PlayAndLearn
                                                     )
                                                     .Subscribe(_ => dispatch(new Message.StartCodeExecution()))))
                                         .Attach(DockPanel.DockProperty, Dock.Top),
-                                    VNode.Create<TextBox>()
+                                    VDomNode.Create<TextBox>()
                                         .Set(p => p.Text, state.Code)
                                         .Set(p => p.FontFamily, FiraCode)
                                         .Set(p => p.TextWrapping, TextWrapping.Wrap)
                                         .Set(p => p.AcceptsReturn, true)
-                                        .Subscribe(p => TextBox.TextProperty.Changed
-                                            .Where(e => ReferenceEquals(e.Sender, p))
-                                            .Subscribe(e => dispatch(new Message.ChangeCode((string)e.NewValue)))
+                                        .Subscribe(p => Observable
+                                            .FromEventPattern<TextInputEventArgs>(
+                                                h => p.TextInput += h,
+                                                h => p.TextInput -= h)
+                                            .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
                                         )
-                                    // VNode.Create<TextEditor>()
+                                    // VDomNode.Create<TextEditor>()
                                     //     .Set(p => p.Text, state.Code)
                                     //     .Set(p => p.Background, Brushes.Transparent)
                                     //     .Set(p => p.ShowLineNumbers, true)
@@ -350,7 +391,7 @@ namespace PlayAndLearn
                                     //         .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
                                     //     )
 
-                                    // VNode.Create<RoslynCodeEditor>()
+                                    // VDomNode.Create<RoslynCodeEditor>()
                                     //     .Set(p => p.MinWidth, 100)
                                     //     .Set(p => p.Background, Brushes.Azure)
                                     //     .Attach(Grid.ColumnProperty, 2)
@@ -381,10 +422,10 @@ namespace PlayAndLearn
                 );
         }
 
-        private static IEnumerable<IVNode> GetCanvasItems(State state, Dispatch<Message> dispatch)
+        private static IEnumerable<IVDomNode> GetCanvasItems(State state, Dispatch<Message> dispatch)
         {
             var center = new Position(state.SceneSize.Width / 2.0, state.SceneSize.Height / 2.0);
-            yield return VNode.Create<Image>()
+            yield return VDomNode.Create<Image>()
                 .Set(p => p.ZIndex, 10)
                 .Set(p => p.Source, new Bitmap(new MemoryStream(state.Player.IdleCostume)))
                 .Set(p => p.Width, state.Player.Size.Width)
@@ -399,7 +440,7 @@ namespace PlayAndLearn
                 .Attach(Canvas.LeftProperty, center.X + state.Player.Position.X - state.Player.Size.Width / 2)
                 .Attach(Canvas.BottomProperty, center.Y + state.Player.Position.Y - state.Player.Size.Height / 2);
 
-            yield return VNode.Create<TextBlock>()
+            yield return VDomNode.Create<TextBlock>()
                 .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
                 .Set(p => p.Foreground, Brushes.Gray)
                 .Subscribe(p => Observable
@@ -412,12 +453,12 @@ namespace PlayAndLearn
 
             foreach (var line in state.Lines)
             {
-                yield return VNode.Create<Line>()
-                    .SetConstant(p => p.StartPoint = new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
-                    .SetConstant(p => p.EndPoint = new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
-                    .SetConstant(p => p.Stroke = new SolidColorBrush(line.Color.ToColor()))
-                    .SetConstant(p => p.StrokeThickness = line.Weight)
-                    .SetConstant(p => p.ZIndex = 5);
+                yield return VDomNode.Create<Line>()
+                    .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
+                    .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
+                    .Set(p => p.Stroke, new SolidColorBrush(line.Color.ToColor()))
+                    .Set(p => p.StrokeThickness, line.Weight)
+                    .Set(p => p.ZIndex, 5);
             }
         }
     }
