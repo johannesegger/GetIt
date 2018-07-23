@@ -13,12 +13,14 @@ namespace PlayAndLearn.Models
 
         public class ParsedCode : UserScript
         {
-            public ParsedCode(SyntaxTree syntaxTree)
+            public ParsedCode(SyntaxTree originalTree, SyntaxTree modifiedTree)
             {
-                SyntaxTree = syntaxTree;
+                OriginalTree = originalTree;
+                ModifiedTree = modifiedTree;
             }
 
-            public SyntaxTree SyntaxTree { get; }
+            public SyntaxTree OriginalTree { get; }
+            public SyntaxTree ModifiedTree { get; }
         }
 
         public class CompiledCode : UserScript

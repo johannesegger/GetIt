@@ -43,23 +43,28 @@ namespace PlayAndLearn.Models
 
         public static UserScript.CompiledCode Compile(this UserScript.ParsedCode code)
         {
-            var compilation = CSharpCompilation.CreateScriptCompilation(
-                "PlayAndLearn.Game",
-                code.SyntaxTree,
-                new[]
-                {
-                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(Assembly.Load("System.Runtime, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a").Location),
-                    // MetadataReference.CreateFromFile(typeof(System.Collections.Generic.IEnumerable<>).Assembly.Location),
-                    MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location)
-                },
-                new CSharpCompilationOptions(
-                    OutputKind.DynamicallyLinkedLibrary,
-                    usings: new[] { typeof(PlayerExtensions).Namespace }
-                ),
-                globalsType: typeof(UserScriptGlobals)
-            );
-            var diagnostics = compilation.GetDiagnostics();
+            Compilation CompileTree(SyntaxTree tree)
+            {
+                return CSharpCompilation.CreateScriptCompilation(
+                    "PlayAndLearn.Game",
+                    tree,
+                    new[]
+                    {
+                        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                        MetadataReference.CreateFromFile(Assembly.Load("System.Runtime, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a").Location),
+                        // MetadataReference.CreateFromFile(typeof(System.Collections.Generic.IEnumerable<>).Assembly.Location),
+                        MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location)
+                    },
+                    new CSharpCompilationOptions(
+                        OutputKind.DynamicallyLinkedLibrary,
+                        usings: new[] { typeof(PlayerExtensions).Namespace }
+                    ),
+                    globalsType: typeof(UserScriptGlobals)
+                );
+            }
+
+            var compilation = CompileTree(code.ModifiedTree);
+            var diagnostics = CompileTree(code.OriginalTree).GetDiagnostics();
             return new UserScript.CompiledCode(compilation, diagnostics);
         }
 
@@ -95,7 +100,7 @@ namespace PlayAndLearn.Models
                                         SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)))
                             })))
                 .NormalizeWhitespace();
-            return new UserScript.ParsedCode(tree.WithRootAndOptions(newRoot, tree.Options));
+            return new UserScript.ParsedCode(tree, tree.WithRootAndOptions(newRoot, tree.Options));
         }
 
         private class CodeParser : CSharpSyntaxRewriter
