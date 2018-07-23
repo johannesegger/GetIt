@@ -1,5 +1,6 @@
 using System;
 using Elmish.Net;
+using PlayAndLearn.Utils;
 
 namespace PlayAndLearn.Models
 {
@@ -67,5 +68,8 @@ namespace PlayAndLearn.Models
 
         public static Player SetPenWeight(this Player player, double weight) =>
             player.With(p => p.Pen.Weight, weight);
+
+        public static Player ShiftPenColor(this Player player, double shift) =>
+            player.With(p => p.Pen.Color, player.Pen.Color.ToHSL().AddHue(shift).ToRGB());
     }
 }
