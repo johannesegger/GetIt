@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -16,7 +15,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Avalonia.Logging.Serilog;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
@@ -25,12 +23,14 @@ using Avalonia.Rendering;
 using Avalonia.Threading;
 using Elmish.Net;
 using Elmish.Net.VDom;
+using LanguageExt;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Scripting;
 using PlayAndLearn.Models;
 using PlayAndLearn.Utils;
 using static LanguageExt.Prelude;
+using Unit = System.Reactive.Unit;
 
 namespace PlayAndLearn
 {
@@ -84,7 +84,7 @@ namespace PlayAndLearn
                 Init(),
                 Update,
                 View,
-                TaskPoolScheduler.Default,
+                Subscribe,
                 AvaloniaScheduler.Instance,
                 () => proxy.Window);
 
@@ -133,28 +133,29 @@ namespace PlayAndLearn
 
 //     Player.SleepMilliseconds(10);
 // }";
-            var code = @"for (var i = 0; i < 20; i++)
+            var code = @"Player.SetPenColor(new RGB(0xFF, 0x00, 0xFF));
+for (var i = 0; i < 20; i++)
 {
     Player.TurnOffPen();
     Player.GoTo(0, -100 + 20 * i);
     Player.TurnOnPen();
-    Player.SetPenColor(new RGB(0xFF, 0x00, 0xFF));
     for (int j = 0; j < 60; j++)
     {
         Player.SetPenWeight((j % 5) + 1);
         Player.Rotate(6);
         Player.Go(5);
+        Player.ShiftPenColor(0.01);
     }
 }";
             var state = new State(
                 sceneSize: new Models.Size(400, 400),
-                code: "",
+                code: code,
                 script: None,
-                executionState: None,
+                executionState: new ExecutionState.Stopped(Enumerable.Empty<object>()),
                 player: Turtle.CreateDefault(),
                 previousDragPosition: None,
                 lines: ImmutableList<VisualLine>.Empty);
-            return (state, Cmd.OfMsg<Message>(new Message.ChangeCode(code)));
+            return Update(new Message.CompileCode(), state);
         }
 
         private static (State, Cmd<Message>) Update(Message message, State state)
@@ -170,7 +171,7 @@ namespace PlayAndLearn
                     var newState = state
                         .With(p => p.Code, m.Code)
                         .With(p => p.Script, None);
-                    return (newState, Cmd.OfMsg<Message>(new Message.CompileCode()));
+                    return Update(new Message.CompileCode(), newState);
                 },
                 (Message.CompileCode _) =>
                 {
@@ -186,35 +187,75 @@ namespace PlayAndLearn
                 },
                 (Message.StartCodeExecution _) =>
                 {
-                    return state.Script
-                        .Bind(p => Optional(p.AsT1))
+                    return state.ExecutionState
                         .Match(
-                            compiledCode =>
+                            stoppedState =>
                             {
-                                var globals = new UserScriptGlobals { Player = state.Player };
-                                return compiledCode
-                                    .Run<IEnumerable<object>>(globals)
+                                return state.Script
+                                    .Bind(p => Optional(p.AsT1))
                                     .Match(
-                                        o =>
+                                        compiledCode =>
                                         {
-                                            var newState = state.With(
-                                                p => p.ExecutionState,
-                                                new ExecutionState(o, None));
-                                            return (newState, Cmd.OfMsg<Message>(new Message.ContinueCodeExecution()));
+                                            var globals = new UserScriptGlobals { Player = state.Player };
+                                            return compiledCode
+                                                .Run<IEnumerable<object>>(globals)
+                                                .Match(
+                                                    o =>
+                                                    {
+                                                        var newState = state.With(
+                                                            p => p.ExecutionState,
+                                                            new ExecutionState.Stopped(o));
+                                                        return Update(new Message.ContinueCodeExecution(), newState);
+                                                    },
+                                                    diagnostics => (state, Cmd.None<Message>())); // TODO show errors
                                         },
-                                        diagnostics => (state, Cmd.None<Message>())); // TODO show errors
+                                        () => (state, Cmd.None<Message>()));
+
                             },
-                            () => (state, Cmd.None<Message>()));
+                            startedState =>
+                            {
+                                // That shouldn't happen, but just keep going
+                                return (state, Cmd.None<Message>());
+                            },
+                            pausedState =>
+                            {
+                                var newState = state.With(
+                                    p => p.ExecutionState,
+                                    new ExecutionState.Started(pausedState.States, pausedState.State));
+                                return Update(new Message.ContinueCodeExecution(), newState);
+                            });
+
+                },
+                (Message.PauseCodeExecution _) =>
+                {
+                    var newState = state.ExecutionState
+                        .Match(
+                            stoppedState => state,
+                            startedState => state.With(p => p.ExecutionState, new ExecutionState.Paused(startedState.States, startedState.State)),
+                            pausedState => state);
+                    return (newState, Cmd.None<Message>());
+                },
+                (Message.StopCodeExecution _) =>
+                {
+                    var newState = state.ExecutionState
+                        .Match(
+                            stoppedState => state,
+                            startedState => state.With(p => p.ExecutionState, new ExecutionState.Stopped(startedState.States)),
+                            pausedState => state.With(p => p.ExecutionState, new ExecutionState.Stopped(pausedState.States)));
+                    return (newState, Cmd.None<Message>());
                 },
                 (Message.ContinueCodeExecution _) =>
                 {
-                    return state.ExecutionState
-                        .Some(executionState => executionState.State
+                    (State, Cmd<Message>) AdvanceExecution(IEnumerable<object> executionStates, Option<IEnumerator<object>> executionState)
+                    {
+                        return executionState
                             .Some(enumerator =>
                             {
                                 if (enumerator.MoveNext())
                                 {
-                                    var newState = state.With(p => p.Player, (Player)enumerator.Current);
+                                    var newState = state
+                                        .With(p => p.ExecutionState, new ExecutionState.Started(executionStates, enumerator))
+                                        .With(p => p.Player, (Player)enumerator.Current);
                                     if (state.Player.Pen.IsOn && !state.Player.Position.Equals(newState.Player.Position))
                                     {
                                         var line = new VisualLine(
@@ -224,33 +265,30 @@ namespace PlayAndLearn
                                             state.Player.Pen.Weight);
                                         newState = newState.With(p => p.Lines, newState.Lines.Add(line));
                                     }
-                                    var cmd = Cmd.OfSub<Message>(async dispatch =>
-                                    {
-                                        await Task.Delay(TimeSpan.FromMilliseconds(20));
-                                        dispatch(new Message.ContinueCodeExecution());
-                                    });
-                                    return (newState, cmd);
+                                    return (newState, Cmd.None<Message>());
                                 }
                                 else
                                 {
                                     enumerator.Dispose();
                                     var newState = state
-                                        .With(
-                                            p => p.ExecutionState,
-                                            executionState.With(p => p.State, None));
+                                        .With(p => p.ExecutionState, new ExecutionState.Stopped(executionStates));
                                     return (newState, Cmd.None<Message>());
                                 }
                             })
                             .None(() =>
                             {
-                                var enumerator = executionState.States.GetEnumerator();
+                                var enumerator = executionStates.GetEnumerator();
                                 var newState = state
-                                    .With(
-                                        p => p.ExecutionState,
-                                        executionState.With(p => p.State, Optional(enumerator)));
-                                return (newState, Cmd.OfMsg<Message>(new Message.ContinueCodeExecution()));
-                            }))
-                        .None(() => (state, Cmd.None<Message>()));
+                                    .With(p => p.ExecutionState, new ExecutionState.Started(executionStates, enumerator));
+                                return (newState, Cmd.None<Message>());
+                            });
+                    }
+
+                    return state.ExecutionState
+                        .Match(
+                            stoppedState => AdvanceExecution(stoppedState.States, None),
+                            startedState => AdvanceExecution(startedState.States, Some(startedState.State)),
+                            pausedState => AdvanceExecution(pausedState.States, Some(pausedState.State)));
                 },
                 (Message.ResetPlayerPosition _) =>
                 {
@@ -336,31 +374,8 @@ namespace PlayAndLearn
                                 .Attach(Grid.ColumnProperty, 2)
                                 .SetChildNodes(
                                     p => p.Children,
-                                    VDomNode.Create<Border>()
-                                        .Set(p => p.BorderThickness, new Thickness(1))
-                                        .Set(p => p.BorderBrush, Brushes.White)
-                                        .Set(p => p.HorizontalAlignment, HorizontalAlignment.Left)
-                                        .Set(p => p.Margin, new Thickness(0, 5))
-                                        .Attach(
-                                            ToolTip.TipProperty,
-                                            state.Script
-                                                .Bind(script => Optional(script.AsT1))
-                                                .Bind(compiledCode => compiledCode.HasErrors ? Some(compiledCode.Diagnostics) : None)
-                                                .MatchUnsafe(
-                                                    list => string.Join(Environment.NewLine, list),
-                                                    () => null))
-                                        .Set(
-                                            p => p.Child,
-                                            VDomNode.Create<Button>()
-                                                .Set(p => p.Content, "Run ▶")
-                                                .Set(p => p.IsEnabled, state.CanExecuteScript())
-                                                .Set(p => p.Foreground, state.CanExecuteScript() ? Brushes.GreenYellow : Brushes.OrangeRed)
-                                                .Subscribe(p => Observable
-                                                    .FromEventPattern<RoutedEventArgs>(
-                                                        h => p.Click += h,
-                                                        h => p.Click -= h
-                                                    )
-                                                    .Subscribe(_ => dispatch(new Message.StartCodeExecution()))))
+                                    VDomNode.Create<WrapPanel>()
+                                        .SetChildNodes(p => p.Children, GetScriptButtons(state, dispatch))
                                         .Attach(DockPanel.DockProperty, Dock.Top),
                                     VDomNode.Create<TextBox>()
                                         .Set(p => p.Text, state.Code)
@@ -430,7 +445,10 @@ namespace PlayAndLearn
                 .Set(p => p.Source, new Bitmap(new MemoryStream(state.Player.IdleCostume)))
                 .Set(p => p.Width, state.Player.Size.Width)
                 .Set(p => p.Height, state.Player.Size.Height)
-                .Set(p => p.RenderTransform, new RotateTransform(360 - state.Player.Direction))
+                .Set(
+                    p => p.RenderTransform,
+                    VDomNode.Create<RotateTransform>()
+                        .Set(p => p.Angle, 360 - state.Player.Direction))
                 .Subscribe(p => Observable
                     .FromEventPattern<PointerPressedEventArgs>(
                         h => p.PointerPressed += h,
@@ -456,10 +474,78 @@ namespace PlayAndLearn
                 yield return VDomNode.Create<Line>()
                     .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
                     .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
-                    .Set(p => p.Stroke, new SolidColorBrush(line.Color.ToColor()))
+                    .Set(p => p.Stroke, VDomNode.Create<SolidColorBrush>().Set(p => p.Color, line.Color.ToColor()))
                     .Set(p => p.StrokeThickness, line.Weight)
                     .Set(p => p.ZIndex, 5);
             }
+        }
+
+        private static IEnumerable<IVDomNode> GetScriptButtons(State state, Dispatch<Message> dispatch)
+        {
+            yield return VDomNode.Create<Border>()
+                .Set(p => p.BorderThickness, new Thickness(1))
+                .Set(p => p.BorderBrush, Brushes.White)
+                .Set(p => p.Margin, new Thickness(0, 5))
+                .Attach(
+                    ToolTip.TipProperty,
+                    state.Script
+                        .Bind(script => Optional(script.AsT1))
+                        .Bind(compiledCode => compiledCode.HasErrors ? Some(compiledCode.Diagnostics) : None)
+                        .MatchUnsafe(
+                            list => string.Join(Environment.NewLine, list),
+                            () => null))
+                .Set(
+                    p => p.Child,
+                    VDomNode.Create<Button>()
+                        .Set(p => p.Content, "Run ▶")
+                        .Set(p => p.IsEnabled, state.CanExecuteScript() && !state.ExecutionState.IsStarted)
+                        .Set(p => p.Foreground, Brushes.GreenYellow)
+                        .Subscribe(p => Observable
+                            .FromEventPattern<RoutedEventArgs>(
+                                h => p.Click += h,
+                                h => p.Click -= h
+                            )
+                            .Subscribe(_ => dispatch(new Message.StartCodeExecution()))));
+
+            yield return VDomNode.Create<Button>()
+                .Set(p => p.Content, "Pause ⏸")
+                .Set(p => p.IsEnabled, state.ExecutionState.IsStarted)
+                .Set(p => p.Foreground, Brushes.LightGoldenrodYellow)
+                .Set(p => p.Margin, new Thickness(1, 6))
+                .Subscribe(p => Observable
+                    .FromEventPattern<RoutedEventArgs>(
+                        h => p.Click += h,
+                        h => p.Click -= h
+                    )
+                    .Subscribe(_ => dispatch(new Message.PauseCodeExecution())));
+
+            yield return VDomNode.Create<Button>()
+                .Set(p => p.Content, "Stop ■")
+                .Set(p => p.IsEnabled, state.ExecutionState.IsStarted || state.ExecutionState.IsPaused)
+                .Set(p => p.Foreground, Brushes.IndianRed)
+                .Set(p => p.Margin, new Thickness(1, 6))
+                .Subscribe(p => Observable
+                    .FromEventPattern<RoutedEventArgs>(
+                        h => p.Click += h,
+                        h => p.Click -= h
+                    )
+                    .Subscribe(_ => dispatch(new Message.StopCodeExecution())));
+        }
+
+        private static Sub<Message> Subscribe(State state)
+        {
+            if (state.ExecutionState.IsStarted)
+            {
+                return Sub.Create(
+                    "8994debe-794c-4e19-9276-abe669738280",
+                    (string key, Dispatch<Message> dispatch) =>
+                    {
+                        return Observable
+                            .Interval(TimeSpan.FromMilliseconds(20))
+                            .Subscribe(_ => dispatch(new Message.ContinueCodeExecution()));
+                    });
+            }
+            return Sub.None<Message>();
         }
     }
 }

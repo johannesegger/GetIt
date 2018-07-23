@@ -9,7 +9,7 @@ namespace PlayAndLearn.Models
             Size sceneSize,
             string code,
             Option<UserScript> script,
-            Option<ExecutionState> executionState,
+            ExecutionState executionState,
             Player player,
             Option<Position> previousDragPosition,
             IImmutableList<VisualLine> lines)
@@ -26,7 +26,7 @@ namespace PlayAndLearn.Models
         public Size SceneSize { get; }
         public string Code { get; }
         public Option<UserScript> Script { get; }
-        public Option<ExecutionState> ExecutionState { get; }
+        public ExecutionState ExecutionState { get; }
         public Player Player { get; }
         public Option<Position> PreviousDragPosition { get; }
         public IImmutableList<VisualLine> Lines { get; }

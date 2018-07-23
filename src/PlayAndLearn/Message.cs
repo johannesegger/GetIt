@@ -8,6 +8,8 @@ namespace PlayAndLearn
         Message.ChangeCode,
         Message.CompileCode,
         Message.StartCodeExecution,
+        Message.PauseCodeExecution,
+        Message.StopCodeExecution,
         Message.ContinueCodeExecution,
         Message.ResetPlayerPosition,
         Message.StartDragPlayer,
@@ -39,6 +41,14 @@ namespace PlayAndLearn
         }
 
         public class StartCodeExecution : Message
+        {
+        }
+
+        public class PauseCodeExecution : Message
+        {
+        }
+
+        public class StopCodeExecution : Message
         {
         }
 
