@@ -137,7 +137,7 @@ namespace PlayAndLearn
 for (var i = 0; i < 20; i++)
 {
     Player.TurnOffPen();
-    Player.GoTo(0, -100 + 20 * i);
+    Player.GoTo(0, -200 + 20 * i);
     Player.TurnOnPen();
     for (int j = 0; j < 60; j++)
     {
