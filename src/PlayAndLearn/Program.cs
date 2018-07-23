@@ -383,9 +383,9 @@ for (var i = 0; i < 20; i++)
                                         .Set(p => p.TextWrapping, TextWrapping.Wrap)
                                         .Set(p => p.AcceptsReturn, true)
                                         .Subscribe(p => Observable
-                                            .FromEventPattern<TextInputEventArgs>(
-                                                h => p.TextInput += h,
-                                                h => p.TextInput -= h)
+                                            .FromEventPattern<KeyEventArgs>(
+                                                h => p.KeyUp += h,
+                                                h => p.KeyUp -= h)
                                             .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
                                         )
                                     // VDomNode.Create<TextEditor>()
