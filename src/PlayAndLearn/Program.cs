@@ -31,6 +31,7 @@ using PlayAndLearn.Models;
 using PlayAndLearn.Utils;
 using static LanguageExt.Prelude;
 using Unit = System.Reactive.Unit;
+using static Elmish.Net.ElmishApp<PlayAndLearn.Message>;
 
 namespace PlayAndLearn
 {
@@ -324,60 +325,64 @@ for (var i = 0; i < 20; i++)
         private static FontFamily FiraCode =
             "resm:PlayAndLearn.Fonts.FiraCode.FiraCode-*.ttf?assembly=PlayAndLearn#Fira Code";
 
-        private static IVDomNode<MainWindow> View(State state, Dispatch<Message> dispatch)
+        private static IVDomNode<MainWindow, Message> View(State state, Dispatch<Message> dispatch)
         {
-            return VDomNode.Create<MainWindow>()
+            return VDomNode<MainWindow>()
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "Play and Learn")
                 .Set(
                     p => p.Content,
-                    VDomNode.Create<Grid>()
+                    VDomNode<Grid>()
                         .SetChildNodes(
                             p => p.ColumnDefinitions,
-                            VDomNode.Create<ColumnDefinition>()
+                            VDomNode<ColumnDefinition>()
                                 .Set(p => p.Width, new GridLength(state.SceneSize.Width, GridUnitType.Pixel)),
-                            VDomNode.Create<ColumnDefinition>()
+                            VDomNode<ColumnDefinition>()
                                 .Set(p => p.Width, GridLength.Auto),
-                            VDomNode.Create<ColumnDefinition>()
+                            VDomNode<ColumnDefinition>()
                                 .Set(p => p.Width, new GridLength(1, GridUnitType.Star)))
                         .SetChildNodes(
                             p => p.Children,
-                            VDomNode.Create<Canvas>()
+                            VDomNode<Canvas>()
                                 .Set(p => p.Background, Brushes.WhiteSmoke)
                                 .Set(p => p.MinWidth, 100)
                                 .SetChildNodes(p => p.Children, GetCanvasItems(state, dispatch))
-                                .Subscribe(p => Observable
-                                    .FromEventPattern(
-                                        h => p.LayoutUpdated += h,
-                                        h => p.LayoutUpdated -= h)
-                                    .Select(e => new Models.Size(
-                                        (int)Math.Round(p.Bounds.Size.Width),
-                                        (int)Math.Round(p.Bounds.Size.Height)))
-                                    .Where(size => !size.Equals(state.SceneSize))
-                                    .Subscribe(size => dispatch(new Message.ChangeSceneSize(size))))
-                                .Subscribe(p => state.PreviousDragPosition
+                                .Subscribe(
+                                    p => new { Element = p, state.SceneSize },
+                                    p => Observable
+                                        .FromEventPattern(
+                                            h => p.Element.LayoutUpdated += h,
+                                            h => p.Element.LayoutUpdated -= h)
+                                        .Select(e => new Models.Size(
+                                            (int)Math.Round(p.Element.Bounds.Size.Width),
+                                            (int)Math.Round(p.Element.Bounds.Size.Height)))
+                                        .Where(size => !size.Equals(p.SceneSize))
+                                        .Select(size => new Message.ChangeSceneSize(size)))
+                                .Subscribe(
+                                    p => new { Element = p, Parent = p.Parent, PreviousDragPosition = state.PreviousDragPosition },
+                                    p => p.PreviousDragPosition
                                     .Some(previousDragPosition => Observable
                                         .FromEventPattern<PointerEventArgs>(
-                                            h => p.PointerMoved += h,
-                                            h => p.PointerMoved -= h)
+                                            h => p.Element.PointerMoved += h,
+                                            h => p.Element.PointerMoved -= h)
                                         .Select(e => e.EventArgs.GetPosition(p.Parent).ToPosition(p.Parent))
-                                        .Subscribe(position => dispatch(new Message.DragPlayer(position))))
-                                    .None(Disposable.Empty))
+                                        .Select(position => (Message)new Message.DragPlayer(position)))
+                                    .None(Observable.Empty<Message>()))
                                 .Subscribe(p => Observable
                                     .FromEventPattern<PointerReleasedEventArgs>(
                                         h => p.PointerReleased += h,
                                         h => p.PointerReleased -= h)
-                                    .Subscribe(_ => dispatch(new Message.StopDragPlayer()))),
-                            VDomNode.Create<GridSplitter>()
+                                    .Select(_ => new Message.StopDragPlayer())),
+                            VDomNode<GridSplitter>()
                                 .Attach(Grid.ColumnProperty, 1),
-                            VDomNode.Create<DockPanel>()
+                            VDomNode<DockPanel>()
                                 .Attach(Grid.ColumnProperty, 2)
                                 .SetChildNodes(
                                     p => p.Children,
-                                    VDomNode.Create<WrapPanel>()
+                                    VDomNode<WrapPanel>()
                                         .SetChildNodes(p => p.Children, GetScriptButtons(state, dispatch))
                                         .Attach(DockPanel.DockProperty, Dock.Top),
-                                    VDomNode.Create<TextBox>()
+                                    VDomNode<TextBox>()
                                         .Set(p => p.Text, state.Code)
                                         .Set(p => p.FontFamily, FiraCode)
                                         .Set(p => p.TextWrapping, TextWrapping.Wrap)
@@ -386,103 +391,104 @@ for (var i = 0; i < 20; i++)
                                             .FromEventPattern<KeyEventArgs>(
                                                 h => p.KeyUp += h,
                                                 h => p.KeyUp -= h)
-                                            .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
-                                        )
-                                    // VDomNode.Create<TextEditor>()
-                                    //     .Set(p => p.Text, state.Code)
-                                    //     .Set(p => p.Background, Brushes.Transparent)
-                                    //     .Set(p => p.ShowLineNumbers, true)
-                                    //     .Set(p => p.TextArea.IndentationStrategy, new CSharpIndentationStrategy())
-                                    //     .Set(p => p.FontSize, 30)
-                                    //     .Set(
-                                    //         p => p.SyntaxHighlighting,
-                                    //         HighlightingManager.Instance.GetDefinition("C#"),
-                                    //         EqualityComparer.Create((IHighlightingDefinition p) => p.Name))
-                                    //     // .Set(p => p.FontFamily, FiraCode)
-                                    //     .Subscribe(p => Observable
-                                    //         .FromEventPattern<TextInputEventArgs>(
-                                    //             h => p.TextArea.TextEntered += h,
-                                    //             h => p.TextArea.TextEntered -= h)
-                                    //         .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
-                                    //     )
+                                            .Select(_ => new Message.ChangeCode(p.Text)))
+                                // VDomNode<TextEditor>()
+                                //     .Set(p => p.Text, state.Code)
+                                //     .Set(p => p.Background, Brushes.Transparent)
+                                //     .Set(p => p.ShowLineNumbers, true)
+                                //     .Set(p => p.TextArea.IndentationStrategy, new CSharpIndentationStrategy())
+                                //     .Set(p => p.FontSize, 30)
+                                //     .Set(
+                                //         p => p.SyntaxHighlighting,
+                                //         HighlightingManager.Instance.GetDefinition("C#"),
+                                //         EqualityComparer.Create((IHighlightingDefinition p) => p.Name))
+                                //     // .Set(p => p.FontFamily, FiraCode)
+                                //     .Subscribe(p => Observable
+                                //         .FromEventPattern<TextInputEventArgs>(
+                                //             h => p.TextArea.TextEntered += h,
+                                //             h => p.TextArea.TextEntered -= h)
+                                //         .Subscribe(e => dispatch(new Message.ChangeCode(p.Text)))
+                                //     )
 
-                                    // VDomNode.Create<RoslynCodeEditor>()
-                                    //     .Set(p => p.MinWidth, 100)
-                                    //     .Set(p => p.Background, Brushes.Azure)
-                                    //     .Attach(Grid.ColumnProperty, 2)
-                                    //     .Subscribe(p => Observable
-                                    //         // .FromEventPattern<EventHandler, EventArgs>(
-                                    //         //     h => p.Initialized += h,
-                                    //         //     h => p.Initialized -= h
-                                    //         // )
-                                    //         .Timer(TimeSpan.FromSeconds(2))
-                                    //         .ObserveOn(AvaloniaScheduler.Instance)
-                                    //         .Subscribe(_ =>
-                                    //         {
-                                    //             var host = new RoslynHost(additionalAssemblies: new[]
-                                    //             {
-                                    //                 Assembly.Load("RoslynPad.Roslyn.Avalonia"),
-                                    //                 Assembly.Load("RoslynPad.Editor.Avalonia")
-                                    //             });
-                                    //             p.Initialize(
-                                    //                 host,
-                                    //                 new ClassificationHighlightColors(),
-                                    //                 workingDirectory: Directory.GetCurrentDirectory(),
-                                    //                 documentText: state.Code
-                                    //             );
-                                    //         })
-                                    //     )
+                                // VDomNode<RoslynCodeEditor>()
+                                //     .Set(p => p.MinWidth, 100)
+                                //     .Set(p => p.Background, Brushes.Azure)
+                                //     .Attach(Grid.ColumnProperty, 2)
+                                //     .Subscribe(p => Observable
+                                //         // .FromEventPattern<EventHandler, EventArgs>(
+                                //         //     h => p.Initialized += h,
+                                //         //     h => p.Initialized -= h
+                                //         // )
+                                //         .Timer(TimeSpan.FromSeconds(2))
+                                //         .ObserveOn(AvaloniaScheduler.Instance)
+                                //         .Subscribe(_ =>
+                                //         {
+                                //             var host = new RoslynHost(additionalAssemblies: new[]
+                                //             {
+                                //                 Assembly.Load("RoslynPad.Roslyn.Avalonia"),
+                                //                 Assembly.Load("RoslynPad.Editor.Avalonia")
+                                //             });
+                                //             p.Initialize(
+                                //                 host,
+                                //                 new ClassificationHighlightColors(),
+                                //                 workingDirectory: Directory.GetCurrentDirectory(),
+                                //                 documentText: state.Code
+                                //             );
+                                //         })
+                                //     )
                                 )
                         )
                 );
         }
 
-        private static IEnumerable<IVDomNode> GetCanvasItems(State state, Dispatch<Message> dispatch)
+        private static IEnumerable<IVDomNode<Message>> GetCanvasItems(State state, Dispatch<Message> dispatch)
         {
             var center = new Position(state.SceneSize.Width / 2.0, state.SceneSize.Height / 2.0);
-            yield return VDomNode.Create<Image>()
+            yield return VDomNode<Image>()
                 .Set(p => p.ZIndex, 10)
                 .Set(p => p.Source, new Bitmap(new MemoryStream(state.Player.IdleCostume)))
                 .Set(p => p.Width, state.Player.Size.Width)
                 .Set(p => p.Height, state.Player.Size.Height)
                 .Set(
                     p => p.RenderTransform,
-                    VDomNode.Create<RotateTransform>()
+                    VDomNode<RotateTransform>()
                         .Set(p => p.Angle, 360 - state.Player.Direction))
-                .Subscribe(p => Observable
-                    .FromEventPattern<PointerPressedEventArgs>(
-                        h => p.PointerPressed += h,
-                        h => p.PointerPressed -= h)
-                    .Select(e => e.EventArgs.GetPosition(p.Parent).ToPosition(p.Parent))
-                    .Subscribe(position => dispatch(new Message.StartDragPlayer(position))))
+                .Subscribe(
+                    p => new { Element = p, Parent = p.Parent },
+                    p => Observable
+                        .FromEventPattern<PointerPressedEventArgs>(
+                            h => p.Element.PointerPressed += h,
+                            h => p.Element.PointerPressed -= h)
+                        .Select(e => e.EventArgs.GetPosition(p.Parent).ToPosition(p.Parent))
+                        .Select(position => new Message.StartDragPlayer(position)))
                 .Attach(Canvas.LeftProperty, center.X + state.Player.Position.X - state.Player.Size.Width / 2)
                 .Attach(Canvas.BottomProperty, center.Y + state.Player.Position.Y - state.Player.Size.Height / 2);
 
-            yield return VDomNode.Create<TextBlock>()
+            yield return VDomNode<TextBlock>()
                 .Set(p => p.Text, $"X: {state.Player.Position.X:F2} | Y: {state.Player.Position.Y:F2} | ∠ {state.Player.Direction:F2}°")
                 .Set(p => p.Foreground, Brushes.Gray)
                 .Subscribe(p => Observable
                     .FromEventPattern<RoutedEventArgs>(
                         h => p.DoubleTapped += h,
                         h => p.DoubleTapped -= h)
-                    .Subscribe(_ => dispatch(new Message.ResetPlayerPosition())))
+                    .Select(_ => new Message.ResetPlayerPosition()))
                 .Attach(Canvas.BottomProperty, 10)
                 .Attach(Canvas.RightProperty, 10);
 
             foreach (var line in state.Lines)
             {
-                yield return VDomNode.Create<Line>()
+                yield return VDomNode<Line>()
                     .Set(p => p.StartPoint, new Point(center.X + line.P1.X, state.SceneSize.Height - center.Y - line.P1.Y))
                     .Set(p => p.EndPoint, new Point(center.X + line.P2.X, state.SceneSize.Height - center.Y - line.P2.Y))
-                    .Set(p => p.Stroke, VDomNode.Create<SolidColorBrush>().Set(p => p.Color, line.Color.ToColor()))
+                    .Set(p => p.Stroke, VDomNode<SolidColorBrush>().Set(p => p.Color, line.Color.ToColor()))
                     .Set(p => p.StrokeThickness, line.Weight)
                     .Set(p => p.ZIndex, 5);
             }
         }
 
-        private static IEnumerable<IVDomNode> GetScriptButtons(State state, Dispatch<Message> dispatch)
+        private static IEnumerable<IVDomNode<Message>> GetScriptButtons(State state, Dispatch<Message> dispatch)
         {
-            yield return VDomNode.Create<Border>()
+            yield return VDomNode<Border>()
                 .Set(p => p.BorderThickness, new Thickness(1))
                 .Set(p => p.BorderBrush, Brushes.White)
                 .Set(p => p.Margin, new Thickness(0, 5))
@@ -496,7 +502,7 @@ for (var i = 0; i < 20; i++)
                             () => null))
                 .Set(
                     p => p.Child,
-                    VDomNode.Create<Button>()
+                    VDomNode<Button>()
                         .Set(p => p.Content, "Run ▶")
                         .Set(p => p.IsEnabled, state.CanExecuteScript() && !state.ExecutionState.IsStarted)
                         .Set(p => p.Foreground, Brushes.GreenYellow)
@@ -505,9 +511,9 @@ for (var i = 0; i < 20; i++)
                                 h => p.Click += h,
                                 h => p.Click -= h
                             )
-                            .Subscribe(_ => dispatch(new Message.StartCodeExecution()))));
+                            .Select(_ => new Message.StartCodeExecution())));
 
-            yield return VDomNode.Create<Button>()
+            yield return VDomNode<Button>()
                 .Set(p => p.Content, "Pause ⏸")
                 .Set(p => p.IsEnabled, state.ExecutionState.IsStarted)
                 .Set(p => p.Foreground, Brushes.LightGoldenrodYellow)
@@ -517,9 +523,9 @@ for (var i = 0; i < 20; i++)
                         h => p.Click += h,
                         h => p.Click -= h
                     )
-                    .Subscribe(_ => dispatch(new Message.PauseCodeExecution())));
+                    .Select(_ => new Message.PauseCodeExecution()));
 
-            yield return VDomNode.Create<Button>()
+            yield return VDomNode<Button>()
                 .Set(p => p.Content, "Stop ■")
                 .Set(p => p.IsEnabled, state.ExecutionState.IsStarted || state.ExecutionState.IsPaused)
                 .Set(p => p.Foreground, Brushes.IndianRed)
@@ -529,7 +535,7 @@ for (var i = 0; i < 20; i++)
                         h => p.Click += h,
                         h => p.Click -= h
                     )
-                    .Subscribe(_ => dispatch(new Message.StopCodeExecution())));
+                    .Select(_ => new Message.StopCodeExecution()));
         }
 
         private static Sub<Message> Subscribe(State state)
@@ -538,12 +544,10 @@ for (var i = 0; i < 20; i++)
             {
                 return Sub.Create(
                     "8994debe-794c-4e19-9276-abe669738280",
-                    (string key, Dispatch<Message> dispatch) =>
-                    {
-                        return Observable
-                            .Interval(TimeSpan.FromMilliseconds(20))
-                            .Subscribe(_ => dispatch(new Message.ContinueCodeExecution()));
-                    });
+                    key => Observable
+                        .Interval(TimeSpan.FromMilliseconds(20))
+                        .Select(_ => (Message)new Message.ContinueCodeExecution())
+                    );
             }
             return Sub.None<Message>();
         }
