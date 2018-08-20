@@ -1,0 +1,1 @@
+$env:DOTNET_ROOT= Split-Path (Get-Command dotnet).Path -Parent
