@@ -1,13 +1,14 @@
 open System.IO
 open System.Threading.Tasks
 
+open Giraffe
+open Giraffe.Serialization
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
-open Giraffe
+open MirrorSharp
+open MirrorSharp.AspNetCore
 open Saturn
 open Shared
-
-open Giraffe.Serialization
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -34,6 +35,8 @@ let app = application {
     use_static publicPath
     service_config configureSerialization
     use_gzip
+    app_config (fun app -> app.UseWebSockets())
+    app_config (fun app -> app.UseMiddleware<WebSocketMiddleware>([| MirrorSharpOptions() :> obj |]))
 }
 
 run app

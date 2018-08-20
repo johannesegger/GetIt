@@ -66,6 +66,14 @@ module.exports = {
                     loader: 'babel-loader',
                     options: babelOptions
                 },
+            },
+            {
+                test: /\.s(a|c)ss$/,
+                loader: [
+                    'style-loader',
+                    'css-loader',
+                    'sass-loader'
+                ]
             }
         ]
     },

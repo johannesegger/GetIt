@@ -1,0 +1,4 @@
+group server
+    FSharp.Core
+    Microsoft.AspNetCore
+    MirrorSharp.Common
