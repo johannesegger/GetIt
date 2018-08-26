@@ -41,6 +41,10 @@ module.exports = {
             '/api/*': {
                 target: 'http://localhost:' + port,
                 changeOrigin: true
+            },
+            '/mirrorsharp': {
+                target: 'ws://localhost:8085',
+                ws: true
             }
         },
         contentBase: "./public",

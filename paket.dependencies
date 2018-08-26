@@ -3,7 +3,8 @@ group Server
     source https://api.nuget.org/v3/index.json
 
     nuget FSharp.Core
-nuget Microsoft.AspNetCore.WebSockets
+    nuget Microsoft.AspNetCore.WebSockets
+    nuget Microsoft.CodeAnalysis.CSharp.Scripting
     nuget MirrorSharp.Common
     nuget Saturn
     nuget Fable.JsonConverter
@@ -17,6 +18,7 @@ group Client
     nuget Fable.Elmish.React
     nuget Fable.Elmish.HMR
     nuget Fulma
+    nuget Fulma.Extensions
 
     clitool dotnet-fable
 
@@ -28,3 +30,4 @@ group Build
     nuget Fake.Core.Target
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
+    nuget Fulma.Extensions

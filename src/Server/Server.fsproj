@@ -5,11 +5,12 @@
         <TargetFramework>netcoreapp2.1</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="..\Shared\Shared.fs" />
+        <Compile Include="UserScript.fs" />
         <Compile Include="Server.fs" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\MirrorSharp.AspNetCore\MirrorSharp.AspNetCore.fsproj" />
+      <ProjectReference Include="..\MirrorSharp.AspNetCore\MirrorSharp.AspNetCore.csproj" />
+      <ProjectReference Include="..\GameLib\GameLib.fsproj" />
     </ItemGroup>
     <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

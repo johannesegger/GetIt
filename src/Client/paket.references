@@ -1,8 +1,9 @@
 group Client
+    dotnet-fable
     FSharp.Core
     Fable.Elmish.Debugger
     Fable.Elmish.React
     Fable.Elmish.HMR
     Fable.Core
-    dotnet-fable
     Fulma
+    Fulma.Extensions

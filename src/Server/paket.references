@@ -4,3 +4,4 @@ group Server
     Fable.JsonConverter
     MirrorSharp.Common
     Microsoft.AspNetCore.WebSockets
+    Microsoft.CodeAnalysis.CSharp.Scripting

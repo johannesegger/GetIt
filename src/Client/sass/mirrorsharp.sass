@@ -3,3 +3,19 @@
 @import '../../../node_modules/codemirror/addon/hint/show-hint.css'
 @import '../../../node_modules/codemirror-addon-lint-fix/dist/lint-fix.css'
 @import '../../../node_modules/mirrorsharp/mirrorsharp.css'
+
+@import '../../../node_modules/bulma/bulma'
+@import '../../../node_modules/bulma-divider/dist/css/bulma-divider'
+
+html
+    overflow-y: hidden
+    
+html, body, #elmish-app, #elmish-app > div
+    height: 100%
+
+canvas
+    width: 100%
+    height: 100%
+
+.CodeMirror
+    flex: 1
