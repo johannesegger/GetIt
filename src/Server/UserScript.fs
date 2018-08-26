@@ -19,12 +19,14 @@ type private CodeParser() =
     override __.VisitExpressionStatement(node) =
         match node.Expression with
         | :? InvocationExpressionSyntax as n ->
-            let actualIdentifier =
-                n.Expression.ChildNodes()
-                |> Seq.ofType<IdentifierNameSyntax>
+            let rec actualIdentifier (expression: ExpressionSyntax) =
+                expression.ChildNodes()
                 |> Seq.tryHead
-                |> Option.map (fun n -> n.Identifier.Text)
-            match actualIdentifier with
+                |> Option.bind (function
+                | :? IdentifierNameSyntax as n -> Some n.Identifier.Text
+                | :? MemberAccessExpressionSyntax as n -> actualIdentifier n
+                | _ -> None)
+            match actualIdentifier n.Expression with
             | Some identifier when identifier = "Player" ->
                 SyntaxFactory
                     .YieldStatement(SyntaxKind.YieldReturnStatement, n)

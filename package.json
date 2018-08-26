@@ -1,11 +1,14 @@
 {
     "private": true,
     "dependencies": {
+        "@inlet/react-pixi": "0.1.4",
         "babel-polyfill": "6.26.0",
         "babel-runtime": "6.26.0",
         "bulma": "0.7.1",
         "bulma-divider": "2.0.1",
+        "color-convert": "1.9.2",
         "mirrorsharp": "0.9.3",
+        "pixi.js": "4.8.1",
         "react": "16.4.0",
         "react-bootstrap": "0.32.1",
         "react-dom": "16.4.0"

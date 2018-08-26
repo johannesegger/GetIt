@@ -1,5 +1,6 @@
 module Client
 
+open System
 open Elmish
 open Elmish.React
 open Fable.Core.JsInterop
@@ -9,6 +10,7 @@ open Fable.Helpers.React.Props
 open Fulma
 open Fulma.Extensions
 open MirrorSharp
+open ReactPixi
 open GameLib.Data
 open GameLib.Instruction
 
@@ -41,25 +43,32 @@ type Diagnostic = {
 type UserProgram =
     | NotCompiled
     | Runnable of GameInstruction list
+    | Running of GameInstruction list * GameInstruction list
     | HasErrors of Diagnostic list
 
 type Size = {
-    Width: int
-    Height: int
+    Width: float
+    Height: float
 }
 
 type Pen = {
-    Weight: float
     Color: RGBColor
+    Weight: float
     IsOn: bool
 }
 
 type Player = {
-    Size: Size
     Position: Position
     Direction: float
     Pen: Pen
     CostumeUrl: string
+}
+
+type DrawnLine = {
+    From: Position
+    To: Position
+    Color: RGBColor
+    Weight: float
 }
 
 type Model = {
@@ -67,6 +76,7 @@ type Model = {
     Code: string
     UserProgram: UserProgram
     Player: Player
+    DrawnLines: DrawnLine list
 }
 
 type CodeCompilationResult = {
@@ -91,26 +101,26 @@ let init () =
 for (var i = 0; i < 20; i++)
 {
     Player.Pen.TurnOff();
-    Player.GoTo(0, -200 + 20 * i);
+    Player.GoTo(0, 200 - 20 * i);
     Player.Pen.TurnOn();
     for (int j = 0; j < 60; j++)
     {
         Player.Pen.SetWeight((j % 5) + 1);
-        Player.RotateClockwise(6);
+        Player.RotateCounterClockwise(6);
         Player.Go(5);
         Player.Pen.ShiftColor(0.01);
     }
 }"
           UserProgram = NotCompiled
           Player =
-            { Size = { Width = 50; Height = 50 }
-              Position = { X = 0.; Y = 0. }
+            { Position = { X = 0.; Y = 0. }
               Direction = 0.
               Pen =
                 { Weight = 1.
                   Color = { Red = 0uy; Green = 0uy; Blue = 0uy }
                   IsOn = false }
-              CostumeUrl = "/images/models/turtle.png" } }
+              CostumeUrl = "/images/models/turtle.png" }
+          DrawnLines = [] }
 
     model, Cmd.none
 
@@ -160,7 +170,68 @@ let update msg currentModel =
                     else Runnable result.Instructions }
         model, Cmd.none
     | RunCode ->
-        currentModel, Cmd.none
+        let wrapAngle value = (value % 360. + 360.) % 360.
+
+        let shiftColor shift color =
+            match ColorConvert.convert.rgb.hsl color.Red color.Green color.Blue with
+            | [| h; s; l |] ->
+                match ColorConvert.convert.hsl.rgb (h + int (shift * 360.)) s l with
+                | [| r; g; b |] -> { Red = r; Green = g; Blue = b }
+                | x -> failwithf "Unknown RGB value %A" x
+            | x -> failwithf "Unknown HSL value %A" x
+        
+        let applyPenInstruction pen = function
+            | TurnOn -> { pen with IsOn = true }
+            | TurnOff ->  { pen with IsOn = false }
+            | ToggleOnOff -> { pen with IsOn = not pen.IsOn }
+            | SetColor color -> { pen with Color = color }
+            | ShiftColor shift -> { pen with Color = shiftColor shift pen.Color }
+            | SetWeight weight -> { pen with Weight = weight }
+            | ChangeWeight weight -> { pen with Weight = pen.Weight + weight }
+
+        let applyPlayerInstruction player = function
+            | SetPosition position -> { player with Position = position }
+            | ChangePosition position -> { player with Position = { X = player.Position.X + position.X; Y = player.Position.Y + position.Y } }
+            | Go steps ->
+                let directionRadians = player.Direction / 180. * Math.PI
+                { player with
+                    Position =
+                        { X = player.Position.X + Math.Cos(directionRadians) * steps
+                          Y = player.Position.Y - Math.Sin(directionRadians) * steps } }
+            | SetDirection direction -> { player with Direction = wrapAngle direction }
+            | ChangeDirection direction -> { player with Direction = player.Direction + direction |> wrapAngle }
+
+        let applyInstruction player = function
+            | PlayerInstruction x -> applyPlayerInstruction player x
+            | PenInstruction x -> { player with Pen = applyPenInstruction player.Pen x }
+        
+        match currentModel.UserProgram with
+        | Runnable ((instruction :: instructions) as allInstructions)
+        | Running ((instruction :: instructions), allInstructions) ->
+            let model =
+                { currentModel with
+                    Player = applyInstruction currentModel.Player instruction
+                    UserProgram = Running (instructions, allInstructions) }
+            let model' =
+                if currentModel.Player.Position <> model.Player.Position && currentModel.Player.Pen.IsOn
+                then
+                    let line =
+                        { From = currentModel.Player.Position
+                          To = model.Player.Position
+                          Color = currentModel.Player.Pen.Color
+                          Weight =currentModel.Player.Pen.Weight }
+                    { model with DrawnLines = line :: model.DrawnLines}
+                else model
+            let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
+            model', cmd
+        | Runnable [] -> currentModel, Cmd.none
+        | Running ([], instructions) ->
+            let model =
+                { currentModel with
+                    UserProgram = Runnable instructions }
+            model, Cmd.none
+        | NotCompiled
+        | HasErrors _ -> currentModel, Cmd.none
 
 let view model dispatch =
     let host = Browser.window.location.host
@@ -175,6 +246,8 @@ let view model dispatch =
     let mapCodeCompilationResult result =
         { Diagnostics = toJson result?diagnostics |> ofJson<Diagnostic list>
           Instructions = ofJson<GameInstruction list> !!result?x }
+          
+    let sceneWidth, sceneHeight = 500., 500.
 
     div [ Style [ Display "flex"; FlexDirection "column" ] ]
         [ Navbar.navbar [ Navbar.Color IsSuccess; Navbar.Props [ Style [ Flex "0 0 auto" ] ] ]
@@ -182,14 +255,13 @@ let view model dispatch =
                 [ Heading.h2 [ Heading.Modifiers [ Modifier.TextColor IsWhiteTer ] ]
                     [ str "Play and Learn" ] ] ]
           Columns.columns [ Columns.Props [ Style [ Flex "1" ] ] ]
-            [ Column.column [ Column.Props [ Style [ Display "flex"; FlexDirection "column"; Height "100%" ] ] ]
+            [ Column.column [ Column.Props [ Style [ Display "flex"; FlexDirection "column"; CSSProp.Height "100%" ] ] ]
                 [ Button.list [ Button.List.Props [ Style [ Padding "1rem 1rem 0 1rem" ] ] ]
                     [ Button.button
                         [ Button.OnClick (fun _ev -> dispatch RunCode)
                           Button.Color IsSuccess
                           Button.IsOutlined
-                          Button.Props [ Style [ Flex "0 0 auto" ] ] ] [ str "Run ▶" ]
-                    ]
+                          Button.Props [ Style [ Flex "0 0 auto" ] ] ] [ str "Run ▶" ] ]
                   mirrorSharp
                     [ ServiceUrl mirrorSharpServiceUrl
                       InitialCode model.Code
@@ -199,12 +271,36 @@ let view model dispatch =
                       OnSlowUpdateResult (mapCodeCompilationResult >> CodeCompilationFinished >> dispatch)
                       OnTextChange (fun getText -> dispatch (CodeChanged (getText())))
                       OnConnectionChange (fun state _event -> parseConnectionState state |> MirrorSharpConnectionChanged |> dispatch)
-                      OnServerError (MirrorSharpServerError >> dispatch) ]
-                ]
+                      OnServerError (MirrorSharpServerError >> dispatch) ] ]
               Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
-                [ Divider.divider [ Divider.IsVertical; Divider.Props [ Style [ Height "100%" ] ] ] ]
-              Column.column []
-                [ canvas [] [] ]
+                [ Divider.divider [ Divider.IsVertical; Divider.Props [ Style [ CSSProp.Height "100%" ] ] ] ]
+              Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
+                [ stage [ StageProps.Width sceneWidth; StageProps.Height sceneHeight; Options [ BackgroundColor 0xEEEEEE ] ]
+                    [ container [ ContainerProps.X (sceneWidth / 2.); ContainerProps.Y (sceneHeight / 2.) ]
+                        [ let draw line (ctx: GraphicsContext) =
+                            ctx.clear()
+                            let color = sprintf "0x%02x%02x%02x" line.Color.Red line.Color.Green line.Color.Blue
+                            ctx.lineStyle line.Weight color
+                            ctx.moveTo line.From.X line.From.Y
+                            ctx.lineTo line.To.X line.To.Y
+                          yield!
+                            model.DrawnLines
+                            |> List.map (fun line ->
+                                graphics [ Draw (draw line) ] []
+                            )
+                          yield sprite
+                            [ Image model.Player.CostumeUrl
+                              SpriteProps.X model.Player.Position.X
+                              SpriteProps.Y model.Player.Position.Y
+                              Rotation ((360. - model.Player.Direction) / 180. * Math.PI)
+                              SpriteProps.Anchor { x = 0.5; y = 0.5 } ] []
+                        ]
+                      text
+                        [ X 20.
+                          Y (sceneHeight - 20.)
+                          Text (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction)
+                          Anchor { x = 0.; y = 1. }
+                          TextStyle [ FontFamily "Segoe UI"; FontSize "14px"; Fill "gray" ] ] [] ] ]
             ]
         ]
 
