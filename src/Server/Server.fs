@@ -12,7 +12,6 @@ open MirrorSharp.Advanced
 open MirrorSharp.AspNetCore
 open MirrorSharp.Extensions
 open Saturn
-open GameLib.Instruction
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
