@@ -7,8 +7,6 @@ open Fable.Import.React
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 
-importAll "./sass/mirrorsharp.sass"
-
 type [<AllowNullLiteral>] MirrorSharpInstance =
     abstract sendServerOptions: options: obj -> JS.Promise<unit>
     abstract destroy: options: obj -> unit
