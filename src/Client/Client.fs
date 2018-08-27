@@ -14,6 +14,8 @@ open ReactPixi
 open GameLib.Data
 open GameLib.Instruction
 
+importAll "../../node_modules/font-awesome/scss/font-awesome.scss"
+
 type MirrorSharpConnectionState = Open | Closed | Error
 
 type InitializedMirrorSharpState = {
