@@ -16,6 +16,7 @@ open GameLib.Data
 open GameLib.Instruction
 
 importAll "../../node_modules/font-awesome/scss/font-awesome.scss"
+importAll "../../node_modules/firacode/distr/fira_code.css"
 importAll "./sass/main.sass"
 
 type MirrorSharpConnectionState = Open | Closed | Error
