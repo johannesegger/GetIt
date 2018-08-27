@@ -71,11 +71,22 @@ type DrawnLine = {
     Weight: float
 }
 
+type ProgramState =
+    | NoConnection
+    | HasErrors
+    | Compiled
+
+type DragState =
+    | NotDragging
+    | Dragging of Position
+
 type Model = {
     MirrorSharp: MirrorSharpState
     Code: string
     UserProgram: UserProgram
+    ProgramState: ProgramState
     Player: Player
+    DragState: DragState
     DrawnLines: DrawnLine list
 }
 
@@ -93,6 +104,9 @@ type Msg =
     | CodeCompilationStarted
     | CodeCompilationFinished of CodeCompilationResult
     | RunCode
+    | StartDragPlayer of Position
+    | DragPlayer of Position
+    | StopDragPlayer
 
 let init () =
     let model =
@@ -112,6 +126,7 @@ for (var i = 0; i < 20; i++)
     }
 }"
           UserProgram = NotCompiled
+          ProgramState = NoConnection
           Player =
             { Position = { X = 0.; Y = 0. }
               Direction = 0.
@@ -120,6 +135,7 @@ for (var i = 0; i < 20; i++)
                   Color = { Red = 0uy; Green = 0uy; Blue = 0uy }
                   IsOn = false }
               CostumeUrl = "/images/models/turtle.png" }
+          DragState = NotDragging
           DrawnLines = [] }
 
     model, Cmd.none
@@ -128,16 +144,16 @@ let update msg currentModel =
     match msg with
     | InitializedMirrorSharp instance ->
         let model =
-            { currentModel
-                with MirrorSharp =
-                        Initialized
-                            { Instance = instance
-                              ConnectionState = Closed } }
+            { currentModel with
+                MirrorSharp =
+                    Initialized
+                        { Instance = instance
+                          ConnectionState = Closed } }
         model, Cmd.none
     | UninitializedMirrorSharp ->
         let model =
-            { currentModel
-                with MirrorSharp = NotInitialized }
+            { currentModel with
+                MirrorSharp = NotInitialized }
         model, Cmd.none
     | MirrorSharpConnectionChanged connectionState ->
         match currentModel.MirrorSharp with
@@ -162,12 +178,19 @@ let update msg currentModel =
                 UserProgram = NotCompiled }
         model, Cmd.none
     | CodeCompilationFinished result ->
+        let hasErrors =
+            result.Diagnostics
+            |> Seq.exists (fun d -> d.Severity = Error)
         let model =
             { currentModel with
                 UserProgram =
-                    if result.Diagnostics |> Seq.exists (fun d -> d.Severity = Error)
-                    then HasErrors result.Diagnostics
-                    else Runnable result.Instructions }
+                    if hasErrors
+                    then UserProgram.HasErrors result.Diagnostics
+                    else Runnable result.Instructions
+                ProgramState =
+                    if hasErrors
+                    then HasErrors
+                    else Compiled }
         model, Cmd.none
     | RunCode ->
         let wrapAngle value = (value % 360. + 360.) % 360.
@@ -191,13 +214,14 @@ let update msg currentModel =
 
         let applyPlayerInstruction player = function
             | SetPosition position -> { player with Position = position }
-            | ChangePosition position -> { player with Position = { X = player.Position.X + position.X; Y = player.Position.Y + position.Y } }
+            | ChangePosition position -> { player with Position = player.Position + position }
             | Go steps ->
                 let directionRadians = player.Direction / 180. * Math.PI
+                let delta =
+                    { X = Math.Cos(directionRadians) * steps
+                      Y = -Math.Sin(directionRadians) * steps }
                 { player with
-                    Position =
-                        { X = player.Position.X + Math.Cos(directionRadians) * steps
-                          Y = player.Position.Y - Math.Sin(directionRadians) * steps } }
+                    Position = player.Position + delta }
             | SetDirection direction -> { player with Direction = wrapAngle direction }
             | ChangeDirection direction -> { player with Direction = player.Direction + direction |> wrapAngle }
 
@@ -231,7 +255,28 @@ let update msg currentModel =
                     UserProgram = Runnable instructions }
             model, Cmd.none
         | NotCompiled
-        | HasErrors _ -> currentModel, Cmd.none
+        | UserProgram.HasErrors _ -> currentModel, Cmd.none
+    | StartDragPlayer position ->
+        let model =
+            { currentModel with
+                DragState = Dragging position }
+        model, Cmd.none
+    | DragPlayer position ->
+        match currentModel.DragState with
+        | Dragging previousDragPosition ->
+            let model =
+                { currentModel with
+                    Player =
+                        { currentModel.Player with
+                            Position = currentModel.Player.Position + (position - previousDragPosition) }
+                    DragState = Dragging position }
+            model, Cmd.none
+        | NotDragging -> currentModel, Cmd.none
+    | StopDragPlayer ->
+        let model =
+            { currentModel with
+                DragState = NotDragging }
+        model, Cmd.none
 
 let view model dispatch =
     let host = Browser.window.location.host
@@ -244,23 +289,46 @@ let view model dispatch =
         | x -> failwithf "Invalid connection state: %s" x
 
     let mapCodeCompilationResult result =
-        { Diagnostics = toJson result?diagnostics |> ofJson<Diagnostic list>
+        { Diagnostics =
+            !!result?diagnostics
+            |> Seq.map (fun d ->
+                let parseSeverity = function
+                | "error" -> Error
+                | "warning" -> Warning
+                | "info" -> Info
+                | "hidden" -> Hidden
+                | x -> failwithf "Invalid diagnostic severity: %s" x
+
+                { Id = !!d?id
+                  Message = !!d?message
+                  Severity = parseSeverity !!d?severity
+                  Span = { Start = !!d?start; Length = !!d?length }
+                  Tags = Seq.toList !!d?tags }
+            )
+            |> Seq.toList
           Instructions = ofJson<GameInstruction list> !!result?x }
           
     let sceneWidth, sceneHeight = 500., 500.
 
+    let color, isRunnable =
+        match model.ProgramState with
+        | NoConnection -> IsWarning, false
+        | HasErrors -> IsDanger, false
+        | Compiled -> IsSuccess, true
+
     div [ Style [ Display "flex"; FlexDirection "column" ] ]
-        [ Navbar.navbar [ Navbar.Color IsSuccess; Navbar.Props [ Style [ Flex "0 0 auto" ] ] ]
-            [ Navbar.Item.div [ ]
-                [ Heading.h2 [ Heading.Modifiers [ Modifier.TextColor IsWhiteTer ] ]
+        [ Navbar.navbar [ Navbar.Color color; Navbar.Props [ Style [ Flex "0 0 auto" ] ] ]
+            [ Navbar.Item.div []
+                [ Heading.h2 []
                     [ str "Play and Learn" ] ] ]
           Columns.columns [ Columns.Props [ Style [ Flex "1" ] ] ]
             [ Column.column [ Column.Props [ Style [ Display "flex"; FlexDirection "column"; CSSProp.Height "100%" ] ] ]
                 [ Button.list [ Button.List.Props [ Style [ Padding "1rem 1rem 0 1rem" ] ] ]
                     [ Button.button
                         [ Button.OnClick (fun _ev -> dispatch RunCode)
-                          Button.Color IsSuccess
+                          Button.Color color
                           Button.IsOutlined
+                          Button.Disabled (not isRunnable)
                           Button.Props [ Style [ Flex "0 0 auto" ] ] ] [ str "Run ▶" ] ]
                   mirrorSharp
                     [ ServiceUrl mirrorSharpServiceUrl
@@ -275,8 +343,8 @@ let view model dispatch =
               Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
                 [ Divider.divider [ Divider.IsVertical; Divider.Props [ Style [ CSSProp.Height "100%" ] ] ] ]
               Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
-                [ stage [ StageProps.Width sceneWidth; StageProps.Height sceneHeight; Options [ BackgroundColor 0xEEEEEE ] ]
-                    [ container [ ContainerProps.X (sceneWidth / 2.); ContainerProps.Y (sceneHeight / 2.) ]
+                [ stage [ Width sceneWidth; Height sceneHeight; Options [ BackgroundColor 0xEEEEEE ] ]
+                    [ container [ X (sceneWidth / 2.); Y (sceneHeight / 2.) ]
                         [ let draw line (ctx: GraphicsContext) =
                             ctx.clear()
                             let color = sprintf "0x%02x%02x%02x" line.Color.Red line.Color.Green line.Color.Blue
@@ -288,12 +356,29 @@ let view model dispatch =
                             |> List.map (fun line ->
                                 graphics [ Draw (draw line) ] []
                             )
-                          yield sprite
+                          let commonSpriteProps: IPixiProp list =
                             [ Image model.Player.CostumeUrl
-                              SpriteProps.X model.Player.Position.X
-                              SpriteProps.Y model.Player.Position.Y
+                              X model.Player.Position.X
+                              Y model.Player.Position.Y
                               Rotation ((360. - model.Player.Direction) / 180. * Math.PI)
-                              SpriteProps.Anchor { x = 0.5; y = 0.5 } ] []
+                              Anchor { x = 0.5; y = 0.5 }
+                              Interactive true
+                              Mousedown (fun evt ->
+                                let position =
+                                    { X = !!evt?data?``global``?x
+                                      Y = !!evt?data?``global``?y }
+                                dispatch (StartDragPlayer position)) ]
+                          let dragSpriteProps: IPixiProp list =
+                              match model.DragState with
+                              | Dragging _ ->
+                                  [ Mousemove (fun evt ->
+                                        let delta =
+                                            { X = !!evt?data?``global``?x
+                                              Y = !!evt?data?``global``?y }
+                                        dispatch (DragPlayer delta))
+                                    Mouseup (fun _e -> dispatch StopDragPlayer) ]
+                              | NotDragging -> []
+                          yield sprite (commonSpriteProps @ dragSpriteProps) []
                         ]
                       text
                         [ X 20.
@@ -312,11 +397,11 @@ open Elmish.HMR
 
 Program.mkProgram init update view
 #if DEBUG
-|> Program.withConsoleTrace
-|> Program.withHMR
+// |> Program.withConsoleTrace
+// |> Program.withHMR
 #endif
 |> Program.withReact "elmish-app"
 #if DEBUG
-|> Program.withDebugger
+// |> Program.withDebugger
 #endif
 |> Program.run

@@ -3,42 +3,58 @@ module rec ReactPixi
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Helpers.React
+open Fable.Import.React
 
 type Point = {
     x: float
     y: float
 }
 
+type IPixiProp = interface end
+
+type InteractiveProps =
+    | Interactive of bool
+    | Mousedown of (MouseEvent -> unit)
+    | Mousemove of (MouseEvent -> unit)
+    | Mouseup of (MouseEvent -> unit)
+    interface IPixiProp
+
+type PositionProps =
+    | X of float
+    | Y of float
+    interface IPixiProp
+
+type SizeProps =
+    | Width of float
+    | Height of float
+    interface IPixiProp
+
+type IStageProp = inherit IPixiProp
+
 type StageOption =
     | BackgroundColor of int
 
 type StageProps =
-    | Width of float
-    | Height of float
     | Options of StageOption list
+    interface IStageProp
 
-let inline stage (props: StageProps list) elems =
+let inline stage (props: IPixiProp list) elems =
     ofImport "Stage" "@inlet/react-pixi" (keyValueList CaseRules.LowerFirst props) elems
 
-type ContainerProps =
-    | X of float
-    | Y of float
+type IContainerProps = inherit IPixiProp
 
-let inline container (props: ContainerProps list) elems =
+let inline container (props: IPixiProp list) elems =
     ofImport "Container" "@inlet/react-pixi" (keyValueList CaseRules.LowerFirst props) elems
 
 type SpriteProps =
     | Image of string
-    | X of float
-    | Y of float
     | Rotation of float
     | Anchor of Point
     | Scale of Point
     | Skew of Point
-    | Width of float
-    | Height of float
+    interface IPixiProp
 
-let inline sprite (props : SpriteProps list) elems =
+let inline sprite (props : IPixiProp list) elems =
     ofImport "Sprite" "@inlet/react-pixi" (keyValueList CaseRules.LowerFirst props) elems
 
 type TextStyleProps =
@@ -47,13 +63,12 @@ type TextStyleProps =
     | Fill of string
 
 type TextProps =
-    | X of float
-    | Y of float
     | Text of string
     | Anchor of Point
     | [<CompiledName("style")>] TextStyle of TextStyleProps list
+    interface IPixiProp
 
-let inline text (props: TextProps list) elems =
+let inline text (props: IPixiProp list) elems =
     ofImport "Text" "@inlet/react-pixi" (keyValueList CaseRules.LowerFirst props) elems
 
 type [<AllowNullLiteral>] GraphicsContext =
