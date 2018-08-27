@@ -400,11 +400,11 @@ open Elmish.HMR
 
 Program.mkProgram init update view
 #if DEBUG
-// |> Program.withConsoleTrace
-// |> Program.withHMR
+|> Program.withConsoleTrace
+|> Program.withHMR
 #endif
 |> Program.withReact "elmish-app"
 #if DEBUG
-// |> Program.withDebugger
+|> Program.withDebugger
 #endif
 |> Program.run
