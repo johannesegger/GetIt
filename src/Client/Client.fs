@@ -9,6 +9,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fulma
 open Fulma.Extensions
+open Fulma.FontAwesome
 open MirrorSharp
 open ReactPixi
 open GameLib.Data
@@ -332,7 +333,9 @@ let view model dispatch =
                           Button.Color color
                           Button.IsOutlined
                           Button.Disabled (not isRunnable)
-                          Button.Props [ Style [ Flex "0 0 auto" ] ] ] [ str "Run ▶" ] ]
+                          Button.Props [ Style [ Flex "0 0 auto" ] ] ]
+                        [ span [] [ str "Run" ]
+                          Icon.faIcon [ ] [ Fa.icon Fa.I.Play ] ] ]
                   mirrorSharp
                     [ ServiceUrl mirrorSharpServiceUrl
                       InitialCode model.Code
