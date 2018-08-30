@@ -46,14 +46,15 @@ let setPlayer (session: IWorkSession) player =
 let getPlayer (session: IWorkSession) =
     session.ExtensionData.["player"] :?> Player
 
-let update (session: IWorkSession) (diagnostics: Diagnostic seq) ct = async {
+let update (session: IWorkSession) (diagnostics: Diagnostic seq) = async {
     if diagnostics |> Seq.exists (fun d -> d.Severity = DiagnosticSeverity.Error)
     then
-        return Seq.empty
+        return []
     else
         let globals = {
             UserScript.ScriptGlobals.Player = getPlayer session
         }
+        let! ct = Async.CancellationToken
         let! tree =
             session.Roslyn.Project.Documents
             |> Seq.exactlyOne
@@ -61,7 +62,7 @@ let update (session: IWorkSession) (diagnostics: Diagnostic seq) ct = async {
             |> Async.AwaitTask
         return!
             UserScript.rewriteForExecution tree
-            |> UserScript.run metadataReferences compilationOptions.Usings globals ct
+            |> UserScript.run metadataReferences compilationOptions.Usings globals
 }
 
 let jsonConverter = Fable.JsonConverter() :> JsonConverter
@@ -85,10 +86,10 @@ let app = application {
                     { new ISlowUpdateExtension with
                         member __.ProcessAsync(session, diagnostics, ct) =
                             async {
-                                let! result = update session diagnostics ct
+                                let! result = update session diagnostics
                                 return result :> obj
                             }
-                            |> Async.StartAsTask
+                            |> fun a -> Async.StartAsTask(a, cancellationToken = ct)
                         member __.WriteResult(writer, result, session) =
                             writeUpdateResult writer result session
                     },

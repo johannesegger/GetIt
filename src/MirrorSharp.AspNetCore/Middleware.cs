@@ -23,7 +23,7 @@ namespace MirrorSharp.AspNetCore
                 if(ctx.WebSockets.IsWebSocketRequest)
                 {
                     var webSocket = await ctx.WebSockets.AcceptWebSocketAsync();
-                    await WebSocketLoopAsync(webSocket, CancellationToken.None);
+                    await WebSocketLoopAsync(webSocket, ctx.RequestAborted);
 
                 }
                 else

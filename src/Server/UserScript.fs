@@ -13,6 +13,12 @@ module private Seq =
     let ofType<'TResult> items =
         System.Linq.Enumerable.OfType<'TResult>(items)
 
+module private Async =
+    let map fn a = async {
+        let! result = a
+        return fn result
+    }
+
 [<CLIMutable>]
 type ScriptGlobals = {
     Player: Player
@@ -115,10 +121,27 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
 
     syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options)
 
-let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (globals: ScriptGlobals) ct (tree: SyntaxTree) = async {
+let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (globals: ScriptGlobals) (tree: SyntaxTree) = async {
     let options =
         ScriptOptions.Default
             .WithReferences(metadataReferences)
             .WithImports(usingDirectives)
-    return! CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct) |> Async.AwaitTask
+    let! ct = Async.CancellationToken
+    let guid = Guid.NewGuid()
+    printfn "Started %O" guid
+    ct.Register(fun () -> printfn "Cancelled %O" guid) |> ignore
+    let! getResult =
+        CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
+        |> Async.AwaitTask
+        |> Async.map (Seq.toList >> Some)
+        |> Async.StartChild
+    let! timeout =
+        Async.Sleep 10_000
+        |> Async.map (fun () -> raise (OperationCanceledException()))
+        |> Async.StartChild
+    let! result =
+        Async.Choice [getResult; timeout]
+        |> Async.map Option.get
+    printfn "Finished %O" guid    
+    return result
 }
