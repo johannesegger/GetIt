@@ -191,7 +191,6 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
         ScriptOptions.Default
             .WithReferences(metadataReferences)
             .WithImports(usingDirectives)
-    printfn "Running %O" tree
     let! getResult =
         async {
             let! ct = Async.CancellationToken
