@@ -10,7 +10,6 @@ open Microsoft.CodeAnalysis.CSharp
 open MirrorSharp
 open MirrorSharp.Advanced
 open MirrorSharp.AspNetCore
-open MirrorSharp.Extensions
 open Newtonsoft.Json
 open Saturn
 open GameLib.Data.Global
@@ -115,12 +114,6 @@ let app = application {
         options.CSharp.ParseOptions <- options.CSharp.ParseOptions.WithKind SourceCodeKind.Script
         options.CSharp.MetadataReferences <- ImmutableList.CreateRange metadataReferences
         options.CSharp.CompilationOptions <- compilationOptions.WithUsings(compilationOptions.Usings.Add("GameLib.DummyGlobals"))
-
-        // let language =
-        //     GenericLanguage(
-        //         "C# Script",
-        //         fun text -> CSharpScriptSession.Create(text, metadataReferences, compilationOptions, typeof<obj>)
-        //     )
 
         app.UseMirrorSharp(options)
     )
