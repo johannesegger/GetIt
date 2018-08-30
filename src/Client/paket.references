@@ -7,3 +7,4 @@ group Client
     Fable.Core
     Fulma
     Fulma.Extensions
+    Thoth.Elmish.Toast

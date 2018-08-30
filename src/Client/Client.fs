@@ -155,8 +155,10 @@ let rec update msg currentModel =
             model, Cmd.none
         | NotInitialized -> currentModel, Cmd.none
     | MirrorSharpServerError message ->
-        // TODO show toast?
-        currentModel, Cmd.none
+        let cmd =
+            toast "Server error" message
+            |> Toast.error
+        currentModel, cmd
     | SendMirrorSharpServerOptions ->
         match currentModel.MirrorSharp with
         | Initialized mirrorSharp ->
@@ -172,8 +174,10 @@ let rec update msg currentModel =
     | SendMirrorSharpServerOptionsResponse (Ok ()) ->
         currentModel, Cmd.none
     | SendMirrorSharpServerOptionsResponse (Result.Error e) ->
-        // TODO show toast?
-        currentModel, Cmd.none
+        let cmd =
+            toast "Set server options" e.Message
+            |> Toast.error
+        currentModel, cmd
     | CodeChanged code ->
         let model =
             { currentModel with
@@ -370,6 +374,7 @@ Program.mkProgram init update view
 |> Program.withConsoleTrace
 |> Program.withHMR
 #endif
+|> Toast.Program.withToast Toast.renderFulma
 |> Program.withReact "elmish-app"
 #if DEBUG
 |> Program.withDebugger

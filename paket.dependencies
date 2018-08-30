@@ -20,6 +20,7 @@ group Client
     nuget Fable.Elmish.HMR
     nuget Fulma
     nuget Fulma.Extensions
+    nuget Thoth.Elmish.Toast
 
     clitool dotnet-fable
 
