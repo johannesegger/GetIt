@@ -152,13 +152,16 @@ let rec update msg currentModel =
     | SendMirrorSharpServerOptions ->
         match currentModel.MirrorSharp with
         | Initialized mirrorSharp ->
+            let model =
+                { currentModel with
+                    IsProgramInSyncWithServer = false }
             let cmd =
                 Cmd.ofPromise
                     mirrorSharp.Instance.sendServerOptions
                     (createObj [ "language" ==> "C#"; "x-player" ==> serializePlayer currentModel.Player ]) // Remove language if https://github.com/ashmind/mirrorsharp/pull/85 is merged
                     (Ok >> SendMirrorSharpServerOptionsResponse)
                     (Result.Error >> SendMirrorSharpServerOptionsResponse)
-            currentModel, cmd
+            model, cmd
         | NotInitialized ->
             currentModel, Cmd.none
     | SendMirrorSharpServerOptionsResponse (Ok ()) ->
