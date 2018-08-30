@@ -8,6 +8,7 @@ open Microsoft.CodeAnalysis.CSharp.Scripting
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Scripting
 open GameLib.Data.Global
+open GameLib.Execution
 
 module private Seq =
     let ofType<'TResult> items =
@@ -22,9 +23,10 @@ module private Async =
 [<CLIMutable>]
 type ScriptGlobals = {
     Player: Player
+    CancellationToken: System.Threading.CancellationToken
 }
 
-type private UserScriptRewriter() =
+type private YieldStatesUserScriptRewriter() =
     inherit CSharpSyntaxRewriter()
 
     let mutable numberOfRewrites = 0
@@ -55,6 +57,64 @@ type private UserScriptRewriter() =
             | _ -> node :> SyntaxNode
         | _ -> node :> SyntaxNode
 
+type private CancellableUserScriptRewriter() =
+    inherit CSharpSyntaxRewriter()
+    let insertCancellationTokenCheck (statement: StatementSyntax) =
+        match statement with
+        | :? BlockSyntax as block ->
+            [
+                yield
+                    SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            SyntaxFactory.IdentifierName("CancellationToken"),
+                            SyntaxFactory.IdentifierName("ThrowIfCancellationRequested")
+                        )
+                    )
+                    |> SyntaxFactory.ExpressionStatement
+                    :> StatementSyntax
+                yield! block.Statements
+            ]
+            |> SyntaxList
+            |> block.WithStatements
+        | _ ->
+            [
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        SyntaxFactory.IdentifierName("CancellationToken"),
+                        SyntaxFactory.IdentifierName("ThrowIfCancellationRequested")
+                    )
+                )
+                |> SyntaxFactory.ExpressionStatement
+                :> StatementSyntax
+
+                statement
+            ]
+            |> SyntaxList
+            |> SyntaxFactory.Block
+
+    override __.VisitDoStatement(node) =
+        base.VisitDoStatement node
+        :?> DoStatementSyntax
+        |> fun n -> insertCancellationTokenCheck n.Statement
+        |> node.WithStatement
+        :> SyntaxNode
+
+    override __.VisitWhileStatement(node) =
+        base.VisitWhileStatement node
+        :?> WhileStatementSyntax
+        |> fun n -> insertCancellationTokenCheck n.Statement
+        |> node.WithStatement
+        :> SyntaxNode
+
+    override __.VisitForStatement(node) =
+        base.VisitForStatement node
+        :?> ForStatementSyntax
+        |> fun n -> insertCancellationTokenCheck n.Statement
+        |> node.WithStatement
+        :> SyntaxNode
+
 let rec private getFullTypeName (t: Type) =
     let rec getFullTypeNameWithoutGenerics (t: Type) =
         if not <| isNull t.DeclaringType
@@ -76,8 +136,13 @@ let rec private getFullTypeName (t: Type) =
         sprintf "%s<%s>" name genericArguments
 
 let rewriteForExecution (syntaxTree: SyntaxTree) =
-    let rewriter = UserScriptRewriter()
-    let root = rewriter.Visit(syntaxTree.GetRoot()) :?> CompilationUnitSyntax
+    let yieldStatesRewriter = YieldStatesUserScriptRewriter()
+    let root = 
+        [ yieldStatesRewriter :> CSharpSyntaxRewriter
+          CancellableUserScriptRewriter() :> CSharpSyntaxRewriter ]
+        |> List.fold (fun root rewriter -> rewriter.Visit root) (syntaxTree.GetRoot())
+        :?> CompilationUnitSyntax
+    
     let method =
         SyntaxFactory
             .MethodDeclaration(
@@ -92,7 +157,7 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
                             root.Members
                             |> Seq.ofType<GlobalStatementSyntax>
                             |> Seq.map (fun p -> p.Statement)
-                        if rewriter.NumberOfRewrites = 0
+                        if yieldStatesRewriter.NumberOfRewrites = 0
                         then
                             yield
                                 SyntaxFactory.YieldStatement(
@@ -126,22 +191,19 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
         ScriptOptions.Default
             .WithReferences(metadataReferences)
             .WithImports(usingDirectives)
-    let! ct = Async.CancellationToken
-    let guid = Guid.NewGuid()
-    printfn "Started %O" guid
-    ct.Register(fun () -> printfn "Cancelled %O" guid) |> ignore
+    printfn "Running %O" tree
     let! getResult =
-        CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
-        |> Async.AwaitTask
-        |> Async.map (Seq.toList >> Some)
-        |> Async.StartChild
-    let! timeout =
-        Async.Sleep 10_000
-        |> Async.map (fun () -> raise (OperationCanceledException()))
-        |> Async.StartChild
-    let! result =
-        Async.Choice [getResult; timeout]
-        |> Async.map Option.get
-    printfn "Finished %O" guid    
-    return result
+        async {
+            let! ct = Async.CancellationToken
+            let globals = { globals with CancellationToken = ct }
+            return!
+                CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
+                |> Async.AwaitTask
+                |> Async.map (Seq.toList >> RanToCompletion)
+        }
+        |> fun a -> Async.StartChild(a, 10_000)
+    try
+        return! getResult
+    with :? System.TimeoutException ->
+        return TimedOut
 }

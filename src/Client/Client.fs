@@ -10,10 +10,12 @@ open Fable.Helpers.React.Props
 open Fulma
 open Fulma.Extensions
 open Fulma.FontAwesome
+open Thoth.Elmish
 open MirrorSharp
 open ReactPixi
 open GameLib.Data
 open GameLib.Data.Global
+open GameLib.Execution
 open GameLib.Serialization
 
 importAll "../../node_modules/font-awesome/scss/font-awesome.scss"
@@ -31,26 +33,15 @@ type MirrorSharpState =
     | NotInitialized
     | Initialized of InitializedMirrorSharpState
 
-type DiagnosticSpan = {
-    Start: int
-    Length: int
-}
-
-type DiagnosticSeverity = Hidden | Info | Warning | Error
-
-type Diagnostic = {
-    Id: string
-    Message: string
-    Severity: DiagnosticSeverity
-    Span: DiagnosticSpan
-    Tags: string list
-}
+type NotRunnableReason =
+    | TimedOut
 
 type UserProgram =
     | NotCompiled
+    | NotRunnable of NotRunnableReason
     | Runnable of Player list
     | Running of Player list
-    | HasErrors of Diagnostic list
+    | HasErrors of CompilationError list
 
 type DrawnLine = {
     From: Position
@@ -62,7 +53,8 @@ type DrawnLine = {
 type ProgramState =
     | NoConnection
     | HasErrors
-    | Compiled
+    | TimedOut
+    | Runnable
 
 type DragState =
     | NotDragging
@@ -78,11 +70,6 @@ type Model = {
     DrawnLines: DrawnLine list
 }
 
-type CodeCompilationResult = {
-    Diagnostics: Diagnostic list
-    Instructions: Player list
-}
-
 type Msg =
     | InitializedMirrorSharp of MirrorSharpInstance
     | UninitializedMirrorSharp
@@ -92,7 +79,7 @@ type Msg =
     | SendMirrorSharpServerOptionsResponse of Result<unit, exn>
     | CodeChanged of string
     | CodeCompilationStarted
-    | CodeCompilationFinished of CodeCompilationResult
+    | CodeCompilationFinished of RunScriptResult
     | RunCode
     | StartDragPlayer of Position
     | DragPlayer of Position
@@ -101,7 +88,7 @@ type Msg =
 let init () =
     let model =
         { MirrorSharp = NotInitialized
-          Code = "Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
+          Code = "/*Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
 for (var i = 0; i < 20; i++)
 {
     Player.TurnOffPen();
@@ -114,9 +101,9 @@ for (var i = 0; i < 20; i++)
         Player.Go(5);
         Player.ShiftPenColor(0.01);
     }
-}"
+}*/"
           UserProgram = NotCompiled
-          ProgramState = Compiled
+          ProgramState = ProgramState.Runnable
           Player =
             { Position = { X = 0.; Y = 0. }
               Direction = 0.
@@ -129,6 +116,14 @@ for (var i = 0; i < 20; i++)
           DrawnLines = [] }
 
     model, Cmd.none
+
+let private toast title message =
+    Toast.message message
+    |> Toast.title title
+    |> Toast.position Toast.TopRight
+    |> Toast.noTimeout
+    |> Toast.withCloseButton
+    |> Toast.dismissOnClick
 
 let rec update msg currentModel =
     match msg with
@@ -189,23 +184,30 @@ let rec update msg currentModel =
                 UserProgram = NotCompiled }
         model, Cmd.none
     | CodeCompilationFinished result ->
-        let hasErrors =
-            result.Diagnostics
-            |> Seq.exists (fun d -> d.Severity = Error)
+        let userProgram, programState, cmd =
+            match result with
+            | RunScriptResult.Skipped (CompilationErrors compilationErrors) ->
+                UserProgram.HasErrors compilationErrors,
+                ProgramState.HasErrors,
+                Cmd.none
+            | RunScriptResult.RanToCompletion instructions ->
+                UserProgram.Runnable instructions,
+                ProgramState.Runnable,
+                Cmd.none
+            | RunScriptResult.TimedOut ->
+                UserProgram.NotRunnable NotRunnableReason.TimedOut,
+                ProgramState.TimedOut,
+                toast "Program execution" "Execution of your program timed out, you might have an endless loop somewhere"
+                |> Toast.warning
+
         let model =
             { currentModel with
-                UserProgram =
-                    if hasErrors
-                    then UserProgram.HasErrors result.Diagnostics
-                    else Runnable result.Instructions
-                ProgramState =
-                    if hasErrors
-                    then HasErrors
-                    else Compiled }
-        model, Cmd.none
+                UserProgram = userProgram
+                ProgramState = programState }
+        model, cmd
     | RunCode ->
         match currentModel.UserProgram with
-        | Runnable (instruction :: instructions)
+        | UserProgram.Runnable (instruction :: instructions)
         | Running (instruction :: instructions) ->
             let model =
                 { currentModel with
@@ -223,10 +225,11 @@ let rec update msg currentModel =
                 else model
             let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
             model', cmd
-        | Runnable [] -> currentModel, Cmd.none
+        | UserProgram.Runnable [] -> currentModel, Cmd.none
         | Running [] -> update SendMirrorSharpServerOptions currentModel
         | NotCompiled
-        | UserProgram.HasErrors _ -> currentModel, Cmd.none
+        | UserProgram.HasErrors _
+        | NotRunnable _ -> currentModel, Cmd.none
     | StartDragPlayer position ->
         let model =
             { currentModel with
@@ -260,32 +263,16 @@ let view model dispatch =
         | x -> failwithf "Invalid connection state: %s" x
 
     let mapCodeCompilationResult result =
-        { Diagnostics =
-            !!result?diagnostics
-            |> Seq.map (fun d ->
-                let parseSeverity = function
-                | "error" -> Error
-                | "warning" -> Warning
-                | "info" -> Info
-                | "hidden" -> Hidden
-                | x -> failwithf "Invalid diagnostic severity: %s" x
-
-                { Id = !!d?id
-                  Message = !!d?message
-                  Severity = parseSeverity !!d?severity
-                  Span = { Start = !!d?start; Length = !!d?length }
-                  Tags = Seq.toList !!d?tags }
-            )
-            |> Seq.toList
-          Instructions = ofJson<Player list> !!result?x }
+        ofJson<RunScriptResult> !!result?x
           
     let sceneWidth, sceneHeight = 500., 500.
 
     let color, isRunnable =
         match model.ProgramState with
         | NoConnection -> IsWarning, false
-        | HasErrors -> IsDanger, false
-        | Compiled -> IsSuccess, true
+        | ProgramState.HasErrors -> IsDanger, false
+        | ProgramState.TimedOut -> IsWarning, false
+        | ProgramState.Runnable -> IsSuccess, true
 
     div [ Style [ Display "flex"; FlexDirection "column" ] ]
         [ Navbar.navbar [ Navbar.Color color; Navbar.Props [ Style [ Flex "0 0 auto" ] ] ]

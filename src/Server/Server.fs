@@ -13,7 +13,9 @@ open MirrorSharp.AspNetCore
 open Newtonsoft.Json
 open Saturn
 open GameLib.Data.Global
+open GameLib.Execution
 open GameLib.Serialization
+open System.Threading
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -47,14 +49,25 @@ let getPlayer (session: IWorkSession) =
     session.ExtensionData.["player"] :?> Player
 
 let update (session: IWorkSession) (diagnostics: Diagnostic seq) = async {
-    if diagnostics |> Seq.exists (fun d -> d.Severity = DiagnosticSeverity.Error)
+    let compilationErrors =
+        diagnostics
+        |> Seq.filter (fun d -> d.Severity = DiagnosticSeverity.Error)
+        |> Seq.map (fun d ->
+            {
+                Message = d.GetMessage()
+                Span = { Start = d.Location.SourceSpan.Start; End = d.Location.SourceSpan.End }
+            }
+        )
+        |> Seq.toList
+    if compilationErrors |> List.isEmpty |> not
     then
-        return []
+        return Skipped (CompilationErrors compilationErrors)
     else
+        let! ct = Async.CancellationToken
         let globals = {
             UserScript.ScriptGlobals.Player = getPlayer session
+            UserScript.ScriptGlobals.CancellationToken = CancellationToken.None // is overwritten when running script
         }
-        let! ct = Async.CancellationToken
         let! tree =
             session.Roslyn.Project.Documents
             |> Seq.exactlyOne
