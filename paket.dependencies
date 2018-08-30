@@ -8,6 +8,7 @@ group Server
     nuget MirrorSharp.Common
     nuget Saturn
     nuget Fable.JsonConverter
+    nuget Spectrum
 
 group Client
     storage: none

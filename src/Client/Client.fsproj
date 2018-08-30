@@ -4,10 +4,9 @@
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="PixiJS.fs" />
+        <Compile Include="..\Shared\GameLib.Serialization.fs" />
         <Compile Include="ReactPixi.fs" />
         <Compile Include="MirrorSharpComponent.fs" />
-        <Compile Include="ColorConvert.fs" />
         <Compile Include="Client.fs" />
     </ItemGroup>
     <ItemGroup>

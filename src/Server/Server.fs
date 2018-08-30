@@ -1,6 +1,6 @@
+open System.Collections.Immutable
 open System.IO
 open System.Reflection
-
 open Giraffe
 open Giraffe.Serialization
 open Microsoft.AspNetCore.Builder
@@ -11,7 +11,10 @@ open MirrorSharp
 open MirrorSharp.Advanced
 open MirrorSharp.AspNetCore
 open MirrorSharp.Extensions
+open Newtonsoft.Json
 open Saturn
+open GameLib.Data.Global
+open GameLib.Serialization
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -30,25 +33,38 @@ let metadataReferences: MetadataReference list = [
     MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location)
     MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location)
     MetadataReference.CreateFromFile(Assembly.Load("GameLib").Location)
+    MetadataReference.CreateFromFile(Assembly.Load("GameLib.Server").Location)
 ]
 let compilationOptions =
     CSharpCompilationOptions(
         OutputKind.DynamicallyLinkedLibrary,
-        usings = [ "GameLib.Data"; "GameLib.Instructions" ]
+        usings = [ "GameLib.Data"; "GameLib.Server" ]
     )
+
+let setPlayer (session: IWorkSession) player =
+    session.ExtensionData.["player"] <- player
+
+let getPlayer (session: IWorkSession) =
+    session.ExtensionData.["player"] :?> Player
 
 let update (session: IWorkSession) (diagnostics: Diagnostic seq) ct = async {
     if diagnostics |> Seq.exists (fun d -> d.Severity = DiagnosticSeverity.Error)
     then
         return Seq.empty
     else
-        let tree = session.TryGetGenericLanguageSession<SyntaxTree>().Data
+        let globals = {
+            UserScript.ScriptGlobals.Player = getPlayer session
+        }
+        let! tree =
+            session.Roslyn.Project.Documents
+            |> Seq.exactlyOne
+            |> fun d -> d.GetSyntaxTreeAsync(ct)
+            |> Async.AwaitTask
         return!
             UserScript.rewriteForExecution tree
-            |> UserScript.run metadataReferences compilationOptions.Usings
+            |> UserScript.run metadataReferences compilationOptions.Usings globals ct
 }
 
-open Newtonsoft.Json
 let jsonConverter = Fable.JsonConverter() :> JsonConverter
 
 let writeUpdateResult (writer: IFastJsonWriter) (result: obj) session =
@@ -77,6 +93,17 @@ let app = application {
                         member __.WriteResult(writer, result, session) =
                             writeUpdateResult writer result session
                     },
+                SetOptionsFromClient =
+                    { new ISetOptionsFromClientExtension with
+                        member __.TrySetOption(session, name, value) =
+                            match name with
+                            | "x-player" ->
+                                value
+                                |> deserializePlayer jsonConverter
+                                |> setPlayer session
+                                true
+                            | _ -> false
+                    },
                 IncludeExceptionDetails = true,
                 ExceptionLogger =
                     { new IExceptionLogger with
@@ -86,14 +113,16 @@ let app = application {
                 SelfDebugEnabled = true
             )
         options.CSharp.ParseOptions <- options.CSharp.ParseOptions.WithKind SourceCodeKind.Script
+        options.CSharp.MetadataReferences <- ImmutableList.CreateRange metadataReferences
+        options.CSharp.CompilationOptions <- compilationOptions.WithUsings(compilationOptions.Usings.Add("GameLib.DummyGlobals"))
 
-        let language =
-            GenericLanguage(
-                "C# Script",
-                fun text -> CSharpScriptSession.Create(text, metadataReferences, compilationOptions, typeof<obj>)
-            )
+        // let language =
+        //     GenericLanguage(
+        //         "C# Script",
+        //         fun text -> CSharpScriptSession.Create(text, metadataReferences, compilationOptions, typeof<obj>)
+        //     )
 
-        app.UseMirrorSharp(language, options)
+        app.UseMirrorSharp(options)
     )
 }
 

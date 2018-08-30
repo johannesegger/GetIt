@@ -2071,6 +2071,7 @@ NUGET
       Microsoft.AspNetCore.Session (>= 2.1)
       Microsoft.AspNetCore.StaticFiles (>= 2.1)
       Microsoft.Extensions.Caching.Memory (>= 2.1)
+    Spectrum (0.1)
     SQLitePCLRaw.bundle_green (1.1.11) - restriction: >= net46
       SQLitePCLRaw.core (>= 1.1.11) - restriction: || (>= monoandroid) (&& (>= net35) (< portable-net40+sl5+win8+wp8) (< portable-net45+win8+wp8+wpa81)) (&& (< net35) (>= netstandard1.1) (< win8) (< wpa81)) (&& (< net35) (>= portable-net40+sl5+win8+wp8) (< portable-net45+win8+wp8+wpa81)) (&& (< net35) (< portable-net40+sl5+win8+wp8) (>= portable-net45+win8+wp8+wpa81) (< portable-net45+win8+wpa81)) (&& (< net35) (< portable-net40+sl5+win8+wp8) (< portable-net45+win8+wp8+wpa81)) (&& (< net35) (< portable-net40+sl5+win8+wp8) (>= portable-net45+win8+wpa81)) (&& (>= net40) (< portable-net45+win8+wp8+wpa81)) (>= net45) (>= netcoreapp1.0) (&& (< netstandard1.1) (>= win8) (< win81)) (&& (< netstandard1.1) (>= win81)) (>= uap10.0) (&& (< win8) (>= wpa81)) (>= wp8) (>= xamarinios) (>= xamarinmac)
       SQLitePCLRaw.lib.e_sqlite3.linux (>= 1.1.11) - restriction: || (&& (>= net35) (< portable-net40+sl5+win8+wp8) (< portable-net45+win8+wp8+wpa81)) (&& (>= net40) (< portable-net45+win8+wp8+wpa81)) (>= net45) (>= netcoreapp1.0)

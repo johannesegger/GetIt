@@ -13,7 +13,8 @@ open Fulma.FontAwesome
 open MirrorSharp
 open ReactPixi
 open GameLib.Data
-open GameLib.Instruction
+open GameLib.Data.Global
+open GameLib.Serialization
 
 importAll "../../node_modules/font-awesome/scss/font-awesome.scss"
 importAll "../../node_modules/firacode/distr/fira_code.css"
@@ -47,27 +48,9 @@ type Diagnostic = {
 
 type UserProgram =
     | NotCompiled
-    | Runnable of GameInstruction list
-    | Running of GameInstruction list * GameInstruction list
+    | Runnable of Player list
+    | Running of Player list
     | HasErrors of Diagnostic list
-
-type Size = {
-    Width: float
-    Height: float
-}
-
-type Pen = {
-    Color: RGBColor
-    Weight: float
-    IsOn: bool
-}
-
-type Player = {
-    Position: Position
-    Direction: float
-    Pen: Pen
-    CostumeUrl: string
-}
 
 type DrawnLine = {
     From: Position
@@ -97,7 +80,7 @@ type Model = {
 
 type CodeCompilationResult = {
     Diagnostics: Diagnostic list
-    Instructions: GameInstruction list
+    Instructions: Player list
 }
 
 type Msg =
@@ -105,6 +88,8 @@ type Msg =
     | UninitializedMirrorSharp
     | MirrorSharpConnectionChanged of MirrorSharpConnectionState
     | MirrorSharpServerError of string
+    | SendMirrorSharpServerOptions
+    | SendMirrorSharpServerOptionsResponse of Result<unit, exn>
     | CodeChanged of string
     | CodeCompilationStarted
     | CodeCompilationFinished of CodeCompilationResult
@@ -116,22 +101,22 @@ type Msg =
 let init () =
     let model =
         { MirrorSharp = NotInitialized
-          Code = "Player.Pen.SetColor(new RGBColor(0xFF, 0x00, 0xFF));
+          Code = "Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
 for (var i = 0; i < 20; i++)
 {
-    Player.Pen.TurnOff();
+    Player.TurnOffPen();
     Player.GoTo(0, 200 - 20 * i);
-    Player.Pen.TurnOn();
+    Player.TurnOnPen();
     for (int j = 0; j < 60; j++)
     {
-        Player.Pen.SetWeight((j % 5) + 1);
+        Player.SetPenWeight((j % 5) + 1);
         Player.RotateCounterClockwise(6);
         Player.Go(5);
-        Player.Pen.ShiftColor(0.01);
+        Player.ShiftPenColor(0.01);
     }
 }"
           UserProgram = NotCompiled
-          ProgramState = NoConnection
+          ProgramState = Compiled
           Player =
             { Position = { X = 0.; Y = 0. }
               Direction = 0.
@@ -145,7 +130,7 @@ for (var i = 0; i < 20; i++)
 
     model, Cmd.none
 
-let update msg currentModel =
+let rec update msg currentModel =
     match msg with
     | InitializedMirrorSharp instance ->
         let model =
@@ -154,7 +139,7 @@ let update msg currentModel =
                     Initialized
                         { Instance = instance
                           ConnectionState = Closed } }
-        model, Cmd.none
+        update SendMirrorSharpServerOptions model
     | UninitializedMirrorSharp ->
         let model =
             { currentModel with
@@ -170,6 +155,23 @@ let update msg currentModel =
             model, Cmd.none
         | NotInitialized -> currentModel, Cmd.none
     | MirrorSharpServerError message ->
+        // TODO show toast?
+        currentModel, Cmd.none
+    | SendMirrorSharpServerOptions ->
+        match currentModel.MirrorSharp with
+        | Initialized mirrorSharp ->
+            let cmd =
+                Cmd.ofPromise
+                    mirrorSharp.Instance.sendServerOptions
+                    (createObj [ "language" ==> "C#"; "x-player" ==> serializePlayer currentModel.Player ]) // Remove language if https://github.com/ashmind/mirrorsharp/pull/85 is merged
+                    (Ok >> SendMirrorSharpServerOptionsResponse)
+                    (Result.Error >> SendMirrorSharpServerOptionsResponse)
+            currentModel, cmd
+        | NotInitialized ->
+            currentModel, Cmd.none
+    | SendMirrorSharpServerOptionsResponse (Ok ()) ->
+        currentModel, Cmd.none
+    | SendMirrorSharpServerOptionsResponse (Result.Error e) ->
         // TODO show toast?
         currentModel, Cmd.none
     | CodeChanged code ->
@@ -198,49 +200,13 @@ let update msg currentModel =
                     else Compiled }
         model, Cmd.none
     | RunCode ->
-        let wrapAngle value = (value % 360. + 360.) % 360.
-
-        let shiftColor shift color =
-            match ColorConvert.convert.rgb.hsl color.Red color.Green color.Blue with
-            | [| h; s; l |] ->
-                match ColorConvert.convert.hsl.rgb (h + int (shift * 360.)) s l with
-                | [| r; g; b |] -> { Red = r; Green = g; Blue = b }
-                | x -> failwithf "Unknown RGB value %A" x
-            | x -> failwithf "Unknown HSL value %A" x
-        
-        let applyPenInstruction pen = function
-            | TurnOn -> { pen with IsOn = true }
-            | TurnOff ->  { pen with IsOn = false }
-            | ToggleOnOff -> { pen with IsOn = not pen.IsOn }
-            | SetColor color -> { pen with Color = color }
-            | ShiftColor shift -> { pen with Color = shiftColor shift pen.Color }
-            | SetWeight weight -> { pen with Weight = weight }
-            | ChangeWeight weight -> { pen with Weight = pen.Weight + weight }
-
-        let applyPlayerInstruction player = function
-            | SetPosition position -> { player with Position = position }
-            | ChangePosition position -> { player with Position = player.Position + position }
-            | Go steps ->
-                let directionRadians = player.Direction / 180. * Math.PI
-                let delta =
-                    { X = Math.Cos(directionRadians) * steps
-                      Y = -Math.Sin(directionRadians) * steps }
-                { player with
-                    Position = player.Position + delta }
-            | SetDirection direction -> { player with Direction = wrapAngle direction }
-            | ChangeDirection direction -> { player with Direction = player.Direction + direction |> wrapAngle }
-
-        let applyInstruction player = function
-            | PlayerInstruction x -> applyPlayerInstruction player x
-            | PenInstruction x -> { player with Pen = applyPenInstruction player.Pen x }
-        
         match currentModel.UserProgram with
-        | Runnable ((instruction :: instructions) as allInstructions)
-        | Running ((instruction :: instructions), allInstructions) ->
+        | Runnable (instruction :: instructions)
+        | Running (instruction :: instructions) ->
             let model =
                 { currentModel with
-                    Player = applyInstruction currentModel.Player instruction
-                    UserProgram = Running (instructions, allInstructions) }
+                    Player = instruction
+                    UserProgram = Running instructions }
             let model' =
                 if currentModel.Player.Position <> model.Player.Position && currentModel.Player.Pen.IsOn
                 then
@@ -254,11 +220,7 @@ let update msg currentModel =
             let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
             model', cmd
         | Runnable [] -> currentModel, Cmd.none
-        | Running ([], instructions) ->
-            let model =
-                { currentModel with
-                    UserProgram = Runnable instructions }
-            model, Cmd.none
+        | Running [] -> update SendMirrorSharpServerOptions currentModel
         | NotCompiled
         | UserProgram.HasErrors _ -> currentModel, Cmd.none
     | StartDragPlayer position ->
@@ -281,7 +243,7 @@ let update msg currentModel =
         let model =
             { currentModel with
                 DragState = NotDragging }
-        model, Cmd.none
+        update SendMirrorSharpServerOptions model
 
 let view model dispatch =
     let host = Browser.window.location.host
@@ -311,7 +273,7 @@ let view model dispatch =
                   Tags = Seq.toList !!d?tags }
             )
             |> Seq.toList
-          Instructions = ofJson<GameInstruction list> !!result?x }
+          Instructions = ofJson<Player list> !!result?x }
           
     let sceneWidth, sceneHeight = 500., 500.
 
@@ -383,7 +345,8 @@ let view model dispatch =
                                             { X = !!evt?data?``global``?x
                                               Y = !!evt?data?``global``?y }
                                         dispatch (DragPlayer delta))
-                                    Mouseup (fun _e -> dispatch StopDragPlayer) ]
+                                    Mouseup (fun _e -> dispatch StopDragPlayer)
+                                    Mouseupoutside (fun _e -> dispatch StopDragPlayer) ]
                               | NotDragging -> []
                           yield sprite (commonSpriteProps @ dragSpriteProps) []
                         ]

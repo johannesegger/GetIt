@@ -17,6 +17,7 @@ type InteractiveProps =
     | Mousedown of (MouseEvent -> unit)
     | Mousemove of (MouseEvent -> unit)
     | Mouseup of (MouseEvent -> unit)
+    | Mouseupoutside of (MouseEvent -> unit)
     interface IPixiProp
 
 type PositionProps =

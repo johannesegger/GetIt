@@ -7,14 +7,22 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Scripting
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Scripting
-open GameLib.Instruction
+open GameLib.Data.Global
 
 module private Seq =
     let ofType<'TResult> items =
         System.Linq.Enumerable.OfType<'TResult>(items)
 
-type private CodeParser() =
+[<CLIMutable>]
+type ScriptGlobals = {
+    Player: Player
+}
+
+type private UserScriptRewriter() =
     inherit CSharpSyntaxRewriter()
+
+    let mutable numberOfRewrites = 0
+    member __.NumberOfRewrites with get() = numberOfRewrites
 
     override __.VisitExpressionStatement(node) =
         match node.Expression with
@@ -28,18 +36,33 @@ type private CodeParser() =
                 | _ -> None)
             match actualIdentifier n.Expression with
             | Some identifier when identifier = "Player" ->
+                numberOfRewrites <- numberOfRewrites + 1
                 SyntaxFactory
-                    .YieldStatement(SyntaxKind.YieldReturnStatement, n)
+                    .YieldStatement(
+                        SyntaxKind.YieldReturnStatement,
+                        SyntaxFactory.AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            SyntaxFactory.IdentifierName(identifier),
+                            n))
                     .WithSemicolonToken(node.SemicolonToken)
                 :> SyntaxNode
             | _ -> node :> SyntaxNode
         | _ -> node :> SyntaxNode
 
 let rec private getFullTypeName (t: Type) =
+    let rec getFullTypeNameWithoutGenerics (t: Type) =
+        if not <| isNull t.DeclaringType
+        then
+            sprintf "%s.%s"
+                (getFullTypeNameWithoutGenerics t.DeclaringType)
+                t.Name
+        else
+            sprintf "%s.%s" t.Namespace (Regex.Replace(t.Name, @"`\d+$", ""))
+
     if t.IsGenericParameter then t.Name
-    elif not t.IsGenericType then t.FullName
+    elif not t.IsGenericType then getFullTypeNameWithoutGenerics t
     else
-        let name = sprintf "%s.%s" t.Namespace (Regex.Replace(t.Name, @"`\d+$", ""))
+        let name = getFullTypeNameWithoutGenerics t
         let genericArguments =
             t.GetGenericArguments()
             |> Seq.map getFullTypeName
@@ -47,19 +70,29 @@ let rec private getFullTypeName (t: Type) =
         sprintf "%s<%s>" name genericArguments
 
 let rewriteForExecution (syntaxTree: SyntaxTree) =
-    let root = CodeParser().Visit(syntaxTree.GetRoot()) :?> CompilationUnitSyntax
+    let rewriter = UserScriptRewriter()
+    let root = rewriter.Visit(syntaxTree.GetRoot()) :?> CompilationUnitSyntax
     let method =
         SyntaxFactory
             .MethodDeclaration(
                 SyntaxFactory.ParseTypeName(
-                    getFullTypeName typeof<GameInstruction seq>),
+                    getFullTypeName typeof<Player seq>),
                 SyntaxFactory.Identifier("Run")
             )
             .WithBody(
                 SyntaxFactory.Block(
-                    root.Members
-                    |> Seq.ofType<GlobalStatementSyntax>
-                    |> Seq.map (fun p -> p.Statement)
+                    [
+                        yield!
+                            root.Members
+                            |> Seq.ofType<GlobalStatementSyntax>
+                            |> Seq.map (fun p -> p.Statement)
+                        if rewriter.NumberOfRewrites = 0
+                        then
+                            yield
+                                SyntaxFactory.YieldStatement(
+                                    SyntaxKind.YieldBreakStatement)
+                                :> StatementSyntax
+                    ]
                 )
             )
     let newRoot =
@@ -81,10 +114,11 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
             .NormalizeWhitespace()
 
     syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options)
-let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (tree: SyntaxTree) = async {
+
+let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (globals: ScriptGlobals) ct (tree: SyntaxTree) = async {
     let options =
         ScriptOptions.Default
             .WithReferences(metadataReferences)
             .WithImports(usingDirectives)
-    return! CSharpScript.EvaluateAsync<GameInstruction seq>(tree.ToString(), options) |> Async.AwaitTask
+    return! CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct) |> Async.AwaitTask
 }

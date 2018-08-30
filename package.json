@@ -6,7 +6,6 @@
         "babel-runtime": "6.26.0",
         "bulma": "0.7.1",
         "bulma-divider": "2.0.1",
-        "color-convert": "1.9.2",
         "firacode": "1.205.0",
         "font-awesome": "4.7.0",
         "mirrorsharp": "0.9.3",
