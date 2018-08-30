@@ -50,12 +50,6 @@ type DrawnLine = {
     Weight: float
 }
 
-type ProgramState =
-    | NoConnection
-    | HasErrors
-    | TimedOut
-    | Runnable
-
 type DragState =
     | NotDragging
     | Dragging of Position
@@ -64,7 +58,7 @@ type Model = {
     MirrorSharp: MirrorSharpState
     Code: string
     UserProgram: UserProgram
-    ProgramState: ProgramState
+    IsProgramInSyncWithServer: bool
     Player: Player
     DragState: DragState
     DrawnLines: DrawnLine list
@@ -86,9 +80,7 @@ type Msg =
     | StopDragPlayer
 
 let init () =
-    let model =
-        { MirrorSharp = NotInitialized
-          Code = "/*Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
+    let code = "/*Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
 for (var i = 0; i < 20; i++)
 {
     Player.TurnOffPen();
@@ -102,8 +94,11 @@ for (var i = 0; i < 20; i++)
         Player.ShiftPenColor(0.01);
     }
 }*/"
+    let model =
+        { MirrorSharp = NotInitialized
+          Code = code
           UserProgram = NotCompiled
-          ProgramState = ProgramState.Runnable
+          IsProgramInSyncWithServer = code = ""
           Player =
             { Position = { X = 0.; Y = 0. }
               Direction = 0.
@@ -176,7 +171,8 @@ let rec update msg currentModel =
     | CodeChanged code ->
         let model =
             { currentModel with
-                Code = code }
+                Code = code
+                IsProgramInSyncWithServer = false }
         model, Cmd.none
     | CodeCompilationStarted ->
         let model =
@@ -184,52 +180,48 @@ let rec update msg currentModel =
                 UserProgram = NotCompiled }
         model, Cmd.none
     | CodeCompilationFinished result ->
-        let userProgram, programState, cmd =
+        let userProgram =
             match result with
             | RunScriptResult.Skipped (CompilationErrors compilationErrors) ->
-                UserProgram.HasErrors compilationErrors,
-                ProgramState.HasErrors,
-                Cmd.none
+                UserProgram.HasErrors compilationErrors
             | RunScriptResult.RanToCompletion instructions ->
-                UserProgram.Runnable instructions,
-                ProgramState.Runnable,
-                Cmd.none
+                UserProgram.Runnable instructions
             | RunScriptResult.TimedOut ->
-                UserProgram.NotRunnable NotRunnableReason.TimedOut,
-                ProgramState.TimedOut,
-                toast "Program execution" "Execution of your program timed out, you might have an endless loop somewhere"
-                |> Toast.warning
+                UserProgram.NotRunnable NotRunnableReason.TimedOut
 
         let model =
             { currentModel with
                 UserProgram = userProgram
-                ProgramState = programState }
-        model, cmd
+                IsProgramInSyncWithServer = true }
+        model, Cmd.none
     | RunCode ->
-        match currentModel.UserProgram with
-        | UserProgram.Runnable (instruction :: instructions)
-        | Running (instruction :: instructions) ->
-            let model =
-                { currentModel with
-                    Player = instruction
-                    UserProgram = Running instructions }
-            let model' =
-                if currentModel.Player.Position <> model.Player.Position && currentModel.Player.Pen.IsOn
-                then
-                    let line =
-                        { From = currentModel.Player.Position
-                          To = model.Player.Position
-                          Color = currentModel.Player.Pen.Color
-                          Weight =currentModel.Player.Pen.Weight }
-                    { model with DrawnLines = line :: model.DrawnLines}
-                else model
-            let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
-            model', cmd
-        | UserProgram.Runnable [] -> currentModel, Cmd.none
-        | Running [] -> update SendMirrorSharpServerOptions currentModel
-        | NotCompiled
-        | UserProgram.HasErrors _
-        | NotRunnable _ -> currentModel, Cmd.none
+        if currentModel.IsProgramInSyncWithServer
+        then
+            match currentModel.UserProgram with
+            | UserProgram.Runnable (instruction :: instructions)
+            | Running (instruction :: instructions) ->
+                let model =
+                    { currentModel with
+                        Player = instruction
+                        UserProgram = Running instructions }
+                let model' =
+                    if currentModel.Player.Position <> model.Player.Position && currentModel.Player.Pen.IsOn
+                    then
+                        let line =
+                            { From = currentModel.Player.Position
+                              To = model.Player.Position
+                              Color = currentModel.Player.Pen.Color
+                              Weight =currentModel.Player.Pen.Weight }
+                        { model with DrawnLines = line :: model.DrawnLines}
+                    else model
+                let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
+                model', cmd
+            | UserProgram.Runnable [] -> currentModel, Cmd.none
+            | Running [] -> update SendMirrorSharpServerOptions currentModel
+            | NotCompiled
+            | UserProgram.HasErrors _
+            | NotRunnable _ -> currentModel, Cmd.none
+        else currentModel, Cmd.none
     | StartDragPlayer position ->
         let model =
             { currentModel with
@@ -268,11 +260,20 @@ let view model dispatch =
     let sceneWidth, sceneHeight = 500., 500.
 
     let color, isRunnable =
-        match model.ProgramState with
-        | NoConnection -> IsWarning, false
-        | ProgramState.HasErrors -> IsDanger, false
-        | ProgramState.TimedOut -> IsWarning, false
-        | ProgramState.Runnable -> IsSuccess, true
+        match model.UserProgram with
+        | NotCompiled -> IsSuccess, false
+        | NotRunnable _ -> IsWarning, false
+        | Runnable _ -> IsSuccess, true
+        | Running _ -> IsSuccess, true
+        | HasErrors _ -> IsDanger, false
+
+    let runTooltip =
+        if not model.IsProgramInSyncWithServer
+        then Some ("Compiling", [])
+        else
+            match model.UserProgram with
+            | NotRunnable TimedOut -> Some ("Execution of your program timed out. You might have an endless loop somewhere", [ Tooltip.IsMultiline ])
+            | _ -> None
 
     div [ Style [ Display "flex"; FlexDirection "column" ] ]
         [ Navbar.navbar [ Navbar.Color color; Navbar.Props [ Style [ Flex "0 0 auto" ] ] ]
@@ -283,11 +284,20 @@ let view model dispatch =
             [ Column.column [ Column.Props [ Style [ Display "flex"; FlexDirection "column"; CSSProp.Height "100%" ] ] ]
                 [ Button.list [ Button.List.Props [ Style [ Padding "1rem 1rem 0 1rem" ] ] ]
                     [ Button.button
-                        [ Button.OnClick (fun _ev -> dispatch RunCode)
-                          Button.Color color
-                          Button.IsOutlined
-                          Button.Disabled (not isRunnable)
-                          Button.Props [ Style [ Flex "0 0 auto" ] ] ]
+                        [ yield Button.OnClick (fun _ev -> dispatch RunCode)
+                          yield Button.Color color
+                          yield Button.IsOutlined
+                          yield Button.Disabled (not (isRunnable && model.IsProgramInSyncWithServer))
+                          yield Button.Props
+                            [ yield Style [ Flex "0 0 auto" ] :> IHTMLProp
+                              match runTooltip with
+                              | Some (text, _) -> yield Tooltip.dataTooltip text :> IHTMLProp
+                              | None -> () ]
+                          match runTooltip with
+                          | Some (_, classes) ->
+                            let classString = [ Tooltip.ClassName; Tooltip.IsTooltipRight ] @ classes |> String.concat " "
+                            yield Button.CustomClass classString
+                          | None -> () ]
                         [ span [] [ str "Run" ]
                           Icon.faIcon [ ] [ Fa.icon Fa.I.Play ] ] ]
                   mirrorSharp

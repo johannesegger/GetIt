@@ -1036,6 +1036,10 @@ bulma-divider@2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/bulma-divider/-/bulma-divider-2.0.1.tgz#6ab81c939fafd4962e2e5432b2df07dfeb02f150"
 
+bulma-tooltip@2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/bulma-tooltip/-/bulma-tooltip-2.0.2.tgz#cf0bf5ad2dc75492cbcbd4816e1a005314dc90ac"
+
 bulma@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/bulma/-/bulma-0.7.1.tgz#73c2e3b2930c90cc272029cbd19918b493fca486"
