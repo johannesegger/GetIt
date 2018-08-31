@@ -12,7 +12,6 @@ open Fulma.Extensions
 open Fulma.FontAwesome
 open Thoth.Elmish
 open MirrorSharp
-open ReactPixi
 open GameLib.Data
 open GameLib.Data.Global
 open GameLib.Execution
@@ -84,7 +83,7 @@ let init () =
 for (var i = 0; i < 20; i++)
 {
     Player.TurnOffPen();
-    Player.GoTo(0, 200 - 20 * i);
+    Player.GoTo(0, -200 + 20 * i);
     Player.TurnOnPen();
     for (int j = 0; j < 60; j++)
     {
@@ -106,6 +105,7 @@ for (var i = 0; i < 20; i++)
                 { Weight = 1.
                   Color = { Red = 0uy; Green = 0uy; Blue = 0uy }
                   IsOn = false }
+              SpeechBubble = None
               CostumeUrl = "/images/models/turtle.png" }
           DragState = NotDragging
           DrawnLines = [] }
@@ -208,16 +208,25 @@ let rec update msg currentModel =
                         Player = instruction
                         UserProgram = Running instructions }
                 let model' =
-                    if currentModel.Player.Position <> model.Player.Position && currentModel.Player.Pen.IsOn
+                    if model.Player.Pen.IsOn && currentModel.Player.Position <> model.Player.Position
                     then
                         let line =
                             { From = currentModel.Player.Position
                               To = model.Player.Position
-                              Color = currentModel.Player.Pen.Color
-                              Weight =currentModel.Player.Pen.Weight }
+                              Color = model.Player.Pen.Color
+                              Weight = model.Player.Pen.Weight }
                         { model with DrawnLines = line :: model.DrawnLines}
                     else model
-                let cmd = Cmd.ofAsync Async.Sleep 50 (fun () -> RunCode) (fun _e -> RunCode)
+                let duration =
+                    match instruction with
+                    | { SpeechBubble = Some (_, Some duration) } -> duration
+                    | _ -> TimeSpan.FromMilliseconds 50.
+                let cmd =
+                    Cmd.ofAsync
+                        Async.Sleep
+                        (int duration.TotalMilliseconds)
+                        (fun () -> RunCode)
+                        (fun _e -> RunCode)
                 model', cmd
             | UserProgram.Runnable [] -> currentModel, Cmd.none
             | Running [] -> update SendMirrorSharpServerOptions currentModel
@@ -228,7 +237,11 @@ let rec update msg currentModel =
     | StartDragPlayer position ->
         let model =
             { currentModel with
-                DragState = Dragging position }
+                DragState = Dragging position
+                // TODO this feels like cheating because `IsProgramInSyncWithServer`
+                // would be set to `false` as soon as server options are sent,
+                // maybe prohibit dragging while the programming is running?
+                IsProgramInSyncWithServer = false }
         model, Cmd.none
     | DragPlayer position ->
         match currentModel.DragState with
@@ -247,6 +260,71 @@ let rec update msg currentModel =
                 DragState = NotDragging }
         update SendMirrorSharpServerOptions model
 
+let private sceneView model dispatch =
+    let sceneWidth, sceneHeight = 500., 500.
+
+    let playerPositionStyle player =
+        let left = sprintf "%fpx" (player.Position.X + sceneWidth / 2.)
+        let bottom = sprintf "%fpx" (player.Position.Y + sceneHeight / 2.)
+        [ Position "absolute"
+          Left left
+          Bottom bottom
+          Transform (sprintf "translate(-50%%, 50%%) rotate(%fdeg)" (360. - player.Direction)) ]
+
+    let getAngle p1 p2 =
+        let dx = p2.X - p1.X
+        let dy = p2.Y - p1.Y
+        let atan2 = Math.Atan2(dy, dx) * 180. / Math.PI
+        if atan2 < 0. then atan2 + 360.
+        else atan2
+      
+    let getLength p1 p2 =
+        let dx = p2.X - p1.X
+        let dy = p2.Y - p1.Y
+        Math.Sqrt(dx * dx + dy * dy)
+
+    let linePositionStyle line =
+        let direction = getAngle line.From line.To
+        let left = sprintf "%fpx" (line.From.X + sceneWidth / 2.)
+        let bottom = sprintf "%fpx" (line.From.Y + sceneHeight / 2.)
+        [ Position "absolute"
+          Left left
+          Bottom bottom
+          Transform (sprintf "translate(0, 50%%) rotate(%fdeg)" (360. - direction))
+          TransformOrigin "left center"
+          Height (sprintf "%fpx" line.Weight)
+          Width (sprintf "%fpx" (getLength line.From line.To))
+          Background (sprintf "rgb(%d, %d, %d)" line.Color.Red line.Color.Green line.Color.Blue) ]
+
+    let dragSpriteProps : IHTMLProp list =
+        match model.DragState with
+        | Dragging _ ->
+            [ OnMouseMove (fun e ->
+                let delta = { X = e.pageX; Y = -e.pageY }
+                dispatch (DragPlayer delta)
+              )
+              OnMouseUp (fun _e -> dispatch StopDragPlayer)
+            ]
+        | NotDragging -> []
+
+    div
+        [ yield Style
+            [ Position "relative"
+              Width (sprintf "%fpx" sceneWidth)
+              Height (sprintf "%fpx" sceneWidth)
+              Background "#eeeeee" ] :> IHTMLProp
+          yield! dragSpriteProps ]
+        [ for line in model.DrawnLines -> div [ Style (linePositionStyle line) ] []
+          yield div
+            [ Style (playerPositionStyle model.Player)
+              OnMouseDown (fun e ->
+                e.preventDefault()
+                let position = { X = e.pageX; Y = -e.pageY }
+                dispatch (StartDragPlayer position)) ]
+            [ img [ Src model.Player.CostumeUrl ] ]
+          yield div [ Style [ Position "absolute"; Left "20px"; Bottom "20px" ] ]
+            [ str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction) ] ]
+
 let view model dispatch =
     let host = Browser.window.location.host
     let mirrorSharpServiceUrl = sprintf "ws://%s/mirrorsharp" host
@@ -259,8 +337,6 @@ let view model dispatch =
 
     let mapCodeCompilationResult result =
         ofJson<RunScriptResult> !!result?x
-          
-    let sceneWidth, sceneHeight = 500., 500.
 
     let color, isRunnable =
         match model.UserProgram with
@@ -316,53 +392,9 @@ let view model dispatch =
               Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
                 [ Divider.divider [ Divider.IsVertical; Divider.Props [ Style [ CSSProp.Height "100%" ] ] ] ]
               Column.column [ Column.Width (Screen.All, Column.IsNarrow) ]
-                [ stage [ Width sceneWidth; Height sceneHeight; Options [ BackgroundColor 0xEEEEEE ] ]
-                    [ container [ X (sceneWidth / 2.); Y (sceneHeight / 2.) ]
-                        [ let draw line (ctx: GraphicsContext) =
-                            ctx.clear()
-                            let color = sprintf "0x%02x%02x%02x" line.Color.Red line.Color.Green line.Color.Blue
-                            ctx.lineStyle line.Weight color
-                            ctx.moveTo line.From.X line.From.Y
-                            ctx.lineTo line.To.X line.To.Y
-                          yield!
-                            model.DrawnLines
-                            |> List.map (fun line ->
-                                graphics [ Draw (draw line) ] []
-                            )
-                          let commonSpriteProps: IPixiProp list =
-                            [ Image model.Player.CostumeUrl
-                              X model.Player.Position.X
-                              Y model.Player.Position.Y
-                              Rotation ((360. - model.Player.Direction) / 180. * Math.PI)
-                              Anchor { x = 0.5; y = 0.5 }
-                              Interactive true
-                              Mousedown (fun evt ->
-                                let position =
-                                    { X = !!evt?data?``global``?x
-                                      Y = !!evt?data?``global``?y }
-                                dispatch (StartDragPlayer position)) ]
-                          let dragSpriteProps: IPixiProp list =
-                              match model.DragState with
-                              | Dragging _ ->
-                                  [ Mousemove (fun evt ->
-                                        let delta =
-                                            { X = !!evt?data?``global``?x
-                                              Y = !!evt?data?``global``?y }
-                                        dispatch (DragPlayer delta))
-                                    Mouseup (fun _e -> dispatch StopDragPlayer)
-                                    Mouseupoutside (fun _e -> dispatch StopDragPlayer) ]
-                              | NotDragging -> []
-                          yield sprite (commonSpriteProps @ dragSpriteProps) []
-                        ]
-                      text
-                        [ X 20.
-                          Y (sceneHeight - 20.)
-                          Text (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction)
-                          Anchor { x = 0.; y = 1. }
-                          TextStyle [ FontFamily "Segoe UI"; FontSize "14px"; Fill "gray" ] ] [] ] ]
+                [ sceneView model dispatch ]
             ]
         ]
-
 
 #if DEBUG
 open Elmish.Debug

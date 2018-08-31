@@ -1,5 +1,7 @@
 module GameLib.Data
 
+open System
+
 type RGBColor =
     { Red: byte
       Green: byte
@@ -27,4 +29,5 @@ module Global =
         { Position: Position
           Direction: float
           Pen: Pen
+          SpeechBubble: (string * TimeSpan option) option
           CostumeUrl: string }

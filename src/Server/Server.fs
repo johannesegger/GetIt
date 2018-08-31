@@ -1,6 +1,7 @@
 open System.Collections.Immutable
 open System.IO
 open System.Reflection
+open System.Threading
 open Giraffe
 open Giraffe.Serialization
 open Microsoft.AspNetCore.Builder
@@ -15,7 +16,6 @@ open Saturn
 open GameLib.Data.Global
 open GameLib.Execution
 open GameLib.Serialization
-open System.Threading
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us

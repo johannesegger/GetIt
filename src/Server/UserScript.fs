@@ -9,6 +9,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Scripting
 open GameLib.Data.Global
 open GameLib.Execution
+open GameLib.Server
 
 module private Seq =
     let ofType<'TResult> items =
@@ -45,14 +46,40 @@ type private YieldStatesUserScriptRewriter() =
             match actualIdentifier n.Expression with
             | Some identifier when identifier = "Player" ->
                 numberOfRewrites <- numberOfRewrites + 1
-                SyntaxFactory
-                    .YieldStatement(
+                [
+                    SyntaxFactory.VariableDeclaration(
+                        SyntaxFactory.IdentifierName "var",
+                        SyntaxFactory
+                            .VariableDeclarator(
+                                SyntaxFactory.Identifier "state")
+                            .WithInitializer(
+                                SyntaxFactory.EqualsValueClause n)
+                        |> SyntaxFactory.SingletonSeparatedList)
+                    |> SyntaxFactory.LocalDeclarationStatement
+                    :> StatementSyntax
+
+                    SyntaxFactory.YieldStatement(
                         SyntaxKind.YieldReturnStatement,
-                        SyntaxFactory.AssignmentExpression(
-                            SyntaxKind.SimpleAssignmentExpression,
-                            SyntaxFactory.IdentifierName(identifier),
-                            n))
-                    .WithSemicolonToken(node.SemicolonToken)
+                        SyntaxFactory.IdentifierName "state")
+                    :> StatementSyntax
+
+                    SyntaxFactory.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        SyntaxFactory.IdentifierName identifier,
+                        SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                SyntaxFactory.IdentifierName "State",
+                                SyntaxFactory.IdentifierName "getPlayer"
+                            ),
+                            SyntaxFactory.IdentifierName "state"
+                            |> SyntaxFactory.Argument
+                            |> SyntaxFactory.SingletonSeparatedList
+                            |> SyntaxFactory.ArgumentList))
+                    |> SyntaxFactory.ExpressionStatement
+                    :> StatementSyntax
+                ]
+                |> SyntaxFactory.Block
                 :> SyntaxNode
             | _ -> node :> SyntaxNode
         | _ -> node :> SyntaxNode
@@ -60,37 +87,23 @@ type private YieldStatesUserScriptRewriter() =
 type private CancellableUserScriptRewriter() =
     inherit CSharpSyntaxRewriter()
     let insertCancellationTokenCheck (statement: StatementSyntax) =
+        let checkCtStatement =
+            SyntaxFactory.MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                SyntaxFactory.IdentifierName "CancellationToken",
+                SyntaxFactory.IdentifierName "ThrowIfCancellationRequested")
+            |> SyntaxFactory.InvocationExpression
+            |> SyntaxFactory.ExpressionStatement
+            :> StatementSyntax
         match statement with
         | :? BlockSyntax as block ->
-            [
-                yield
-                    SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            SyntaxFactory.IdentifierName("CancellationToken"),
-                            SyntaxFactory.IdentifierName("ThrowIfCancellationRequested")
-                        )
-                    )
-                    |> SyntaxFactory.ExpressionStatement
-                    :> StatementSyntax
-                yield! block.Statements
-            ]
+            [ yield checkCtStatement
+              yield! block.Statements ]
             |> SyntaxList
             |> block.WithStatements
         | _ ->
-            [
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        SyntaxFactory.IdentifierName("CancellationToken"),
-                        SyntaxFactory.IdentifierName("ThrowIfCancellationRequested")
-                    )
-                )
-                |> SyntaxFactory.ExpressionStatement
-                :> StatementSyntax
-
-                statement
-            ]
+            [ checkCtStatement
+              statement ]
             |> SyntaxList
             |> SyntaxFactory.Block
 
@@ -147,7 +160,7 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
         SyntaxFactory
             .MethodDeclaration(
                 SyntaxFactory.ParseTypeName(
-                    getFullTypeName typeof<Player seq>),
+                    getFullTypeName typeof<Instruction seq>),
                 SyntaxFactory.Identifier("Run")
             )
             .WithBody(
@@ -186,6 +199,17 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
 
     syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options)
 
+let private foldInstructions instruction items =
+    let items' =
+        match instruction with
+        | ChangePlayerInstruction player -> player :: items
+        | TemporarilyChangePlayerInstruction (_, tmpPlayer) -> tmpPlayer :: items
+    match items' with
+    | p1 :: p2 :: tail when
+        p1.Position = p2.Position &&
+        p1.SpeechBubble = p2.SpeechBubble -> p1 :: tail
+    | x -> x
+
 let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (globals: ScriptGlobals) (tree: SyntaxTree) = async {
     let options =
         ScriptOptions.Default
@@ -196,13 +220,16 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
             let! ct = Async.CancellationToken
             let globals = { globals with CancellationToken = ct }
             return!
-                CSharpScript.EvaluateAsync<Player seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
+                CSharpScript.EvaluateAsync<Instruction seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
                 |> Async.AwaitTask
-                |> Async.map (Seq.toList >> RanToCompletion)
+                |> Async.map Seq.toList
         }
         |> fun a -> Async.StartChild(a, 10_000)
     try
-        return! getResult
+        let! instructions = getResult
+        return
+            List.foldBack foldInstructions instructions []
+            |> RanToCompletion
     with :? System.TimeoutException ->
         return TimedOut
 }
