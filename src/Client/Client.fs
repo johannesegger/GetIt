@@ -12,6 +12,7 @@ open Fulma.Extensions
 open Fulma.FontAwesome
 open Thoth.Elmish
 open MirrorSharp
+open ReactDraggable
 open GameLib.Data
 open GameLib.Data.Global
 open GameLib.Execution
@@ -77,6 +78,7 @@ type Msg =
     | StartDragPlayer of Position
     | DragPlayer of Position
     | StopDragPlayer
+    | ResetPlayer
 
 let init () =
     let code = "/*Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
@@ -106,7 +108,8 @@ for (var i = 0; i < 20; i++)
                   Color = { Red = 0uy; Green = 0uy; Blue = 0uy }
                   IsOn = false }
               SpeechBubble = None
-              CostumeUrl = "/images/models/turtle.png" }
+              CostumeUrl = "/images/models/turtle.png"
+              Size = { Width = 50.; Height = 50. } }
           DragState = NotDragging
           DrawnLines = [] }
 
@@ -246,11 +249,10 @@ let rec update msg currentModel =
     | DragPlayer position ->
         match currentModel.DragState with
         | Dragging previousDragPosition ->
+            let newPosition = currentModel.Player.Position + (position - previousDragPosition)
             let model =
                 { currentModel with
-                    Player =
-                        { currentModel.Player with
-                            Position = currentModel.Player.Position + (position - previousDragPosition) }
+                    Player = { currentModel.Player with Position = newPosition }
                     DragState = Dragging position }
             model, Cmd.none
         | NotDragging -> currentModel, Cmd.none
@@ -259,17 +261,17 @@ let rec update msg currentModel =
             { currentModel with
                 DragState = NotDragging }
         update SendMirrorSharpServerOptions model
+    | ResetPlayer ->
+        let model =
+            { currentModel with
+                Player =
+                    { currentModel.Player with
+                        Position = { X = 0.; Y = 0. }
+                        Direction = 0. } }
+        update SendMirrorSharpServerOptions model
 
 let private sceneView model dispatch =
     let sceneWidth, sceneHeight = 500., 500.
-
-    let playerPositionStyle player =
-        let left = sprintf "%fpx" (player.Position.X + sceneWidth / 2.)
-        let bottom = sprintf "%fpx" (player.Position.Y + sceneHeight / 2.)
-        [ Position "absolute"
-          Left left
-          Bottom bottom
-          Transform (sprintf "translate(-50%%, 50%%) rotate(%fdeg)" (360. - player.Direction)) ]
 
     let getAngle p1 p2 =
         let dx = p2.X - p1.X
@@ -296,33 +298,50 @@ let private sceneView model dispatch =
           Width (sprintf "%fpx" (getLength line.From line.To))
           Background (sprintf "rgb(%d, %d, %d)" line.Color.Red line.Color.Green line.Color.Blue) ]
 
-    let dragSpriteProps : IHTMLProp list =
-        match model.DragState with
-        | Dragging _ ->
-            [ OnMouseMove (fun e ->
-                let delta = { X = e.pageX; Y = -e.pageY }
-                dispatch (DragPlayer delta)
-              )
-              OnMouseUp (fun _e -> dispatch StopDragPlayer)
-            ]
-        | NotDragging -> []
-
     div
-        [ yield Style
+        [ Style
             [ Position "relative"
               Width (sprintf "%fpx" sceneWidth)
               Height (sprintf "%fpx" sceneWidth)
-              Background "#eeeeee" ] :> IHTMLProp
-          yield! dragSpriteProps ]
+              MarginTop (sprintf "%fpx" (model.Player.Size.Height / 2.))
+              Background "#eeeeee" ] ]
         [ for line in model.DrawnLines -> div [ Style (linePositionStyle line) ] []
+          yield draggable
+            [ Bounds
+                [ DraggableBoundsLeft (-model.Player.Size.Width / 2.)
+                  DraggableBoundsTop (-model.Player.Size.Height / 2.)
+                  DraggableBoundsRight (sceneWidth - model.Player.Size.Width / 2.)
+                  DraggableBoundsBottom (sceneHeight - model.Player.Size.Height / 2.) ]
+              DraggablePosition
+                [ X (model.Player.Position.X + sceneWidth / 2. - model.Player.Size.Width / 2.)
+                  Y (model.Player.Position.Y + sceneHeight / 2. - model.Player.Size.Height / 2.) ]
+              OnStart (fun e d ->
+                let position = { X = d.x; Y = d.y}
+                dispatch (StartDragPlayer position))
+              OnDrag (fun e d ->
+                let position = { X = d.x; Y = d.y}
+                dispatch (DragPlayer position))
+              OnStop (fun e d -> dispatch StopDragPlayer) ]
+            [ div
+                [ Style
+                    [ Width (sprintf "%fpx" model.Player.Size.Width)
+                      Height (sprintf "%fpx" model.Player.Size.Height) ] ]
+                [ img
+                    [ Src model.Player.CostumeUrl
+                      Draggable false
+                      Style [ Transform (sprintf "rotate(%fdeg)" (360. - model.Player.Direction)) ] ] ] ]
+          
+          let tooltipProps: IHTMLProp list =
+            match model.DragState with
+            | Dragging _ -> []
+            | NotDragging ->
+                [ ClassName (String.concat " " [ Tooltip.ClassName; Tooltip.IsTooltipBottom ])
+                  Tooltip.dataTooltip "Double-click to reset player" ]
+          
           yield div
-            [ Style (playerPositionStyle model.Player)
-              OnMouseDown (fun e ->
-                e.preventDefault()
-                let position = { X = e.pageX; Y = -e.pageY }
-                dispatch (StartDragPlayer position)) ]
-            [ img [ Src model.Player.CostumeUrl ] ]
-          yield div [ Style [ Position "absolute"; Left "20px"; Bottom "20px" ] ]
+            [ yield Style [ Position "absolute"; Left "20px"; Bottom "20px"; Cursor "default"; !!("userSelect", "none") ] :> IHTMLProp
+              yield OnDoubleClick (fun _ -> dispatch ResetPlayer) :> IHTMLProp
+              yield! tooltipProps ]
             [ str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction) ] ]
 
 let view model dispatch =

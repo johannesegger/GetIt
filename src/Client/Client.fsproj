@@ -5,6 +5,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="..\Shared\GameLib.Serialization.fs" />
+        <Compile Include="ReactDraggable.fs" />
         <Compile Include="MirrorSharpComponent.fs" />
         <Compile Include="Toast.fs" />
         <Compile Include="Client.fs" />

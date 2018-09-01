@@ -30,4 +30,5 @@ module Global =
           Direction: float
           Pen: Pen
           SpeechBubble: (string * TimeSpan option) option
-          CostumeUrl: string }
+          CostumeUrl: string
+          Size: Size }

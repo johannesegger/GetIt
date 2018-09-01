@@ -11,7 +11,8 @@
         "mirrorsharp": "0.9.3",
         "react": "16.4.0",
         "react-bootstrap": "0.32.1",
-        "react-dom": "16.4.0"
+        "react-dom": "16.4.0",
+        "react-draggable": "3.0.5"
     },
     "devDependencies": {
         "babel-core": "6.26.3",
