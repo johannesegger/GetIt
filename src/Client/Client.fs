@@ -297,8 +297,26 @@ let private lineView line =
           Height (sprintf "%fpx" line.Weight)
           Width (sprintf "%fpx" (getLength line.From line.To))
           Background (sprintf "rgb(%d, %d, %d)" line.Color.Red line.Color.Green line.Color.Blue) ]
-          
+
     div [ Style (linePositionStyle line) ] []
+
+let private speechBubbleView player =
+    match player.SpeechBubble with
+    | Some (text, _) ->
+        let yProp, yClassName =
+            if player.Position.Y > 0.
+            then Top (sceneHeight / 2. - player.Position.Y + player.Size.Height), "top"
+            else Bottom (sceneHeight / 2. + player.Position.Y + player.Size.Height), "bottom"
+        div
+            [ Style
+                [ Position "absolute"
+                  Left (player.Position.X + sceneWidth / 2.)
+                  yProp
+                  Transform "translate(-50%, 0)" ]
+              ClassName (sprintf "speech-bubble %s" yClassName) ]
+            [ p [] [ str text ] ]
+        |> Some
+    | _ -> None
 
 let private playerView player dispatch =
     draggable
@@ -319,7 +337,10 @@ let private playerView player dispatch =
           OnStop (fun e d -> dispatch StopDragPlayer) ]
         [ div
             [ Style
-                [ Width (sprintf "%fpx" player.Size.Width)
+                [ Position "absolute"
+                  Left "0"
+                  Top "0"
+                  Width (sprintf "%fpx" player.Size.Width)
                   Height (sprintf "%fpx" player.Size.Height) ] ]
             [ img
                 [ Src player.CostumeUrl
@@ -349,6 +370,7 @@ let private sceneView model dispatch =
               MarginTop (sprintf "%fpx" (model.Player.Size.Height / 2.))
               Background "#eeeeee" ] ]
         [ yield! List.map lineView model.DrawnLines
+          yield! Option.toList (speechBubbleView model.Player)
           yield playerView model.Player dispatch
           yield infoView model dispatch ]
 
