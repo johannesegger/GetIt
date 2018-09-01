@@ -314,12 +314,12 @@ let private sceneView model dispatch =
                   DraggableBoundsBottom (sceneHeight - model.Player.Size.Height / 2.) ]
               DraggablePosition
                 [ X (model.Player.Position.X + sceneWidth / 2. - model.Player.Size.Width / 2.)
-                  Y (model.Player.Position.Y + sceneHeight / 2. - model.Player.Size.Height / 2.) ]
+                  Y (sceneHeight / 2. - model.Player.Position.Y - model.Player.Size.Height / 2.) ]
               OnStart (fun e d ->
-                let position = { X = d.x; Y = d.y}
+                let position = { X = d.x; Y = -d.y}
                 dispatch (StartDragPlayer position))
               OnDrag (fun e d ->
-                let position = { X = d.x; Y = d.y}
+                let position = { X = d.x; Y = -d.y}
                 dispatch (DragPlayer position))
               OnStop (fun e d -> dispatch StopDragPlayer) ]
             [ div
