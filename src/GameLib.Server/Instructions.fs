@@ -66,11 +66,10 @@ type PlayerExtensions() =
         { player with SpeechBubble = Some (text, None) }
         |> ChangePlayerInstruction
     [<Extension>] 
-    static member Say(player, text, duration) =
+    static member Say(player, text, durationInSeconds) =
         TemporarilyChangePlayerInstruction
             (player,
-            { player with SpeechBubble = Some (text, Some duration) })
-
+            { player with SpeechBubble = Some (text, TimeSpan.FromSeconds durationInSeconds |> Some) })
     [<Extension>] 
     static member TurnOnPen(player) =
         { player with Pen = { player.Pen with IsOn = true} }
