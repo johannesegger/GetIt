@@ -63,7 +63,7 @@ type PlayerExtensions() =
     static member TurnLeft(player) = { player with Direction = 180. } |> ChangePlayerInstruction
     [<Extension>] 
     static member Say(player, text) =
-        { player with SpeechBubble = Some text }
+        { player with SpeechBubble = Some (text, None) }
         |> ChangePlayerInstruction
     [<Extension>] 
     static member Say(player, text, duration) =
