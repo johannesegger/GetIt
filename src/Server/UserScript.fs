@@ -47,15 +47,17 @@ type private YieldStatesUserScriptRewriter() =
             | Some identifier when identifier = "Player" ->
                 numberOfRewrites <- numberOfRewrites + 1
                 [
-                    SyntaxFactory.VariableDeclaration(
-                        SyntaxFactory.IdentifierName "var",
-                        SyntaxFactory
-                            .VariableDeclarator(
-                                SyntaxFactory.Identifier "state")
-                            .WithInitializer(
-                                SyntaxFactory.EqualsValueClause n)
-                        |> SyntaxFactory.SingletonSeparatedList)
-                    |> SyntaxFactory.LocalDeclarationStatement
+                    SyntaxFactory
+                        .LocalDeclarationStatement(
+                            SyntaxFactory.VariableDeclaration(
+                                SyntaxFactory.IdentifierName "var",
+                                SyntaxFactory
+                                    .VariableDeclarator(
+                                        SyntaxFactory.Identifier "state")
+                                    .WithInitializer(
+                                        SyntaxFactory.EqualsValueClause n)
+                                |> SyntaxFactory.SingletonSeparatedList))
+                        .WithSemicolonToken(node.SemicolonToken)
                     :> StatementSyntax
 
                     SyntaxFactory.YieldStatement(
