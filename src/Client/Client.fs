@@ -270,9 +270,9 @@ let rec update msg currentModel =
                         Direction = 0. } }
         update SendMirrorSharpServerOptions model
 
-let private sceneView model dispatch =
-    let sceneWidth, sceneHeight = 500., 500.
+let private sceneWidth, sceneHeight = 500., 500.
 
+let private lineView line =
     let getAngle p1 p2 =
         let dx = p2.X - p1.X
         let dy = p2.Y - p1.Y
@@ -297,7 +297,50 @@ let private sceneView model dispatch =
           Height (sprintf "%fpx" line.Weight)
           Width (sprintf "%fpx" (getLength line.From line.To))
           Background (sprintf "rgb(%d, %d, %d)" line.Color.Red line.Color.Green line.Color.Blue) ]
+          
+    div [ Style (linePositionStyle line) ] []
 
+let private playerView player dispatch =
+    draggable
+        [ Bounds
+            [ DraggableBoundsLeft (-player.Size.Width / 2.)
+              DraggableBoundsTop (-player.Size.Height / 2.)
+              DraggableBoundsRight (sceneWidth - player.Size.Width / 2.)
+              DraggableBoundsBottom (sceneHeight - player.Size.Height / 2.) ]
+          DraggablePosition
+            [ X (player.Position.X + sceneWidth / 2. - player.Size.Width / 2.)
+              Y (sceneHeight / 2. - player.Position.Y - player.Size.Height / 2.) ]
+          OnStart (fun e d ->
+            let position = { X = d.x; Y = -d.y}
+            dispatch (StartDragPlayer position))
+          OnDrag (fun e d ->
+            let position = { X = d.x; Y = -d.y}
+            dispatch (DragPlayer position))
+          OnStop (fun e d -> dispatch StopDragPlayer) ]
+        [ div
+            [ Style
+                [ Width (sprintf "%fpx" player.Size.Width)
+                  Height (sprintf "%fpx" player.Size.Height) ] ]
+            [ img
+                [ Src player.CostumeUrl
+                  Draggable false
+                  Style [ Transform (sprintf "rotate(%fdeg)" (360. - player.Direction)) ] ] ] ]
+
+let private infoView model dispatch =
+    let tooltipProps: IHTMLProp list =
+        match model.DragState with
+        | Dragging _ -> []
+        | NotDragging ->
+            [ ClassName (String.concat " " [ Tooltip.ClassName; Tooltip.IsTooltipBottom ])
+              Tooltip.dataTooltip "Double-click to reset player" ]
+      
+    div
+        [ yield Style [ Position "absolute"; Left "20px"; Bottom "20px"; Cursor "default"; !!("userSelect", "none") ] :> IHTMLProp
+          yield OnDoubleClick (fun _ -> dispatch ResetPlayer) :> IHTMLProp
+          yield! tooltipProps ]
+        [ str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction) ]
+
+let private sceneView model dispatch =
     div
         [ Style
             [ Position "relative"
@@ -305,44 +348,9 @@ let private sceneView model dispatch =
               Height (sprintf "%fpx" sceneWidth)
               MarginTop (sprintf "%fpx" (model.Player.Size.Height / 2.))
               Background "#eeeeee" ] ]
-        [ for line in model.DrawnLines -> div [ Style (linePositionStyle line) ] []
-          yield draggable
-            [ Bounds
-                [ DraggableBoundsLeft (-model.Player.Size.Width / 2.)
-                  DraggableBoundsTop (-model.Player.Size.Height / 2.)
-                  DraggableBoundsRight (sceneWidth - model.Player.Size.Width / 2.)
-                  DraggableBoundsBottom (sceneHeight - model.Player.Size.Height / 2.) ]
-              DraggablePosition
-                [ X (model.Player.Position.X + sceneWidth / 2. - model.Player.Size.Width / 2.)
-                  Y (sceneHeight / 2. - model.Player.Position.Y - model.Player.Size.Height / 2.) ]
-              OnStart (fun e d ->
-                let position = { X = d.x; Y = -d.y}
-                dispatch (StartDragPlayer position))
-              OnDrag (fun e d ->
-                let position = { X = d.x; Y = -d.y}
-                dispatch (DragPlayer position))
-              OnStop (fun e d -> dispatch StopDragPlayer) ]
-            [ div
-                [ Style
-                    [ Width (sprintf "%fpx" model.Player.Size.Width)
-                      Height (sprintf "%fpx" model.Player.Size.Height) ] ]
-                [ img
-                    [ Src model.Player.CostumeUrl
-                      Draggable false
-                      Style [ Transform (sprintf "rotate(%fdeg)" (360. - model.Player.Direction)) ] ] ] ]
-          
-          let tooltipProps: IHTMLProp list =
-            match model.DragState with
-            | Dragging _ -> []
-            | NotDragging ->
-                [ ClassName (String.concat " " [ Tooltip.ClassName; Tooltip.IsTooltipBottom ])
-                  Tooltip.dataTooltip "Double-click to reset player" ]
-          
-          yield div
-            [ yield Style [ Position "absolute"; Left "20px"; Bottom "20px"; Cursor "default"; !!("userSelect", "none") ] :> IHTMLProp
-              yield OnDoubleClick (fun _ -> dispatch ResetPlayer) :> IHTMLProp
-              yield! tooltipProps ]
-            [ str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" model.Player.Position.X model.Player.Position.Y model.Player.Direction) ] ]
+        [ yield! List.map lineView model.DrawnLines
+          yield playerView model.Player dispatch
+          yield infoView model dispatch ]
 
 let view model dispatch =
     let host = Browser.window.location.host
