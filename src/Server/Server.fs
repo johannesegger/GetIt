@@ -17,7 +17,7 @@ open GameLib.Data.Global
 open GameLib.Execution
 open GameLib.Serialization
 
-let publicPath = Path.GetFullPath "../Client/public"
+let publicPath = Path.GetFullPath "../Client"
 let port = 8085us
 
 let webApp = router {

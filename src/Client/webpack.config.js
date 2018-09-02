@@ -1,5 +1,6 @@
 var path = require("path");
 var webpack = require("webpack");
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 var fableUtils = require("fable-utils");
 
 function resolve(filePath) {
@@ -24,12 +25,11 @@ var port = process.env.SUAVE_FABLE_PORT || "8085";
 console.log("Bundling for " + (isProduction ? "production" : "development") + "...");
 
 module.exports = {
-    devtool: "source-map",
-    entry: resolve('./Client.fsproj'),
     mode: isProduction ? "production" : "development",
+    devtool: isProduction ? undefined : "source-map",
+    entry: resolve('./Client.fsproj'),
     output: {
-        path: resolve('./public/js'),
-        publicPath: "/js",
+        path: resolve('../../deploy/Client'),
         filename: "bundle.js"
     },
     resolve: {
@@ -92,8 +92,11 @@ module.exports = {
             }
         ]
     },
-    plugins: isProduction ? [] : [
-        new webpack.HotModuleReplacementPlugin(),
-        new webpack.NamedModulesPlugin()
+    plugins: [
+        ...(isProduction ? [] : [new webpack.HotModuleReplacementPlugin()]),
+        ...(isProduction ? [] : [new webpack.NamedModulesPlugin()]),
+        new CopyWebpackPlugin([
+            "public/"
+        ]),
     ]
 };
