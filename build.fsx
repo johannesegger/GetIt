@@ -11,6 +11,7 @@ open System
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
+open Fake.Api
 
 let serverPath = Path.getFullName "./src/Server"
 let clientPath = Path.getFullName "./src/Client"
@@ -104,6 +105,36 @@ Target.create "Bundle" (fun _ ->
 
     let publishArgs = sprintf "publish -c Release -o \"%s\" -r \"%s\"" serverDir runtime
     runDotNet publishArgs serverPath
+
+    let files = System.IO.Directory.GetFiles(deployDir, "*", System.IO.SearchOption.AllDirectories)
+    Zip.zip deployDir (sprintf "%s/play-and-learn-%s.zip" deployDir runtime) files
+)
+
+Target.create "GitHubRelease" (fun _ ->
+    let token =
+        match Environment.environVarOrDefault "github_token" "" with
+        | s when not (System.String.IsNullOrWhiteSpace s) -> s
+        | _ -> failwith "Please set the github_token environment variable to a github personal access token with repro access."
+
+    let version =
+        match Environment.environVarOrDefault "release_version" "" with
+        | s when SemVer.isValid s -> SemVer.parse s
+        | _ -> failwith "Please set the release_version environment variable to a SemVer compatible version."
+
+    let releaseNotes =
+        match Environment.environVarOrDefault "release_notes" "" with
+        | s when not (System.String.IsNullOrWhiteSpace s) -> String.splitStr Environment.NewLine s
+        | _ -> failwith "Please set the release_notes environment variable to a non-empty string."
+
+    let files =
+        [ runtime ]
+        |> List.map (fun n -> sprintf "%s/play-and-learn-%s.zip" deployDir n)
+
+    GitHub.createClientWithToken token
+    |> GitHub.draftNewRelease "johannesegger" "PlayAndLearn" version.AsString (version.PreRelease <> None) releaseNotes
+    |> GitHub.uploadFiles files
+    |> GitHub.publishDraft
+    |> Async.RunSynchronously
 )
 
 open Fake.Core.TargetOperators
@@ -112,6 +143,7 @@ open Fake.Core.TargetOperators
     ==> "InstallClient"
     ==> "Build"
     ==> "Bundle"
+    ==> "GitHubRelease"
 
 "Clean"
     ==> "InstallClient"
