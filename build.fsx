@@ -106,6 +106,9 @@ Target.create "Bundle" (fun _ ->
     let publishArgs = sprintf "publish -c Release -o \"%s\" -r \"%s\"" serverDir runtime
     runDotNet publishArgs serverPath
 
+    sprintf "assets/Turtle.ico"
+    |> Fake.IO.Shell.copyFile (Path.combine serverDir "Server.ico")
+
     let files = System.IO.Directory.GetFiles(deployDir, "*", System.IO.SearchOption.AllDirectories)
     let targetFile = sprintf "%s/play-and-learn-%s.zip" deployDir runtime
     Zip.zip deployDir targetFile files
