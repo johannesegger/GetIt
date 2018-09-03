@@ -107,7 +107,21 @@ Target.create "Bundle" (fun _ ->
     runDotNet publishArgs serverPath
 
     let files = System.IO.Directory.GetFiles(deployDir, "*", System.IO.SearchOption.AllDirectories)
-    Zip.zip deployDir (sprintf "%s/play-and-learn-%s.zip" deployDir runtime) files
+    let targetFile = sprintf "%s/play-and-learn-%s.zip" deployDir runtime
+    Zip.zip deployDir targetFile files
+
+    let calculateFileHashSha256 filePath =
+        let hashAlgorithm = "SHA256"
+
+        use hashImp = System.Security.Cryptography.HashAlgorithm.Create hashAlgorithm
+        use stream = System.IO.File.OpenRead filePath
+        let hash = hashImp.ComputeHash stream
+        BitConverter.ToString hash
+        |> String.replace "-" ""
+
+    let hashFile = sprintf "%s/play-and-learn-%s.sha256" deployDir runtime
+    calculateFileHashSha256 targetFile
+    |> File.writeString false hashFile
 )
 
 Target.create "GitHubRelease" (fun _ ->
@@ -127,8 +141,8 @@ Target.create "GitHubRelease" (fun _ ->
         | _ -> failwith "Please set the release_notes environment variable to a non-empty string."
 
     let files =
-        [ runtime ]
-        |> List.map (fun n -> sprintf "%s/play-and-learn-%s.zip" deployDir n)
+        [ sprintf "%s/play-and-learn-%s.zip" deployDir runtime
+          sprintf "%s/play-and-learn-%s.sha256" deployDir runtime ]
 
     GitHub.createClientWithToken token
     |> GitHub.draftNewRelease "johannesegger" "PlayAndLearn" version.AsString (version.PreRelease <> None) releaseNotes
