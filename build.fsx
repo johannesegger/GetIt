@@ -96,33 +96,40 @@ Target.create "Run" (fun _ ->
     |> ignore
 )
 
-let runtime = "win7-x64"
+let runtimes =
+    [ "win7-x64" ]
+    |> List.map (fun runtime ->
+        let packagePath = sprintf "%s/play-and-learn-%s.zip" deployDir runtime
+        runtime,
+        packagePath,
+        sprintf "%s.sha256" packagePath)
 
 Target.create "Bundle" (fun _ ->
     let serverDir = Path.combine deployDir "Server"
 
-    let publishArgs = sprintf "publish -c Release -o \"%s\" -r \"%s\"" serverDir runtime
-    runDotNet publishArgs serverPath
+    runtimes
+    |> List.iter (fun (runtime, packagePath, hashPath) ->
+        let publishArgs = sprintf "publish -c Release -o \"%s\" -r \"%s\"" serverDir runtime
+        runDotNet publishArgs serverPath
 
-    sprintf "assets/Turtle.ico"
-    |> Fake.IO.Shell.copyFile (Path.combine serverDir "Server.ico")
+        sprintf "assets/Turtle.ico"
+        |> Fake.IO.Shell.copyFile (Path.combine serverDir "Server.ico")
 
-    let files = System.IO.Directory.GetFiles(deployDir, "*", System.IO.SearchOption.AllDirectories)
-    let targetFile = sprintf "%s/play-and-learn-%s.zip" deployDir runtime
-    Zip.zip deployDir targetFile files
+        let files = System.IO.Directory.GetFiles(deployDir, "*", System.IO.SearchOption.AllDirectories)
+        Zip.zip deployDir packagePath files
 
-    let calculateFileHashSha256 filePath =
-        let hashAlgorithm = "SHA256"
+        let calculateFileHashSha256 filePath =
+            let hashAlgorithm = "SHA256"
 
-        use hashImp = System.Security.Cryptography.HashAlgorithm.Create hashAlgorithm
-        use stream = System.IO.File.OpenRead filePath
-        let hash = hashImp.ComputeHash stream
-        BitConverter.ToString hash
-        |> String.replace "-" ""
+            use hashImp = System.Security.Cryptography.HashAlgorithm.Create hashAlgorithm
+            use stream = System.IO.File.OpenRead filePath
+            let hash = hashImp.ComputeHash stream
+            BitConverter.ToString hash
+            |> String.replace "-" ""
 
-    let hashFile = sprintf "%s/play-and-learn-%s.sha256" deployDir runtime
-    calculateFileHashSha256 targetFile
-    |> File.writeString false hashFile
+        calculateFileHashSha256 packagePath
+        |> File.writeString false hashPath
+    )
 )
 
 Target.create "GitHubRelease" (fun _ ->
@@ -142,8 +149,8 @@ Target.create "GitHubRelease" (fun _ ->
         | _ -> failwith "Please set the release_notes environment variable to a non-empty string."
 
     let files =
-        [ sprintf "%s/play-and-learn-%s.zip" deployDir runtime
-          sprintf "%s/play-and-learn-%s.sha256" deployDir runtime ]
+        runtimes
+        |> List.collect (fun (_, packagePath, hashPath) -> [ packagePath; hashPath ])
 
     GitHub.createClientWithToken token
     |> GitHub.draftNewRelease "johannesegger" "PlayAndLearn" version.AsString (version.PreRelease <> None) releaseNotes
