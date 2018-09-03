@@ -100,8 +100,6 @@ let runtime = "win7-x64"
 
 Target.create "Bundle" (fun _ ->
     let serverDir = Path.combine deployDir "Server"
-    let clientDir = Path.combine deployDir "Client"
-    let publicDir = Path.combine clientDir "public"
 
     let publishArgs = sprintf "publish -c Release -o \"%s\" -r \"%s\"" serverDir runtime
     runDotNet publishArgs serverPath
