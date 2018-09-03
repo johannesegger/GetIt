@@ -18,7 +18,6 @@ open GameLib.Execution
 open GameLib.Serialization
 
 let publicPath = Path.GetFullPath "../Client"
-let port = 8085us
 
 let webApp = router {
     get "/api/init" (Successful.OK 42)
@@ -84,7 +83,7 @@ let writeUpdateResult (writer: IFastJsonWriter) (result: obj) session =
     JsonConvert.SerializeObject(result, [|jsonConverter|])
     |> writer.WriteValue
 
-let app = application {
+let app port = application {
     url (sprintf "http://0.0.0.0:%d/" port)
     use_router webApp
     memory_cache
@@ -133,4 +132,20 @@ let app = application {
     )
 }
 
-run app
+open Argu
+
+type CLIArguments =
+    | Port of port:int
+with
+    interface IArgParserTemplate with
+        member s.Usage =
+            match s with
+            | Port _ -> "specify a port the server listens at."
+
+[<EntryPoint>]
+let main argv =
+    let parser = ArgumentParser.Create<CLIArguments>()
+    let results = parser.Parse argv
+    let port = results.GetResult (Port, defaultValue = 8085)
+    run (app port)
+    0

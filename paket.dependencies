@@ -3,6 +3,7 @@ group Server
     source https://api.nuget.org/v3/index.json
 
     nuget FSharp.Core
+    nuget Argu
     nuget Microsoft.AspNetCore.WebSockets
     nuget Microsoft.CodeAnalysis.CSharp.Scripting
     nuget MirrorSharp.Common
