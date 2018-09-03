@@ -1,3 +1,4 @@
+open System
 open System.Collections.Immutable
 open System.IO
 open System.Reflection
@@ -132,20 +133,32 @@ let app port = application {
     )
 }
 
+let startBrowserWithDelay (url: Uri) =
+    async {
+        do! Async.Sleep 1000
+        let psi = System.Diagnostics.ProcessStartInfo(url.ToString(), UseShellExecute = true)
+        System.Diagnostics.Process.Start psi |> ignore
+    }
+    |> Async.Start
+
 open Argu
 
 type CLIArguments =
     | Port of port:int
+    | Open_Browser
 with
     interface IArgParserTemplate with
         member s.Usage =
             match s with
             | Port _ -> "specify a port the server listens at."
+            | Open_Browser _ -> "open web browser after launching the server."
 
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<CLIArguments>()
     let results = parser.Parse argv
     let port = results.GetResult (Port, defaultValue = 8085)
+    if results.Contains Open_Browser
+    then startBrowserWithDelay (sprintf "http://localhost:%d" port |> Uri)
     run (app port)
     0
