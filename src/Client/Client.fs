@@ -35,10 +35,14 @@ type MirrorSharpState =
 type NotRunnableReason =
     | TimedOut
 
+type LimitedRunnableReason =
+    | TooManyInstructions of Instruction list
+
 type UserProgram =
     | NotCompiled
     | NotRunnable of NotRunnableReason
     | Runnable of Instruction list
+    | LimitedRunnable of LimitedRunnableReason
     | Running of Instruction list
     | HasErrors of CompilationError list
 
@@ -207,8 +211,10 @@ let rec update msg currentModel =
                 UserProgram.HasErrors compilationErrors
             | RunScriptResult.RanToCompletion instructions ->
                 UserProgram.Runnable instructions
-            | RunScriptResult.TimedOut ->
+            | RunScriptResult.StoppedExecution StopReason.TimedOut ->
                 UserProgram.NotRunnable NotRunnableReason.TimedOut
+            | RunScriptResult.StoppedExecution (StopReason.TooManyInstructions instructions) ->
+                UserProgram.LimitedRunnable (LimitedRunnableReason.TooManyInstructions instructions)
 
         let model =
             { currentModel with
@@ -220,6 +226,7 @@ let rec update msg currentModel =
         then
             match currentModel.UserProgram with
             | UserProgram.Runnable (instruction :: instructions)
+            | UserProgram.LimitedRunnable (TooManyInstructions (instruction :: instructions))
             | Running (instruction :: instructions) ->
                 let applyPlayerInstruction player = function
                     | SetPositionInstruction position ->
@@ -270,7 +277,8 @@ let rec update msg currentModel =
                         (fun () -> RunCode)
                         (fun _e -> RunCode)
                 model, cmd
-            | UserProgram.Runnable [] -> currentModel, Cmd.none
+            | UserProgram.Runnable []
+            | UserProgram.LimitedRunnable (TooManyInstructions []) -> currentModel, Cmd.none
             | Running [] -> update SendMirrorSharpServerOptions currentModel
             | NotCompiled
             | UserProgram.HasErrors _
@@ -431,6 +439,7 @@ let view model dispatch =
         | NotCompiled -> IsSuccess, false
         | NotRunnable _ -> IsWarning, false
         | Runnable _ -> IsSuccess, true
+        | LimitedRunnable _ -> IsWarning, true
         | Running _ -> IsSuccess, true
         | HasErrors _ -> IsDanger, false
 
@@ -439,7 +448,10 @@ let view model dispatch =
         then Some ("Compiling", [])
         else
             match model.UserProgram with
-            | NotRunnable TimedOut -> Some ("Execution of your program timed out. You might have an endless loop somewhere", [ Tooltip.IsMultiline ])
+            | NotRunnable TimedOut ->
+                Some ("Execution of your program timed out. You might have an endless loop somewhere.", [ Tooltip.IsMultiline ])
+            | LimitedRunnable (TooManyInstructions instructions) ->
+                Some ((sprintf "Your program has too many instructions. Only the first %d instructions will be executed." instructions.Length), [ Tooltip.IsMultiline ])
             | _ -> None
 
     div [ Style [ Display "flex"; FlexDirection "column" ] ]

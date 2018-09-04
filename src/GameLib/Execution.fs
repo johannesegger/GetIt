@@ -30,7 +30,11 @@ type Instruction =
     | PlayerInstruction of PlayerInstruction
     | SceneInstruction of SceneInstruction
 
+type StopReason =
+    | TimedOut
+    | TooManyInstructions of Instruction list
+
 type RunScriptResult =
     | Skipped of SkipReason
     | RanToCompletion of Instruction list
-    | TimedOut
+    | StoppedExecution of StopReason

@@ -207,6 +207,7 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
         ScriptOptions.Default
             .WithReferences(metadataReferences)
             .WithImports(usingDirectives)
+    let maxInstructions = 5_000
     let! getResult =
         async {
             let! ct = Async.CancellationToken
@@ -214,12 +215,15 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
             return!
                 CSharpScript.EvaluateAsync<Instruction seq>(tree.ToString(), options, globals, typeof<ScriptGlobals>, ct)
                 |> Async.AwaitTask
-                |> Async.map Seq.toList
+                |> Async.map (Seq.truncate maxInstructions >> Seq.toList)
         }
         |> fun a -> Async.StartChild(a, 10_000)
     try
         let! result = getResult
-        return RanToCompletion result
+        return
+            if result.Length < maxInstructions
+            then RanToCompletion result
+            else StoppedExecution (TooManyInstructions result)
     with :? System.TimeoutException ->
-        return TimedOut
+        return StoppedExecution TimedOut
 }
