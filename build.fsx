@@ -75,7 +75,7 @@ Target.create "RestoreServer" (fun _ ->
 
 Target.create "Build" (fun _ ->
     runDotNet "build" serverPath
-    runDotNet "fable webpack --port free" clientPath
+    runDotNet "fable webpack --port free -- -p" clientPath
 )
 
 Target.create "Run" (fun _ ->
