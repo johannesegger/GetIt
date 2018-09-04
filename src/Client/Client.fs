@@ -415,7 +415,8 @@ let private sceneView model dispatch =
               Width (sprintf "%fpx" sceneWidth)
               Height (sprintf "%fpx" sceneWidth)
               MarginTop (sprintf "%fpx" (model.Player.Size.Height / 2.))
-              Background "#eeeeee" ] ]
+              Background "#eeeeee"
+              Overflow "hidden" ] ]
         [ yield! List.map lineView model.Player.DrawnLines
           yield! Option.toList (speechBubbleView model.Player)
           yield playerView model.Player dispatch
