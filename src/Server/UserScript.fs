@@ -7,7 +7,6 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Scripting
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Scripting
-open GameLib.Data.Global
 open GameLib.Execution
 open GameLib.Server
 
@@ -21,11 +20,12 @@ module private Async =
         return fn result
     }
 
-[<CLIMutable>]
-type ScriptGlobals = {
-    Player: Player
-    CancellationToken: System.Threading.CancellationToken
-}
+type ScriptGlobals =
+    { mutable State: ScriptState
+      CancellationToken: System.Threading.CancellationToken }
+    with
+        member this.Player = this.State.Player
+        member this.Scene = this.State.Scene
 
 type private YieldStatesUserScriptRewriter() =
     inherit CSharpSyntaxRewriter()
@@ -53,7 +53,7 @@ type private YieldStatesUserScriptRewriter() =
                                 SyntaxFactory.IdentifierName "var",
                                 SyntaxFactory
                                     .VariableDeclarator(
-                                        SyntaxFactory.Identifier "state")
+                                        SyntaxFactory.Identifier "instruction")
                                     .WithInitializer(
                                         SyntaxFactory.EqualsValueClause n)
                                 |> SyntaxFactory.SingletonSeparatedList))
@@ -62,21 +62,24 @@ type private YieldStatesUserScriptRewriter() =
 
                     SyntaxFactory.YieldStatement(
                         SyntaxKind.YieldReturnStatement,
-                        SyntaxFactory.IdentifierName "state")
+                        SyntaxFactory.IdentifierName "instruction")
                     :> StatementSyntax
 
                     SyntaxFactory.AssignmentExpression(
                         SyntaxKind.SimpleAssignmentExpression,
-                        SyntaxFactory.IdentifierName identifier,
+                        SyntaxFactory.IdentifierName "State",
                         SyntaxFactory.InvocationExpression(
                             SyntaxFactory.MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
-                                SyntaxFactory.IdentifierName "State",
-                                SyntaxFactory.IdentifierName "getPlayer"
+                                SyntaxFactory.IdentifierName "ScriptStateModule",
+                                SyntaxFactory.IdentifierName "applyInstruction"
                             ),
-                            SyntaxFactory.IdentifierName "state"
-                            |> SyntaxFactory.Argument
-                            |> SyntaxFactory.SingletonSeparatedList
+                            [ SyntaxFactory.IdentifierName "State"
+                              |> SyntaxFactory.Argument
+
+                              SyntaxFactory.IdentifierName "instruction"
+                              |> SyntaxFactory.Argument ]
+                            |> SyntaxFactory.SeparatedList
                             |> SyntaxFactory.ArgumentList))
                     |> SyntaxFactory.ExpressionStatement
                     :> StatementSyntax
@@ -161,56 +164,43 @@ let rewriteForExecution (syntaxTree: SyntaxTree) =
     let method =
         SyntaxFactory
             .MethodDeclaration(
-                SyntaxFactory.ParseTypeName(
-                    getFullTypeName typeof<Instruction seq>),
-                SyntaxFactory.Identifier("Run")
+                getFullTypeName typeof<Instruction seq> |> SyntaxFactory.ParseTypeName,
+                SyntaxFactory.Identifier "Run"
             )
             .WithBody(
-                SyntaxFactory.Block(
-                    [
-                        yield!
-                            root.Members
-                            |> Seq.ofType<GlobalStatementSyntax>
-                            |> Seq.map (fun p -> p.Statement)
-                        if yieldStatesRewriter.NumberOfRewrites = 0
-                        then
-                            yield
-                                SyntaxFactory.YieldStatement(
-                                    SyntaxKind.YieldBreakStatement)
-                                :> StatementSyntax
-                    ]
-                )
+                [
+                    yield!
+                        root.Members
+                        |> Seq.ofType<GlobalStatementSyntax>
+                        |> Seq.map (fun p -> p.Statement)
+                    if yieldStatesRewriter.NumberOfRewrites = 0
+                    then
+                        yield
+                            SyntaxKind.YieldBreakStatement
+                            |> SyntaxFactory.YieldStatement
+                            :> StatementSyntax
+                ]
+                |> SyntaxFactory.Block
             )
     let newRoot =
         root
             .WithMembers(
-                SyntaxFactory.List(seq {
+                [
                     yield!
                         root.Members
                         |> Seq.filter (fun p -> p :? GlobalStatementSyntax |> not)
                     yield method :> MemberDeclarationSyntax
-                    yield 
-                        SyntaxFactory.GlobalStatement(
-                            SyntaxFactory.ExpressionStatement(
-                                SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName("Run")),
-                                SyntaxFactory.MissingToken(SyntaxKind.SemicolonToken)))
+                    yield
+                        SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName "Run"),
+                            SyntaxFactory.MissingToken SyntaxKind.SemicolonToken)
+                        |> SyntaxFactory.GlobalStatement
                         :> MemberDeclarationSyntax
-                })
-            )
+                ]
+                |> SyntaxFactory.List)
             .NormalizeWhitespace()
 
     syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options)
-
-let private foldInstructions instruction items =
-    let items' =
-        match instruction with
-        | ChangePlayerInstruction player -> player :: items
-        | TemporarilyChangePlayerInstruction (_, tmpPlayer) -> tmpPlayer :: items
-    match items' with
-    | p1 :: p2 :: tail when
-        p1.Position = p2.Position &&
-        p1.SpeechBubble = p2.SpeechBubble -> p1 :: tail
-    | x -> x
 
 let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq) (globals: ScriptGlobals) (tree: SyntaxTree) = async {
     let options =
@@ -228,10 +218,8 @@ let run (metadataReferences: MetadataReference seq) (usingDirectives: string seq
         }
         |> fun a -> Async.StartChild(a, 10_000)
     try
-        let! instructions = getResult
-        return
-            List.foldBack foldInstructions instructions []
-            |> RanToCompletion
+        let! result = getResult
+        return RanToCompletion result
     with :? System.TimeoutException ->
         return TimedOut
 }

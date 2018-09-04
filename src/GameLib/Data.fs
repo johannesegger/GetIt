@@ -1,7 +1,5 @@
 module GameLib.Data
 
-open System
-
 type RGBColor =
     { Red: byte
       Green: byte
@@ -19,16 +17,14 @@ type Size =
     { Width: float
       Height: float }
 
-module Global =
-    type Pen =
-        { Color: RGBColor
-          Weight: float
-          IsOn: bool }
+type Pen =
+    { Color: RGBColor
+      Weight: float
+      IsOn: bool }
 
+module Server =
     type Player =
         { Position: Position
           Direction: float
           Pen: Pen
-          SpeechBubble: (string * TimeSpan option) option
-          CostumeUrl: string
           Size: Size }

@@ -14,7 +14,6 @@ open Thoth.Elmish
 open MirrorSharp
 open ReactDraggable
 open GameLib.Data
-open GameLib.Data.Global
 open GameLib.Execution
 open GameLib.Serialization
 
@@ -39,20 +38,28 @@ type NotRunnableReason =
 type UserProgram =
     | NotCompiled
     | NotRunnable of NotRunnableReason
-    | Runnable of Player list
-    | Running of Player list
+    | Runnable of Instruction list
+    | Running of Instruction list
     | HasErrors of CompilationError list
-
-type DrawnLine = {
-    From: Position
-    To: Position
-    Color: RGBColor
-    Weight: float
-}
 
 type DragState =
     | NotDragging
     | Dragging of Position
+
+type DrawnLine =
+    { From: Position
+      To: Position
+      Color: RGBColor
+      Weight: float }
+
+type Player =
+    { Position: Position
+      Direction: float
+      Pen: Pen
+      SpeechBubble: (string * TimeSpan option) option
+      CostumeUrl: string
+      Size: Size
+      DrawnLines: DrawnLine list }
 
 type Model = {
     MirrorSharp: MirrorSharpState
@@ -61,7 +68,6 @@ type Model = {
     IsProgramInSyncWithServer: bool
     Player: Player
     DragState: DragState
-    DrawnLines: DrawnLine list
 }
 
 type Msg =
@@ -109,9 +115,9 @@ for (var i = 0; i < 20; i++)
                   IsOn = false }
               SpeechBubble = None
               CostumeUrl = "/images/models/turtle.png"
-              Size = { Width = 50.; Height = 50. } }
-          DragState = NotDragging
-          DrawnLines = [] }
+              Size = { Width = 50.; Height = 50. }
+              DrawnLines = [] }
+          DragState = NotDragging }
 
     model, Cmd.none
 
@@ -122,6 +128,13 @@ let private toast title message =
     |> Toast.noTimeout
     |> Toast.withCloseButton
     |> Toast.dismissOnClick
+
+let toServerPlayer player =
+    { Server.Player.Position = player.Position
+      Server.Player.Direction = player.Direction
+      Server.Player.Pen = player.Pen
+      Server.Player.Size = player.Size
+    }
 
 let rec update msg currentModel =
     match msg with
@@ -161,7 +174,9 @@ let rec update msg currentModel =
             let cmd =
                 Cmd.ofPromise
                     mirrorSharp.Instance.sendServerOptions
-                    (createObj [ "language" ==> "C#"; "x-player" ==> serializePlayer currentModel.Player ]) // Remove language if https://github.com/ashmind/mirrorsharp/pull/85 is merged
+                    (createObj
+                        [ "language" ==> "C#" // Remove if https://github.com/ashmind/mirrorsharp/pull/85 is merged
+                          "x-player" ==> (currentModel.Player |> toServerPlayer |> serializePlayer) ])
                     (Ok >> SendMirrorSharpServerOptionsResponse)
                     (Result.Error >> SendMirrorSharpServerOptionsResponse)
             model, cmd
@@ -206,22 +221,46 @@ let rec update msg currentModel =
             match currentModel.UserProgram with
             | UserProgram.Runnable (instruction :: instructions)
             | Running (instruction :: instructions) ->
+                let applyPlayerInstruction player = function
+                    | SetPositionInstruction position ->
+                        let drawnLines =
+                            if player.Pen.IsOn && position <> player.Position
+                            then
+                                let line =
+                                    { From = player.Position
+                                      To = position
+                                      Color = player.Pen.Color
+                                      Weight = player.Pen.Weight }
+                                line :: player.DrawnLines
+                            else player.DrawnLines
+                        { player with
+                            Position = position
+                            DrawnLines = drawnLines }
+                    | SetDirectionInstruction direction -> { player with Direction = direction }
+                    | SayInstruction data -> { player with SpeechBubble = Some data }
+                    | SetPenOnInstruction isOn -> { player with Pen = { player.Pen with IsOn = isOn } }
+                    | SetPenColorInstruction color -> { player with Pen = { player.Pen with Color = color } }
+                    | SetPenWeigthInstruction weight -> { player with Pen = { player.Pen with Weight = weight } }
+
+                let applySceneInstruction player = function
+                    | ClearLinesInstruction -> { player with DrawnLines = [] }
+
+                let applyInstruction player = function
+                    | PlayerInstruction instruction -> applyPlayerInstruction player instruction
+                    | SceneInstruction instruction -> applySceneInstruction player instruction
+
+                let player =
+                    match currentModel.Player with
+                    | { SpeechBubble = (Some (_, Some _)) } as p -> { p with SpeechBubble = None }
+                    | x -> x
+
                 let model =
                     { currentModel with
-                        Player = instruction
+                        Player = applyInstruction player instruction
                         UserProgram = Running instructions }
-                let model' =
-                    if model.Player.Pen.IsOn && currentModel.Player.Position <> model.Player.Position
-                    then
-                        let line =
-                            { From = currentModel.Player.Position
-                              To = model.Player.Position
-                              Color = model.Player.Pen.Color
-                              Weight = model.Player.Pen.Weight }
-                        { model with DrawnLines = line :: model.DrawnLines}
-                    else model
+                    
                 let duration =
-                    match instruction with
+                    match model.Player with
                     | { SpeechBubble = Some (_, Some duration) } -> duration
                     | _ -> TimeSpan.FromMilliseconds 50.
                 let cmd =
@@ -230,7 +269,7 @@ let rec update msg currentModel =
                         (int duration.TotalMilliseconds)
                         (fun () -> RunCode)
                         (fun _e -> RunCode)
-                model', cmd
+                model, cmd
             | UserProgram.Runnable [] -> currentModel, Cmd.none
             | Running [] -> update SendMirrorSharpServerOptions currentModel
             | NotCompiled
@@ -369,7 +408,7 @@ let private sceneView model dispatch =
               Height (sprintf "%fpx" sceneWidth)
               MarginTop (sprintf "%fpx" (model.Player.Size.Height / 2.))
               Background "#eeeeee" ] ]
-        [ yield! List.map lineView model.DrawnLines
+        [ yield! List.map lineView model.Player.DrawnLines
           yield! Option.toList (speechBubbleView model.Player)
           yield playerView model.Player dispatch
           yield infoView model dispatch ]

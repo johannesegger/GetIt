@@ -3,17 +3,31 @@ namespace GameLib.Server
 open System
 open System.Runtime.CompilerServices
 open GameLib.Data
-open GameLib.Data.Global
+open GameLib.Data.Server
+open GameLib.Execution
 open Spectrum
 
-type Instruction =
-    | ChangePlayerInstruction of Player
-    | TemporarilyChangePlayerInstruction of Player * Player
+type Scene() = class end
 
-module State =
-    let getPlayer = function
-        | ChangePlayerInstruction player -> player
-        | TemporarilyChangePlayerInstruction (player, _) -> player
+type ScriptState =
+    { Player: Player
+      Scene: Scene }
+
+module ScriptStateModule =
+    let applyPlayerInstruction player = function
+        | SetPositionInstruction position -> { player with Position = position }
+        | SetDirectionInstruction direction -> { player with Direction = direction }
+        | SayInstruction _ -> player
+        | SetPenOnInstruction isOn -> { player with Pen = { player.Pen with IsOn = isOn } }
+        | SetPenColorInstruction color -> { player with Pen = { player.Pen with Color = color } }
+        | SetPenWeigthInstruction weight -> { player with Pen = { player.Pen with Weight = weight } }
+
+    let applySceneInstruction scene = function
+        | ClearLinesInstruction -> scene
+
+    let applyInstruction state = function
+        | PlayerInstruction instruction -> { state with Player = applyPlayerInstruction state.Player instruction }
+        | SceneInstruction instruction -> { state with Scene = applySceneInstruction state.Scene instruction }
 
 module private Helpers =
     let wrapAngle value = (value % 360. + 360.) % 360.
@@ -29,10 +43,9 @@ module private Helpers =
 [<Extension>]
 type PlayerExtensions() =
     [<Extension>]
-    static member GoTo(player, x, y) = { player with Position = { X = x; Y = y } } |> ChangePlayerInstruction
-
+    static member GoTo(player: Player, x, y) = SetPositionInstruction { X = x; Y = y } |> PlayerInstruction
     [<Extension>]
-    static member Move(player, x, y) = { player with Position = player.Position + { X = x; Y = y } } |> ChangePlayerInstruction
+    static member Move(player, x, y) = SetPositionInstruction (player.Position + { X = x; Y = y }) |> PlayerInstruction
     [<Extension>]
     static member MoveRight(player, x) = player.Move(x, 0.)
     [<Extension>]
@@ -47,54 +60,65 @@ type PlayerExtensions() =
         player.Move(Math.Cos(directionRadians) * steps, Math.Sin(directionRadians) * steps)
     [<Extension>]
     static member RotateClockwise(player, angleInDegrees) =
-        { player with Direction = player.Direction - angleInDegrees |> Helpers.wrapAngle }
-        |> ChangePlayerInstruction
+        player.Direction - angleInDegrees
+        |> Helpers.wrapAngle
+        |> SetDirectionInstruction
+        |> PlayerInstruction
     [<Extension>]
     static member RotateCounterClockwise(player, angleInDegrees) =
-        { player with Direction = player.Direction + angleInDegrees |> Helpers.wrapAngle }
-        |> ChangePlayerInstruction
+        player.Direction + angleInDegrees
+        |> Helpers.wrapAngle
+        |> SetDirectionInstruction
+        |> PlayerInstruction
     [<Extension>]
-    static member TurnUp(player) = { player with Direction = 90. } |> ChangePlayerInstruction
+    static member TurnUp(player: Player) = SetDirectionInstruction 90. |> PlayerInstruction
     [<Extension>]
-    static member TurnRight(player) = { player with Direction = 0. } |> ChangePlayerInstruction
+    static member TurnRight(player: Player) = SetDirectionInstruction 0. |> PlayerInstruction
     [<Extension>]
-    static member TurnDown(player) = { player with Direction = 270. } |> ChangePlayerInstruction
+    static member TurnDown(player: Player) = SetDirectionInstruction 270. |> PlayerInstruction
     [<Extension>] 
-    static member TurnLeft(player) = { player with Direction = 180. } |> ChangePlayerInstruction
+    static member TurnLeft(player: Player) = SetDirectionInstruction 180. |> PlayerInstruction
     [<Extension>] 
-    static member Say(player, text) =
-        { player with SpeechBubble = Some (text, None) }
-        |> ChangePlayerInstruction
+    static member Say(player: Player, text) =
+        (text, None)
+        |> SayInstruction
+        |> PlayerInstruction
     [<Extension>] 
-    static member Say(player, text, durationInSeconds) =
-        TemporarilyChangePlayerInstruction
-            (player,
-            { player with SpeechBubble = Some (text, TimeSpan.FromSeconds durationInSeconds |> Some) })
+    static member Say(player: Player, text, durationInSeconds) =
+        (text, TimeSpan.FromSeconds durationInSeconds |> Some)
+        |> SayInstruction
+        |> PlayerInstruction
     [<Extension>] 
-    static member TurnOnPen(player) =
-        { player with Pen = { player.Pen with IsOn = true} }
-        |> ChangePlayerInstruction
+    static member TurnOnPen(player: Player) =
+        SetPenOnInstruction true
+        |> PlayerInstruction
     [<Extension>] 
-    static member TurnOffPen(player) =
-        { player with Pen = { player.Pen with IsOn = false} }
-        |> ChangePlayerInstruction
+    static member TurnOffPen(player: Player) =
+        SetPenOnInstruction false
+        |> PlayerInstruction
     [<Extension>] 
     static member TogglePenOnOff(player) =
-        { player with Pen = { player.Pen with IsOn = not player.Pen.IsOn } }
-        |> ChangePlayerInstruction
+        SetPenOnInstruction (not player.Pen.IsOn)
+        |> PlayerInstruction
     [<Extension>] 
-    static member SetPenColor(player, color) =
-        { player with Pen = { player.Pen with Color = color } }
-        |> ChangePlayerInstruction
+    static member SetPenColor(player: Player, color) =
+        SetPenColorInstruction color
+        |> PlayerInstruction
     [<Extension>] 
     static member ShiftPenColor(player, offset) =
-        { player with Pen = { player.Pen with Color = Helpers.shiftColor offset player.Pen.Color } }
-        |> ChangePlayerInstruction
+        Helpers.shiftColor offset player.Pen.Color
+        |> SetPenColorInstruction
+        |> PlayerInstruction
     [<Extension>] 
-    static member SetPenWeight(player, weight) =
-        { player with Pen = { player.Pen with Weight = weight } }
-        |> ChangePlayerInstruction
+    static member SetPenWeight(player: Player, weight) =
+        SetPenWeigthInstruction weight
+        |> PlayerInstruction
     [<Extension>] 
     static member ChangePenWeight(player, weight) =
-        { player with Pen = { player.Pen with Weight = player.Pen.Weight + weight } }
-        |> ChangePlayerInstruction
+        SetPenWeigthInstruction (player.Pen.Weight + weight)
+        |> PlayerInstruction
+
+[<Extension>]
+type SceneExtensions() =
+    [<Extension>]
+    static member ClearLines(scene: Scene) = ClearLinesInstruction

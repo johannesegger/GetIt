@@ -1,6 +1,6 @@
 module GameLib.Serialization
 
-open GameLib.Data.Global
+open GameLib.Data.Server
 
 module String =
     let replace (a: string) (b: string) (text: string) = text.Replace(a, b)

@@ -14,9 +14,10 @@ open MirrorSharp.Advanced
 open MirrorSharp.AspNetCore
 open Newtonsoft.Json
 open Saturn
-open GameLib.Data.Global
+open GameLib.Data.Server
 open GameLib.Execution
 open GameLib.Serialization
+open GameLib.Server
 
 let publicPath = Path.GetFullPath "../Client"
 
@@ -65,7 +66,9 @@ let update (session: IWorkSession) (diagnostics: Diagnostic seq) = async {
     else
         let! ct = Async.CancellationToken
         let globals = {
-            UserScript.ScriptGlobals.Player = getPlayer session
+            UserScript.ScriptGlobals.State =
+                { Player = getPlayer session
+                  Scene = Scene() }
             UserScript.ScriptGlobals.CancellationToken = CancellationToken.None // is overwritten when running script
         }
         let! tree =
@@ -127,7 +130,9 @@ let app port = application {
             )
         options.CSharp.ParseOptions <- options.CSharp.ParseOptions.WithKind SourceCodeKind.Script
         options.CSharp.MetadataReferences <- ImmutableList.CreateRange metadataReferences
-        options.CSharp.CompilationOptions <- compilationOptions.WithUsings(compilationOptions.Usings.Add("GameLib.DummyGlobals"))
+        options.CSharp.CompilationOptions <-
+            compilationOptions.Usings.Add "GameLib.Server.DummyGlobals"
+            |> compilationOptions.WithUsings
 
         app.UseMirrorSharp(options)
     )

@@ -7,7 +7,6 @@
   <ItemGroup>
     <Compile Include="Data.fs" />
     <Compile Include="Execution.fs" />
-    <Compile Include="DummyGlobals.fs" />
   </ItemGroup>
 
 </Project>
