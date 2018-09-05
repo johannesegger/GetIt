@@ -386,7 +386,7 @@ let private infoView model dispatch =
         match model.DragState with
         | Dragging _ -> []
         | NotDragging ->
-            [ ClassName (String.concat " " [ Tooltip.ClassName; Tooltip.IsTooltipBottom ])
+            [ ClassName (String.concat " " [ Tooltip.ClassName; Tooltip.IsTooltipTop ])
               Tooltip.dataTooltip "Double-click to reset player" ]
       
     div
