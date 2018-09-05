@@ -91,20 +91,7 @@ type Msg =
     | ResetPlayer
 
 let init () =
-    let code = "/*Player.SetPenColor(new RGBColor(0xFF, 0x00, 0xFF));
-for (var i = 0; i < 20; i++)
-{
-    Player.TurnOffPen();
-    Player.GoTo(0, -200 + 20 * i);
-    Player.TurnOnPen();
-    for (int j = 0; j < 60; j++)
-    {
-        Player.SetPenWeight((j % 5) + 1);
-        Player.RotateCounterClockwise(6);
-        Player.Go(5);
-        Player.ShiftPenColor(0.01);
-    }
-}*/"
+    let code = ""
     let model =
         { MirrorSharp = NotInitialized
           Code = code
