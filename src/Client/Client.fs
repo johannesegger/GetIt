@@ -212,9 +212,9 @@ let rec update msg currentModel =
         if currentModel.IsProgramInSyncWithServer
         then
             match currentModel.UserProgram with
-            | UserProgram.Runnable (instruction :: instructions)
-            | UserProgram.LimitedRunnable (TooManyInstructions (instruction :: instructions))
-            | Running (instruction :: instructions) ->
+            | UserProgram.Runnable ((x :: xs) as instructions)
+            | UserProgram.LimitedRunnable (TooManyInstructions ((x :: xs) as instructions))
+            | Running ((x :: xs) as instructions) ->
                 let applyPlayerInstruction player = function
                     | SetPositionInstruction position ->
                         let drawnLines =
@@ -243,14 +243,32 @@ let rec update msg currentModel =
                     | PlayerInstruction instruction -> applyPlayerInstruction player instruction
                     | SceneInstruction instruction -> applySceneInstruction player instruction
 
-                let player =
-                    match currentModel.Player with
+                let rec applyInstructions player instructions =
+                    match instructions with
+                    | [] -> player, []
+                    | x :: xs ->
+                        let player' = applyInstruction player x
+                        if player.Position = player'.Position
+                            && player.Direction = player'.Direction
+                            && player.SpeechBubble = player'.SpeechBubble
+                            && player.CostumeUrl = player'.CostumeUrl
+                            && player.Size = player'.Size
+                        then applyInstructions player' xs
+                        else player', xs
+
+                let removeTemporarySpeechBubble player =
+                    match player with
                     | { SpeechBubble = (Some (_, Some _)) } as p -> { p with SpeechBubble = None }
                     | x -> x
 
+                let player, instructions =
+                    currentModel.Player
+                    |> removeTemporarySpeechBubble
+                    |> fun p -> applyInstructions p instructions
+
                 let model =
                     { currentModel with
-                        Player = applyInstruction player instruction
+                        Player = player
                         UserProgram = Running instructions }
                     
                 let duration =
