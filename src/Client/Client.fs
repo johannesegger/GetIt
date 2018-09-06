@@ -17,6 +17,9 @@ open GameLib.Data
 open GameLib.Execution
 open GameLib.Serialization
 
+type ServerScriptState = GameLib.Data.Server.ScriptState
+type ServerScene = GameLib.Data.Server.Scene
+
 importAll "../../node_modules/font-awesome/scss/font-awesome.scss"
 importAll "../../node_modules/firacode/distr/fira_code.css"
 importAll "./sass/main.sass"
@@ -120,11 +123,13 @@ let private toast title message =
     |> Toast.withCloseButton
     |> Toast.dismissOnClick
 
-let toServerPlayer player =
-    { Server.Player.Position = player.Position
-      Server.Player.Direction = player.Direction
-      Server.Player.Pen = player.Pen
-      Server.Player.Size = player.Size
+let toServerState player =
+    { ServerScriptState.Player =
+        { Position = player.Position
+          Direction = player.Direction
+          Pen = player.Pen
+          Size = player.Size }
+      ServerScriptState.Scene = ServerScene()
     }
 
 let rec update msg currentModel =
@@ -167,7 +172,7 @@ let rec update msg currentModel =
                     mirrorSharp.Instance.sendServerOptions
                     (createObj
                         [ "language" ==> "C#" // Remove if https://github.com/ashmind/mirrorsharp/pull/85 is merged
-                          "x-player" ==> (currentModel.Player |> toServerPlayer |> serializePlayer) ])
+                          "x-state" ==> (currentModel.Player |> toServerState |> serializeState) ])
                     (Ok >> SendMirrorSharpServerOptionsResponse)
                     (Result.Error >> SendMirrorSharpServerOptionsResponse)
             model, cmd

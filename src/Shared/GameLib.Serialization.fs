@@ -15,21 +15,21 @@ let btoa (text: string): string = jsNative
 open Newtonsoft
 #endif
 
-let serializePlayer (player: Player): string =
+let serializeState (state: ScriptState): string =
 #if FABLE_COMPILER
-    player |> toJson |> btoa |> String.replace "=" "|"
+    state |> toJson |> btoa |> String.replace "=" "|"
 #else
     failwith "not implemented"
 #endif
 
 #if FABLE_COMPILER
-let deserializePlayer (value: string) =
+let deserializeState (value: string) =
     failwith "not implemented"
 #else
-let deserializePlayer jsonConverter (value: string) =
+let deserializeState jsonConverter (value: string) =
     value
     |> String.replace "|" "="
     |> System.Convert.FromBase64String
     |> System.Text.Encoding.Default.GetString
-    |> fun s -> Json.JsonConvert.DeserializeObject<Player>(s, [|jsonConverter|])
+    |> fun s -> Json.JsonConvert.DeserializeObject<ScriptState>(s, [|jsonConverter|])
 #endif

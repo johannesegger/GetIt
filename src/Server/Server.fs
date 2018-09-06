@@ -43,11 +43,11 @@ let compilationOptions =
         usings = [ "GameLib.Data"; "GameLib.Server" ]
     )
 
-let setPlayer (session: IWorkSession) player =
-    session.ExtensionData.["player"] <- player
+let setState (session: IWorkSession) state =
+    session.ExtensionData.["state"] <- state
 
-let getPlayer (session: IWorkSession) =
-    session.ExtensionData.["player"] :?> Player
+let getState (session: IWorkSession) =
+    session.ExtensionData.["state"] :?> ScriptState
 
 let update (session: IWorkSession) (diagnostics: Diagnostic seq) = async {
     let compilationErrors =
@@ -66,9 +66,7 @@ let update (session: IWorkSession) (diagnostics: Diagnostic seq) = async {
     else
         let! ct = Async.CancellationToken
         let globals = {
-            UserScript.ScriptGlobals.State =
-                { Player = getPlayer session
-                  Scene = Scene() }
+            UserScript.ScriptGlobals.State = getState session
             UserScript.ScriptGlobals.CancellationToken = CancellationToken.None // is overwritten when running script
         }
         let! tree =
@@ -113,10 +111,10 @@ let app port = application {
                     { new ISetOptionsFromClientExtension with
                         member __.TrySetOption(session, name, value) =
                             match name with
-                            | "x-player" ->
+                            | "x-state" ->
                                 value
-                                |> deserializePlayer jsonConverter
-                                |> setPlayer session
+                                |> deserializeState jsonConverter
+                                |> setState session
                                 true
                             | _ -> false
                     },

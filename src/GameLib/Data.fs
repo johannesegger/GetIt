@@ -28,3 +28,9 @@ module Server =
           Direction: float
           Pen: Pen
           Size: Size }
+
+    type Scene() = class end
+
+    type ScriptState =
+        { Player: Player
+          Scene: Scene }

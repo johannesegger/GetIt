@@ -21,7 +21,7 @@ module private Async =
     }
 
 type ScriptGlobals =
-    { mutable State: ScriptState
+    { mutable State: GameLib.Data.Server.ScriptState
       CancellationToken: System.Threading.CancellationToken }
     with
         member this.Player = this.State.Player
@@ -71,7 +71,7 @@ type private YieldStatesUserScriptRewriter() =
                         SyntaxFactory.InvocationExpression(
                             SyntaxFactory.MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
-                                SyntaxFactory.IdentifierName "ScriptStateModule",
+                                SyntaxFactory.IdentifierName "ScriptState",
                                 SyntaxFactory.IdentifierName "applyInstruction"
                             ),
                             [ SyntaxFactory.IdentifierName "State"

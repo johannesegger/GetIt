@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ScriptState.fs" />
     <Compile Include="Instructions.fs" />
     <Compile Include="DummyGlobals.fs" />
   </ItemGroup>
