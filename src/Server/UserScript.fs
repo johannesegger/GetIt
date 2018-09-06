@@ -44,7 +44,7 @@ type private YieldStatesUserScriptRewriter() =
                 | :? MemberAccessExpressionSyntax as n -> actualIdentifier n
                 | _ -> None)
             match actualIdentifier n.Expression with
-            | Some identifier when identifier = "Player" ->
+            | Some identifier when [ "Player"; "Scene" ] |> List.contains identifier ->
                 numberOfRewrites <- numberOfRewrites + 1
                 [
                     SyntaxFactory

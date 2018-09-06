@@ -121,4 +121,4 @@ type PlayerExtensions() =
 [<Extension>]
 type SceneExtensions() =
     [<Extension>]
-    static member ClearLines(scene: Scene) = ClearLinesInstruction
+    static member ClearLines(scene: Scene) = SceneInstruction ClearLinesInstruction
