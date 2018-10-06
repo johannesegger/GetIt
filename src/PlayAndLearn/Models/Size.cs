@@ -2,6 +2,7 @@ using System;
 
 namespace PlayAndLearn.Models
 {
+    [Equals]
     public sealed class Size
     {
         public Size(int width, int height)

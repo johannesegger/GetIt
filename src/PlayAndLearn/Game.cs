@@ -18,6 +18,10 @@ namespace PlayAndLearn
     {
         private static MainWindow mainWindow;
 
+        private static TimeSpan movementDelay = TimeSpan.FromMilliseconds(40);
+
+        public static void SetSlowMotion() => movementDelay = TimeSpan.FromSeconds(1);
+
         public static void ShowScene()
         {
             using (var signal = new ManualResetEventSlim())
@@ -55,6 +59,13 @@ namespace PlayAndLearn
                 );
 
                 sprite
+                    .Changed(p => p.Position)
+                    .Subscribe(_ => SleepMilliseconds(movementDelay.TotalMilliseconds));
+                sprite
+                    .Changed(p => p.Direction)
+                    .Subscribe(_ => SleepMilliseconds(movementDelay.TotalMilliseconds));
+
+                sprite
                     .IdleCostume
                     .ObserveOn(AvaloniaScheduler.Instance)
                     .Subscribe(costumeStreamFactory =>
@@ -79,7 +90,7 @@ namespace PlayAndLearn
                     .ObserveOn(AvaloniaScheduler.Instance)
                     .Subscribe(((Position position, Models.Pen pen) p) =>
                     {
-                        if (p.pen != null)
+                        if (p.pen.IsOn)
                         {
                             var currentPosition = new Position(
                                 Canvas.GetLeft(spriteControl),
@@ -109,7 +120,7 @@ namespace PlayAndLearn
                     .ObserveOn(AvaloniaScheduler.Instance)
                     .Subscribe(direction =>
                     {
-                        spriteControl.RenderTransform = new RotateTransform(360 - direction);
+                        spriteControl.RenderTransform = new RotateTransform(360 - direction.Value);
                     })
                     .DisposeWith(d);
 
@@ -118,6 +129,12 @@ namespace PlayAndLearn
             }).Wait();
 
             return addedSprite;
+        }
+
+        public static void ShowSceneAndAddTurtle()
+        {
+            Game.ShowScene();
+            Game.AddSprite(Turtle.Default);
         }
 
         public static void SleepMilliseconds(double value)
