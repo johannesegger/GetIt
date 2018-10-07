@@ -9,10 +9,11 @@ namespace PlayAndLearn.Sample
         static void Main(string[] args)
         {
             Game.ShowSceneAndAddTurtle();
-            //Game.SetSlowMotion();
+            // Game.SetSlowMotion();
 
-            //Program1();
-            Program2();
+            // Program1();
+            // Program2();
+            // Program3();
         }
 
         private static void Program1()
@@ -30,7 +31,7 @@ namespace PlayAndLearn.Sample
                 Turtle.Default.ShiftPenColor(10.0 / 360);
                 n++;
 
-                Game.SleepMilliseconds(10);
+                Game.Sleep(10);
             }
         }
 
@@ -42,6 +43,27 @@ namespace PlayAndLearn.Sample
                 Turtle.Default.RotateClockwise(10);
                 Turtle.Default.Go(10);
             }
+        }
+
+        private static void Program3()
+        {
+            Turtle.Default.GoTo(0, 0);
+            Turtle.Default.Say("Let's do it", 2);
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(10);
+            }
+            Turtle.Default.Say("Nice one");
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(-10);
+            }
+            Turtle.Default.ShutUp();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(10);
+            }
+            Turtle.Default.Say("Done");
         }
     }
 }

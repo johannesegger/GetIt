@@ -54,9 +54,14 @@ namespace PlayAndLearn.Models
 
         public static void TurnLeft(this Player player) => player.Direction = new Degrees(180);
 
-        public static void Say(this Player player, string text) => throw new NotImplementedException();
+        public static void Say(this Player player, string text) =>
+            player.SpeechBubble = new SpeechBubble(text, TimeSpan.Zero);
 
-        public static void Say(this Player player, string text, double durationInSeconds) => throw new NotImplementedException();
+        public static void Say(this Player player, string text, double durationInSeconds) =>
+            player.SpeechBubble = new SpeechBubble(text, TimeSpan.FromSeconds(durationInSeconds));
+
+        public static void ShutUp(this Player player) =>
+            player.SpeechBubble = SpeechBubble.Empty;
 
         public static void TurnOnPen(this Player player) => player.Pen = player.Pen.WithIsOn(true);
 

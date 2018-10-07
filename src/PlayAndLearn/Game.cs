@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 using Avalonia.Logging.Serilog;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -51,6 +53,10 @@ namespace PlayAndLearn
             {
                 var spriteControl = new Image { ZIndex = 10 };
                 mainWindow.Scene.Children.Add(spriteControl);
+                var speechBubbleControl = CreateSpeechBubble();
+                speechBubbleControl.IsVisible = false;
+                mainWindow.Scene.Children.Add(speechBubbleControl);
+
                 var d = new CompositeDisposable();
 
                 var center = new Position(
@@ -58,12 +64,9 @@ namespace PlayAndLearn
                     mainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2
                 );
 
-                sprite
+                var positionChanged = sprite
                     .Changed(p => p.Position)
-                    .Subscribe(_ => SleepMilliseconds(movementDelay.TotalMilliseconds));
-                sprite
-                    .Changed(p => p.Direction)
-                    .Subscribe(_ => SleepMilliseconds(movementDelay.TotalMilliseconds));
+                    .Select(p => new Position(p.X + center.X, p.Y + center.Y));
 
                 sprite
                     .IdleCostume
@@ -81,9 +84,7 @@ namespace PlayAndLearn
 
                 Observable
                     .CombineLatest(
-                        sprite
-                            .Changed(p => p.Position)
-                            .Select(p => new Position(p.X + center.X, p.Y + center.Y)),
+                        positionChanged,
                         sprite.Changed(p => p.Pen),
                         (position, pen) => (position, pen)
                     )
@@ -124,22 +125,94 @@ namespace PlayAndLearn
                     })
                     .DisposeWith(d);
 
-                addedSprite.Disposable = d;
+                Observable
+                    .CombineLatest(
+                        sprite.Changed(p => p.SpeechBubble),
+                        positionChanged,
+                        (speechBubble, position) => new { speechBubble, position }
+                    )
+                    .ObserveOn(AvaloniaScheduler.Instance)
+                    .Subscribe(p =>
+                    {
+                        SetSpeechBubbleText(speechBubbleControl, p.speechBubble.Text);
+                        Canvas.SetLeft(speechBubbleControl, p.position.X + 30);
+                        Canvas.SetBottom(speechBubbleControl, p.position.Y + spriteControl.Bounds.Height);
+                        speechBubbleControl.IsVisible = p.speechBubble.Text != string.Empty;
+                    });
 
+                // TODO it's not guaranteed that the following subscriptions run
+                // after updating the UI, but it currently works, because subscriptions
+                // seem to run in the same order as they are being set up.
+                sprite
+                    .Changed(p => p.Position)
+                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds));
+                sprite
+                    .Changed(p => p.Direction)
+                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds));
+
+                sprite
+                    .Changed(p => p.SpeechBubble.Duration)
+                    .Where(p => p > TimeSpan.Zero)
+                    .Subscribe(p =>
+                    {
+                        Sleep(p.TotalMilliseconds);
+                        sprite.SpeechBubble = SpeechBubble.Empty;
+                    });
+
+                addedSprite.Disposable = d;
             }).Wait();
 
             return addedSprite;
         }
 
+        public static Control CreateSpeechBubble()
+        {
+            var grid = new Grid();
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.Children.Add(new Border
+                {
+                    Background = Brushes.WhiteSmoke,
+                    CornerRadius = 5,
+                    BorderThickness = 5,
+                    BorderBrush = Brushes.Black,
+                    Child = new TextBlock
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = 15,
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(10, 5)
+                    }
+                });
+            var triangle = new Path
+            {
+                Fill = Brushes.Black,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Data = PathGeometry.Parse("M0,0 L15,0 0,15")
+            };
+            Grid.SetRow(triangle, 1);
+            grid.Children.Add(triangle);
+            return grid;
+        }
+
+        private static void SetSpeechBubbleText(IControl speechBubbleControl, string text)
+        {
+            speechBubbleControl
+                .FindVisualChildren<TextBlock>()
+                .Single()
+                .Text = text;
+        }
+        
         public static void ShowSceneAndAddTurtle()
         {
             Game.ShowScene();
             Game.AddSprite(Turtle.Default);
         }
 
-        public static void SleepMilliseconds(double value)
+        public static void Sleep(double durationInMilliseconds)
         {
-            Thread.Sleep(TimeSpan.FromMilliseconds(value));
+            Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds));
         }
     }
 }

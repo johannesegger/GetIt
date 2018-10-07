@@ -20,6 +20,7 @@ namespace PlayAndLearn.Models
             new Position(0, 0),
             new Degrees(0),
             new Pen(false, 1, new RGB(0x00, 0x00, 0x00)),
+            SpeechBubble.Empty,
             Observable.Return<Func<Stream>>(
                 () => Assembly
                     .GetExecutingAssembly()
