@@ -14,6 +14,7 @@ namespace PlayAndLearn.Sample
             // Program1();
             // Program2();
             // Program3();
+            Program4();
         }
 
         private static void Program1()
@@ -64,6 +65,29 @@ namespace PlayAndLearn.Sample
                 Turtle.Default.Go(10);
             }
             Turtle.Default.Say("Done");
+        }
+
+        private static void Program4()
+        {
+            Turtle.Default.GoTo(0, 0);
+            Turtle.Default.SetPenWeight(1.5);
+            Turtle.Default.SetPenColor(RGBColor.Cyan);
+            Turtle.Default.TurnOnPen();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(10);
+            }
+            Game.ClearScene();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(-10);
+            }
+            Game.ClearScene();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.Default.Go(10);
+            }
+            Game.ClearScene();
         }
     }
 }

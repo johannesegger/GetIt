@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -21,6 +22,8 @@ namespace PlayAndLearn
         private static MainWindow mainWindow;
 
         private static TimeSpan movementDelay = TimeSpan.FromMilliseconds(40);
+
+        private static ICollection<Control> drawnLines = new List<Control>();
 
         public static void SetSlowMotion() => movementDelay = TimeSpan.FromSeconds(1);
 
@@ -109,6 +112,7 @@ namespace PlayAndLearn
                                 ZIndex = 5
                             };
                             mainWindow.Scene.Children.Add(line);
+                            drawnLines.Add(line);
                         }
 
                         Canvas.SetLeft(spriteControl, p.position.X);
@@ -204,6 +208,15 @@ namespace PlayAndLearn
                 .Text = text;
         }
         
+        public static void ClearScene()
+        {
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                mainWindow.Scene.Children.RemoveAll(drawnLines);
+                drawnLines.Clear();
+            }).Wait();
+        }
+
         public static void ShowSceneAndAddTurtle()
         {
             Game.ShowScene();
