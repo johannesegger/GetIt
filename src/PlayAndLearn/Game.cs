@@ -54,13 +54,18 @@ namespace PlayAndLearn
             var addedSprite = new SingleAssignmentDisposable();
             Dispatcher.UIThread.InvokeAsync(() =>
             {
+                var d = new CompositeDisposable();
+
                 var spriteControl = new Image { ZIndex = 10 };
                 mainWindow.Scene.Children.Add(spriteControl);
+                Disposable.Create(() => mainWindow.Scene.Children.Remove(spriteControl))
+                    .DisposeWith(d);
+
                 var speechBubbleControl = CreateSpeechBubble();
                 speechBubbleControl.IsVisible = false;
                 mainWindow.Scene.Children.Add(speechBubbleControl);
-
-                var d = new CompositeDisposable();
+                Disposable.Create(() => mainWindow.Scene.Children.Remove(speechBubbleControl))
+                    .DisposeWith(d);
 
                 var center = new Position(
                     mainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2,
@@ -142,17 +147,20 @@ namespace PlayAndLearn
                         Canvas.SetLeft(speechBubbleControl, p.position.X + 30);
                         Canvas.SetBottom(speechBubbleControl, p.position.Y + spriteControl.Bounds.Height);
                         speechBubbleControl.IsVisible = p.speechBubble.Text != string.Empty;
-                    });
+                    })
+                    .DisposeWith(d);
 
                 // TODO it's not guaranteed that the following subscriptions run
                 // after updating the UI, but it currently works, because subscriptions
                 // seem to run in the same order as they are being set up.
                 sprite
                     .Changed(p => p.Position)
-                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds));
+                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds))
+                    .DisposeWith(d);
                 sprite
                     .Changed(p => p.Direction)
-                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds));
+                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds))
+                    .DisposeWith(d);
 
                 sprite
                     .Changed(p => p.SpeechBubble.Duration)
@@ -161,7 +169,8 @@ namespace PlayAndLearn
                     {
                         Sleep(p.TotalMilliseconds);
                         sprite.SpeechBubble = SpeechBubble.Empty;
-                    });
+                    })
+                    .DisposeWith(d);
 
                 addedSprite.Disposable = d;
             }).Wait();
