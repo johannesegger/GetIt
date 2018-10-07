@@ -20,7 +20,7 @@ namespace PlayAndLearn.Sample
         {
             Turtle.Default.GoTo(0, 0);
             Turtle.Default.SetPenWeight(1.5);
-            Turtle.Default.SetPenColor(new RGB(0x00, 0xFF, 0xFF));
+            Turtle.Default.SetPenColor(RGBColor.Cyan);
             Turtle.Default.TurnOnPen();
             var n = 5;
             while (n < 400)
