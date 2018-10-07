@@ -19,17 +19,17 @@ namespace PlayAndLearn.Sample
 
         private static void Program1()
         {
-            Turtle.Default.GoTo(0, 0);
-            Turtle.Default.SetPenWeight(1.5);
-            Turtle.Default.SetPenColor(RGBColor.Cyan);
-            Turtle.Default.TurnOnPen();
+            Turtle.GoTo(0, 0);
+            Turtle.SetPenWeight(1.5);
+            Turtle.SetPenColor(RGBColor.Cyan);
+            Turtle.TurnOnPen();
             var n = 5;
             while (n < 400)
             {
-                Turtle.Default.Go(n);
-                Turtle.Default.RotateCounterClockwise(89.5);
+                Turtle.Go(n);
+                Turtle.RotateCounterClockwise(89.5);
 
-                Turtle.Default.ShiftPenColor(10.0 / 360);
+                Turtle.ShiftPenColor(10.0 / 360);
                 n++;
 
                 Game.Sleep(10);
@@ -38,54 +38,54 @@ namespace PlayAndLearn.Sample
 
         private static void Program2()
         {
-            Turtle.Default.GoTo(0, 0);
+            Turtle.GoTo(0, 0);
             for (int i = 0; i < 36; i++)
             {
-                Turtle.Default.RotateClockwise(10);
-                Turtle.Default.Go(10);
+                Turtle.RotateClockwise(10);
+                Turtle.Go(10);
             }
         }
 
         private static void Program3()
         {
-            Turtle.Default.GoTo(0, 0);
-            Turtle.Default.Say("Let's do it", 2);
+            Turtle.GoTo(0, 0);
+            Turtle.Say("Let's do it", 2);
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(10);
+                Turtle.Go(10);
             }
-            Turtle.Default.Say("Nice one");
+            Turtle.Say("Nice one");
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(-10);
+                Turtle.Go(-10);
             }
-            Turtle.Default.ShutUp();
+            Turtle.ShutUp();
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(10);
+                Turtle.Go(10);
             }
-            Turtle.Default.Say("Done");
+            Turtle.Say("Done");
         }
 
         private static void Program4()
         {
-            Turtle.Default.GoTo(0, 0);
-            Turtle.Default.SetPenWeight(1.5);
-            Turtle.Default.SetPenColor(RGBColor.Cyan);
-            Turtle.Default.TurnOnPen();
+            Turtle.GoTo(0, 0);
+            Turtle.SetPenWeight(1.5);
+            Turtle.SetPenColor(RGBColor.Cyan);
+            Turtle.TurnOnPen();
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(10);
+                Turtle.Go(10);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(-10);
+                Turtle.Go(-10);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
-                Turtle.Default.Go(10);
+                Turtle.Go(10);
             }
             Game.ClearScene();
         }
