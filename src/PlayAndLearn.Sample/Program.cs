@@ -14,7 +14,8 @@ namespace PlayAndLearn.Sample
             // Program1();
             // Program2();
             // Program3();
-            Program4();
+            // Program4();
+            Program5();
         }
 
         private static void Program1()
@@ -88,6 +89,14 @@ namespace PlayAndLearn.Sample
                 Turtle.Go(10);
             }
             Game.ClearScene();
+        }
+
+        private static void Program5()
+        {
+            Turtle.OnKeyUp(KeyboardKey.Up, player => player.MoveUp(10));
+            Turtle.OnKeyUp(KeyboardKey.Down, player => player.MoveDown(10));
+            Turtle.OnKeyUp(KeyboardKey.Left, player => player.MoveLeft(10));
+            Turtle.OnKeyUp(KeyboardKey.Right, player => player.MoveRight(10));
         }
     }
 }

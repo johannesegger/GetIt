@@ -19,7 +19,7 @@ namespace PlayAndLearn
 {
     public static class Game
     {
-        private static MainWindow mainWindow;
+        internal static MainWindow MainWindow { get; private set; }
 
         private static TimeSpan movementDelay = TimeSpan.FromMilliseconds(40);
 
@@ -38,10 +38,10 @@ namespace PlayAndLearn
                         .UsePlatformDetect()
                         .LogToDebug()
                         .SetupWithoutStarting();
-                    mainWindow = new MainWindow();
-                    mainWindow.Show();
+                    MainWindow = new MainWindow();
+                    MainWindow.Show();
                     signal.Set();
-                    builder.Instance.Run(mainWindow);
+                    builder.Instance.Run(MainWindow);
                 });
                 uiThread.IsBackground = false;
                 uiThread.Start();
@@ -57,19 +57,19 @@ namespace PlayAndLearn
                 var d = new CompositeDisposable();
 
                 var spriteControl = new Image { ZIndex = 10 };
-                mainWindow.Scene.Children.Add(spriteControl);
-                Disposable.Create(() => mainWindow.Scene.Children.Remove(spriteControl))
+                MainWindow.Scene.Children.Add(spriteControl);
+                Disposable.Create(() => MainWindow.Scene.Children.Remove(spriteControl))
                     .DisposeWith(d);
 
                 var speechBubbleControl = CreateSpeechBubble();
                 speechBubbleControl.IsVisible = false;
-                mainWindow.Scene.Children.Add(speechBubbleControl);
-                Disposable.Create(() => mainWindow.Scene.Children.Remove(speechBubbleControl))
+                MainWindow.Scene.Children.Add(speechBubbleControl);
+                Disposable.Create(() => MainWindow.Scene.Children.Remove(speechBubbleControl))
                     .DisposeWith(d);
 
                 var center = new Position(
-                    mainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2,
-                    mainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2
+                    MainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2,
+                    MainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2
                 );
 
                 var positionChanged = sprite
@@ -108,15 +108,15 @@ namespace PlayAndLearn
                             {
                                 StartPoint = new Point(
                                     currentPosition.X + sprite.Size.Width / 2,
-                                    mainWindow.Scene.Bounds.Height - currentPosition.Y - sprite.Size.Height / 2),
+                                    MainWindow.Scene.Bounds.Height - currentPosition.Y - sprite.Size.Height / 2),
                                 EndPoint = new Point(
                                     p.position.X + sprite.Size.Width / 2,
-                                    mainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
+                                    MainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
                                 Stroke = new SolidColorBrush(new Color(0xFF, p.pen.Color.Red, p.pen.Color.Green, p.pen.Color.Blue)),
                                 StrokeThickness = p.pen.Weight,
                                 ZIndex = 5
                             };
-                            mainWindow.Scene.Children.Add(line);
+                            MainWindow.Scene.Children.Add(line);
                             drawnLines.Add(line);
                         }
 
@@ -221,7 +221,7 @@ namespace PlayAndLearn
         {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                mainWindow.Scene.Children.RemoveAll(drawnLines);
+                MainWindow.Scene.Children.RemoveAll(drawnLines);
                 drawnLines.Clear();
             }).Wait();
         }

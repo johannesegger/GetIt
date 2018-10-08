@@ -53,5 +53,6 @@ namespace PlayAndLearn.Models
         public static void ShiftPenColor(double shift) => Default.ShiftPenColor(shift);
         public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
+        public static IDisposable OnKeyUp(KeyboardKey key, Action<Player> action) => Default.OnKeyUp(key, action);
     }
 }

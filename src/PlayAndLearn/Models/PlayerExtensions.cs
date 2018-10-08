@@ -1,4 +1,7 @@
 using System;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using Avalonia.Input;
 
 namespace PlayAndLearn.Models
 {
@@ -76,5 +79,21 @@ namespace PlayAndLearn.Models
         public static void SetPenWeight(this Player player, double weight) => player.Pen = player.Pen.WithWeight(weight);
 
         public static void ChangePenWeight(this Player player, double change) => player.SetPenWeight(player.Pen.Weight + change);
+
+        public static IDisposable OnKeyUp(this Player player, KeyboardKey key, Action<Player> action)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                // TODO KeyDown doesn't work for arrow keys and some others
+                Observable
+                    .FromEventPattern<KeyEventArgs>(
+                        h => Game.MainWindow.KeyUp += h,
+                        h => Game.MainWindow.KeyUp -= h
+                    )
+                    .Where(p => p.EventArgs.Key == key.ToAvaloniaKey())
+                    .Subscribe(_ => action(player));
+            }).Wait();
+            return Disposable.Empty;
+        }
     }
 }
