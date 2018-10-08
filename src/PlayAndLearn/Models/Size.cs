@@ -5,13 +5,13 @@ namespace PlayAndLearn.Models
     [Equals]
     public sealed class Size
     {
-        public Size(int width, int height)
+        public Size(double width, double height)
         {
             Width = width;
             Height = height;
         }
 
-        public int Width { get; }
-        public int Height { get; }
+        public double Width { get; }
+        public double Height { get; }
     }
 }

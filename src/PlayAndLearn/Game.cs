@@ -27,6 +27,10 @@ namespace PlayAndLearn
 
         public static void SetSlowMotion() => movementDelay = TimeSpan.FromSeconds(1);
 
+        public static Models.Rectangle Bounds => new Models.Rectangle(
+            new Position(-MainWindow.Scene.Bounds.Width / 2, -MainWindow.Scene.Bounds.Height / 2),
+            new Models.Size(MainWindow.Scene.Bounds.Width, MainWindow.Scene.Bounds.Height));
+
         public static void ShowScene()
         {
             using (var signal = new ManualResetEventSlim())
