@@ -197,7 +197,7 @@ namespace PlayAndLearn
             return addedSprite;
         }
 
-        public static Control CreateSpeechBubble()
+        private static Control CreateSpeechBubble()
         {
             var grid = new Grid();
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
