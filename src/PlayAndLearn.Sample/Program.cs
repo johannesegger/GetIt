@@ -93,10 +93,10 @@ namespace PlayAndLearn.Sample
 
         private static void Program5()
         {
-            Turtle.OnKeyUp(KeyboardKey.Up, player => player.MoveUp(10));
-            Turtle.OnKeyUp(KeyboardKey.Down, player => player.MoveDown(10));
-            Turtle.OnKeyUp(KeyboardKey.Left, player => player.MoveLeft(10));
-            Turtle.OnKeyUp(KeyboardKey.Right, player => player.MoveRight(10));
+            Turtle.OnKeyDown(KeyboardKey.Up, player => player.MoveUp(10));
+            Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10));
+            Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10));
+            Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10));
         }
     }
 }
