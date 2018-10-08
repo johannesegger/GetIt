@@ -1,4 +1,5 @@
 using System;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Avalonia.Input;
 
@@ -89,6 +90,23 @@ namespace PlayAndLearn.Models
                         handledEventsToo: true)
                 )
                 .Where(eventArgs => eventArgs.Key == key.ToAvaloniaKey())
+                .Subscribe(_ => action(player));
+        }
+
+        public static IDisposable OnMouseEnter(this Player player, Action<Player> action)
+        {
+            var control = Game.TryFindPlayerControl(player);
+            if (control == null)
+            {
+                return Disposable.Empty;
+            }
+            return Observable
+                .Create<PointerEventArgs>(observer =>
+                    control.AddHandler(
+                        InputElement.PointerEnterEvent,
+                        new EventHandler<PointerEventArgs>((s, e) => observer.OnNext(e)),
+                        handledEventsToo: true)
+                )
                 .Subscribe(_ => action(player));
         }
     }

@@ -15,7 +15,8 @@ namespace PlayAndLearn.Sample
             // Program2();
             // Program3();
             // Program4();
-            Program5();
+            // Program5();
+            Program6();
         }
 
         private static void Program1()
@@ -97,6 +98,15 @@ namespace PlayAndLearn.Sample
             Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10));
             Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10));
             Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10));
+        }
+
+        private static void Program6()
+        {
+            var randomNumberGenerator = new Random();
+            Turtle.OnMouseEnter(player =>
+                player.GoTo(
+                    randomNumberGenerator.Next((int)Game.Bounds.Left, (int)Game.Bounds.Right),
+                    randomNumberGenerator.Next((int)Game.Bounds.Bottom, (int)Game.Bounds.Top)));
         }
     }
 }

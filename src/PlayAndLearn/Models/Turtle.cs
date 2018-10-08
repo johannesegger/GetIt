@@ -54,5 +54,6 @@ namespace PlayAndLearn.Models
         public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
         public static IDisposable OnKeyDown(KeyboardKey key, Action<Player> action) => Default.OnKeyDown(key, action);
+        public static IDisposable OnMouseEnter(Action<Player> action) => Default.OnMouseEnter(action);
     }
 }

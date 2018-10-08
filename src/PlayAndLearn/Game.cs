@@ -21,6 +21,17 @@ namespace PlayAndLearn
     {
         internal static MainWindow MainWindow { get; private set; }
 
+        private static IDictionary<Player, IControl> playerToControlMap = new Dictionary<Player, IControl>();
+
+        internal static IControl TryFindPlayerControl(Player player)
+        {
+            if (playerToControlMap.TryGetValue(player, out var control))
+            {
+                return control;
+            }
+            return null;
+        }
+
         private static TimeSpan movementDelay = TimeSpan.FromMilliseconds(40);
 
         private static ICollection<Control> drawnLines = new List<Control>();
@@ -63,6 +74,10 @@ namespace PlayAndLearn
                 var spriteControl = new Image { ZIndex = 10 };
                 MainWindow.Scene.Children.Add(spriteControl);
                 Disposable.Create(() => MainWindow.Scene.Children.Remove(spriteControl))
+                    .DisposeWith(d);
+
+                playerToControlMap.Add(sprite, spriteControl);
+                Disposable.Create(() => playerToControlMap.Remove(sprite))
                     .DisposeWith(d);
 
                 var speechBubbleControl = CreateSpeechBubble();
