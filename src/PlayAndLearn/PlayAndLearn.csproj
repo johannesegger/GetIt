@@ -3,6 +3,16 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
+  <PropertyGroup>
+    <Title>PlayAndLearn</Title>
+    <Authors>JEgger</Authors>
+    <Description>.NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.</Description>
+    <PackageLicenseUrl>https://github.com/johannesegger/PlayAndLearn/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/johannesegger/PlayAndLearn</PackageProjectUrl>
+    <PackageTags>Elm;Elmish</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <RepositoryUrl>https://github.com/johannesegger/PlayAndLearn</RepositoryUrl>
+  </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Models\**\*.png" />
     <EmbeddedResource Include="Icon.ico" />
