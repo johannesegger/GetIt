@@ -138,7 +138,6 @@ namespace PlayAndLearn
                             MainWindow.Scene.Children.Add(line);
                             drawnLines.Add(line);
                         }
-
                         Canvas.SetLeft(spriteControl, p.position.X);
                         Canvas.SetBottom(spriteControl, p.position.Y);
                     })
@@ -163,8 +162,9 @@ namespace PlayAndLearn
                     .Subscribe(p =>
                     {
                         SetSpeechBubbleText(speechBubbleControl, p.speechBubble.Text);
-                        Canvas.SetLeft(speechBubbleControl, p.position.X + 30);
+                        Canvas.SetLeft(speechBubbleControl, p.position.X + 70);
                         Canvas.SetBottom(speechBubbleControl, p.position.Y + spriteControl.Bounds.Height);
+
                         speechBubbleControl.IsVisible = p.speechBubble.Text != string.Empty;
                     })
                     .DisposeWith(d);
@@ -199,7 +199,11 @@ namespace PlayAndLearn
 
         private static Control CreateSpeechBubble()
         {
-            var grid = new Grid();
+            var grid = new Grid { MaxWidth = 300 };
+            grid.LayoutUpdated += (s, e) =>
+            {
+                grid.RenderTransform = new TranslateTransform(-grid.Bounds.Width / 2, 0);
+            };
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.Children.Add(new Border

@@ -18,6 +18,7 @@ namespace PlayAndLearn.Sample
             // Program5();
             // Program6();
             // Program7();
+            Program8();
         }
 
         private static void Program1()
@@ -114,6 +115,15 @@ namespace PlayAndLearn.Sample
         {
             Turtle.Say("Try and hit me, sucker!", 2);
             Turtle.OnClick(player => player.Say("Ouch, that hurts!", 2));
+        }
+
+        private static void Program8()
+        {
+            for (int i = 0; i < 500; i++)
+            {
+                Turtle.Say(new string('A', i));
+                Game.Sleep(20);
+            }
         }
     }
 }
