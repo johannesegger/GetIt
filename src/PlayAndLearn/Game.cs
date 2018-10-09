@@ -57,6 +57,7 @@ namespace PlayAndLearn
                     MainWindow.Show();
                     signal.Set();
                     builder.Instance.Run(MainWindow);
+                    Environment.Exit(0); // shut everything down when the UI thread exits
                 });
                 uiThread.IsBackground = false;
                 uiThread.Start();
