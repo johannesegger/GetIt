@@ -16,7 +16,8 @@ namespace PlayAndLearn.Sample
             // Program3();
             // Program4();
             // Program5();
-            Program6();
+            // Program6();
+            // Program7();
         }
 
         private static void Program1()
@@ -107,6 +108,12 @@ namespace PlayAndLearn.Sample
                 player.GoTo(
                     randomNumberGenerator.Next((int)Game.Bounds.Left, (int)Game.Bounds.Right),
                     randomNumberGenerator.Next((int)Game.Bounds.Bottom, (int)Game.Bounds.Top)));
+        }
+
+        private static void Program7()
+        {
+            Turtle.Say("Try and hit me, sucker!", 2);
+            Turtle.OnClick(player => player.Say("Ouch, that hurts!", 2));
         }
     }
 }

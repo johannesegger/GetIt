@@ -2,6 +2,7 @@ using System;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace PlayAndLearn.Models
 {
@@ -93,20 +94,35 @@ namespace PlayAndLearn.Models
                 .Subscribe(_ => action(player));
         }
 
-        public static IDisposable OnMouseEnter(this Player player, Action<Player> action)
+        private static IObservable<TEventArgs> Observe<TEventArgs>(this Player player, RoutedEvent<TEventArgs> routedEvent)
+            where TEventArgs : RoutedEventArgs
         {
             var control = Game.TryFindPlayerControl(player);
             if (control == null)
             {
-                return Disposable.Empty;
+                return Observable.Empty<TEventArgs>();
             }
             return Observable
-                .Create<PointerEventArgs>(observer =>
+                .Create<TEventArgs>(observer =>
                     control.AddHandler(
-                        InputElement.PointerEnterEvent,
-                        new EventHandler<PointerEventArgs>((s, e) => observer.OnNext(e)),
+                        routedEvent,
+                        new EventHandler<TEventArgs>((s, e) => observer.OnNext(e)),
                         handledEventsToo: true)
                 )
+                .ObserveOn(System.Reactive.Concurrency.TaskPoolScheduler.Default);
+        }
+
+        public static IDisposable OnMouseEnter(this Player player, Action<Player> action)
+        {
+            return player
+                .Observe(InputElement.PointerEnterEvent)
+                .Subscribe(_ => action(player));
+        }
+
+        public static IDisposable OnClick(this Player player, Action<Player> action)
+        {
+            return player
+                .Observe(InputElement.TappedEvent)
                 .Subscribe(_ => action(player));
         }
     }
