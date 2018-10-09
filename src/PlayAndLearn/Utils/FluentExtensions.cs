@@ -11,7 +11,11 @@ namespace PlayAndLearn.Utils
             return obj;
         }
 
-        public static TObj Subscribe<TObj, TValue>(this TObj obj, IObservable<TValue> value, Action<TObj, TValue> setter, CompositeDisposable d)
+        public static TObj Subscribe<TObj, TValue>(
+            this TObj obj,
+            IObservable<TValue> value,
+            Action<TObj, TValue> setter,
+            CompositeDisposable d)
         {
             value
                 .Subscribe(v => setter(obj, v))
