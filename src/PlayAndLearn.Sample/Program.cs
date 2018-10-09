@@ -1,6 +1,4 @@
 ﻿using System;
-using PlayAndLearn.Models;
-using PlayAndLearn.Utils;
 
 namespace PlayAndLearn.Sample
 {
@@ -96,10 +94,10 @@ namespace PlayAndLearn.Sample
 
         private static void Program5()
         {
-            Turtle.OnKeyDown(KeyboardKey.Up, player => player.MoveUp(10));
-            Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10));
-            Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10));
-            Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10));
+            Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.MoveUp(10));
+            Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.MoveDown(10));
+            Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.MoveLeft(10));
+            Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.MoveRight(10));
         }
 
         private static void Program6()

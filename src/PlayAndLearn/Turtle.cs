@@ -5,9 +5,10 @@ using System.Reactive.Linq;
 using System.Reflection;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using PlayAndLearn.Models;
 using Portable.Xaml;
 
-namespace PlayAndLearn.Models
+namespace PlayAndLearn
 {
     public static class Turtle
     {

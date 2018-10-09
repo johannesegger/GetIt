@@ -3,8 +3,9 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using PlayAndLearn.Models;
 
-namespace PlayAndLearn.Models
+namespace PlayAndLearn
 {
     public static class PlayerExtensions
     {

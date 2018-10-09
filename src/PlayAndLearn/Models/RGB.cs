@@ -1,4 +1,4 @@
-namespace PlayAndLearn
+namespace PlayAndLearn.Models
 {
     [Equals]
     public sealed class RGB
