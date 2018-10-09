@@ -71,17 +71,9 @@ namespace PlayAndLearn
             {
                 var d = new CompositeDisposable();
 
-                var spriteControl = new Image()
+                var spriteControl = new ContentControl()
                     .Do(p => p.ZIndex = 10)
-                    .Do(p => p.Width = sprite.Size.Width)
-                    .Do(p => p.Height = sprite.Size.Height)
-                    .Do(p =>
-                    {
-                        using (var costume = sprite.CostumeFactory())
-                        {
-                            p.Source = new Bitmap(costume);
-                        }
-                    });
+                    .Do(p => p.Content = sprite.Costume.ToAvaloniaControl(sprite.Size));
                 
                 MainWindow.Scene.AddChild(spriteControl)
                     .DisposeWith(d);
@@ -109,23 +101,15 @@ namespace PlayAndLearn
                         sprite.Changed(p => p.Direction),
                         (position, direction) => new { position, direction });
 
-
                 MainWindow.PlayerPanel
                     .AddChild(
                         new DockPanel
                         {
                             Children =
                             {
-                                new Image()
+                                new ContentControl()
                                     .Do(p => p.Margin = new Thickness(10))
-                                    .Do(p => p.Width = 30)
-                                    .Do(p =>
-                                    {
-                                        using (var costume = sprite.CostumeFactory())
-                                        {
-                                            p.Source = new Bitmap(costume);
-                                        }
-                                    }),
+                                    .Do(p => p.Content = sprite.Costume.ToAvaloniaControl(new Models.Size(30, 30))),
                                 new TextBlock()
                                     .Do(p => p.VerticalAlignment = VerticalAlignment.Center)
                                     .Do(p => p.Margin = new Thickness(10))
@@ -160,7 +144,7 @@ namespace PlayAndLearn
                                 EndPoint = new Point(
                                     p.position.X + sprite.Size.Width / 2,
                                     MainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
-                                Stroke = new SolidColorBrush(new Color(0xFF, p.pen.Color.Red, p.pen.Color.Green, p.pen.Color.Blue)),
+                                Stroke = p.pen.Color.ToAvaloniaBrush(),
                                 StrokeThickness = p.pen.Weight,
                                 ZIndex = 5
                             };
