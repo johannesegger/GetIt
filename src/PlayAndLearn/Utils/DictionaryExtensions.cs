@@ -4,7 +4,7 @@ using System.Reactive.Disposables;
 
 namespace PlayAndLearn.Utils
 {
-    public static class DictionaryExtensions
+    internal static class DictionaryExtensions
     {
         public static IDisposable AddUndoable<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {

@@ -3,7 +3,7 @@ using System.Reactive.Disposables;
 
 namespace PlayAndLearn.Utils
 {
-    public static class FluentExtensions
+    internal static class FluentExtensions
     {
         public static T Do<T>(this T obj, Action<T> setter)
         {

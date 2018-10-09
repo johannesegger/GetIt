@@ -7,7 +7,7 @@ using Avalonia.VisualTree;
 
 namespace PlayAndLearn.Utils
 {
-    public static class AvaloniaExtensions
+    internal static class AvaloniaExtensions
     {
         public static IEnumerable<T> FindVisualChildren<T>(this IVisual control)
         {
