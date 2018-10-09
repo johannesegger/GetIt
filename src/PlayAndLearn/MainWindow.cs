@@ -12,18 +12,15 @@ namespace PlayAndLearn
     {
         public MainWindow()
         {
-            InitializeComponent();
             using (var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("PlayAndLearn.Icon.ico"))
             {
                 Icon = new WindowIcon(iconStream);
             }
+            Title = "Play and Learn";
+            Scene = new Canvas();
+            Content = Scene;
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
-
-        public Canvas Scene => this.FindControl<Canvas>("Scene");
+        public Canvas Scene { get; }
     }
 }
