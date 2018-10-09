@@ -71,19 +71,27 @@ namespace PlayAndLearn
             {
                 var d = new CompositeDisposable();
 
-                var spriteControl = new Image { ZIndex = 10 };
-                MainWindow.Scene.Children.Add(spriteControl);
-                Disposable.Create(() => MainWindow.Scene.Children.Remove(spriteControl))
+                var spriteControl = new Image()
+                    .Do(p => p.ZIndex = 10)
+                    .Do(p => p.Width = sprite.Size.Width)
+                    .Do(p => p.Height = sprite.Size.Height)
+                    .Do(p =>
+                    {
+                        using (var costume = sprite.CostumeFactory())
+                        {
+                            p.Source = new Bitmap(costume);
+                        }
+                    });
+                
+                MainWindow.Scene.AddChild(spriteControl)
                     .DisposeWith(d);
 
-                playerToControlMap.Add(sprite, spriteControl);
-                Disposable.Create(() => playerToControlMap.Remove(sprite))
+                playerToControlMap.AddUndoable(sprite, spriteControl)
                     .DisposeWith(d);
 
                 var speechBubbleControl = CreateSpeechBubble();
                 speechBubbleControl.IsVisible = false;
-                MainWindow.Scene.Children.Add(speechBubbleControl);
-                Disposable.Create(() => MainWindow.Scene.Children.Remove(speechBubbleControl))
+                MainWindow.Scene.AddChild(speechBubbleControl)
                     .DisposeWith(d);
 
                 var center = new Position(
@@ -95,18 +103,39 @@ namespace PlayAndLearn
                     .Changed(p => p.Position)
                     .Select(p => new Position(p.X + center.X, p.Y + center.Y));
 
-                sprite
-                    .IdleCostume
-                    .ObserveOn(AvaloniaScheduler.Instance)
-                    .Subscribe(costumeStreamFactory =>
-                    {
-                        using (var costume = costumeStreamFactory())
+                var positionOrDirectionChanged = Observable
+                    .CombineLatest(
+                        positionChanged,
+                        sprite.Changed(p => p.Direction),
+                        (position, direction) => new { position, direction });
+
+
+                MainWindow.PlayerPanel
+                    .AddChild(
+                        new DockPanel
                         {
-                            spriteControl.Source = new Bitmap(costume);
+                            Children =
+                            {
+                                new Image()
+                                    .Do(p => p.Margin = new Thickness(10))
+                                    .Do(p => p.Width = 30)
+                                    .Do(p =>
+                                    {
+                                        using (var costume = sprite.CostumeFactory())
+                                        {
+                                            p.Source = new Bitmap(costume);
+                                        }
+                                    }),
+                                new TextBlock()
+                                    .Do(p => p.VerticalAlignment = VerticalAlignment.Center)
+                                    .Do(p => p.Margin = new Thickness(10))
+                                    .Subscribe(
+                                        positionOrDirectionChanged.ObserveOn(AvaloniaScheduler.Instance),
+                                        (p, o) => p.Text = $"X: {o.position.X:F2} | Y: {o.position.Y:F2} | ∠ {o.direction.Value:F2}°",
+                                        d)
+                            }
                         }
-                        spriteControl.Width = sprite.Size.Width;
-                        spriteControl.Height = sprite.Size.Height;
-                    })
+                    )
                     .DisposeWith(d);
 
                 Observable

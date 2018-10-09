@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Reactive.Disposables;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 
@@ -19,6 +22,19 @@ namespace PlayAndLearn.Utils
                     yield return subChild;
                 }
             }
+        }
+
+        public static TElement AttachProperty<TElement, TValue>(this TElement element, AvaloniaProperty<TValue> property, TValue value)
+            where TElement : AvaloniaObject
+        {
+            element.SetValue(property, value);
+            return element;
+        }
+
+        public static IDisposable AddChild(this Panel panel, IControl child)
+        {
+            panel.Children.Add(child);
+            return Disposable.Create(() => panel.Children.Remove(child));
         }
     }
 }

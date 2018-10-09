@@ -22,11 +22,9 @@ namespace PlayAndLearn
             new Degrees(0),
             new Pen(false, 1, new RGB(0x00, 0x00, 0x00)),
             SpeechBubble.Empty,
-            Observable.Return<Func<Stream>>(
-                () => Assembly
-                    .GetExecutingAssembly()
-                    .GetManifestResourceStream("PlayAndLearn.Models.Turtle.default.png")
-            )
+            () => Assembly
+                .GetExecutingAssembly()
+                .GetManifestResourceStream("PlayAndLearn.Models.Turtle.default.png")
         );
 
         public static void GoTo(double x, double y) => Default.GoTo(x, y);

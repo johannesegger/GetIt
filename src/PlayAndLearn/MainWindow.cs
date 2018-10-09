@@ -2,7 +2,9 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using PlayAndLearn.Utils;
 using PropertyChanged;
 
 namespace PlayAndLearn
@@ -17,10 +19,14 @@ namespace PlayAndLearn
                 Icon = new WindowIcon(iconStream);
             }
             Title = "Play and Learn";
-            Scene = new Canvas();
-            Content = Scene;
+            Content = Scene = new Canvas();
+            PlayerPanel = new WrapPanel()
+                .AttachProperty(Canvas.LeftProperty, 0)
+                .AttachProperty(Canvas.BottomProperty, 0);
+            Scene.Children.Add(PlayerPanel);
         }
 
         public Canvas Scene { get; }
+        public Panel PlayerPanel { get; }
     }
 }

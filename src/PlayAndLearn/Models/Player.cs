@@ -21,15 +21,15 @@ namespace PlayAndLearn.Models
 
         internal SpeechBubble SpeechBubble { get; set; }
 
-        internal IObservable<Func<Stream>> IdleCostume { get; }
+        internal Func<Stream> CostumeFactory { get; }
 
-        public Player(Size size, Position position, Degrees direction, Pen pen, SpeechBubble speechBubble, IObservable<Func<Stream>> idleCostume)
+        public Player(Size size, Position position, Degrees direction, Pen pen, SpeechBubble speechBubble, Func<Stream> costumeFactory)
         {
             Size = size ?? throw new ArgumentNullException(nameof(size));
             Position = position ?? throw new ArgumentNullException(nameof(position));
             Direction = direction ?? throw new ArgumentNullException(nameof(direction));
             Pen = pen ?? throw new ArgumentNullException(nameof(pen));
-            IdleCostume = idleCostume ?? throw new ArgumentNullException(nameof(idleCostume));
+            CostumeFactory = costumeFactory ?? throw new ArgumentNullException(nameof(costumeFactory));
             SpeechBubble = speechBubble ?? throw new ArgumentNullException(nameof(speechBubble));
         }
     }
