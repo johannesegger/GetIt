@@ -1,3 +1,5 @@
+using PlayAndLearn.Models;
+
 namespace PlayAndLearn
 {
     public static class RGBColor
