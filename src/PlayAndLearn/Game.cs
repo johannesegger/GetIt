@@ -86,14 +86,24 @@ namespace PlayAndLearn
                 MainWindow.Scene.AddChild(speechBubbleControl)
                     .DisposeWith(d);
 
-                var center = new Position(
-                    MainWindow.Scene.Bounds.Width / 2 - sprite.Size.Width / 2,
-                    MainWindow.Scene.Bounds.Height / 2 - sprite.Size.Height / 2
-                );
+                var sceneBoundsChanged = Observable
+                    .FromEventPattern(
+                        h => MainWindow.Scene.LayoutUpdated += h,
+                        h => MainWindow.Scene.LayoutUpdated -= h
+                    )
+                    .Select(p => MainWindow.Scene.Bounds);
+
+                var centerChanged = sceneBoundsChanged
+                    .Select(bounds => new Position(
+                        bounds.Width / 2 - sprite.Size.Width / 2,
+                        bounds.Height / 2 - sprite.Size.Height / 2
+                    ));
 
                 var positionChanged = sprite
                     .Changed(p => p.Position)
-                    .Select(p => new Position(p.X + center.X, p.Y + center.Y));
+                    .CombineLatest(
+                        centerChanged,
+                        (position, center) => new Position(position.X + center.X, position.Y + center.Y));
 
                 var positionOrDirectionChanged = Observable
                     .CombineLatest(
