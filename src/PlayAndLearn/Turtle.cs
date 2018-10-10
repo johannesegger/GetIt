@@ -69,9 +69,9 @@ namespace PlayAndLearn
         public static void MoveUp(int steps) => Default.MoveUp(steps);
         public static void MoveDown(int steps) => Default.MoveDown(steps);
         public static void Go(int steps) => Default.Go(steps);
-        public static void SetDirection(double angleInDegrees) => Default.SetDirection(angleInDegrees);
-        public static void RotateClockwise(double angleInDegrees) => Default.RotateClockwise(angleInDegrees);
-        public static void RotateCounterClockwise(double angleInDegrees) => Default.RotateCounterClockwise(angleInDegrees);
+        public static void SetDirection(Degrees angle) => Default.SetDirection(angle);
+        public static void RotateClockwise(Degrees angle) => Default.RotateClockwise(angle);
+        public static void RotateCounterClockwise(Degrees angle) => Default.RotateCounterClockwise(angle);
         public static void TurnUp() => Default.TurnUp();
         public static void TurnRight() => Default.TurnRight();
         public static void TurnDown() => Default.TurnDown();
@@ -86,6 +86,8 @@ namespace PlayAndLearn
         public static void ShiftPenColor(double shift) => Default.ShiftPenColor(shift);
         public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
+        public static Degrees GetDirectionToMouse() => Default.GetDirectionToMouse();
+        public static double GetDistanceToMouse() => Default.GetDistanceToMouse();
         public static IDisposable OnKeyDown(KeyboardKey key, Action<Player> action) => Default.OnKeyDown(key, action);
         public static IDisposable OnMouseEnter(Action<Player> action) => Default.OnMouseEnter(action);
         public static IDisposable OnClick(Action<Player> action) => Default.OnClick(action);

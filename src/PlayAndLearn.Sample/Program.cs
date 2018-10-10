@@ -17,7 +17,8 @@ namespace PlayAndLearn.Sample
             // Program6();
             // Program7();
             // Program8();
-            Program9();
+            // Program9();
+            Program10();
         }
 
         private static void Program1()
@@ -147,6 +148,17 @@ namespace PlayAndLearn.Sample
             Turtle.GoTo(33, -33);
             Turtle.TurnOnPen();
             Turtle.GoToCenter();
+        }
+
+        private static void Program10()
+        {
+            while (Turtle.GetDistanceToMouse() > 10)
+            {
+                var direction = Turtle.GetDirectionToMouse();
+                Turtle.SetDirection(direction);
+                Turtle.Go(10);
+            }
+            Turtle.Say("Geschnappt :-)");
         }
     }
 }

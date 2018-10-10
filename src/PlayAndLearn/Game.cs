@@ -7,6 +7,7 @@ using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Logging.Serilog;
 using Avalonia.Media;
@@ -41,6 +42,16 @@ namespace PlayAndLearn
         public static Models.Rectangle Bounds => new Models.Rectangle(
             new Position(-MainWindow.Scene.Bounds.Width / 2, -MainWindow.Scene.Bounds.Height / 2),
             new Models.Size(MainWindow.Scene.Bounds.Width, MainWindow.Scene.Bounds.Height));
+
+        public static Position MousePosition
+        {
+            get
+            {
+                var point = ((IInputRoot)MainWindow).MouseDevice
+                    .GetPosition(Game.MainWindow.Scene);
+                return new Position(Bounds.Position.X + point.X, Bounds.Position.Y + Bounds.Size.Height - point.Y);
+            }
+        }
 
         public static void ShowScene()
         {

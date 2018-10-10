@@ -37,28 +37,28 @@ namespace PlayAndLearn
             );
         }
 
-        public static void SetDirection(this Player player, double angleInDegrees)
+        public static void SetDirection(this Player player, Degrees angle)
         {
-            player.Direction = new Degrees(angleInDegrees);
+            player.Direction = angle;
         }
 
-        public static void RotateClockwise(this Player player, double angleInDegrees)
+        public static void RotateClockwise(this Player player, Degrees angle)
         {
-            player.SetDirection(player.Direction.Value - angleInDegrees);
+            player.SetDirection(player.Direction + angle);
         }
 
-        public static void RotateCounterClockwise(this Player player, double angleInDegrees)
+        public static void RotateCounterClockwise(this Player player, Degrees angle)
         {
-            player.SetDirection(player.Direction.Value + angleInDegrees);
+            player.SetDirection(player.Direction + angle);
         }
 
-        public static void TurnUp(this Player player) => player.Direction = new Degrees(90);
+        public static void TurnUp(this Player player) => player.Direction = 90;
 
-        public static void TurnRight(this Player player) => player.Direction = new Degrees(0);
+        public static void TurnRight(this Player player) => player.Direction = 0;
 
-        public static void TurnDown(this Player player) => player.Direction = new Degrees(270);
+        public static void TurnDown(this Player player) => player.Direction = 270;
 
-        public static void TurnLeft(this Player player) => player.Direction = new Degrees(180);
+        public static void TurnLeft(this Player player) => player.Direction = 180;
 
         public static void Say(this Player player, string text) =>
             player.SpeechBubble = new SpeechBubble(text);
@@ -86,6 +86,10 @@ namespace PlayAndLearn
         public static void SetPenWeight(this Player player, double weight) => player.Pen = player.Pen.WithWeight(weight);
 
         public static void ChangePenWeight(this Player player, double change) => player.SetPenWeight(player.Pen.Weight + change);
+
+        public static Degrees GetDirectionToMouse(this Player player) => player.Position.AngleTo(Game.MousePosition);
+
+        public static double GetDistanceToMouse(this Player player) => player.Position.DistanceTo(Game.MousePosition);
 
         public static IDisposable OnKeyDown(this Player player, KeyboardKey key, Action<Player> action)
         {
