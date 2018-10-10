@@ -61,10 +61,14 @@ namespace PlayAndLearn
         public static void TurnLeft(this Player player) => player.Direction = new Degrees(180);
 
         public static void Say(this Player player, string text) =>
-            player.SpeechBubble = new SpeechBubble(text, TimeSpan.Zero);
+            player.SpeechBubble = new SpeechBubble(text);
 
-        public static void Say(this Player player, string text, double durationInSeconds) =>
-            player.SpeechBubble = new SpeechBubble(text, TimeSpan.FromSeconds(durationInSeconds));
+        public static void Say(this Player player, string text, double durationInSeconds)
+        {
+            player.SpeechBubble = new SpeechBubble(text);
+            Game.Sleep(TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds);
+            player.SpeechBubble = SpeechBubble.Empty;
+        }
 
         public static void ShutUp(this Player player) =>
             player.SpeechBubble = SpeechBubble.Empty;

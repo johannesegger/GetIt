@@ -203,16 +203,6 @@ namespace PlayAndLearn
                     .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds))
                     .DisposeWith(d);
 
-                sprite
-                    .Changed(p => p.SpeechBubble.Duration)
-                    .Where(p => p > TimeSpan.Zero)
-                    .Subscribe(p =>
-                    {
-                        Sleep(p.TotalMilliseconds);
-                        sprite.SpeechBubble = SpeechBubble.Empty;
-                    })
-                    .DisposeWith(d);
-
                 addedSprite.Disposable = d;
             }).Wait();
 
