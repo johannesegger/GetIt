@@ -14,7 +14,6 @@
     <RepositoryUrl>https://github.com/johannesegger/PlayAndLearn</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Models\**\*.png" />
     <EmbeddedResource Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup>
