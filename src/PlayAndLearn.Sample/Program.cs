@@ -46,6 +46,7 @@ namespace PlayAndLearn.Sample
             {
                 Turtle.RotateClockwise(10);
                 Turtle.Go(10);
+                Game.Sleep(50);
             }
         }
 
@@ -56,16 +57,19 @@ namespace PlayAndLearn.Sample
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(10);
+                Game.Sleep(50);
             }
             Turtle.Say("Nice one");
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(-10);
+                Game.Sleep(50);
             }
             Turtle.ShutUp();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(10);
+                Game.Sleep(50);
             }
             Turtle.Say("Done");
         }
@@ -79,16 +83,19 @@ namespace PlayAndLearn.Sample
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(10);
+                Game.Sleep(50);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(-10);
+                Game.Sleep(50);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.Go(10);
+                Game.Sleep(50);
             }
             Game.ClearScene();
         }
