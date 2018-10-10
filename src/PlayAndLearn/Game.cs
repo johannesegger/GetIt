@@ -103,10 +103,7 @@ namespace PlayAndLearn
                     .StartWith(MainWindow.Scene.Bounds);
 
                 var centerChanged = sceneBoundsChanged
-                    .Select(bounds => new Position(
-                        bounds.Width / 2 - sprite.Size.Width / 2,
-                        bounds.Height / 2 - sprite.Size.Height / 2
-                    ));
+                    .Select(bounds => new Position(bounds.Width / 2, bounds.Height / 2));
 
                 var positionChanged = sprite
                     .Changed(p => p.Position)
@@ -116,7 +113,7 @@ namespace PlayAndLearn
 
                 var positionOrDirectionChanged = Observable
                     .CombineLatest(
-                        positionChanged,
+                        sprite.Changed(p => p.Position),
                         sprite.Changed(p => p.Direction),
                         (position, direction) => new { position, direction });
 
@@ -155,11 +152,11 @@ namespace PlayAndLearn
                             var line = new Line
                             {
                                 StartPoint = new Point(
-                                    p.oldPosition.X + sprite.Size.Width / 2,
-                                    MainWindow.Scene.Bounds.Height - p.oldPosition.Y - sprite.Size.Height / 2),
+                                    p.oldPosition.X,
+                                    MainWindow.Scene.Bounds.Height - p.oldPosition.Y),
                                 EndPoint = new Point(
-                                    p.newPosition.X + sprite.Size.Width / 2,
-                                    MainWindow.Scene.Bounds.Height - p.newPosition.Y - sprite.Size.Height / 2),
+                                    p.newPosition.X,
+                                    MainWindow.Scene.Bounds.Height - p.newPosition.Y),
                                 Stroke = p.pen.Color.ToAvaloniaBrush(),
                                 StrokeThickness = p.pen.Weight,
                                 ZIndex = 5
@@ -167,8 +164,8 @@ namespace PlayAndLearn
                             MainWindow.Scene.Children.Add(line);
                             drawnLines.Add(line);
                         }
-                        Canvas.SetLeft(spriteControl, p.newPosition.X);
-                        Canvas.SetBottom(spriteControl, p.newPosition.Y);
+                        Canvas.SetLeft(spriteControl, p.newPosition.X - sprite.Size.Width / 2);
+                        Canvas.SetBottom(spriteControl, p.newPosition.Y - sprite.Size.Height / 2);
                     })
                     .DisposeWith(d);
 
@@ -191,8 +188,8 @@ namespace PlayAndLearn
                     .Subscribe(p =>
                     {
                         SetSpeechBubbleText(speechBubbleControl, p.speechBubble.Text);
-                        Canvas.SetLeft(speechBubbleControl, p.position.X + 70);
-                        Canvas.SetBottom(speechBubbleControl, p.position.Y + spriteControl.Bounds.Height);
+                        Canvas.SetLeft(speechBubbleControl, p.position.X + 45);
+                        Canvas.SetBottom(speechBubbleControl, p.position.Y + spriteControl.Bounds.Height / 2);
 
                         speechBubbleControl.IsVisible = p.speechBubble.Text != string.Empty;
                     })
