@@ -46,7 +46,7 @@ namespace PlayAndLearn
 
         public static void RotateClockwise(this Player player, Degrees angle)
         {
-            player.SetDirection(player.Direction + angle);
+            player.SetDirection(player.Direction - angle);
         }
 
         public static void RotateCounterClockwise(this Player player, Degrees angle)
