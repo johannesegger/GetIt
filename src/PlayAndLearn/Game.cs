@@ -33,11 +33,12 @@ namespace PlayAndLearn
             return null;
         }
 
-        private static TimeSpan movementDelay = TimeSpan.FromMilliseconds(40);
+        internal static TimeSpan MovementDelay { get; private set; } = TimeSpan.FromMilliseconds(40);
 
         private static ICollection<Control> drawnLines = new List<Control>();
 
-        public static void SetSlowMotion() => movementDelay = TimeSpan.FromSeconds(1);
+        public static void SetSlowMotion() => MovementDelay = TimeSpan.FromSeconds(1);
+        public static void SetFastMotion() => MovementDelay = TimeSpan.FromMilliseconds(10);
 
         public static Models.Rectangle Bounds => new Models.Rectangle(
             new Position(-MainWindow.Scene.Bounds.Width / 2, -MainWindow.Scene.Bounds.Height / 2),
@@ -200,18 +201,6 @@ namespace PlayAndLearn
 
                         speechBubbleControl.IsVisible = p.speechBubble.Text != string.Empty;
                     })
-                    .DisposeWith(d);
-
-                // TODO it's not guaranteed that the following subscriptions run
-                // after updating the UI, but it currently works, because subscriptions
-                // seem to run in the same order as they are being set up.
-                sprite
-                    .Changed(p => p.Position)
-                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds))
-                    .DisposeWith(d);
-                sprite
-                    .Changed(p => p.Direction)
-                    .Subscribe(_ => Sleep(movementDelay.TotalMilliseconds))
                     .DisposeWith(d);
 
                 addedSprite.Disposable = d;

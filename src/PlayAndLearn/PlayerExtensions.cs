@@ -13,6 +13,7 @@ namespace PlayAndLearn
         public static void GoTo(this Player player, double x, double y)
         {
             player.Position = new Position(x, y);
+            Game.Sleep(Game.MovementDelay.TotalMilliseconds);
         }
         public static void GoToCenter(this Player player) => player.GoTo(0, 0);
         public static void Move(this Player player, double x, double y)
@@ -40,6 +41,7 @@ namespace PlayAndLearn
         public static void SetDirection(this Player player, Degrees angle)
         {
             player.Direction = angle;
+            Game.Sleep(Game.MovementDelay.TotalMilliseconds);
         }
 
         public static void RotateClockwise(this Player player, Degrees angle)

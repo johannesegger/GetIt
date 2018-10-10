@@ -152,11 +152,12 @@ namespace PlayAndLearn.Sample
 
         private static void Program10()
         {
+            Game.SetFastMotion();
             while (Turtle.GetDistanceToMouse() > 10)
             {
                 var direction = Turtle.GetDirectionToMouse();
                 Turtle.SetDirection(direction);
-                Turtle.Go(10);
+                Turtle.Go(1);
             }
             Turtle.Say("Geschnappt :-)");
         }
