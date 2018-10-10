@@ -127,10 +127,25 @@ namespace PlayAndLearn.Sample
 
         private static void Program9()
         {
-            Turtle.TurnOnPen();
             Turtle.SetPenWeight(5);
+
+            Turtle.TurnOnPen();
+            Turtle.GoTo(33, 33);
+            Turtle.TurnOffPen();
+            Turtle.GoTo(66, 66);
+            Turtle.TurnOnPen();
             Turtle.GoTo(100, 100);
+
+            Turtle.GoTo(100, 33);
+            Turtle.TurnOffPen();
+            Turtle.GoTo(100, -33);
+            Turtle.TurnOnPen();
             Turtle.GoTo(100, -100);
+            
+            Turtle.GoTo(66, -66);
+            Turtle.TurnOffPen();
+            Turtle.GoTo(33, -33);
+            Turtle.TurnOnPen();
             Turtle.GoToCenter();
         }
     }
