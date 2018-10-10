@@ -16,7 +16,8 @@ namespace PlayAndLearn.Sample
             // Program5();
             // Program6();
             // Program7();
-            Program8();
+            // Program8();
+            Program9();
         }
 
         private static void Program1()
@@ -122,6 +123,15 @@ namespace PlayAndLearn.Sample
                 Turtle.Say(new string('A', i));
                 Game.Sleep(20);
             }
+        }
+
+        private static void Program9()
+        {
+            Turtle.TurnOnPen();
+            Turtle.SetPenWeight(5);
+            Turtle.GoTo(100, 100);
+            Turtle.GoTo(100, -100);
+            Turtle.GoToCenter();
         }
     }
 }

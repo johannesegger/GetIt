@@ -92,7 +92,8 @@ namespace PlayAndLearn
                         h => MainWindow.Scene.LayoutUpdated += h,
                         h => MainWindow.Scene.LayoutUpdated -= h
                     )
-                    .Select(p => MainWindow.Scene.Bounds);
+                    .Select(_ => MainWindow.Scene.Bounds)
+                    .StartWith(MainWindow.Scene.Bounds);
 
                 var centerChanged = sceneBoundsChanged
                     .Select(bounds => new Position(
@@ -135,26 +136,23 @@ namespace PlayAndLearn
 
                 Observable
                     .CombineLatest(
-                        positionChanged,
+                        positionChanged.Buffer(2, 1),
                         sprite.Changed(p => p.Pen),
-                        (position, pen) => (position, pen)
+                        (position, pen) => new { oldPosition = position[0], newPosition = position[1], pen = pen }
                     )
                     .ObserveOn(AvaloniaScheduler.Instance)
-                    .Subscribe(((Position position, Models.Pen pen) p) =>
+                    .Subscribe(p =>
                     {
                         if (p.pen.IsOn)
                         {
-                            var currentPosition = new Position(
-                                Canvas.GetLeft(spriteControl),
-                                Canvas.GetBottom(spriteControl));
                             var line = new Line
                             {
                                 StartPoint = new Point(
-                                    currentPosition.X + sprite.Size.Width / 2,
-                                    MainWindow.Scene.Bounds.Height - currentPosition.Y - sprite.Size.Height / 2),
+                                    p.oldPosition.X + sprite.Size.Width / 2,
+                                    MainWindow.Scene.Bounds.Height - p.oldPosition.Y - sprite.Size.Height / 2),
                                 EndPoint = new Point(
-                                    p.position.X + sprite.Size.Width / 2,
-                                    MainWindow.Scene.Bounds.Height - p.position.Y - sprite.Size.Height / 2),
+                                    p.newPosition.X + sprite.Size.Width / 2,
+                                    MainWindow.Scene.Bounds.Height - p.newPosition.Y - sprite.Size.Height / 2),
                                 Stroke = p.pen.Color.ToAvaloniaBrush(),
                                 StrokeThickness = p.pen.Weight,
                                 ZIndex = 5
@@ -162,8 +160,8 @@ namespace PlayAndLearn
                             MainWindow.Scene.Children.Add(line);
                             drawnLines.Add(line);
                         }
-                        Canvas.SetLeft(spriteControl, p.position.X);
-                        Canvas.SetBottom(spriteControl, p.position.Y);
+                        Canvas.SetLeft(spriteControl, p.newPosition.X);
+                        Canvas.SetBottom(spriteControl, p.newPosition.Y);
                     })
                     .DisposeWith(d);
 
