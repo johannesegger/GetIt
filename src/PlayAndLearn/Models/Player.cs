@@ -14,11 +14,11 @@ namespace PlayAndLearn.Models
     {
         public Size Size { get; }
 
-        public Position Position { get; set; }
+        public Position Position { get; internal set; }
 
-        public Degrees Direction { get; set; }
+        public Degrees Direction { get; internal set; }
 
-        public Pen Pen { get; set; }
+        public Pen Pen { get; internal set; }
 
         internal SpeechBubble SpeechBubble { get; set; }
 
