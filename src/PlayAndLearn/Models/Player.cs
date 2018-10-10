@@ -14,15 +14,15 @@ namespace PlayAndLearn.Models
     {
         public Size Size { get; }
 
-        public Position Position { get; internal set; }
+        public Position Position { get; set; }
 
-        public Degrees Direction { get; internal set; }
+        public Degrees Direction { get; set; }
 
-        public Pen Pen { get; internal set; }
+        public Pen Pen { get; set; }
 
-        internal SpeechBubble SpeechBubble { get; set; }
+        public SpeechBubble SpeechBubble { get; set; }
 
-        internal Costume Costume { get; }
+        public Costume Costume { get; }
 
         public Player(Size size, Position position, Degrees direction, Pen pen, SpeechBubble speechBubble, Costume costume)
         {
