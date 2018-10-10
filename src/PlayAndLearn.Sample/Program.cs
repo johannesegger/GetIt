@@ -7,7 +7,6 @@ namespace PlayAndLearn.Sample
         static void Main(string[] args)
         {
             Game.ShowSceneAndAddTurtle();
-            // Game.SetSlowMotion();
 
             // Program1();
             // Program2();
@@ -152,12 +151,12 @@ namespace PlayAndLearn.Sample
 
         private static void Program10()
         {
-            Game.SetFastMotion();
             while (Turtle.GetDistanceToMouse() > 10)
             {
                 var direction = Turtle.GetDirectionToMouse();
                 Turtle.SetDirection(direction);
                 Turtle.Go(1);
+                Game.Sleep(5);
             }
             Turtle.Say("Geschnappt :-)");
         }

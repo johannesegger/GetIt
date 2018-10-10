@@ -33,12 +33,7 @@ namespace PlayAndLearn
             return null;
         }
 
-        internal static TimeSpan MovementDelay { get; private set; } = TimeSpan.FromMilliseconds(40);
-
         private static ICollection<Control> drawnLines = new List<Control>();
-
-        public static void SetSlowMotion() => MovementDelay = TimeSpan.FromSeconds(1);
-        public static void SetFastMotion() => MovementDelay = TimeSpan.FromMilliseconds(10);
 
         public static Models.Rectangle Bounds => new Models.Rectangle(
             new Position(-MainWindow.Scene.Bounds.Width / 2, -MainWindow.Scene.Bounds.Height / 2),
