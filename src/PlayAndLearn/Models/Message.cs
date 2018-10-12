@@ -11,6 +11,7 @@ namespace PlayAndLearn.Models
             Message.SetDirection,
             Message.Say,
             Message.SetPen,
+            Message.SetSizeFactor,
             Message.AddPlayer,
             Message.RemovePlayer,
             Message.ClearScene,
@@ -90,6 +91,18 @@ namespace PlayAndLearn.Models
 
             public Guid PlayerId { get; }
             public Pen Pen { get; }
+        }
+
+        public class SetSizeFactor : Message
+        {
+            public SetSizeFactor(Guid playerId, double sizeFactor)
+            {
+                PlayerId = playerId;
+                SizeFactor = sizeFactor;
+            }
+
+            public Guid PlayerId { get; }
+            public double SizeFactor { get; }
         }
 
         public class AddPlayer : Message

@@ -11,6 +11,7 @@ namespace PlayAndLearn.Models
         internal Guid Id { get; }
         internal Player Player => Game.State.Players.Single(p => p.Id == Id);
         public Size Size => Player.Size;
+        public double SizeFactor => Player.SizeFactor;
         public Position Position => Player.Position;
         public Degrees Direction => Player.Direction;
         public Pen Pen => Player.Pen;

@@ -145,6 +145,11 @@ namespace PlayAndLearn
                     var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.Pen, m.Pen));
                     return (newState, Cmd.None<Message>());
                 },
+                (Message.SetSizeFactor m) =>
+                {
+                    var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SizeFactor, m.SizeFactor));
+                    return (newState, Cmd.None<Message>());
+                },
                 (Message.AddPlayer m) =>
                 {
                     var newState = state.With(p => p.Players, state.Players.Add(m.Player));

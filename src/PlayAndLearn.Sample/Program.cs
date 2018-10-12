@@ -16,7 +16,8 @@
             // Program8();
             // Program9();
             // Program10();
-            Program11();
+            // Program11();
+            Program12();
         }
 
         private static void Program1()
@@ -190,6 +191,12 @@
             Turtle.Go(100);
             Game.Sleep(1000);
             Turtle.GoToCenter();
+        }
+
+        private static void Program12()
+        {
+            Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
+            Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
         }
     }
 }

@@ -67,6 +67,7 @@ namespace PlayAndLearn
         public static Player CreateDefault() => new Player(
             Guid.NewGuid(),
             new Size(50, 50),
+            1,
             new Position(0, 0),
             new Degrees(0),
             new Pen(false, 1, new RGB(0x00, 0x00, 0x00)),
@@ -100,6 +101,8 @@ namespace PlayAndLearn
         public static void ShiftPenColor(double shift) => Default.ShiftPenColor(shift);
         public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
+        public static void SetSizeFactor(double sizeFactor) => Default.SetSizeFactor(sizeFactor);
+        public static void ChangeSizeFactor(double change) => Default.ChangeSizeFactor(change);
         public static Degrees GetDirectionToMouse() => Default.GetDirectionToMouse();
         public static double GetDistanceToMouse() => Default.GetDistanceToMouse();
         public static IDisposable OnKeyDown(KeyboardKey key, Action<PlayerOnScene> action) => Default.OnKeyDown(key, action);
