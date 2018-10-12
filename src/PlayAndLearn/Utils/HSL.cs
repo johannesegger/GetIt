@@ -24,6 +24,6 @@ namespace PlayAndLearn.Utils
         public double Lightness { get; }
         private double LightnessRounded => Math.Round(Lightness, 5);
 
-        public override string ToString() => $"hsl({Hue * 360:F2}°, {Saturation:P2}%, {Lightness:P2})";
+        public override string ToString() => $"hsl({Hue * 360:F2}°, {Saturation:P2}, {Lightness:P2})";
     }
 }

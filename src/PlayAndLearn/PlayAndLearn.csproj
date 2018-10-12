@@ -19,9 +19,10 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.6.1" />
     <PackageReference Include="Avalonia.Desktop" Version="0.6.1" />
+    <PackageReference Include="Elmish.Net" Version="0.3.2" />
     <PackageReference Include="Equals.Fody" PrivateAssets="All" Version="1.9.2" />
-    <PackageReference Include="Fody" PrivateAssets="All" Version="3.2.8" />
-    <PackageReference Include="PropertyChanged.Fody" PrivateAssets="All" Version="2.5.12" />
+    <PackageReference Include="OneOf" Version="2.1.127" />
+    <PackageReference Include="OneOf.Extended" Version="2.1.127" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Reactive" Version="3.1.1" />
   </ItemGroup>

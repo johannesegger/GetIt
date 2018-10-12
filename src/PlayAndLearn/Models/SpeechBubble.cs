@@ -1,6 +1,6 @@
 using System;
 
-namespace PlayAndLearn.Utils
+namespace PlayAndLearn.Models
 {
     public class SpeechBubble
     {

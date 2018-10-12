@@ -1,6 +1,4 @@
-using PlayAndLearn.Models;
-
-namespace PlayAndLearn.Utils
+namespace PlayAndLearn.Models
 {
     public class GeometryPath
     {

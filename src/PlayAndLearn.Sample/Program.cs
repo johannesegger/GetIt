@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PlayAndLearn.Sample
+﻿namespace PlayAndLearn.Sample
 {
     class Program
     {
@@ -103,19 +101,24 @@ namespace PlayAndLearn.Sample
 
         private static void Program5()
         {
-            Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.MoveUp(10));
-            Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.MoveDown(10));
-            Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.MoveLeft(10));
-            Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.MoveRight(10));
+            Turtle.Say("Move me with arrow keys");
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.MoveUp(10)))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.MoveDown(10)))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.MoveLeft(10)))
+            using (Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.MoveRight(10)))
+            {
+                Game.Sleep(5000);
+            }
+            Turtle.Say("Game over");
         }
 
         private static void Program6()
         {
-            var randomNumberGenerator = new Random();
-            Turtle.OnMouseEnter(player =>
-                player.GoTo(
-                    randomNumberGenerator.Next((int)Game.Bounds.Left, (int)Game.Bounds.Right),
-                    randomNumberGenerator.Next((int)Game.Bounds.Bottom, (int)Game.Bounds.Top)));
+            Turtle.OnMouseEnter(player => player.GoToRandomPosition());
         }
 
         private static void Program7()
@@ -139,32 +142,43 @@ namespace PlayAndLearn.Sample
 
             Turtle.TurnOnPen();
             Turtle.GoTo(33, 33);
+            Game.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.GoTo(66, 66);
+            Game.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.GoTo(100, 100);
+            Game.Sleep(100);
 
             Turtle.GoTo(100, 33);
+            Game.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.GoTo(100, -33);
+            Game.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.GoTo(100, -100);
+            Game.Sleep(100);
             
             Turtle.GoTo(66, -66);
+            Game.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.GoTo(33, -33);
+            Game.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.GoToCenter();
         }
 
         private static void Program10()
         {
+            Turtle.TurnOnPen();
+            Turtle.SetPenColor(RGBColor.Red);
             while (Turtle.GetDistanceToMouse() > 10)
             {
+                Turtle.ShiftPenColor(10.0 / 360);
                 var direction = Turtle.GetDirectionToMouse();
                 Turtle.SetDirection(direction);
-                Turtle.Go(1);
-                Game.Sleep(5);
+                Turtle.Go(10);
+                Game.Sleep(50);
             }
             Turtle.Say("Geschnappt :-)");
         }

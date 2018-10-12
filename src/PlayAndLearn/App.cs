@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Avalonia;
-using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
 
 namespace PlayAndLearn

@@ -1,22 +1,34 @@
 using System;
 using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
-using System.Reactive.Linq;
 using System.Reflection;
-using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
 using PlayAndLearn.Models;
-using PlayAndLearn.Utils;
-using Portable.Xaml;
 
 namespace PlayAndLearn
 {
     public static class Turtle
     {
-        private static string AssemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        private static readonly string AssemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        public static readonly Player Default = CreateDefault();
+        public static readonly Player DefaultPlayer = CreateDefault();
+
+        private static PlayerOnScene @default;
+        public static PlayerOnScene Default
+        {
+            get
+            {
+                return @default ?? throw new Exception($"Default player hasn't been added to the scene. Consider calling `{nameof(Game)}.{nameof(Game.ShowSceneAndAddTurtle)}` at the beginning.");
+            }
+
+            internal set
+            {
+                if (@default != null)
+                {
+                    throw new Exception("Default player has already been set.");
+                }
+                @default = value;
+            }
+        }
 
         private static Costume DefaultCostume =>
             new Costume(
@@ -53,6 +65,7 @@ namespace PlayAndLearn
             );
 
         public static Player CreateDefault() => new Player(
+            Guid.NewGuid(),
             new Size(50, 50),
             new Position(0, 0),
             new Degrees(0),
@@ -69,6 +82,7 @@ namespace PlayAndLearn
         public static void MoveUp(int steps) => Default.MoveUp(steps);
         public static void MoveDown(int steps) => Default.MoveDown(steps);
         public static void Go(int steps) => Default.Go(steps);
+        public static void GoToRandomPosition() => Default.GoToRandomPosition();
         public static void SetDirection(Degrees angle) => Default.SetDirection(angle);
         public static void RotateClockwise(Degrees angle) => Default.RotateClockwise(angle);
         public static void RotateCounterClockwise(Degrees angle) => Default.RotateCounterClockwise(angle);
@@ -88,8 +102,8 @@ namespace PlayAndLearn
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
         public static Degrees GetDirectionToMouse() => Default.GetDirectionToMouse();
         public static double GetDistanceToMouse() => Default.GetDistanceToMouse();
-        public static IDisposable OnKeyDown(KeyboardKey key, Action<Player> action) => Default.OnKeyDown(key, action);
-        public static IDisposable OnMouseEnter(Action<Player> action) => Default.OnMouseEnter(action);
-        public static IDisposable OnClick(Action<Player> action) => Default.OnClick(action);
+        public static IDisposable OnKeyDown(KeyboardKey key, Action<PlayerOnScene> action) => Default.OnKeyDown(key, action);
+        public static IDisposable OnMouseEnter(Action<PlayerOnScene> action) => Default.OnMouseEnter(action);
+        public static IDisposable OnClick(Action<PlayerOnScene> action) => Default.OnClick(action);
     }
 }

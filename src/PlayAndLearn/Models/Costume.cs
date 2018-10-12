@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
-using PlayAndLearn.Models;
 
-namespace PlayAndLearn.Utils
+namespace PlayAndLearn.Models
 {
     public class Costume
     {
