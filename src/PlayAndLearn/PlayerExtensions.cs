@@ -111,33 +111,11 @@ namespace PlayAndLearn
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveKeyDownHandler(handler)));
         }
 
-        // private static IObservable<TEventArgs> Observe<TEventArgs>(this PlayerOnScene player, RoutedEvent<TEventArgs> routedEvent)
-        //     where TEventArgs : RoutedEventArgs
-        // {
-        //     var control = Game.TryFindPlayerControl(player);
-        //     if (control == null)
-        //     {
-        //         return Observable.Empty<TEventArgs>();
-        //     }
-        //     return Observable
-        //         .Create<TEventArgs>(observer =>
-        //             control.AddHandler(
-        //                 routedEvent,
-        //                 new EventHandler<TEventArgs>((s, e) => observer.OnNext(e)),
-        //                 handledEventsToo: true)
-        //         )
-        //         .ObserveOn(System.Reactive.Concurrency.TaskPoolScheduler.Default);
-        // }
-
         public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
             var handler = new MouseEnterPlayerHandler(Guid.NewGuid(), player.Id, () => action(player));
             Game.DispatchMessageAndWaitForUpdate(new Message.AddMouseEnterPlayerHandler(handler));
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveMouseEnterPlayerHandler(handler)));
-
-            // return player
-            //     .Observe(InputElement.PointerEnterEvent)
-            //     .Subscribe(_ => action(player));
         }
 
         public static IDisposable OnClick(this PlayerOnScene player, Action<PlayerOnScene> action)
