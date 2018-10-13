@@ -4,5 +4,5 @@ Param(
 
 Push-Location $PSScriptRoot
 $outputPath = "$pwd\dist"
-dotnet pack src\PlayAndLearn /p:Version=$version /p:PackageOutputPath=$outputPath
+dotnet pack src\GetIt /p:Version=$version /p:PackageOutputPath=$outputPath
 Pop-Location

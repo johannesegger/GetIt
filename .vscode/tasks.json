@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/PlayAndLearn.Sample/PlayAndLearn.Sample.csproj"
+                "${workspaceFolder}/src/GetIt.Sample/GetIt.Sample.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -18,7 +18,7 @@
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/src/PlayAndLearn.Sample/PlayAndLearn.Sample.csproj"
+                "${workspaceFolder}/src/GetIt.Sample/GetIt.Sample.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
