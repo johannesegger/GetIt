@@ -3,6 +3,8 @@ namespace GetIt.Models
     [Equals]
     public sealed class Position
     {
+        public static readonly Position Zero = new Position(0, 0);
+
         public Position(double x, double y)
         {
             X = x;

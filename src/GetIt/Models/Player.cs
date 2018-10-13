@@ -34,5 +34,23 @@ namespace GetIt.Models
         public Pen Pen { get; }
         public SpeechBubble SpeechBubble { get; }
         public Costume Costume { get; }
+
+        public static Player Create(Size originalSize, Costume costume)
+        {
+            return new Player(
+                Guid.NewGuid(),
+                originalSize,
+                1,
+                Position.Zero,
+                Degrees.Zero,
+                Pen.Default,
+                SpeechBubble.Empty,
+                costume);
+        }
+
+        public static Player Create(Costume costume)
+        {
+            return Create(costume.Size, costume);
+        }
     }
 }

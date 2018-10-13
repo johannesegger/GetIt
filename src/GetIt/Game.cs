@@ -82,7 +82,7 @@ namespace GetIt
                 new Models.Rectangle(new Position(-300, -200), new Models.Size(600, 400)),
                 ImmutableList<Player>.Empty,
                 ImmutableList<PenLine>.Empty,
-                new Position(0, 0),
+                Position.Zero,
                 ImmutableList<KeyDownHandler>.Empty,
                 ImmutableList<ClickPlayerHandler>.Empty,
                 ImmutableList<MouseEnterPlayerHandler>.Empty);
@@ -297,6 +297,7 @@ namespace GetIt
             foreach (var player in state.Players)
             {
                 yield return VDomNode<ContentControl>()
+                    // .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightCoral))
                     .Set(p => p.ZIndex, 10)
                     .Set(p => p.Width, player.Size.Width)
                     .Set(p => p.Height, player.Size.Height)
@@ -408,12 +409,14 @@ namespace GetIt
         {
             foreach (var player in state.Players)
             {
-                var size = new Models.Size(30, 30);
+                var boxSize = new Models.Size(30, 30);
+                var size = player.Costume.Size.Scale(boxSize);
                 yield return VDomNode<DockPanel>()
                     .SetChildNodes(p => p.Children,
                         VDomNode<ContentControl>()
-                            .Set(p => p.Width, size.Width)
-                            .Set(p => p.Height, size.Height)
+                            // .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightCoral))
+                            .Set(p => p.Width, boxSize.Width)
+                            .Set(p => p.Height, boxSize.Height)
                             .Set(p => p.Content, GetPlayerView(player)
                                 .Set(p => p.RenderTransform, VDomNode<ScaleTransform>()
                                     .Set(p => p.ScaleX, size.Width / player.Costume.Size.Width)

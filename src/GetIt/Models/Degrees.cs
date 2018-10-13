@@ -3,6 +3,8 @@ namespace GetIt.Models
     [Equals]
     public sealed class Degrees
     {
+        public static readonly Degrees Zero = new Degrees(0);
+
         public Degrees(double value)
         {
             Value = (value % 360 + 360) % 360;
