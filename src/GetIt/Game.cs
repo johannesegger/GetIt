@@ -303,6 +303,7 @@ namespace GetIt
                 yield return VDomNode<Grid>()
                     .Set(p => p.MaxWidth, 300)
                     .Set(p => p.IsVisible, player.SpeechBubble.Text != string.Empty)
+                    .Set(p => p.ZIndex, 7)
                     .Attach(Canvas.LeftProperty, player.Bounds.Right - state.SceneBounds.Left + 20)
                     .Attach(Canvas.BottomProperty, player.Bounds.Top - state.SceneBounds.Bottom)
                     .SetChildNodes(
