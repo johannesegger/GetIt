@@ -255,7 +255,6 @@ namespace GetIt
 
         private static IVDomNode<Window, Message> View(State state, Dispatch<Message> dispatch)
         {
-            
             return VDomNode<Window>()
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "GetIt")
