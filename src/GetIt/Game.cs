@@ -459,16 +459,18 @@ namespace GetIt
             dispatchSubject.OnNext(message);
         }
 
-        public static PlayerOnScene AddPlayer(Player player)
+        public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
         {
             DispatchMessageAndWaitForUpdate(new Message.AddPlayer(player));
-            return new PlayerOnScene(player.Id);
+            var p = new PlayerOnScene(player.Id);
+            TaskPoolScheduler.Default.Schedule(() => fn(p));
+            return p;
         }
 
         public static void ShowSceneAndAddTurtle()
         {
             ShowScene();
-            Turtle.Default = AddPlayer(Turtle.DefaultPlayer);
+            Turtle.Default = AddPlayer(Turtle.DefaultPlayer, _ => {});
         }
 
         public static void Sleep(double durationInMilliseconds)

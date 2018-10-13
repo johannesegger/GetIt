@@ -1,4 +1,6 @@
-﻿namespace GetIt.Sample
+﻿using System;
+
+namespace GetIt.Sample
 {
     class Program
     {
@@ -226,21 +228,50 @@
         {
             Game.ShowScene();
 
-            var leftPlayer = Game.AddPlayer(
+            var isGameOver = false;
+
+            void controlLeftPlayer(Models.PlayerOnScene player)
+            {
+                player.GoTo(Game.State.SceneBounds.Left + 20, 0);
+                player.OnKeyDown(Models.KeyboardKey.W, p => p.MoveUp(10));
+                player.OnKeyDown(Models.KeyboardKey.S, p => p.MoveDown(10));
+            }
+
+            Game.AddPlayer(
                 Models.Player.Create(
                     Costumes.CreateRectangle(
                         new Models.Size(20, 150),
-                        RGBColor.DarkMagenta)));
-            leftPlayer.GoTo(Game.State.SceneBounds.Left + 20, 0);
+                        RGBColor.DarkMagenta)),
+                controlLeftPlayer);
 
-            var rightPlayer = Game.AddPlayer(
+            void controlRightPlayer(Models.PlayerOnScene player)
+            {
+                player.GoTo(Game.State.SceneBounds.Right - 20, 0);
+                player.OnKeyDown(Models.KeyboardKey.Up, p => p.MoveUp(10));
+                player.OnKeyDown(Models.KeyboardKey.Down, p => p.MoveDown(10));
+            }
+
+            Game.AddPlayer(
                 Models.Player.Create(
                     Costumes.CreateRectangle(
                         new Models.Size(20, 150),
-                        RGBColor.Magenta)));
-            rightPlayer.GoTo(Game.State.SceneBounds.Right - 20, 0);
+                        RGBColor.Magenta)),
+                controlRightPlayer);
 
-            var ball = Game.AddPlayer(Models.Player.Create(Costumes.CreateCircle(10, RGBColor.Black)));
+            var rand = new Random();
+            void controlBall(Models.PlayerOnScene player)
+            {
+                player.SetDirection(rand.Next(360));
+                while (!isGameOver)
+                {
+                    player.Go(10);
+                    Game.Sleep(50);
+                }
+            }
+
+            Game.AddPlayer(
+                Models.Player.Create(Costumes.CreateCircle(10, RGBColor.Black)),
+                controlBall);
         }
     }
 }
