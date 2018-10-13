@@ -30,6 +30,10 @@ namespace GetIt.Models
         public double SizeFactor { get; }
         [IgnoreDuringEquals] public Size Size => OriginalSize * SizeFactor;
         public Position Position { get; }
+        [IgnoreDuringEquals] public Rectangle Bounds =>
+            new Rectangle(
+                new Position(Position.X - Size.Width / 2, Position.Y - Size.Height / 2),
+                Size);
         public Degrees Direction { get; }
         public Pen Pen { get; }
         public SpeechBubble SpeechBubble { get; }

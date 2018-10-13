@@ -265,6 +265,7 @@ namespace GetIt.Sample
                 while (!isGameOver)
                 {
                     player.Go(10);
+                    player.BounceIfOnEdge();
                     Game.Sleep(50);
                 }
             }

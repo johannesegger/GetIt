@@ -13,6 +13,7 @@ namespace GetIt.Models
         public Size Size => Player.Size;
         public double SizeFactor => Player.SizeFactor;
         public Position Position => Player.Position;
+        public Rectangle Bounds => Player.Bounds;
         public Degrees Direction => Player.Direction;
         public Pen Pen => Player.Pen;
 

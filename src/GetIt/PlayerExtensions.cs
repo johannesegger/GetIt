@@ -58,6 +58,20 @@ namespace GetIt
             player.SetDirection(player.Direction + angle);
         }
 
+        public static void BounceIfOnEdge(this PlayerOnScene player)
+        {
+            if(player.Bounds.Top > Game.State.SceneBounds.Top
+                || player.Bounds.Bottom < Game.State.SceneBounds.Bottom)
+            {
+                player.SetDirection(360 - player.Direction);
+            }
+            else if(player.Bounds.Right > Game.State.SceneBounds.Right
+                || player.Bounds.Left < Game.State.SceneBounds.Left)
+            {
+                player.SetDirection(180 - player.Direction);
+            }
+        }
+
         public static void TurnUp(this PlayerOnScene player) => player.SetDirection(90);
 
         public static void TurnRight(this PlayerOnScene player) => player.SetDirection(0);

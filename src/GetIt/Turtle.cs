@@ -76,6 +76,7 @@ namespace GetIt
         public static void SetDirection(Degrees angle) => Default.SetDirection(angle);
         public static void RotateClockwise(Degrees angle) => Default.RotateClockwise(angle);
         public static void RotateCounterClockwise(Degrees angle) => Default.RotateCounterClockwise(angle);
+        public static void BounceIfOnEdge() => Default.BounceIfOnEdge();
         public static void TurnUp() => Default.TurnUp();
         public static void TurnRight() => Default.TurnRight();
         public static void TurnDown() => Default.TurnDown();
