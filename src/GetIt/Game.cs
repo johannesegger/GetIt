@@ -236,21 +236,11 @@ namespace GetIt
                 state.SceneBounds.Top - screenCoordinate.Y);
         }
 
-        private static double GetScreenCoordinateX(State state, Position position)
-        {
-            return position.X - state.SceneBounds.Left;
-        }
-
-        private static double GetScreenCoordinateY(State state, Position position)
-        {
-            return state.SceneBounds.Top - position.Y;
-        }
-
         private static Point GetScreenCoordinate(State state, Position position)
         {
             return new Point(
-                GetScreenCoordinateX(state, position),
-                GetScreenCoordinateY(state, position));
+                position.X - state.SceneBounds.Left,
+                state.SceneBounds.Top - position.Y);
         }
 
         private static IVDomNode<Window, Message> View(State state, Dispatch<Message> dispatch)
@@ -307,14 +297,14 @@ namespace GetIt
                         .Set(p => p.RenderTransform, VDomNode<ScaleTransform>()
                             .Set(p => p.ScaleX, player.Size.Width / player.Costume.Size.Width)
                             .Set(p => p.ScaleY, player.Size.Height / player.Costume.Size.Height)))
-                    .Attach(Canvas.LeftProperty, GetScreenCoordinateX(state, player.Position) - player.Size.Width / 2)
-                    .Attach(Canvas.BottomProperty, state.SceneBounds.Size.Height - GetScreenCoordinateY(state, player.Position) - player.Size.Height / 2);
+                    .Attach(Canvas.LeftProperty, player.Bounds.Left - state.SceneBounds.Left)
+                    .Attach(Canvas.BottomProperty, player.Bounds.Bottom - state.SceneBounds.Bottom);
 
                 yield return VDomNode<Grid>()
                     .Set(p => p.MaxWidth, 300)
                     .Set(p => p.IsVisible, player.SpeechBubble.Text != string.Empty)
-                    .Attach(Canvas.LeftProperty, GetScreenCoordinateX(state, player.Position) + 45)
-                    .Attach(Canvas.BottomProperty, state.SceneBounds.Size.Height - GetScreenCoordinateY(state, player.Position) + player.Size.Height / 2)
+                    .Attach(Canvas.LeftProperty, player.Bounds.Right - state.SceneBounds.Left + 20)
+                    .Attach(Canvas.BottomProperty, player.Bounds.Top - state.SceneBounds.Bottom)
                     .SetChildNodes(
                         p => p.RowDefinitions,
                         VDomNode<RowDefinition>().Set(p => p.Height, new GridLength(1, GridUnitType.Star)),
