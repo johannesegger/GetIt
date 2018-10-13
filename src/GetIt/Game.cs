@@ -223,7 +223,7 @@ namespace GetIt
 
         private static Lazy<WindowIcon> Icon = new Lazy<WindowIcon>(() =>
         {
-            using (var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("GetIt.Icon.ico"))
+            using (var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("GetIt.icon.png"))
             {
                 return new WindowIcon(iconStream);
             }

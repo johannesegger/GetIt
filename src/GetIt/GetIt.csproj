@@ -14,7 +14,7 @@
     <RepositoryUrl>https://github.com/johannesegger/GetIt</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Icon.ico" />
+    <EmbeddedResource Include="icon.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.6.1" />
