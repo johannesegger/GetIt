@@ -233,11 +233,17 @@ namespace GetIt.Sample
             void controlLeftPlayer(Models.PlayerOnScene player)
             {
                 player.GoTo(Game.State.SceneBounds.Left + 20, 0);
-                player.OnKeyDown(Models.KeyboardKey.W, p => p.MoveUp(10));
-                player.OnKeyDown(Models.KeyboardKey.S, p => p.MoveDown(10));
+                using (player.OnKeyDown(Models.KeyboardKey.W, p => p.MoveUp(10)))
+                using (player.OnKeyDown(Models.KeyboardKey.S, p => p.MoveDown(10)))
+                {
+                    while (!isGameOver)
+                    {
+                        Game.Sleep(50);
+                    }
+                }
             }
 
-            Game.AddPlayer(
+            var leftPlayer = Game.AddPlayer(
                 Models.Player.Create(
                     Costumes.CreateRectangle(
                         new Models.Size(20, 150),
@@ -247,11 +253,17 @@ namespace GetIt.Sample
             void controlRightPlayer(Models.PlayerOnScene player)
             {
                 player.GoTo(Game.State.SceneBounds.Right - 20, 0);
-                player.OnKeyDown(Models.KeyboardKey.Up, p => p.MoveUp(10));
-                player.OnKeyDown(Models.KeyboardKey.Down, p => p.MoveDown(10));
+                using (player.OnKeyDown(Models.KeyboardKey.Up, p => p.MoveUp(10)))
+                using (player.OnKeyDown(Models.KeyboardKey.Down, p => p.MoveDown(10)))
+                {
+                    while (!isGameOver)
+                    {
+                        Game.Sleep(50);
+                    }
+                }
             }
 
-            Game.AddPlayer(
+            var rightPlayer = Game.AddPlayer(
                 Models.Player.Create(
                     Costumes.CreateRectangle(
                         new Models.Size(20, 150),
@@ -262,10 +274,28 @@ namespace GetIt.Sample
             void controlBall(Models.PlayerOnScene player)
             {
                 player.SetDirection(rand.Next(360));
-                while (!isGameOver)
+                while (true)
                 {
                     player.Go(10);
                     player.BounceIfOnEdge();
+                    if (player.Bounds.Left <= Game.State.SceneBounds.Left
+                        || player.Bounds.Right >= Game.State.SceneBounds.Right)
+                    {
+                        isGameOver = true;
+                        break;
+                    }
+                    if (player.Bounds.Left <= leftPlayer.Bounds.Right
+                        && player.Position.Y <= leftPlayer.Bounds.Top
+                        && player.Position.Y >= leftPlayer.Bounds.Bottom)
+                    {
+                        player.SetDirection(180 - player.Direction);
+                    }
+                    else if (player.Bounds.Right >= rightPlayer.Bounds.Left
+                        && player.Position.Y <= rightPlayer.Bounds.Top
+                        && player.Position.Y >= rightPlayer.Bounds.Bottom)
+                    {
+                        player.SetDirection(180 - player.Direction);
+                    }
                     Game.Sleep(50);
                 }
             }
