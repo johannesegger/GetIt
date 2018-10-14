@@ -23,7 +23,10 @@ using Elmish.Net;
 using Elmish.Net.VDom;
 using GetIt.Models;
 using GetIt.Utils;
+using LanguageExt;
 using static Elmish.Net.ElmishApp<GetIt.Models.Message>;
+using static LanguageExt.Prelude;
+using Unit = System.Reactive.Unit;
 
 namespace GetIt
 {
@@ -135,10 +138,35 @@ namespace GetIt
                     var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.Direction, m.Angle));
                     return (newState, Cmd.None<Message>());
                 },
-                (Message.Say m) =>
+                (Message.SetSpeechBubble m) =>
                 {
                     var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SpeechBubble, m.SpeechBubble));
                     return (newState, Cmd.None<Message>());
+                },
+                (Message.UpdateAnswer m) =>
+                {
+                    var currentPlayer = state.Players.Single(p => p.Id == m.PlayerId);
+                    var newSpeechBubble = currentPlayer.SpeechBubble
+                        .Some(speechBubble => speechBubble
+                            .Match<Option<SpeechBubble>>(
+                                (SpeechBubble.Say say) => say,
+                                (SpeechBubble.Ask ask) => ask.With(p => p.Answer, m.Answer)))
+                        .None(currentPlayer.SpeechBubble);
+                    var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SpeechBubble, newSpeechBubble));
+                    return (newState, Cmd.None<Message>());
+                },
+                (Message.ApplyAnswer m) =>
+                {
+                    var currentPlayer = state.Players.Single(p => p.Id == m.PlayerId);
+                    var answerHandler = currentPlayer.SpeechBubble
+                        .Some(speechBubble => speechBubble
+                            .Match(
+                                (SpeechBubble.Say say) => _ => {},
+                                (SpeechBubble.Ask ask) => ask.AnswerHandler))
+                        .None(_ => {});
+                    var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SpeechBubble, None));
+                    // Have `Game.State` set before executing `answerHandler`
+                    return Update(new Message.ExecuteAction(() => answerHandler(m.Answer)), newState);
                 },
                 (Message.SetPen m) =>
                 {
@@ -217,6 +245,11 @@ namespace GetIt
                         state.MouseEnterPlayerHandlers
                             .Where(p => p.PlayerId == m.PlayerId)
                             .ForEach(p => p.Handler()));
+                    return (state, Cmd.None<Message>());
+                },
+                (Message.ExecuteAction m) =>
+                {
+                    m.Action();
                     return (state, Cmd.None<Message>());
                 });
         }
@@ -300,9 +333,49 @@ namespace GetIt
                     .Attach(Canvas.LeftProperty, player.Bounds.Left - state.SceneBounds.Left)
                     .Attach(Canvas.BottomProperty, player.Bounds.Bottom - state.SceneBounds.Bottom);
 
+                var speechBubbleContent =
+                    player.SpeechBubble
+                        .Some(speechBubble => speechBubble.Match<IVDomNode<IControl, Message>>(
+                            (SpeechBubble.Say sayBubble) => VDomNode<TextBlock>()
+                                .Set(p => p.MaxWidth, 300)
+                                .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
+                                .Set(p => p.FontSize, 15)
+                                .Set(p => p.TextWrapping, TextWrapping.Wrap)
+                                .Set(p => p.Margin, new Thickness(10, 5))
+                                .Set(p => p.Text, sayBubble.Text),
+                            (SpeechBubble.Ask askBubble) => VDomNode<DockPanel>()
+                                .Set(p => p.Width, 300)
+                                .SetChildNodes(
+                                    p => p.Children,
+                                    VDomNode<TextBox>()
+                                        .Set(p => p.Text, askBubble.Answer)
+                                        .Set(p => p.FontSize, 15)
+                                        .Set(p => p.Margin, new Thickness(10, 5))
+                                        .Set(p => p.Watermark, "Answer")
+                                        .Set(p => p.Foreground, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue))
+                                        .Attach(DockPanel.DockProperty, Dock.Bottom)
+                                        .Subscribe(element => Observable
+                                            .FromEventPattern<TextInputEventArgs>(
+                                                h => element.TextInput += h,
+                                                h => element.TextInput -= h)
+                                            .Select(_ => new Message.UpdateAnswer(player.Id, element.Text)))
+                                        .Subscribe(element => Observable
+                                            .FromEventPattern<KeyEventArgs>(
+                                                h => element.KeyDown += h,
+                                                h => element.KeyDown -= h)
+                                            .Where(p => p.EventArgs.Key == Key.Enter)
+                                            .Select(_ => new Message.ApplyAnswer(player.Id, element.Text))),
+                                    VDomNode<TextBlock>()
+                                        .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
+                                        .Set(p => p.FontSize, 15)
+                                        .Set(p => p.TextWrapping, TextWrapping.Wrap)
+                                        .Set(p => p.Margin, new Thickness(10, 5))
+                                        .Set(p => p.Text, askBubble.Question)
+                                        .Set(p => p.Foreground, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue)))))
+                        .None(VDomNode<TextBlock>());
+
                 yield return VDomNode<Grid>()
-                    .Set(p => p.MaxWidth, 300)
-                    .Set(p => p.IsVisible, player.SpeechBubble.Text != string.Empty)
+                    .Set(p => p.IsVisible, player.SpeechBubble.IsSome)
                     .Set(p => p.ZIndex, 7)
                     .Attach(Canvas.LeftProperty, player.Bounds.Right - state.SceneBounds.Left + 20)
                     .Attach(Canvas.BottomProperty, player.Bounds.Top - state.SceneBounds.Bottom)
@@ -327,13 +400,7 @@ namespace GetIt
                             .Set(p => p.CornerRadius, 5)
                             .Set(p => p.BorderThickness, 5)
                             .Set(p => p.BorderBrush, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.Black))
-                            .Set(p => p.Child, VDomNode<TextBlock>()
-                                .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
-                                .Set(p => p.VerticalAlignment, VerticalAlignment.Center)
-                                .Set(p => p.FontSize, 15)
-                                .Set(p => p.TextWrapping, TextWrapping.Wrap)
-                                .Set(p => p.Margin, new Thickness(10, 5))
-                                .Set(p => p.Text, player.SpeechBubble.Text)),
+                            .Set(p => p.Child, speechBubbleContent),
                         VDomNode<Path>()
                             .Set(p => p.Fill, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.Black))
                             .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)

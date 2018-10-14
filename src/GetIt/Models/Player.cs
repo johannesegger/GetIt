@@ -1,4 +1,6 @@
 using System;
+using LanguageExt;
+using static LanguageExt.Prelude;
 
 namespace GetIt.Models
 {
@@ -12,7 +14,7 @@ namespace GetIt.Models
             Position position,
             Degrees direction,
             Pen pen,
-            SpeechBubble speechBubble,
+            Option<SpeechBubble> speechBubble,
             Costume costume)
         {
             Id = id;
@@ -21,7 +23,7 @@ namespace GetIt.Models
             Position = position ?? throw new ArgumentNullException(nameof(position));
             Direction = direction ?? throw new ArgumentNullException(nameof(direction));
             Pen = pen ?? throw new ArgumentNullException(nameof(pen));
-            SpeechBubble = speechBubble ?? throw new ArgumentNullException(nameof(speechBubble));
+            SpeechBubble = speechBubble;
             Costume = costume ?? throw new ArgumentNullException(nameof(costume));
         }
 
@@ -36,7 +38,7 @@ namespace GetIt.Models
                 Size);
         public Degrees Direction { get; }
         public Pen Pen { get; }
-        public SpeechBubble SpeechBubble { get; }
+        public Option<SpeechBubble> SpeechBubble { get; }
         public Costume Costume { get; }
 
         public static Player Create(Size originalSize, Costume costume)
@@ -48,7 +50,7 @@ namespace GetIt.Models
                 Position.Zero,
                 Degrees.Zero,
                 Pen.Default,
-                SpeechBubble.Empty,
+                None,
                 costume);
         }
 

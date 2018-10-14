@@ -1,4 +1,5 @@
 using System;
+using LanguageExt;
 using OneOf;
 
 namespace GetIt.Models
@@ -9,7 +10,9 @@ namespace GetIt.Models
             Message.SetMousePosition,
             Message.SetPosition,
             Message.SetDirection,
-            Message.Say,
+            Message.SetSpeechBubble,
+            Message.UpdateAnswer,
+            Message.ApplyAnswer,
             Message.SetPen,
             Message.SetSizeFactor,
             Message.AddPlayer,
@@ -23,7 +26,8 @@ namespace GetIt.Models
             Message.TriggerClickPlayerEvent,
             Message.AddMouseEnterPlayerHandler,
             Message.RemoveMouseEnterPlayerHandler,
-            Message.TriggerMouseEnterPlayerEvent>
+            Message.TriggerMouseEnterPlayerEvent,
+            Message.ExecuteAction>
     {
         public class SetSceneSize : Message
         {
@@ -69,16 +73,40 @@ namespace GetIt.Models
             public Degrees Angle { get; }
         }
 
-        public class Say : Message
+        public class SetSpeechBubble : Message
         {
-            public Say(Guid playerId, SpeechBubble speechBubble)
+            public SetSpeechBubble(Guid playerId, Option<SpeechBubble> speechBubble)
             {
                 PlayerId = playerId;
                 SpeechBubble = speechBubble;
             }
 
             public Guid PlayerId { get; }
-            public SpeechBubble SpeechBubble { get; }
+            public Option<SpeechBubble> SpeechBubble { get; }
+        }
+
+        public class UpdateAnswer : Message
+        {
+            public UpdateAnswer(Guid playerId, string answer)
+            {
+                PlayerId = playerId;
+                Answer = answer;
+            }
+
+            public Guid PlayerId { get; }
+            public string Answer { get; }
+        }
+
+        public class ApplyAnswer : Message
+        {
+            public ApplyAnswer(Guid playerId, string answer)
+            {
+                PlayerId = playerId;
+                Answer = answer;
+            }
+
+            public Guid PlayerId { get; }
+            public string Answer { get; }
         }
 
         public class SetPen : Message
@@ -217,6 +245,16 @@ namespace GetIt.Models
             }
 
             public Guid PlayerId { get; }
+        }
+
+        public class ExecuteAction : Message
+        {
+            public ExecuteAction(Action action)
+            {
+                Action = action;
+            }
+
+            public Action Action { get; }
         }
     }
 }

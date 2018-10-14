@@ -83,6 +83,7 @@ namespace GetIt
         public static void TurnLeft() => Default.TurnLeft();
         public static void Say(string text) => Default.Say(text);
         public static void Say(string text, double durationInSeconds) => Default.Say(text, durationInSeconds);
+        public static string Ask(string question) => Default.Ask(question);
         public static void ShutUp() => Default.ShutUp();
         public static void TurnOnPen() => Default.TurnOnPen();
         public static void TurnOffPen() => Default.TurnOffPen();

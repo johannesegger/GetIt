@@ -1,8 +1,10 @@
 using System;
 using System.Reactive.Disposables;
+using System.Threading;
 using Elmish.Net;
 using GetIt.Models;
 using GetIt.Utils;
+using static LanguageExt.Prelude;
 
 namespace GetIt
 {
@@ -82,17 +84,31 @@ namespace GetIt
 
         public static void Say(this PlayerOnScene player, string text)
         {
-            Game.DispatchMessageAndWaitForUpdate(new Message.Say(player.Id, new SpeechBubble(text)));
+            Game.DispatchMessageAndWaitForUpdate(new Message.SetSpeechBubble(player.Id, new SpeechBubble.Say(text)));
         }
 
         public static void ShutUp(this PlayerOnScene player) =>
-            Game.DispatchMessageAndWaitForUpdate(new Message.Say(player.Id, SpeechBubble.Empty));
+            Game.DispatchMessageAndWaitForUpdate(new Message.SetSpeechBubble(player.Id, None));
 
         public static void Say(this PlayerOnScene player, string text, double durationInSeconds)
         {
             player.Say(text);
             Game.Sleep(TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds);
             player.ShutUp();
+        }
+
+        public static string Ask(this PlayerOnScene player, string question)
+        {
+            using (var signal = new ManualResetEventSlim())
+            {
+                string answer = null;
+                Game.DispatchMessageAndWaitForUpdate(
+                    new Message.SetSpeechBubble(
+                        player.Id,
+                        new SpeechBubble.Ask(question, "", a => { answer = a; signal.Set(); })));
+                signal.Wait();
+                return answer;
+            }
         }
 
         public static void SetPen(this PlayerOnScene player, Pen pen)
