@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reflection;
@@ -224,13 +225,6 @@ namespace GetIt
             }
         });
 
-        private static Position GetPosition(State state, Point screenCoordinate)
-        {
-            return new Position(
-                state.SceneBounds.Left + screenCoordinate.X,
-                state.SceneBounds.Top - screenCoordinate.Y);
-        }
-
         private static Point GetScreenCoordinate(State state, Position position)
         {
             return new Point(
@@ -240,23 +234,43 @@ namespace GetIt
 
         private static IVDomNode<Window, Message> View(State state, Dispatch<Message> dispatch)
         {
+            Position getDevicePosition(Window window, IPointerDevice pointerDevice)
+            {
+                var screenPoint = pointerDevice.GetPosition((IVisual)window.Content);
+                return new Position(
+                    state.SceneBounds.Left + screenPoint.X,
+                    state.SceneBounds.Top - screenPoint.Y);
+            }
+
+            Position getPositionOfDefaultDevice(Window window)
+            {
+                return getDevicePosition(window, ((IInputRoot)window).MouseDevice);
+            }
+
             return VDomNode<Window>()
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "GetIt")
                 .Set(p => p.Icon, Icon.Value, EqualityComparer.Create((WindowIcon icon) => 0))
+                .Subscribe(window => Observable
+                    .Create<RoutedEventArgs>(observer => window
+                        .AddHandler(
+                            InputElement.TappedEvent,
+                            new EventHandler<RoutedEventArgs>((s, e) => observer.OnNext(e)),
+                            handledEventsToo: true))
+                    .Select(p => new Message.TriggerEvent(new Event.ClickScene(getPositionOfDefaultDevice(window)))))
                 .Subscribe(window => Observable
                     .Merge(
                         Observable
                             .FromEventPattern<PointerEventArgs>(
                                 h => window.PointerMoved += h,
                                 h => window.PointerMoved -= h)
-                            .Select(p => p.EventArgs.Device.GetPosition(window)),
+                            .Select(p => getDevicePosition(window, p.EventArgs.Device)),
                         Observable
                             .FromEventPattern<VisualTreeAttachmentEventArgs>(
                                 h => ((IVisual)window.Content).AttachedToVisualTree += h,
                                 h => ((IVisual)window.Content).AttachedToVisualTree -= h)
-                            .Select(p => ((IInputRoot)window).MouseDevice.GetPosition((IVisual)window.Content)))
-                    .Select(p => new Message.SetMousePosition(GetPosition(state, p))))
+                            .Select(p => getPositionOfDefaultDevice(window)))
+                    .Select(p => new Message.SetMousePosition(p)))
                 .Subscribe(window => Observable
                     .Create<KeyEventArgs>(observer => window
                         .AddHandler(
@@ -507,6 +521,20 @@ namespace GetIt
         public static void ClearScene()
         {
             DispatchMessageAndWaitForUpdate(new Message.ClearScene());
+        }
+
+        public static Position WaitForMouseClick()
+        {
+            using (var signal = new ManualResetEventSlim())
+            {
+                var position = Position.Zero;
+                var handler = new Models.EventHandler.ClickScene(p => { position = p; signal.Set(); });
+                using (AddEventHandler(handler))
+                {
+                    signal.Wait();
+                    return position;
+                }
+            }
         }
     }
 }

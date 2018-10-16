@@ -19,7 +19,8 @@ namespace GetIt.Sample
             // Program11();
             // Program12();
             // Program13();
-            Program14();
+            // Program14();
+            Program15();
         }
 
         private static void Program1()
@@ -317,6 +318,15 @@ namespace GetIt.Sample
                 input = Turtle.Ask("Are you kidding? That's not a number. How old are you?");
             }
             Turtle.Say($"{age}? You're looking good for your age!");
+        }
+
+        private static void Program15()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Click somewhere");
+            var position = Game.WaitForMouseClick();
+            Turtle.Say($"You clicked at {position}");
         }
     }
 }

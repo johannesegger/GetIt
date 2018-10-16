@@ -14,6 +14,16 @@ namespace GetIt.Models
             public KeyboardKey Key { get; }
         }
 
+        public class ClickScene : Event
+        {
+            public ClickScene(Position position)
+            {
+                Position = position;
+            }
+
+            public Position Position { get; }
+        }
+
         public class ClickPlayer : Event
         {
             public ClickPlayer(Guid playerId)
