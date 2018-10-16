@@ -18,15 +18,9 @@ namespace GetIt.Models
             Message.AddPlayer,
             Message.RemovePlayer,
             Message.ClearScene,
-            Message.AddKeyDownHandler,
-            Message.RemoveKeyDownHandler,
-            Message.TriggerKeyDownEvent,
-            Message.AddClickPlayerHandler,
-            Message.RemoveClickPlayerHandler,
-            Message.TriggerClickPlayerEvent,
-            Message.AddMouseEnterPlayerHandler,
-            Message.RemoveMouseEnterPlayerHandler,
-            Message.TriggerMouseEnterPlayerEvent,
+            Message.AddEventHandler,
+            Message.RemoveEventHandler,
+            Message.TriggerEvent,
             Message.ExecuteAction>
     {
         public class SetSceneSize : Message
@@ -157,94 +151,34 @@ namespace GetIt.Models
         {
         }
 
-        public class AddKeyDownHandler : Message
+        public class AddEventHandler : Message
         {
-            public AddKeyDownHandler(KeyDownHandler handler)
+            public AddEventHandler(EventHandler handler)
             {
                 Handler = handler;
             }
 
-            public KeyDownHandler Handler { get; }
+            public EventHandler Handler { get; }
         }
 
-        public class RemoveKeyDownHandler : Message
+        public class RemoveEventHandler : Message
         {
-            public RemoveKeyDownHandler(KeyDownHandler handler)
+            public RemoveEventHandler(EventHandler handler)
             {
                 Handler = handler;
             }
 
-            public KeyDownHandler Handler { get; }
+            public EventHandler Handler { get; }
         }
 
-        public class TriggerKeyDownEvent : Message
+        public class TriggerEvent : Message
         {
-            public TriggerKeyDownEvent(KeyboardKey key)
+            public TriggerEvent(Event @event)
             {
-                Key = key;
+                Event = @event;
             }
 
-            public KeyboardKey Key { get; }
-        }
-
-        public class AddClickPlayerHandler : Message
-        {
-            public AddClickPlayerHandler(ClickPlayerHandler handler)
-            {
-                Handler = handler;
-            }
-
-            public ClickPlayerHandler Handler { get; }
-        }
-
-        public class RemoveClickPlayerHandler : Message
-        {
-            public RemoveClickPlayerHandler(ClickPlayerHandler handler)
-            {
-                Handler = handler;
-            }
-
-            public ClickPlayerHandler Handler { get; }
-        }
-
-        public class TriggerClickPlayerEvent : Message
-        {
-            public TriggerClickPlayerEvent(Guid playerId)
-            {
-                PlayerId = playerId;
-            }
-
-            public Guid PlayerId { get; }
-        }
-
-        public class AddMouseEnterPlayerHandler : Message
-        {
-            public AddMouseEnterPlayerHandler(MouseEnterPlayerHandler handler)
-            {
-                Handler = handler;
-            }
-
-            public MouseEnterPlayerHandler Handler { get; }
-        }
-
-        public class RemoveMouseEnterPlayerHandler : Message
-        {
-            public RemoveMouseEnterPlayerHandler(MouseEnterPlayerHandler handler)
-            {
-                Handler = handler;
-            }
-
-            public MouseEnterPlayerHandler Handler { get; }
-        }
-
-        public class TriggerMouseEnterPlayerEvent : Message
-        {
-            public TriggerMouseEnterPlayerEvent(Guid playerId)
-            {
-                PlayerId = playerId;
-            }
-
-            public Guid PlayerId { get; }
+            public Event Event { get; }
         }
 
         public class ExecuteAction : Message

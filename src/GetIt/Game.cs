@@ -86,9 +86,7 @@ namespace GetIt
                 ImmutableList<Player>.Empty,
                 ImmutableList<PenLine>.Empty,
                 Position.Zero,
-                ImmutableList<KeyDownHandler>.Empty,
-                ImmutableList<ClickPlayerHandler>.Empty,
-                ImmutableList<MouseEnterPlayerHandler>.Empty);
+                ImmutableList<Models.EventHandler>.Empty);
             var cmd = Cmd.None<Message>();
             return (State, cmd);
         }
@@ -193,58 +191,22 @@ namespace GetIt
                     var newState = state.With(p => p.PenLines, state.PenLines.Clear());
                     return (newState, Cmd.None<Message>());
                 },
-                (Message.AddKeyDownHandler m) =>
+                (Message.AddEventHandler m) =>
                 {
-                    var newState = state.With(p => p.KeyDownHandlers, state.KeyDownHandlers.Add(m.Handler));
+                    var newState = state.With(p => p.EventHandlers, state.EventHandlers.Add(m.Handler));
                     return (newState, Cmd.None<Message>());
                 },
-                (Message.RemoveKeyDownHandler m) =>
+                (Message.RemoveEventHandler m) =>
                 {
-                    var newState = state.With(p => p.KeyDownHandlers, state.KeyDownHandlers.Remove(m.Handler));
+                    var newState = state.With(p => p.EventHandlers, state.EventHandlers.Remove(m.Handler));
                     return (newState, Cmd.None<Message>());
                 },
-                (Message.TriggerKeyDownEvent m) =>
+                (Message.TriggerEvent m) =>
                 {
-                    TaskPoolScheduler.Default.Schedule(() =>
-                        state.KeyDownHandlers
-                            .Where(p => p.Key == m.Key)
-                            .ForEach(p => p.Handler()));
-                    return (state, Cmd.None<Message>());
-                },
-                (Message.AddClickPlayerHandler m) =>
-                {
-                    var newState = state.With(p => p.ClickPlayerHandlers, state.ClickPlayerHandlers.Add(m.Handler));
-                    return (newState, Cmd.None<Message>());
-                },
-                (Message.RemoveClickPlayerHandler m) =>
-                {
-                    var newState = state.With(p => p.ClickPlayerHandlers, state.ClickPlayerHandlers.Remove(m.Handler));
-                    return (newState, Cmd.None<Message>());
-                },
-                (Message.TriggerClickPlayerEvent m) =>
-                {
-                    TaskPoolScheduler.Default.Schedule(() =>
-                        state.ClickPlayerHandlers
-                            .Where(p => p.PlayerId == m.PlayerId)
-                            .ForEach(p => p.Handler()));
-                    return (state, Cmd.None<Message>());
-                },
-                (Message.AddMouseEnterPlayerHandler m) =>
-                {
-                    var newState = state.With(p => p.MouseEnterPlayerHandlers, state.MouseEnterPlayerHandlers.Add(m.Handler));
-                    return (newState, Cmd.None<Message>());
-                },
-                (Message.RemoveMouseEnterPlayerHandler m) =>
-                {
-                    var newState = state.With(p => p.MouseEnterPlayerHandlers, state.MouseEnterPlayerHandlers.Remove(m.Handler));
-                    return (newState, Cmd.None<Message>());
-                },
-                (Message.TriggerMouseEnterPlayerEvent m) =>
-                {
-                    TaskPoolScheduler.Default.Schedule(() =>
-                        state.MouseEnterPlayerHandlers
-                            .Where(p => p.PlayerId == m.PlayerId)
-                            .ForEach(p => p.Handler()));
+                    TaskPoolScheduler.Default
+                        .Schedule(() =>
+                            state.EventHandlers
+                                .ForEach(p => p.Handle(m.Event)));
                     return (state, Cmd.None<Message>());
                 },
                 (Message.ExecuteAction m) =>
@@ -282,14 +244,6 @@ namespace GetIt
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "GetIt")
                 .Set(p => p.Icon, Icon.Value, EqualityComparer.Create((WindowIcon icon) => 0))
-                .Set(p => p.Content, VDomNode<Canvas>()
-                    .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
-                    .Subscribe(p => Observable
-                        .FromEventPattern(
-                            h => p.LayoutUpdated += h,
-                            h => p.LayoutUpdated -= h
-                        )
-                        .Select(_ => new Message.SetSceneSize(new Models.Size(p.Bounds.Width, p.Bounds.Height)))))
                 .Subscribe(window => Observable
                     .Merge(
                         Observable
@@ -312,7 +266,15 @@ namespace GetIt
                     )
                     .Choose(e => e.Key
                         .TryGetKeyboardKey()
-                        .Select(key => new Message.TriggerKeyDownEvent(key))));
+                        .Select(key => new Message.TriggerEvent(new Event.KeyDown(key)))))
+                .Set(p => p.Content, VDomNode<Canvas>()
+                    .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
+                    .Subscribe(p => Observable
+                        .FromEventPattern(
+                            h => p.LayoutUpdated += h,
+                            h => p.LayoutUpdated -= h
+                        )
+                        .Select(_ => new Message.SetSceneSize(new Models.Size(p.Bounds.Width, p.Bounds.Height)))));
         }
 
         private static IEnumerable<IVDomNode<Message>> GetSceneChildren(State state, Dispatch<Message> dispatch)
@@ -442,7 +404,7 @@ namespace GetIt
                             new EventHandler<RoutedEventArgs>((s, e) => observer.OnNext(e)),
                             handledEventsToo: true)
                     )
-                    .Select(_ => new Message.TriggerClickPlayerEvent(player.Id)))
+                    .Select(_ => new Message.TriggerEvent(new Event.ClickPlayer(player.Id))))
                 .Subscribe(p => Observable
                     .Create<PointerEventArgs>(observer =>
                         p.AddHandler(
@@ -450,7 +412,7 @@ namespace GetIt
                             new EventHandler<PointerEventArgs>((s, e) => observer.OnNext(e)),
                             handledEventsToo: true)
                     )
-                    .Select(_ => new Message.TriggerMouseEnterPlayerEvent(player.Id)))
+                    .Select(_ => new Message.TriggerEvent(new Event.MouseEnterPlayer(player.Id))))
                 .SetChildNodes(p => p.Children, player.Costume.Paths
                     .Select(path => VDomNode<Path>()
                         .Set(p => p.Fill, VDomNode<SolidColorBrush>()
@@ -515,6 +477,12 @@ namespace GetIt
         internal static void DispatchMessageAndWaitForUpdate(Message message)
         {
             dispatchSubject.OnNext(message);
+        }
+
+        internal static IDisposable AddEventHandler(Models.EventHandler handler)
+        {
+            Game.DispatchMessageAndWaitForUpdate(new Message.AddEventHandler(handler));
+            return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveEventHandler(handler)));
         }
 
         public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)

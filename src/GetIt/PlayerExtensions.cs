@@ -143,23 +143,20 @@ namespace GetIt
 
         public static IDisposable OnKeyDown(this PlayerOnScene player, KeyboardKey key, Action<PlayerOnScene> action)
         {
-            var handler = new KeyDownHandler(Guid.NewGuid(), key, () => action(player));
-            Game.DispatchMessageAndWaitForUpdate(new Message.AddKeyDownHandler(handler));
-            return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveKeyDownHandler(handler)));
+            var handler = new Models.EventHandler.KeyDown(key, () => action(player));
+            return Game.AddEventHandler(handler);
         }
 
         public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
-            var handler = new MouseEnterPlayerHandler(Guid.NewGuid(), player.Id, () => action(player));
-            Game.DispatchMessageAndWaitForUpdate(new Message.AddMouseEnterPlayerHandler(handler));
-            return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveMouseEnterPlayerHandler(handler)));
+            var handler = new Models.EventHandler.MouseEnterPlayer(player.Id, () => action(player));
+            return Game.AddEventHandler(handler);
         }
 
         public static IDisposable OnClick(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
-            var handler = new ClickPlayerHandler(Guid.NewGuid(), player.Id, () => action(player));
-            Game.DispatchMessageAndWaitForUpdate(new Message.AddClickPlayerHandler(handler));
-            return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveClickPlayerHandler(handler)));
+            var handler = new Models.EventHandler.ClickPlayer(player.Id, () => action(player));
+            return Game.AddEventHandler(handler);
         }
     }
 }
