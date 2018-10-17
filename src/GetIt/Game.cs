@@ -536,5 +536,29 @@ namespace GetIt
                 }
             }
         }
+
+        private static KeyboardKey WaitForKeyDown(Option<KeyboardKey> key)
+        {
+            using (var signal = new ManualResetEventSlim())
+            {
+                var keyboardKey = (KeyboardKey)(-1);
+                var handler = new Models.EventHandler.KeyDown(key, p => { keyboardKey = p; signal.Set(); });
+                using (AddEventHandler(handler))
+                {
+                    signal.Wait();
+                    return keyboardKey;
+                }
+            }
+        }
+
+        public static void WaitForKeyDown(KeyboardKey key)
+        {
+            WaitForKeyDown(Some(key));
+        }
+
+        public static KeyboardKey WaitForAnyKeyDown()
+        {
+            return WaitForKeyDown(None);
+        }
     }
 }

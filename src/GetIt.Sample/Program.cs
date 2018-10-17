@@ -20,7 +20,8 @@ namespace GetIt.Sample
             // Program12();
             // Program13();
             // Program14();
-            Program15();
+            // Program15();
+            Program16();
         }
 
         private static void Program1()
@@ -327,6 +328,17 @@ namespace GetIt.Sample
             Turtle.Say("Click somewhere");
             var position = Game.WaitForMouseClick();
             Turtle.Say($"You clicked at {position}");
+        }
+
+        private static void Program16()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Press any key to start");
+            var key = Game.WaitForAnyKeyDown();
+            Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
+            Game.WaitForKeyDown(Models.KeyboardKey.Space);
+            Turtle.Say("Game over.");
         }
     }
 }
