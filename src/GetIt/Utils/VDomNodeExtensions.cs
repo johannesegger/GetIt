@@ -9,7 +9,7 @@ using static LanguageExt.Prelude;
 
 namespace GetIt.Utils
 {
-    public static class VDomNodeExtensions
+    internal static class VDomNodeExtensions
     {
         public static IVDomNode<T, TMessage> Attach<T, TMessage, TProp>(
             this IVDomNode<T, TMessage> node,
