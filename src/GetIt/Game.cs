@@ -13,7 +13,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Logging.Serilog;
 using Avalonia.Media;
@@ -251,36 +250,24 @@ namespace GetIt
                 .Set(p => p.FontFamily, "Segoe UI Symbol")
                 .Set(p => p.Title, "GetIt")
                 .Set(p => p.Icon, Icon.Value, EqualityComparer.Create((WindowIcon icon) => 0))
-                .Subscribe(window => Observable
-                    .Create<RoutedEventArgs>(observer => window
-                        .AddHandler(
-                            InputElement.TappedEvent,
-                            new EventHandler<RoutedEventArgs>((s, e) => observer.OnNext(e)),
-                            handledEventsToo: true))
+                .Subscribe(window => window
+                    .ObserveEvent(InputElement.TappedEvent)
                     .Select(p => new Message.TriggerEvent(new Event.ClickScene(getPositionOfDefaultDevice(window)))))
                 .Subscribe(window => Observable
                     .Merge(
-                        Observable
-                            .FromEventPattern<PointerEventArgs>(
-                                h => window.PointerMoved += h,
-                                h => window.PointerMoved -= h)
-                            .Select(p => getDevicePosition(window, p.EventArgs.Device)),
+                        window
+                            .ObserveEvent(InputElement.PointerMovedEvent)
+                            .Select(p => getDevicePosition(window, p.Device)),
                         Observable
                             .FromEventPattern<VisualTreeAttachmentEventArgs>(
                                 h => ((IVisual)window.Content).AttachedToVisualTree += h,
                                 h => ((IVisual)window.Content).AttachedToVisualTree -= h)
                             .Select(p => getPositionOfDefaultDevice(window)))
                     .Select(p => new Message.SetMousePosition(p)))
-                .Subscribe(window => Observable
-                    .Create<KeyEventArgs>(observer => window
-                        .AddHandler(
-                            InputElement.KeyDownEvent,
-                            new EventHandler<KeyEventArgs>((s, e) => observer.OnNext(e)),
-                            handledEventsToo: true)
-                    )
-                    .Choose(e => e.Key
-                        .TryGetKeyboardKey()
-                        .Select(key => new Message.TriggerEvent(new Event.KeyDown(key)))))
+                .Subscribe(window => window
+                    .ObserveEvent(InputElement.KeyDownEvent)
+                    .Choose(e => e.Key.TryGetKeyboardKey())
+                    .Select(key => new Message.TriggerEvent(new Event.KeyDown(key))))
                 .Set(p => p.Content, VDomNode<Canvas>()
                     .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
                     .Subscribe(p => Observable
@@ -411,21 +398,11 @@ namespace GetIt
             return VDomNode<Canvas>()
                 .Set(p => p.Width, player.Costume.Size.Width)
                 .Set(p => p.Height, player.Costume.Size.Height)
-                .Subscribe(p => Observable
-                    .Create<RoutedEventArgs>(observer =>
-                        p.AddHandler(
-                            InputElement.TappedEvent,
-                            new EventHandler<RoutedEventArgs>((s, e) => observer.OnNext(e)),
-                            handledEventsToo: true)
-                    )
+                .Subscribe(p => p
+                    .ObserveEvent(InputElement.TappedEvent)
                     .Select(_ => new Message.TriggerEvent(new Event.ClickPlayer(player.Id))))
-                .Subscribe(p => Observable
-                    .Create<PointerEventArgs>(observer =>
-                        p.AddHandler(
-                            InputElement.PointerEnterEvent,
-                            new EventHandler<PointerEventArgs>((s, e) => observer.OnNext(e)),
-                            handledEventsToo: true)
-                    )
+                .Subscribe(p => p
+                    .ObserveEvent(InputElement.PointerEnterEvent)
                     .Select(_ => new Message.TriggerEvent(new Event.MouseEnterPlayer(player.Id))))
                 .SetChildNodes(p => p.Children, player.Costume.Paths
                     .Select(path => VDomNode<Path>()
