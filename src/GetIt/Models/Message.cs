@@ -8,6 +8,8 @@ namespace GetIt.Models
         : OneOfBase<
             Message.SetSceneSize,
             Message.SetMousePosition,
+            Message.SetKeyboardKeyPressed,
+            Message.SetKeyboardKeyReleased,
             Message.SetPosition,
             Message.SetDirection,
             Message.SetSpeechBubble,
@@ -31,6 +33,26 @@ namespace GetIt.Models
             }
 
             public Size Size { get; }
+        }
+
+        public class SetKeyboardKeyPressed : Message
+        {
+            public SetKeyboardKeyPressed(KeyboardKey key)
+            {
+                Key = key;
+            }
+
+            public KeyboardKey Key { get; }
+        }
+
+        public class SetKeyboardKeyReleased : Message
+        {
+            public SetKeyboardKeyReleased(KeyboardKey key)
+            {
+                Key = key;
+            }
+
+            public KeyboardKey Key { get; }
         }
 
         public class SetMousePosition : Message

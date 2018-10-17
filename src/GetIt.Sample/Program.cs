@@ -21,7 +21,8 @@ namespace GetIt.Sample
             // Program13();
             // Program14();
             // Program15();
-            Program16();
+            // Program16();
+            Program17();
         }
 
         private static void Program1()
@@ -338,6 +339,26 @@ namespace GetIt.Sample
             var key = Game.WaitForAnyKeyDown();
             Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
             Game.WaitForKeyDown(Models.KeyboardKey.Space);
+            Turtle.Say("Game over.");
+        }
+
+        private static void Program17()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Move me with arrow keys", 2);
+            while (!Game.IsKeyDown(Models.KeyboardKey.Space))
+            {
+                if (Game.IsKeyDown(Models.KeyboardKey.Left))
+                {
+                    Turtle.Go(-10);
+                }
+                if (Game.IsKeyDown(Models.KeyboardKey.Right))
+                {
+                    Turtle.Go(10);
+                }
+                Game.Sleep(50);
+            }
             Turtle.Say("Game over.");
         }
     }

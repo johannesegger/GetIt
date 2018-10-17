@@ -85,7 +85,8 @@ namespace GetIt
                 new Models.Rectangle(new Position(-300, -200), new Models.Size(600, 400)),
                 ImmutableList<Player>.Empty,
                 ImmutableList<PenLine>.Empty,
-                Position.Zero,
+                MouseState.Empty,
+                KeyboardState.Empty,
                 ImmutableList<Models.EventHandler>.Empty);
             var cmd = Cmd.None<Message>();
             return (State, cmd);
@@ -117,7 +118,17 @@ namespace GetIt
                 },
                 (Message.SetMousePosition m) =>
                 {
-                    var newState = state.With(p => p.MousePosition, m.Position);
+                    var newState = state.With(p => p.Mouse.Position, m.Position);
+                    return (newState, Cmd.None<Message>());
+                },
+                (Message.SetKeyboardKeyPressed m) =>
+                {
+                    var newState = state.With(p => p.Keyboard.KeysPressed, state.Keyboard.KeysPressed.Add(m.Key));
+                    return (newState, Cmd.None<Message>());
+                },
+                (Message.SetKeyboardKeyReleased m) =>
+                {
+                    var newState = state.With(p => p.Keyboard.KeysPressed, state.Keyboard.KeysPressed.Remove(m.Key));
                     return (newState, Cmd.None<Message>());
                 },
                 (Message.SetPosition m) =>
@@ -203,11 +214,27 @@ namespace GetIt
                 },
                 (Message.TriggerEvent m) =>
                 {
+                    var newState = state;
+                    var cmd = Cmd.None<Message>();
+                    if (m.Event is Event.KeyDown keyDownEvent)
+                    {
+                        var msg = new Message.SetKeyboardKeyPressed(keyDownEvent.Key);
+                        var (keyDownState, keyDownCmd) = Update(msg, newState);
+                        newState = keyDownState;
+                        cmd = Cmd.Batch(cmd, keyDownCmd);
+                    }
+                    else if (m.Event is Event.KeyUp keyUpEvent)
+                    {
+                        var msg = new Message.SetKeyboardKeyReleased(keyUpEvent.Key);
+                        var (keyUpState, keyUpCmd) = Update(msg, newState);
+                        newState = keyUpState;
+                        cmd = Cmd.Batch(cmd, keyUpCmd);
+                    }
                     TaskPoolScheduler.Default
                         .Schedule(() =>
                             state.EventHandlers
                                 .ForEach(p => p.Handle(m.Event)));
-                    return (state, Cmd.None<Message>());
+                    return (newState, Cmd.None<Message>());
                 },
                 (Message.ExecuteAction m) =>
                 {
@@ -268,6 +295,10 @@ namespace GetIt
                     .ObserveEvent(InputElement.KeyDownEvent)
                     .Choose(e => e.Key.TryGetKeyboardKey())
                     .Select(key => new Message.TriggerEvent(new Event.KeyDown(key))))
+                .Subscribe(window => window
+                    .ObserveEvent(InputElement.KeyUpEvent)
+                    .Choose(e => e.Key.TryGetKeyboardKey())
+                    .Select(key => new Message.TriggerEvent(new Event.KeyUp(key))))
                 .Set(p => p.Content, VDomNode<Canvas>()
                     .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
                     .Subscribe(p => Observable
@@ -528,14 +559,16 @@ namespace GetIt
             }
         }
 
-        public static void WaitForKeyDown(KeyboardKey key)
-        {
-            WaitForKeyDown(Some(key));
-        }
+        public static void WaitForKeyDown(KeyboardKey key) => WaitForKeyDown(Some(key));
+        public static KeyboardKey WaitForAnyKeyDown() => WaitForKeyDown(None);
 
-        public static KeyboardKey WaitForAnyKeyDown()
+        public static bool IsKeyDown(KeyboardKey key)
         {
-            return WaitForKeyDown(None);
+            return State.Keyboard.KeysPressed.Contains(key);
+        }
+        public static bool IsAnyKeyDown()
+        {
+            return !State.Keyboard.KeysPressed.IsEmpty();
         }
     }
 }

@@ -9,20 +9,23 @@ namespace GetIt.Models
             Rectangle sceneBounds,
             IImmutableList<Player> players,
             IImmutableList<PenLine> penLines,
-            Position mousePosition,
+            MouseState mouse,
+            KeyboardState keyboard,
             IImmutableList<EventHandler> eventHandlers)
         {
             SceneBounds = sceneBounds ?? throw new System.ArgumentNullException(nameof(sceneBounds));
             Players = players ?? throw new System.ArgumentNullException(nameof(players));
             PenLines = penLines ?? throw new System.ArgumentNullException(nameof(penLines));
-            MousePosition = mousePosition ?? throw new System.ArgumentNullException(nameof(mousePosition));
+            Mouse = mouse ?? throw new System.ArgumentNullException(nameof(mouse));
+            Keyboard = keyboard;
             EventHandlers = eventHandlers ?? throw new System.ArgumentNullException(nameof(eventHandlers));
         }
 
         public Rectangle SceneBounds { get; }
         public IImmutableList<Player> Players { get; }
         public IImmutableList<PenLine> PenLines { get; }
-        public Position MousePosition { get; }
+        public MouseState Mouse { get; }
+        public KeyboardState Keyboard { get; }
         public IImmutableList<EventHandler> EventHandlers { get; }
     }
 }
