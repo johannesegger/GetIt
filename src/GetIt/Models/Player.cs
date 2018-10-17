@@ -53,10 +53,5 @@ namespace GetIt.Models
                 None,
                 costume);
         }
-
-        public static Player Create(Costume costume)
-        {
-            return Create(costume.Size, costume);
-        }
     }
 }

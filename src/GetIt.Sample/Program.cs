@@ -118,14 +118,14 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.Say("Move me with arrow keys");
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.ShutUp()))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.ShutUp()))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.ShutUp()))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.ShutUp()))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.MoveUp(10)))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.MoveDown(10)))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Left, player => player.MoveLeft(10)))
-            using (Turtle.OnKeyDown(Models.KeyboardKey.Right, player => player.MoveRight(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.MoveUp(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10)))
             {
                 Game.Sleep(5000);
             }
@@ -224,8 +224,8 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.OnKeyDown(Models.KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
-            Turtle.OnKeyDown(Models.KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
+            Turtle.OnKeyDown(KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
+            Turtle.OnKeyDown(KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
         }
 
         private static void Program13()
@@ -234,11 +234,11 @@ namespace GetIt.Sample
 
             var isGameOver = false;
 
-            void controlLeftPlayer(Models.PlayerOnScene player)
+            void controlLeftPlayer(PlayerOnScene player)
             {
                 player.GoTo(Game.State.SceneBounds.Left + 20, 0);
-                using (player.OnKeyDown(Models.KeyboardKey.W, p => p.MoveUp(10)))
-                using (player.OnKeyDown(Models.KeyboardKey.S, p => p.MoveDown(10)))
+                using (player.OnKeyDown(KeyboardKey.W, p => p.MoveUp(10)))
+                using (player.OnKeyDown(KeyboardKey.S, p => p.MoveDown(10)))
                 {
                     while (!isGameOver)
                     {
@@ -248,17 +248,16 @@ namespace GetIt.Sample
             }
 
             var leftPlayer = Game.AddPlayer(
-                Models.Player.Create(
-                    Costumes.CreateRectangle(
-                        new Models.Size(20, 150),
-                        RGBColor.DarkMagenta)),
+                Costumes.CreateRectangle(
+                    new Models.Size(20, 150),
+                    RGBColor.DarkMagenta),
                 controlLeftPlayer);
 
-            void controlRightPlayer(Models.PlayerOnScene player)
+            void controlRightPlayer(PlayerOnScene player)
             {
                 player.GoTo(Game.State.SceneBounds.Right - 20, 0);
-                using (player.OnKeyDown(Models.KeyboardKey.Up, p => p.MoveUp(10)))
-                using (player.OnKeyDown(Models.KeyboardKey.Down, p => p.MoveDown(10)))
+                using (player.OnKeyDown(KeyboardKey.Up, p => p.MoveUp(10)))
+                using (player.OnKeyDown(KeyboardKey.Down, p => p.MoveDown(10)))
                 {
                     while (!isGameOver)
                     {
@@ -268,14 +267,13 @@ namespace GetIt.Sample
             }
 
             var rightPlayer = Game.AddPlayer(
-                Models.Player.Create(
-                    Costumes.CreateRectangle(
-                        new Models.Size(20, 150),
-                        RGBColor.Magenta)),
+                Costumes.CreateRectangle(
+                    new Models.Size(20, 150),
+                    RGBColor.Magenta),
                 controlRightPlayer);
 
             var rand = new Random();
-            void controlBall(Models.PlayerOnScene player)
+            void controlBall(PlayerOnScene player)
             {
                 player.SetDirection(rand.Next(360));
                 while (true)
@@ -305,7 +303,7 @@ namespace GetIt.Sample
             }
 
             Game.AddPlayer(
-                Models.Player.Create(Costumes.CreateCircle(10, RGBColor.Black)),
+                Costumes.CreateCircle(10, RGBColor.Black),
                 controlBall);
         }
 
@@ -338,7 +336,7 @@ namespace GetIt.Sample
             Turtle.Say("Press any key to start");
             var key = Game.WaitForAnyKeyDown();
             Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
-            Game.WaitForKeyDown(Models.KeyboardKey.Space);
+            Game.WaitForKeyDown(KeyboardKey.Space);
             Turtle.Say("Game over.");
         }
 
@@ -347,14 +345,46 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.Say("Move me with arrow keys", 2);
-            while (!Game.IsKeyDown(Models.KeyboardKey.Space))
+            while (!Game.IsKeyDown(KeyboardKey.Space))
             {
-                if (Game.IsKeyDown(Models.KeyboardKey.Left))
+                if (Game.IsKeyDown(KeyboardKey.Left) && Game.IsKeyDown(KeyboardKey.Up))
                 {
-                    Turtle.Go(-10);
+                    Turtle.SetDirection(135);
+                    Turtle.Go(10);
                 }
-                if (Game.IsKeyDown(Models.KeyboardKey.Right))
+                else if (Game.IsKeyDown(KeyboardKey.Left) && Game.IsKeyDown(KeyboardKey.Down))
                 {
+                    Turtle.SetDirection(225);
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right) && Game.IsKeyDown(KeyboardKey.Up))
+                {
+                    Turtle.SetDirection(45);
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right) && Game.IsKeyDown(KeyboardKey.Down))
+                {
+                    Turtle.SetDirection(315);
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Left))
+                {
+                    Turtle.TurnLeft();
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right))
+                {
+                    Turtle.TurnRight();
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Up))
+                {
+                    Turtle.TurnUp();
+                    Turtle.Go(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Down))
+                {
+                    Turtle.TurnDown();
                     Turtle.Go(10);
                 }
                 Game.Sleep(50);

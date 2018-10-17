@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading;
+using GetIt.Models;
 
-namespace GetIt.Models
+namespace GetIt
 {
     public class PlayerOnScene : IDisposable
     {

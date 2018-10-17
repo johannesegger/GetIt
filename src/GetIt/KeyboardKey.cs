@@ -1,4 +1,4 @@
-namespace GetIt.Models
+namespace GetIt
 {
     public enum KeyboardKey
     {

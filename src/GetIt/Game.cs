@@ -507,12 +507,22 @@ namespace GetIt
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveEventHandler(handler)));
         }
 
-        public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
+        private static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
         {
             DispatchMessageAndWaitForUpdate(new Message.AddPlayer(player));
             var p = new PlayerOnScene(player.Id);
             TaskPoolScheduler.Default.Schedule(() => fn(p));
             return p;
+        }
+
+        public static PlayerOnScene AddPlayer(Costume playerCostume, Action<PlayerOnScene> fn)
+        {
+            return AddPlayer(Player.Create(playerCostume.Size, playerCostume), fn);
+        }
+
+        public static PlayerOnScene AddPlayer(Models.Size playerSize, Costume playerCostume, Action<PlayerOnScene> fn)
+        {
+            return AddPlayer(Player.Create(playerSize, playerCostume), fn);
         }
 
         public static void ShowSceneAndAddTurtle()
