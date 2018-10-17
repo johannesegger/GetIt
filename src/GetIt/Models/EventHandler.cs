@@ -1,4 +1,5 @@
 using System;
+using LanguageExt;
 using OneOf;
 
 namespace GetIt.Models
@@ -15,10 +16,10 @@ namespace GetIt.Models
         [Equals]
         public sealed class KeyDown : EventHandler
         {
-            private readonly KeyboardKey key;
-            private readonly Action handler;
+            private readonly Option<KeyboardKey> key;
+            private readonly Action<KeyboardKey> handler;
 
-            public KeyDown(KeyboardKey key, Action handler)
+            public KeyDown(Option<KeyboardKey> key, Action<KeyboardKey> handler)
             {
                 this.key = key;
                 this.handler = handler;
@@ -28,9 +29,9 @@ namespace GetIt.Models
 
             public override void Handle(Event ev)
             {
-                if (ev is Event.KeyDown e && e.Key == key)
+                if (ev is Event.KeyDown e && (key.IsNone || e.Key == key))
                 {
-                    handler();
+                    handler(e.Key);
                 }
             }
         }

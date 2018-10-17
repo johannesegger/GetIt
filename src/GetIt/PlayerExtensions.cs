@@ -4,6 +4,7 @@ using System.Threading;
 using Elmish.Net;
 using GetIt.Models;
 using GetIt.Utils;
+using LanguageExt;
 using static LanguageExt.Prelude;
 
 namespace GetIt
@@ -141,10 +142,20 @@ namespace GetIt
 
         public static double GetDistanceToMouse(this PlayerOnScene player) => player.Position.DistanceTo(Game.State.MousePosition);
 
+        private static IDisposable OnKeyDown(this PlayerOnScene player, Option<KeyboardKey> key, Action<KeyboardKey> action)
+        {
+            var handler = new Models.EventHandler.KeyDown(key, action);
+            return Game.AddEventHandler(handler);
+        }
+
         public static IDisposable OnKeyDown(this PlayerOnScene player, KeyboardKey key, Action<PlayerOnScene> action)
         {
-            var handler = new Models.EventHandler.KeyDown(key, () => action(player));
-            return Game.AddEventHandler(handler);
+            return player.OnKeyDown(Some(key), _ => action(player));
+        }
+
+        public static IDisposable OnAnyKeyDown(this PlayerOnScene player, Action<PlayerOnScene, KeyboardKey> action)
+        {
+            return player.OnKeyDown(None, key => action(player, key));
         }
 
         public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
