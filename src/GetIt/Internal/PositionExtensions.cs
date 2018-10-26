@@ -1,8 +1,7 @@
 using System;
 using Avalonia;
-using GetIt.Models;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     internal static class PositionExtensions
     {

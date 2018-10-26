@@ -2,9 +2,8 @@ using System;
 using LanguageExt;
 using OneOf;
 
-namespace GetIt.Models
+namespace GetIt
 {
-
     public abstract class EventHandler
         : OneOfBase<
             EventHandler.KeyDown,

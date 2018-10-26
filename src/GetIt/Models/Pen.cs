@@ -1,4 +1,4 @@
-namespace GetIt.Models
+namespace GetIt
 {
     [Equals]
     public sealed class Pen

@@ -1,7 +1,7 @@
 using Elmish.Net;
-using GetIt.Utils;
+using GetIt.Internal;
 
-namespace GetIt.Models
+namespace GetIt
 {
     public static class PenExtensions
     {

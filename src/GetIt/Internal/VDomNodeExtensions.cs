@@ -7,7 +7,7 @@ using Elmish.Net.Utils;
 using Elmish.Net.VDom;
 using static LanguageExt.Prelude;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     internal static class VDomNodeExtensions
     {

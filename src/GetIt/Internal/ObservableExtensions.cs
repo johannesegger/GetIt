@@ -2,7 +2,7 @@ using System;
 using System.Reactive.Linq;
 using LanguageExt;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     internal static class ObservableExtensions
     {

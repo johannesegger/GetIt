@@ -1,5 +1,3 @@
-using GetIt.Models;
-
 namespace GetIt
 {
     public static class RGBAColor

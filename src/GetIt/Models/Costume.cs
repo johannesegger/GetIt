@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace GetIt.Models
+namespace GetIt
 {
     public class Costume
     {

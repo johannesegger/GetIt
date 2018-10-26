@@ -1,6 +1,6 @@
 using Elmish.Net;
 
-namespace GetIt.Models
+namespace GetIt
 {
     [Equals]
     public sealed class RGBA

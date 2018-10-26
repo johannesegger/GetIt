@@ -1,6 +1,6 @@
 using System;
 
-namespace GetIt.Models
+namespace GetIt
 {
     public static class SizeExtensions
     {

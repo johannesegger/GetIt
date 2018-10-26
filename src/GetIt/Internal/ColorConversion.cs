@@ -1,7 +1,6 @@
 using System;
-using GetIt.Models;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     // No idea what this does, got this from http://www.easyrgb.com/en/math.php
     internal static class ColorConversion

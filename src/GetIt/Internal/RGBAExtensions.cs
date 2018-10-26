@@ -1,7 +1,6 @@
 using Avalonia.Media;
-using GetIt.Models;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     internal static class RGBAExtensions
     {

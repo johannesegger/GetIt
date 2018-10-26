@@ -2,9 +2,9 @@ using System;
 using LanguageExt;
 using OneOf;
 
-namespace GetIt.Models
+namespace GetIt.Internal
 {
-    public abstract class Message
+    internal abstract class Message
         : OneOfBase<
             Message.SetSceneSize,
             Message.SetMousePosition,

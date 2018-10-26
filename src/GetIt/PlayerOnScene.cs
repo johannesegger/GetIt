@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
-using GetIt.Models;
+using GetIt.Internal;
 
 namespace GetIt
 {

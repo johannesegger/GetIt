@@ -21,10 +21,9 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Elmish.Net;
 using Elmish.Net.VDom;
-using GetIt.Models;
-using GetIt.Utils;
+using GetIt.Internal;
 using LanguageExt;
-using static Elmish.Net.ElmishApp<GetIt.Models.Message>;
+using static Elmish.Net.ElmishApp<GetIt.Internal.Message>;
 using static LanguageExt.Prelude;
 using Unit = System.Reactive.Unit;
 
@@ -82,12 +81,12 @@ namespace GetIt
         private static (State, Cmd<Message>) Init()
         {
             State = new State(
-                new Models.Rectangle(new Position(-300, -200), new Models.Size(600, 400)),
+                new Rectangle(new Position(-300, -200), new Size(600, 400)),
                 ImmutableList<Player>.Empty,
                 ImmutableList<PenLine>.Empty,
                 MouseState.Empty,
                 KeyboardState.Empty,
-                ImmutableList<Models.EventHandler>.Empty);
+                ImmutableList<EventHandler>.Empty);
             var cmd = Cmd.None<Message>();
             return (State, cmd);
         }
@@ -112,7 +111,7 @@ namespace GetIt
             return message.Match(
                 (Message.SetSceneSize m) =>
                 {
-                    var bounds = new Models.Rectangle(new Position(-m.Size.Width / 2, -m.Size.Height / 2), m.Size);
+                    var bounds = new Rectangle(new Position(-m.Size.Width / 2, -m.Size.Height / 2), m.Size);
                     var newState = state.With(p => p.SceneBounds, bounds);
                     return (newState, Cmd.None<Message>());
                 },
@@ -306,7 +305,7 @@ namespace GetIt
                             h => p.LayoutUpdated += h,
                             h => p.LayoutUpdated -= h
                         )
-                        .Select(_ => new Message.SetSceneSize(new Models.Size(p.Bounds.Width, p.Bounds.Height)))));
+                        .Select(_ => new Message.SetSceneSize(new Size(p.Bounds.Width, p.Bounds.Height)))));
         }
 
         private static IEnumerable<IVDomNode<Message>> GetSceneChildren(State state, Dispatch<Message> dispatch)
@@ -452,7 +451,7 @@ namespace GetIt
         {
             foreach (var player in state.Players)
             {
-                var boxSize = new Models.Size(30, 30);
+                var boxSize = new Size(30, 30);
                 var size = player.Costume.Size.Scale(boxSize);
                 yield return VDomNode<DockPanel>()
                     .SetChildNodes(p => p.Children,
@@ -502,7 +501,7 @@ namespace GetIt
             dispatchSubject.OnNext(message);
         }
 
-        internal static IDisposable AddEventHandler(Models.EventHandler handler)
+        internal static IDisposable AddEventHandler(EventHandler handler)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.AddEventHandler(handler));
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveEventHandler(handler)));
@@ -526,7 +525,7 @@ namespace GetIt
             return AddPlayer(Player.Create(playerCostume.Size, playerCostume), fn);
         }
 
-        public static PlayerOnScene AddPlayer(Models.Size playerSize, Costume playerCostume, Action<PlayerOnScene> fn)
+        public static PlayerOnScene AddPlayer(Size playerSize, Costume playerCostume, Action<PlayerOnScene> fn)
         {
             return AddPlayer(Player.Create(playerSize, playerCostume), fn);
         }
@@ -552,7 +551,7 @@ namespace GetIt
             using (var signal = new ManualResetEventSlim())
             {
                 var position = Position.Zero;
-                var handler = new Models.EventHandler.ClickScene(p => { position = p; signal.Set(); });
+                var handler = new EventHandler.ClickScene(p => { position = p; signal.Set(); });
                 using (AddEventHandler(handler))
                 {
                     signal.Wait();
@@ -566,7 +565,7 @@ namespace GetIt
             using (var signal = new ManualResetEventSlim())
             {
                 var keyboardKey = (KeyboardKey)(-1);
-                var handler = new Models.EventHandler.KeyDown(key, p => { keyboardKey = p; signal.Set(); });
+                var handler = new EventHandler.KeyDown(key, p => { keyboardKey = p; signal.Set(); });
                 using (AddEventHandler(handler))
                 {
                     signal.Wait();

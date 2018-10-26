@@ -1,6 +1,6 @@
 using System;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     [Equals]
     internal class HSLA

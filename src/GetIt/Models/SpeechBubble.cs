@@ -1,7 +1,7 @@
 using System;
 using OneOf;
 
-namespace GetIt.Models
+namespace GetIt
 {
     public abstract class SpeechBubble : OneOfBase<SpeechBubble.Say, SpeechBubble.Ask>
     {

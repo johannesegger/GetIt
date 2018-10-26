@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using FsCheck.Xunit;
-using GetIt.Models;
-using GetIt.Utils;
+using GetIt.Internal;
 using Xunit;
 
-namespace GetIt.Test.Utils
+namespace GetIt.Test.Internal
 {
     public class ColorConversionTest
     {

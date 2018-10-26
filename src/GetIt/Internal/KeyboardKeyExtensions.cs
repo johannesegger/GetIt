@@ -2,9 +2,9 @@ using Avalonia.Input;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
-namespace GetIt.Models
+namespace GetIt.Internal
 {
-    public static class KeyboardKeyExtensions
+    internal static class KeyboardKeyExtensions
     {
         public static Option<KeyboardKey> TryGetKeyboardKey(this Key key)
         {

@@ -2,7 +2,7 @@ using System;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
-namespace GetIt.Models
+namespace GetIt
 {
     [Equals]
     public sealed class Player

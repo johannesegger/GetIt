@@ -2,7 +2,6 @@ using System;
 using System.Collections.Immutable;
 using System.IO;
 using System.Reflection;
-using GetIt.Models;
 
 namespace GetIt
 {

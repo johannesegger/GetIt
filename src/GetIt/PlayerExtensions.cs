@@ -2,8 +2,7 @@ using System;
 using System.Reactive.Disposables;
 using System.Threading;
 using Elmish.Net;
-using GetIt.Models;
-using GetIt.Utils;
+using GetIt.Internal;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
@@ -144,7 +143,7 @@ namespace GetIt
 
         private static IDisposable OnKeyDown(this PlayerOnScene player, Option<KeyboardKey> key, Action<KeyboardKey> action)
         {
-            var handler = new Models.EventHandler.KeyDown(key, action);
+            var handler = new EventHandler.KeyDown(key, action);
             return Game.AddEventHandler(handler);
         }
 
@@ -160,13 +159,13 @@ namespace GetIt
 
         public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
-            var handler = new Models.EventHandler.MouseEnterPlayer(player.Id, () => action(player));
+            var handler = new EventHandler.MouseEnterPlayer(player.Id, () => action(player));
             return Game.AddEventHandler(handler);
         }
 
         public static IDisposable OnClick(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
-            var handler = new Models.EventHandler.ClickPlayer(player.Id, () => action(player));
+            var handler = new EventHandler.ClickPlayer(player.Id, () => action(player));
             return Game.AddEventHandler(handler);
         }
     }

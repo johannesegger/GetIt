@@ -2,7 +2,7 @@ using System;
 using System.Reactive.Linq;
 using Avalonia.Interactivity;
 
-namespace GetIt.Utils
+namespace GetIt.Internal
 {
     internal static class AvaloniaExtensions
     {
