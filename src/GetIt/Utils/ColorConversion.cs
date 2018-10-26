@@ -6,11 +6,11 @@ namespace GetIt.Utils
     // No idea what this does, got this from http://www.easyrgb.com/en/math.php
     internal static class ColorConversion
     {
-        public static HSL ToHSL(this RGB rgb)
+        public static HSLA ToHSLA(this RGBA rgba)
         {
-            var r = rgb.Red / 255.0;
-            var g = rgb.Green / 255.0;
-            var b = rgb.Blue / 255.0;
+            var r = rgba.Red / 255.0;
+            var g = rgba.Green / 255.0;
+            var b = rgba.Blue / 255.0;
 
             var min = Math.Min(r, Math.Min(g, b));
             var max = Math.Max(r, Math.Max(g, b));
@@ -40,25 +40,25 @@ namespace GetIt.Utils
                 if ( hue < 0 ) hue += 1;
                 if ( hue > 1 ) hue -= 1;
             }
-            return new HSL(hue, saturation, lightness);
+            return new HSLA(hue, saturation, lightness, rgba.Alpha / (double)byte.MaxValue);
         }
 
-        public static RGB ToRGB(this HSL hsl)
+        public static RGBA ToRGBA(this HSLA hsla)
         {
             byte r, g, b;
-            if (hsl.Saturation == 0)
+            if (hsla.Saturation == 0)
             {
-                r = (byte)Math.Round(hsl.Lightness * 255);
-                g = (byte)Math.Round(hsl.Lightness * 255);
-                b = (byte)Math.Round(hsl.Lightness * 255);
+                r = (byte)Math.Round(hsla.Lightness * 255);
+                g = (byte)Math.Round(hsla.Lightness * 255);
+                b = (byte)Math.Round(hsla.Lightness * 255);
             }
             else
             {
                 double var2;
-                if (hsl.Lightness < 0.5) var2 = hsl.Lightness * (1 + hsl.Saturation);
-                else var2 = (hsl.Lightness + hsl.Saturation) - (hsl.Saturation * hsl.Lightness);
+                if (hsla.Lightness < 0.5) var2 = hsla.Lightness * (1 + hsla.Saturation);
+                else var2 = (hsla.Lightness + hsla.Saturation) - (hsla.Saturation * hsla.Lightness);
 
-                var var1 = 2 * hsl.Lightness - var2;
+                var var1 = 2 * hsla.Lightness - var2;
 
                 double Hue_2_RGB(double v1, double v2, double vH)
                 {
@@ -69,11 +69,11 @@ namespace GetIt.Utils
                     if ( ( 3 * vH ) < 2 ) return ( v1 + ( v2 - v1 ) * ( ( 2.0 / 3.0 ) - vH ) * 6 );
                     return ( v1 );
                 }
-                r = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsl.Hue + ( 1.0 / 3.0 ) ));
-                g = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsl.Hue ));
-                b = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsl.Hue - ( 1.0 / 3.0 ) ));
+                r = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsla.Hue + ( 1.0 / 3.0 ) ));
+                g = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsla.Hue ));
+                b = (byte)Math.Round(255 * Hue_2_RGB( var1, var2, hsla.Hue - ( 1.0 / 3.0 ) ));
             }
-            return new RGB(r, g, b);
+            return new RGBA(r, g, b, (byte)Math.Round(hsla.Alpha * 255));
         }
     }
 }

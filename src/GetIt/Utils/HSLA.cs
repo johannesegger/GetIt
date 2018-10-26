@@ -3,13 +3,14 @@ using System;
 namespace GetIt.Utils
 {
     [Equals]
-    internal class HSL
+    internal class HSLA
     {
-        public HSL(double hue, double saturation, double lightness)
+        public HSLA(double hue, double saturation, double lightness, double alpha)
         {
             Hue = hue;
             Saturation = saturation;
             Lightness = lightness;
+            Alpha = alpha;
         }
 
         [IgnoreDuringEquals]
@@ -24,6 +25,10 @@ namespace GetIt.Utils
         public double Lightness { get; }
         private double LightnessRounded => Math.Round(Lightness, 5);
 
-        public override string ToString() => $"hsl({Hue * 360:F2}°, {Saturation:P2}, {Lightness:P2})";
+        [IgnoreDuringEquals]
+        public double Alpha { get; }
+        private double AlphaRounded => Math.Round(Alpha, 5);
+
+        public override string ToString() => $"hsla({Hue * 360}°, {Saturation:P}, {Lightness:P}, {Alpha})";
     }
 }

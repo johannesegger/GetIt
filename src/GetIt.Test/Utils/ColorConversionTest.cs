@@ -13,28 +13,28 @@ namespace GetIt.Test.Utils
         {
             get
             {
-                yield return new object[] { new RGB(0xFF, 0xFF, 0x00), new HSL(1.0/6.0, 1, 0.5) };
+                yield return new object[] { new RGBA(0xFF, 0xFF, 0x00, 0xff), new HSLA(1.0/6.0, 1, 0.5, 1) };
             }
         }
 
         [Theory]
         [MemberData(nameof(Colors))]
-        internal void ShouldConvertCorrectlyToHSV(RGB rgb, HSL hsl)
+        internal void ShouldConvertCorrectlyToHSV(RGBA rgb, HSLA hsl)
         {
-            rgb.ToHSL().Should().Be(hsl);
+            rgb.ToHSLA().Should().Be(hsl);
         }
 
         [Theory]
         [MemberData(nameof(Colors))]
-        internal void ShouldConvertCorrectlyToRGB(RGB rgb, HSL hsl)
+        internal void ShouldConvertCorrectlyToRGB(RGBA rgb, HSLA hsl)
         {
-            hsl.ToRGB().Should().Be(rgb);
+            hsl.ToRGBA().Should().Be(rgb);
         }
 
         [Property(Skip = "Rounding errors")]
-        internal void ConversionShouldBeIsomorphic(RGB rgb)
+        internal void ConversionShouldBeIsomorphic(RGBA rgb)
         {
-            rgb.ToHSL().ToRGB().Should().Be(rgb);
+            rgb.ToHSLA().ToRGBA().Should().Be(rgb);
         }
     }
 }

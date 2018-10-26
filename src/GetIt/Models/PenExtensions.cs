@@ -7,7 +7,8 @@ namespace GetIt.Models
     {
         public static Pen WithHueShift(this Pen pen, double shift)
         {
-            return pen.With(p => p.Color, pen.Color.ToHSL().AddHue(shift).ToRGB());
+            var hslaColor = pen.Color.ToHSLA();
+            return pen.With(p => p.Color, hslaColor.With(p => p.Hue, hslaColor.Hue + shift).ToRGBA());
         }
     }
 }

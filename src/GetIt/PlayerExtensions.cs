@@ -123,7 +123,7 @@ namespace GetIt
 
         public static void TogglePenOnOff(this PlayerOnScene player) => player.SetPen(player.Pen.With(p => p.IsOn, !player.Pen.IsOn));
 
-        public static void SetPenColor(this PlayerOnScene player, RGB color) => player.SetPen(player.Pen.With(p => p.Color, color));
+        public static void SetPenColor(this PlayerOnScene player, RGBA color) => player.SetPen(player.Pen.With(p => p.Color, color));
 
         public static void ShiftPenColor(this PlayerOnScene player, double shift) => player.SetPen(player.Pen.WithHueShift(shift));
 

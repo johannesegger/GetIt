@@ -5,7 +5,7 @@ namespace GetIt
 {
     public static class Costumes
     {
-        public static Costume CreateRectangle(Size size, RGB fillColor)
+        public static Costume CreateRectangle(Size size, RGBA fillColor)
         {
             return new Costume(
                 size,
@@ -14,7 +14,7 @@ namespace GetIt
             );
         }
 
-        public static Costume CreateCircle(double radius, RGB fillColor)
+        public static Costume CreateCircle(double radius, RGBA fillColor)
         {
             return new Costume(
                 new Size(2 * radius, 2 * radius),

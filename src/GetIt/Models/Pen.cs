@@ -3,9 +3,9 @@ namespace GetIt.Models
     [Equals]
     public sealed class Pen
     {
-        public static readonly Pen Default = new Pen(false, 1, RGBColor.Black);
+        public static readonly Pen Default = new Pen(false, 1, RGBAColor.Black);
 
-        public Pen(bool isOn, double weight, RGB color)
+        public Pen(bool isOn, double weight, RGBA color)
         {
             IsOn = isOn;
             Weight = weight;
@@ -14,6 +14,6 @@ namespace GetIt.Models
 
         public bool IsOn { get; }
         public double Weight { get; }
-        public RGB Color { get; }
+        public RGBA Color { get; }
     }
 }

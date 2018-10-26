@@ -31,7 +31,7 @@ namespace GetIt.Sample
 
             Turtle.GoTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBColor.Cyan);
+            Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 400)
@@ -91,7 +91,7 @@ namespace GetIt.Sample
 
             Turtle.GoTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBColor.Cyan);
+            Turtle.SetPenColor(RGBAColor.Cyan);
             Turtle.TurnOnPen();
             for (var i = 0; i < 10; i++)
             {
@@ -197,7 +197,7 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.TurnOnPen();
-            Turtle.SetPenColor(RGBColor.Red);
+            Turtle.SetPenColor(RGBAColor.Red);
             while (Turtle.GetDistanceToMouse() > 10)
             {
                 Turtle.ShiftPenColor(10.0 / 360);
@@ -250,7 +250,7 @@ namespace GetIt.Sample
             var leftPlayer = Game.AddPlayer(
                 Costumes.CreateRectangle(
                     new Models.Size(20, 150),
-                    RGBColor.DarkMagenta),
+                    RGBAColor.DarkMagenta),
                 controlLeftPlayer);
 
             void controlRightPlayer(PlayerOnScene player)
@@ -269,7 +269,7 @@ namespace GetIt.Sample
             var rightPlayer = Game.AddPlayer(
                 Costumes.CreateRectangle(
                     new Models.Size(20, 150),
-                    RGBColor.Magenta),
+                    RGBAColor.Magenta),
                 controlRightPlayer);
 
             var rand = new Random();
@@ -303,7 +303,7 @@ namespace GetIt.Sample
             }
 
             Game.AddPlayer(
-                Costumes.CreateCircle(10, RGBColor.Black),
+                Costumes.CreateCircle(10, RGBAColor.Black),
                 controlBall);
         }
 
