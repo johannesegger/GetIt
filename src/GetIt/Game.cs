@@ -427,6 +427,7 @@ namespace GetIt
         private static IVDomNode<Panel, Message> GetPlayerView(Player player)
         {
             return VDomNode<Canvas>()
+                // .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightCoral))
                 .Set(p => p.Width, player.Costume.Size.Width)
                 .Set(p => p.Height, player.Costume.Size.Height)
                 .Subscribe(p => p
@@ -513,6 +514,11 @@ namespace GetIt
             var p = new PlayerOnScene(player.Id);
             TaskPoolScheduler.Default.Schedule(() => fn(p));
             return p;
+        }
+
+        public static PlayerOnScene AddPlayer(Costume playerCostume)
+        {
+            return AddPlayer(Player.Create(playerCostume.Size, playerCostume), _ => {});
         }
 
         public static PlayerOnScene AddPlayer(Costume playerCostume, Action<PlayerOnScene> fn)

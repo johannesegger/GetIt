@@ -22,7 +22,8 @@ namespace GetIt.Sample
             // Program14();
             // Program15();
             // Program16();
-            Program17();
+            // Program17();
+            Program18();
         }
 
         private static void Program1()
@@ -390,6 +391,25 @@ namespace GetIt.Sample
                 Game.Sleep(50);
             }
             Turtle.Say("Game over.");
+        }
+
+        private static void Program18()
+        {
+            Game.ShowScene();
+
+            Game.AddPlayer(
+                Costumes.CreatePolygon(
+                    RGBAColor.Pink,
+                    new Models.Position(50, 0),
+                    new Models.Position(150, 50),
+                    new Models.Position(250, 0),
+                    new Models.Position(200, 100),
+                    new Models.Position(300, 150),
+                    new Models.Position(200, 150),
+                    new Models.Position(150, 250),
+                    new Models.Position(100, 150),
+                    new Models.Position(0, 150),
+                    new Models.Position(100, 100)));
         }
     }
 }
