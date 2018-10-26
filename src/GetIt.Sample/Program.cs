@@ -250,8 +250,8 @@ namespace GetIt.Sample
 
             var leftPlayer = Game.AddPlayer(
                 Costumes.CreateRectangle(
-                    new Models.Size(20, 150),
-                    RGBAColor.DarkMagenta),
+                    RGBAColor.DarkMagenta,
+                    new Models.Size(20, 150)),
                 controlLeftPlayer);
 
             void controlRightPlayer(PlayerOnScene player)
@@ -269,8 +269,8 @@ namespace GetIt.Sample
 
             var rightPlayer = Game.AddPlayer(
                 Costumes.CreateRectangle(
-                    new Models.Size(20, 150),
-                    RGBAColor.Magenta),
+                    RGBAColor.Magenta,
+                    new Models.Size(20, 150)),
                 controlRightPlayer);
 
             var rand = new Random();
@@ -304,7 +304,7 @@ namespace GetIt.Sample
             }
 
             Game.AddPlayer(
-                Costumes.CreateCircle(10, RGBAColor.Black),
+                Costumes.CreateCircle(RGBAColor.Black, 10),
                 controlBall);
         }
 

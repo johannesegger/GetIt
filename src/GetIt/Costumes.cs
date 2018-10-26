@@ -7,24 +7,6 @@ namespace GetIt
 {
     public static class Costumes
     {
-        public static Costume CreateRectangle(Size size, RGBA fillColor)
-        {
-            return new Costume(
-                size,
-                ImmutableList<GeometryPath>.Empty
-                    .Add(new GeometryPath(fillColor, $"M 0,0 L 0,{size.Height} L {size.Width},{size.Height} L {size.Width},0 Z"))
-            );
-        }
-
-        public static Costume CreateCircle(double radius, RGBA fillColor)
-        {
-            return new Costume(
-                new Size(2 * radius, 2 * radius),
-                ImmutableList<GeometryPath>.Empty
-                    .Add(new GeometryPath(fillColor, $"M 0,{radius} A {radius},{radius} 0 1 0 {2 * radius},{radius} A {radius},{radius} 0 1 0 0,{radius}"))
-            );
-        }
-
         public static Costume CreatePolygon(RGBA fillColor, IEnumerable<Position> points)
         {
             points = points
@@ -51,6 +33,25 @@ namespace GetIt
         public static Costume CreatePolygon(RGBA fillColor, params Position[] points)
         {
             return CreatePolygon(fillColor, points.AsEnumerable());
+        }
+
+        public static Costume CreateRectangle(RGBA fillColor, Size size)
+        {
+            return CreatePolygon(
+                fillColor,
+                new Position(0, 0),
+                new Position(0, size.Height),
+                new Position(size.Width, size.Height),
+                new Position(size.Width, 0));
+        }
+
+        public static Costume CreateCircle(RGBA fillColor, double radius)
+        {
+            return new Costume(
+                new Size(2 * radius, 2 * radius),
+                ImmutableList<GeometryPath>.Empty
+                    .Add(new GeometryPath(fillColor, $"M 0,{radius} A {radius},{radius} 0 1 0 {2 * radius},{radius} A {radius},{radius} 0 1 0 0,{radius}"))
+            );
         }
     }
 }
