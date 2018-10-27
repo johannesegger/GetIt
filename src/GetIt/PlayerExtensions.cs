@@ -10,14 +10,14 @@ namespace GetIt
 {
     public static class PlayerExtensions
     {
-        public static void GoTo(this PlayerOnScene player, double x, double y)
+        public static void MoveTo(this PlayerOnScene player, double x, double y)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetPosition(player.Id, new Position(x, y)));
         }
-        public static void GoToCenter(this PlayerOnScene player) => player.GoTo(0, 0);
+        public static void MoveToCenter(this PlayerOnScene player) => player.MoveTo(0, 0);
         public static void Move(this PlayerOnScene player, double x, double y)
         {
-            player.GoTo(player.Position.X + x, player.Position.Y + y);
+            player.MoveTo(player.Position.X + x, player.Position.Y + y);
         }
 
         public static void MoveRight(this PlayerOnScene player, int steps) => player.Move(steps, 0);
@@ -28,7 +28,7 @@ namespace GetIt
 
         public static void MoveDown(this PlayerOnScene player, int steps) => player.Move(0, -steps);
 
-        public static void Go(this PlayerOnScene player, int steps)
+        public static void Move(this PlayerOnScene player, int steps)
         {
             var directionRadians = player.Direction.Value / 180 * Math.PI;
             player.Move(
@@ -38,11 +38,11 @@ namespace GetIt
         }
 
         private static Random rand = new Random();
-        public static void GoToRandomPosition(this PlayerOnScene player)
+        public static void MoveToRandomPosition(this PlayerOnScene player)
         {
             var x = rand.Next((int)Game.State.SceneBounds.Left, (int)Game.State.SceneBounds.Right);
             var y = rand.Next((int)Game.State.SceneBounds.Bottom, (int)Game.State.SceneBounds.Top);
-            player.GoTo(x, y);
+            player.MoveTo(x, y);
         }
 
         public static void SetDirection(this PlayerOnScene player, Degrees angle)
