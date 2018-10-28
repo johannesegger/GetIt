@@ -65,12 +65,12 @@ namespace GetIt
 
         public static void MoveTo(double x, double y) => Default.MoveTo(x, y);
         public static void MoveToCenter() => Default.MoveToCenter();
-        public static void Move(double x, double y) => Default.Move(x, y);
-        public static void MoveRight(int steps) => Default.MoveRight(steps);
-        public static void MoveLeft(int steps) => Default.MoveLeft(steps);
-        public static void MoveUp(int steps) => Default.MoveUp(steps);
-        public static void MoveDown(int steps) => Default.MoveDown(steps);
-        public static void Move(int steps) => Default.Move(steps);
+        public static void Move(double deltaX, double deltaY) => Default.Move(deltaX, deltaY);
+        public static void MoveRight(double steps) => Default.MoveRight(steps);
+        public static void MoveLeft(double steps) => Default.MoveLeft(steps);
+        public static void MoveUp(double steps) => Default.MoveUp(steps);
+        public static void MoveDown(double steps) => Default.MoveDown(steps);
+        public static void MoveInDirection(double steps) => Default.MoveInDirection(steps);
         public static void MoveToRandomPosition() => Default.MoveToRandomPosition();
         public static void SetDirection(Degrees angle) => Default.SetDirection(angle);
         public static void RotateClockwise(Degrees angle) => Default.RotateClockwise(angle);

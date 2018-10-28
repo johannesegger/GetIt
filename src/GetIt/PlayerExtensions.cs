@@ -15,20 +15,20 @@ namespace GetIt
             Game.DispatchMessageAndWaitForUpdate(new Message.SetPosition(player.Id, new Position(x, y)));
         }
         public static void MoveToCenter(this PlayerOnScene player) => player.MoveTo(0, 0);
-        public static void Move(this PlayerOnScene player, double x, double y)
+        public static void Move(this PlayerOnScene player, double deltaX, double deltaY)
         {
-            player.MoveTo(player.Position.X + x, player.Position.Y + y);
+            player.MoveTo(player.Position.X + deltaX, player.Position.Y + deltaY);
         }
 
-        public static void MoveRight(this PlayerOnScene player, int steps) => player.Move(steps, 0);
+        public static void MoveRight(this PlayerOnScene player, double steps) => player.Move(steps, 0);
 
-        public static void MoveLeft(this PlayerOnScene player, int steps) => player.Move(-steps, 0);
+        public static void MoveLeft(this PlayerOnScene player, double steps) => player.Move(-steps, 0);
 
-        public static void MoveUp(this PlayerOnScene player, int steps) => player.Move(0, steps);
+        public static void MoveUp(this PlayerOnScene player, double steps) => player.Move(0, steps);
 
-        public static void MoveDown(this PlayerOnScene player, int steps) => player.Move(0, -steps);
+        public static void MoveDown(this PlayerOnScene player, double steps) => player.Move(0, -steps);
 
-        public static void Move(this PlayerOnScene player, int steps)
+        public static void MoveInDirection(this PlayerOnScene player, double steps)
         {
             var directionRadians = player.Direction.Value / 180 * Math.PI;
             player.Move(
