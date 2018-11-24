@@ -205,6 +205,7 @@ namespace GetIt.Sample
                 var direction = Turtle.GetDirectionToMouse();
                 Turtle.SetDirection(direction);
                 Turtle.MoveInDirection(10);
+                Turtle.NextCostume();
                 Game.Sleep(50);
             }
             Turtle.Say("Geschnappt :-)");
@@ -227,6 +228,9 @@ namespace GetIt.Sample
 
             Turtle.OnKeyDown(KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
             Turtle.OnKeyDown(KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
+            Turtle.OnKeyDown(KeyboardKey.Left, player => player.RotateCounterClockwise(5));
+            Turtle.OnKeyDown(KeyboardKey.Right, player => player.RotateClockwise(5));
+            Turtle.OnKeyDown(KeyboardKey.Space, player => player.NextCostume());
         }
 
         private static void Program13()
@@ -249,9 +253,10 @@ namespace GetIt.Sample
             }
 
             var leftPlayer = Game.AddPlayer(
-                Costumes.CreateRectangle(
-                    RGBAColor.DarkMagenta,
-                    new Size(20, 150)),
+                Player.Create(
+                    Costumes.CreateRectangle(
+                        RGBAColor.DarkMagenta,
+                        new Size(20, 150))),
                 controlLeftPlayer);
 
             void controlRightPlayer(PlayerOnScene player)
@@ -268,9 +273,10 @@ namespace GetIt.Sample
             }
 
             var rightPlayer = Game.AddPlayer(
-                Costumes.CreateRectangle(
-                    RGBAColor.Magenta,
-                    new Size(20, 150)),
+                Player.Create(
+                    Costumes.CreateRectangle(
+                        RGBAColor.Magenta,
+                        new Size(20, 150))),
                 controlRightPlayer);
 
             var rand = new Random();
@@ -304,7 +310,8 @@ namespace GetIt.Sample
             }
 
             Game.AddPlayer(
-                Costumes.CreateCircle(RGBAColor.Black, 10),
+                Player.Create(
+                    Costumes.CreateCircle(RGBAColor.Black, 10)),
                 controlBall);
         }
 
@@ -398,18 +405,19 @@ namespace GetIt.Sample
             Game.ShowScene();
 
             Game.AddPlayer(
-                Costumes.CreatePolygon(
-                    RGBAColor.Pink,
-                    new Position(50, 0),
-                    new Position(150, 50),
-                    new Position(250, 0),
-                    new Position(200, 100),
-                    new Position(300, 150),
-                    new Position(200, 150),
-                    new Position(150, 250),
-                    new Position(100, 150),
-                    new Position(0, 150),
-                    new Position(100, 100)));
+                Player.Create(
+                    Costumes.CreatePolygon(
+                        RGBAColor.Pink,
+                        new Position(50, 0),
+                        new Position(150, 50),
+                        new Position(250, 0),
+                        new Position(200, 100),
+                        new Position(300, 150),
+                        new Position(200, 150),
+                        new Position(150, 250),
+                        new Position(100, 150),
+                        new Position(0, 150),
+                        new Position(100, 100))));
         }
     }
 }

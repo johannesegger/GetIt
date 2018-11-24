@@ -186,6 +186,16 @@ namespace GetIt
                     var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SizeFactor, m.SizeFactor));
                     return (newState, Cmd.None<Message>());
                 },
+                (Message.NextCostume m) =>
+                {
+                    var newState = updatePlayer(
+                        state,
+                        m.PlayerId,
+                        player => player.With(
+                            p => p.CostumeIndex,
+                            (player.CostumeIndex + 1) % player.Costumes.Count));
+                    return (newState, Cmd.None<Message>());
+                },
                 (Message.AddPlayer m) =>
                 {
                     var newState = state.With(p => p.Players, state.Players.Add(m.Player));
@@ -397,12 +407,7 @@ namespace GetIt
                         VDomNode<Path>()
                             .Set(p => p.Fill, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.Black))
                             .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
-                            .Set(p => p.Data,
-                                // TODO simplify?
-                                new VDomNode<StreamGeometry, Message>(
-                                    () => PathGeometry.Parse("M0,0 L15,0 0,15"),
-                                    ImmutableList<IVDomNodeProperty<StreamGeometry, Message>>.Empty,
-                                    _ => Sub.None<Message>()))
+                            .Set(p => p.Data, new VStreamGeometry<Message>("M0,0 L15,0 0,15"))
                             .Attach(Grid.RowProperty, 1));
             }
 
@@ -439,12 +444,7 @@ namespace GetIt
                     .Select(path => VDomNode<Path>()
                         .Set(p => p.Fill, VDomNode<SolidColorBrush>()
                             .Set(p => p.Color, path.Fill.ToAvaloniaColor()))
-                        .Set(p => p.Data,
-                            // TODO simplify?
-                            new VDomNode<StreamGeometry, Message>(
-                                () => PathGeometry.Parse(path.Data),
-                                ImmutableList<IVDomNodeProperty<StreamGeometry, Message>>.Empty,
-                                _ => Sub.None<Message>()))));
+                        .Set(p => p.Data, new VStreamGeometry<Message>(path.Data))));
         }
 
         private static IEnumerable<IVDomNode<Message>> GetPlayerInfo(State state)
@@ -507,7 +507,7 @@ namespace GetIt
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveEventHandler(handler)));
         }
 
-        private static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
+        public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
         {
             DispatchMessageAndWaitForUpdate(new Message.AddPlayer(player));
             var p = new PlayerOnScene(player.Id);
@@ -515,19 +515,9 @@ namespace GetIt
             return p;
         }
 
-        public static PlayerOnScene AddPlayer(Costume playerCostume)
+        public static PlayerOnScene AddPlayer(Player player)
         {
-            return AddPlayer(Player.Create(playerCostume.Size, playerCostume), _ => {});
-        }
-
-        public static PlayerOnScene AddPlayer(Costume playerCostume, Action<PlayerOnScene> fn)
-        {
-            return AddPlayer(Player.Create(playerCostume.Size, playerCostume), fn);
-        }
-
-        public static PlayerOnScene AddPlayer(Size playerSize, Costume playerCostume, Action<PlayerOnScene> fn)
-        {
-            return AddPlayer(Player.Create(playerSize, playerCostume), fn);
+            return AddPlayer(player, _ => {});
         }
 
         public static void ShowSceneAndAddTurtle()

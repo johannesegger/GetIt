@@ -17,6 +17,7 @@ namespace GetIt.Internal
             Message.ApplyAnswer,
             Message.SetPen,
             Message.SetSizeFactor,
+            Message.NextCostume,
             Message.AddPlayer,
             Message.RemovePlayer,
             Message.ClearScene,
@@ -147,6 +148,16 @@ namespace GetIt.Internal
 
             public Guid PlayerId { get; }
             public double SizeFactor { get; }
+        }
+
+        public class NextCostume : Message
+        {
+            public NextCostume(Guid playerId)
+            {
+                PlayerId = playerId;
+            }
+
+            public Guid PlayerId { get; }
         }
 
         public class AddPlayer : Message
