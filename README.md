@@ -5,4 +5,4 @@
 ![Sample](docs/sample.gif)
 
 ## Credits
-Turtle icon created by [https://www.vectorportal.com](vectorportal.com).
+Turtle icon created by [vectorportal.com](https://www.vectorportal.com).
