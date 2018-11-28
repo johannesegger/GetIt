@@ -95,6 +95,7 @@ namespace GetIt
             }
         }
 
+        public static void MoveTo(Position position) => Default.MoveTo(position);
         public static void MoveTo(double x, double y) => Default.MoveTo(x, y);
         public static void MoveToCenter() => Default.MoveToCenter();
         public static void MoveBy(double deltaX, double deltaY) => Default.MoveBy(deltaX, deltaY);

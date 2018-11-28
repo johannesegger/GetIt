@@ -10,11 +10,15 @@ namespace GetIt
 {
     public static class PlayerExtensions
     {
+        public static void MoveTo(this PlayerOnScene player, Position position)
+        {
+            Game.DispatchMessageAndWaitForUpdate(new Message.SetPosition(player.Id, position));
+        }
         public static void MoveTo(this PlayerOnScene player, double x, double y)
         {
-            Game.DispatchMessageAndWaitForUpdate(new Message.SetPosition(player.Id, new Position(x, y)));
+            player.MoveTo(new Position(x, y));
         }
-        public static void MoveToCenter(this PlayerOnScene player) => player.MoveTo(0, 0);
+        public static void MoveToCenter(this PlayerOnScene player) => player.MoveTo(Position.Zero);
         public static void MoveBy(this PlayerOnScene player, double deltaX, double deltaY)
         {
             player.MoveTo(player.Position.X + deltaX, player.Position.Y + deltaY);
