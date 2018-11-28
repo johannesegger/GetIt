@@ -128,7 +128,7 @@ namespace GetIt
 
         public static void SetPenColor(this PlayerOnScene player, RGBA color) => player.SetPen(player.Pen.With(p => p.Color, color));
 
-        public static void ShiftPenColor(this PlayerOnScene player, Degrees shift) => player.SetPen(player.Pen.WithHueShift(shift));
+        public static void ShiftPenColor(this PlayerOnScene player, Degrees value) => player.SetPen(player.Pen.WithHueShift(value));
 
         public static void SetPenWeight(this PlayerOnScene player, double weight) => player.SetPen(player.Pen.With(p => p.Weight, weight));
 
