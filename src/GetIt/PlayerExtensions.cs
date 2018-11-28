@@ -8,6 +8,7 @@ using static LanguageExt.Prelude;
 
 namespace GetIt
 {
+    [CodeGeneration.Staticify("Turtle", "Default")]
     public static class PlayerExtensions
     {
         public static void MoveTo(this PlayerOnScene player, Position position)

@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace GetIt
 {
-    public static class Turtle
+    public static partial class Turtle
     {
         private static readonly string AssemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
@@ -94,43 +94,5 @@ namespace GetIt
                 @default = value;
             }
         }
-
-        public static void MoveTo(Position position) => Default.MoveTo(position);
-        public static void MoveTo(double x, double y) => Default.MoveTo(x, y);
-        public static void MoveToCenter() => Default.MoveToCenter();
-        public static void MoveBy(double deltaX, double deltaY) => Default.MoveBy(deltaX, deltaY);
-        public static void MoveRight(double steps) => Default.MoveRight(steps);
-        public static void MoveLeft(double steps) => Default.MoveLeft(steps);
-        public static void MoveUp(double steps) => Default.MoveUp(steps);
-        public static void MoveDown(double steps) => Default.MoveDown(steps);
-        public static void MoveInDirection(double steps) => Default.MoveInDirection(steps);
-        public static void MoveToRandomPosition() => Default.MoveToRandomPosition();
-        public static void SetDirection(Degrees angle) => Default.SetDirection(angle);
-        public static void RotateClockwise(Degrees angle) => Default.RotateClockwise(angle);
-        public static void RotateCounterClockwise(Degrees angle) => Default.RotateCounterClockwise(angle);
-        public static void BounceIfOnEdge() => Default.BounceIfOnEdge();
-        public static void TurnUp() => Default.TurnUp();
-        public static void TurnRight() => Default.TurnRight();
-        public static void TurnDown() => Default.TurnDown();
-        public static void TurnLeft() => Default.TurnLeft();
-        public static void Say(string text) => Default.Say(text);
-        public static void Say(string text, double durationInSeconds) => Default.Say(text, durationInSeconds);
-        public static string Ask(string question) => Default.Ask(question);
-        public static void ShutUp() => Default.ShutUp();
-        public static void TurnOnPen() => Default.TurnOnPen();
-        public static void TurnOffPen() => Default.TurnOffPen();
-        public static void TogglePenOnOff() => Default.TogglePenOnOff();
-        public static void SetPenColor(RGBA color) => Default.SetPenColor(color);
-        public static void ShiftPenColor(Degrees value) => Default.ShiftPenColor(value);
-        public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
-        public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
-        public static void SetSizeFactor(double sizeFactor) => Default.SetSizeFactor(sizeFactor);
-        public static void ChangeSizeFactor(double change) => Default.ChangeSizeFactor(change);
-        public static void NextCostume() => Default.NextCostume();
-        public static Degrees GetDirectionToMouse() => Default.GetDirectionToMouse();
-        public static double GetDistanceToMouse() => Default.GetDistanceToMouse();
-        public static IDisposable OnKeyDown(KeyboardKey key, Action<PlayerOnScene> action) => Default.OnKeyDown(key, action);
-        public static IDisposable OnMouseEnter(Action<PlayerOnScene> action) => Default.OnMouseEnter(action);
-        public static IDisposable OnClick(Action<PlayerOnScene> action) => Default.OnClick(action);
     }
 }
