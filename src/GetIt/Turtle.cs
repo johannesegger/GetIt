@@ -121,7 +121,7 @@ namespace GetIt
         public static void TurnOffPen() => Default.TurnOffPen();
         public static void TogglePenOnOff() => Default.TogglePenOnOff();
         public static void SetPenColor(RGBA color) => Default.SetPenColor(color);
-        public static void ShiftPenColor(double shift) => Default.ShiftPenColor(shift);
+        public static void ShiftPenColor(Degrees value) => Default.ShiftPenColor(value);
         public static void SetPenWeight(double weight) => Default.SetPenWeight(weight);
         public static void ChangePenWeight(double change) => Default.ChangePenWeight(change);
         public static void SetSizeFactor(double sizeFactor) => Default.SetSizeFactor(sizeFactor);

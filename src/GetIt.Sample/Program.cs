@@ -40,7 +40,7 @@ namespace GetIt.Sample
                 Turtle.MoveInDirection(n);
                 Turtle.RotateCounterClockwise(89.5);
 
-                Turtle.ShiftPenColor(10.0 / 360);
+                Turtle.ShiftPenColor(10);
                 n++;
 
                 Game.Sleep(10);
@@ -201,7 +201,7 @@ namespace GetIt.Sample
             Turtle.SetPenColor(RGBAColor.Red);
             while (Turtle.GetDistanceToMouse() > 10)
             {
-                Turtle.ShiftPenColor(10.0 / 360);
+                Turtle.ShiftPenColor(10);
                 var direction = Turtle.GetDirectionToMouse();
                 Turtle.SetDirection(direction);
                 Turtle.MoveInDirection(10);
