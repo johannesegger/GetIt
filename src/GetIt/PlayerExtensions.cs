@@ -133,7 +133,35 @@ namespace GetIt
             player.SetDirection(player.Direction + angle);
         }
 
-        public static void BounceIfOnEdge(this PlayerOnScene player)
+        /// <summary>
+        /// Rotates the player so that it looks up.
+        /// </summary>
+        /// <param name="player">The player that should be rotated.</param>
+        public static void TurnUp(this PlayerOnScene player) => player.SetDirection(90);
+
+        /// <summary>
+        /// Rotates the player so that it looks to the right.
+        /// </summary>
+        /// <param name="player">The player that should be rotated.</param>
+        public static void TurnRight(this PlayerOnScene player) => player.SetDirection(0);
+
+        /// <summary>
+        /// Rotates the player so that it looks down.
+        /// </summary>
+        /// <param name="player">The player that should be rotated.</param>
+        public static void TurnDown(this PlayerOnScene player) => player.SetDirection(270);
+
+        /// <summary>
+        /// Rotates the player so that it looks to the left.
+        /// </summary>
+        /// <param name="player">The player that should be rotated.</param>
+        public static void TurnLeft(this PlayerOnScene player) => player.SetDirection(180);
+
+        /// <summary>
+        /// Bounces the player off the wall if it currently touches it.
+        /// </summary>
+        /// <param name="player">The player that should bounce off the wall.</param>
+        public static void BounceOffWall(this PlayerOnScene player)
         {
             if(player.Bounds.Top > Game.State.SceneBounds.Top
                 || player.Bounds.Bottom < Game.State.SceneBounds.Bottom)
@@ -147,22 +175,30 @@ namespace GetIt
             }
         }
 
-        public static void TurnUp(this PlayerOnScene player) => player.SetDirection(90);
-
-        public static void TurnRight(this PlayerOnScene player) => player.SetDirection(0);
-
-        public static void TurnDown(this PlayerOnScene player) => player.SetDirection(270);
-
-        public static void TurnLeft(this PlayerOnScene player) => player.SetDirection(180);
-
+        /// <summary>
+        /// Shows a speech bubble next to the player.
+        /// You can remove the speech bubble with <see cref="ShutUp"/>.
+        /// </summary>
+        /// <param name="player">The player that the speech bubble should belong to.</param>
+        /// <param name="text">The content of the speech bubble.</param>
         public static void Say(this PlayerOnScene player, string text)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetSpeechBubble(player.Id, new SpeechBubble.Say(text)));
         }
 
+        /// <summary>
+        /// Removes the speech bubble of the player.
+        /// </summary>
+        /// <param name="player">The player that the speech bubble belongs to.</param>
         public static void ShutUp(this PlayerOnScene player) =>
             Game.DispatchMessageAndWaitForUpdate(new Message.SetSpeechBubble(player.Id, None));
 
+        /// <summary>
+        /// Shows a speech bubble next to the player for a specific time.
+        /// </summary>
+        /// <param name="player">The player that the speech bubble should belong to.</param>
+        /// <param name="text">The content of the speech bubble.</param>
+        /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
         public static void Say(this PlayerOnScene player, string text, double durationInSeconds)
         {
             player.Say(text);
@@ -170,6 +206,11 @@ namespace GetIt
             player.ShutUp();
         }
 
+        /// <summary>
+        /// Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.
+        /// </summary>
+        /// <param name="player">The player that the speech bubble should belong to.</param>
+        /// <param name="question">The content of the speech bubble.</param>
         public static string Ask(this PlayerOnScene player, string question)
         {
             using (var signal = new ManualResetEventSlim())
@@ -184,19 +225,46 @@ namespace GetIt
             }
         }
 
+        /// <summary>
+        /// Sets the pen of the player.
+        /// </summary>
+        /// <param name="player">The player that should get the pen.</param>
+        /// <param name="pen">The pen that should be assigned to the player.</param>
         public static void SetPen(this PlayerOnScene player, Pen pen)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetPen(player.Id, pen));
         }
 
+        /// <summary>
+        /// Turns on the pen of the player.
+        /// </summary>
+        /// <param name="player">The player that should get its pen turned on.</param>
         public static void TurnOnPen(this PlayerOnScene player) => player.SetPen(player.Pen.With(p => p.IsOn, true));
 
+        /// <summary>
+        /// Turns off the pen of the player.
+        /// </summary>
+        /// <param name="player">The player that should get its pen turned off.</param>
         public static void TurnOffPen(this PlayerOnScene player) => player.SetPen(player.Pen.With(p => p.IsOn, false));
 
+        /// <summary>
+        /// Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.
+        /// </summary>
+        /// <param name="player">The player that should get its pen toggled.</param>
         public static void TogglePenOnOff(this PlayerOnScene player) => player.SetPen(player.Pen.With(p => p.IsOn, !player.Pen.IsOn));
 
+        /// <summary>
+        /// Sets the pen color of the player.
+        /// </summary>
+        /// <param name="player">The player that should get its pen color set.</param>
+        /// <param name="color">The new color of the pen.</param>
         public static void SetPenColor(this PlayerOnScene player, RGBA color) => player.SetPen(player.Pen.With(p => p.Color, color));
 
+        /// <summary>
+        /// Shifts the HUE value of the pen color.
+        /// </summary>
+        /// <param name="player">The player that should get its pen color shifted.</param>
+        /// <param name="value">The angle that the HUE value should be shifted by.</param>
         public static void ShiftPenColor(this PlayerOnScene player, Degrees value) => player.SetPen(player.Pen.WithHueShift(value));
 
         public static void SetPenWeight(this PlayerOnScene player, double weight) => player.SetPen(player.Pen.With(p => p.Weight, weight));
