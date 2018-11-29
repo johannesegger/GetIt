@@ -11,28 +11,77 @@ namespace GetIt
     [CodeGeneration.Staticify("Turtle", "Default")]
     public static class PlayerExtensions
     {
+        /// <summary>
+        /// Moves the player to a position.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="position">The absolute destination position.</param>
         public static void MoveTo(this PlayerOnScene player, Position position)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetPosition(player.Id, position));
         }
+
+        /// <summary>
+        /// Moves the player to a position.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="x">The absolute x coordinate of the destination position.</param>
+        /// <param name="y">The absolute y coordinate of the destination position.</param>
         public static void MoveTo(this PlayerOnScene player, double x, double y)
         {
             player.MoveTo(new Position(x, y));
         }
+
+        /// <summary>
+        /// Moves the player to the center of the screen.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
         public static void MoveToCenter(this PlayerOnScene player) => player.MoveTo(Position.Zero);
+
+        /// <summary>
+        /// Moves the player by a position.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="deltaX">The change of the x coordinate.</param>
+        /// <param name="deltaY">The change of the y coordinate.</param>
         public static void MoveBy(this PlayerOnScene player, double deltaX, double deltaY)
         {
             player.MoveTo(player.Position.X + deltaX, player.Position.Y + deltaY);
         }
 
+        /// <summary>
+        /// Moves the player horizontally.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="steps">The number of steps.</param>
         public static void MoveRight(this PlayerOnScene player, double steps) => player.MoveBy(steps, 0);
 
+        /// <summary>
+        /// Moves the player horizontally.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="steps">The number of steps.</param>
         public static void MoveLeft(this PlayerOnScene player, double steps) => player.MoveBy(-steps, 0);
 
+        /// <summary>
+        /// Moves the player vertically.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="steps">The number of steps.</param>
         public static void MoveUp(this PlayerOnScene player, double steps) => player.MoveBy(0, steps);
 
+        /// <summary>
+        /// Moves the player vertically.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="steps">The number of steps.</param>
         public static void MoveDown(this PlayerOnScene player, double steps) => player.MoveBy(0, -steps);
 
+        /// <summary>
+        /// Moves the player forward.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="steps">The number of steps.</param>
         public static void MoveInDirection(this PlayerOnScene player, double steps)
         {
             var directionRadians = player.Direction.Value / 180 * Math.PI;
@@ -43,6 +92,10 @@ namespace GetIt
         }
 
         private static Random rand = new Random();
+        /// <summary>
+        /// Moves the player to a random position on the scene.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
         public static void MoveToRandomPosition(this PlayerOnScene player)
         {
             var x = rand.Next((int)Game.State.SceneBounds.Left, (int)Game.State.SceneBounds.Right);
@@ -50,16 +103,31 @@ namespace GetIt
             player.MoveTo(x, y);
         }
 
+        /// <summary>
+        /// Sets the rotation of the player to a specific angle.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="angle">The absolute angle.</param>
         public static void SetDirection(this PlayerOnScene player, Degrees angle)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetDirection(player.Id, angle));
         }
 
+        /// <summary>
+        /// Rotates the player clockwise by a specific angle.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="angle">The relative angle.</param>
         public static void RotateClockwise(this PlayerOnScene player, Degrees angle)
         {
             player.SetDirection(player.Direction - angle);
         }
 
+        /// <summary>
+        /// Rotates the player counter-clockwise by a specific angle.
+        /// </summary>
+        /// <param name="player">The player that should be moved.</param>
+        /// <param name="angle">The relative angle.</param>
         public static void RotateCounterClockwise(this PlayerOnScene player, Degrees angle)
         {
             player.SetDirection(player.Direction + angle);
