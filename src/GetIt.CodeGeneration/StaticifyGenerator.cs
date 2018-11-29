@@ -52,6 +52,14 @@ namespace GetIt.CodeGeneration
                 .Where(m => m.ParameterList.Parameters.Count > 0 && m.ParameterList.Parameters[0].Modifiers.Any(token => token.IsKind(SyntaxKind.ThisKeyword)));
             foreach (var member in extensionMethods)
             {
+                var leadingTrivia = member
+                    .GetLeadingTrivia()
+                    .Where(p => p.HasStructure)
+                    .Select(p => p.GetStructure())
+                    .OfType<DocumentationCommentTriviaSyntax>()
+                    .Select(p => SyntaxFactory.Trivia(
+                        p.WithContent(SyntaxFactory.List(TransformXmlDocumentation(p.Content)))));
+
                 yield return SyntaxFactory
                     .MethodDeclaration(member.ReturnType, member.Identifier)
                     .WithModifiers(
@@ -77,7 +85,66 @@ namespace GetIt.CodeGeneration
                             )
                         )
                     )
-                    .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+                    .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
+                    .WithLeadingTrivia(SyntaxFactory.TriviaList(leadingTrivia));
+            }
+        }
+
+        private IEnumerable<XmlNodeSyntax> TransformXmlDocumentation(SyntaxList<XmlNodeSyntax> xmlNodes)
+        {
+            foreach (var node in xmlNodes)
+            {
+                if (node is XmlElementSyntax xmlElement)
+                {
+                    if (xmlElement.StartTag.Name.LocalName.Text == "param"
+                        && xmlElement.StartTag.Attributes.OfType<XmlNameAttributeSyntax>().Any(a => a.Name.LocalName.Text == "name" && a.Identifier.Identifier.Text == "player"))
+                    {
+                        continue;
+                    }
+                    else if (xmlElement.StartTag.Name.LocalName.Text == "summary")
+                    {
+                        yield return xmlElement.WithContent(SyntaxFactory.List(TransformXmlSummary(xmlElement.Content)));
+                    }
+                    else
+                    {
+                        yield return node;
+                    }
+                }
+                else
+                {
+                    yield return node;
+                }
+            }
+        }
+
+        private IEnumerable<XmlNodeSyntax> TransformXmlSummary(SyntaxList<XmlNodeSyntax> content)
+        {
+            foreach (var childNode in content)
+            {
+                if (childNode is XmlTextSyntax textNode)
+                {
+                    yield return textNode.WithTextTokens(SyntaxFactory.TokenList(TransformXmlSummaryTokens(textNode.TextTokens)));
+                }
+                else
+                {
+                    yield return childNode;
+                }
+            }
+        }
+
+        private IEnumerable<SyntaxToken> TransformXmlSummaryTokens(SyntaxTokenList textTokens)
+        {
+            foreach (var token in textTokens)
+            {
+                if (token.IsKind(SyntaxKind.XmlTextLiteralToken))
+                {
+                    var text = token.Text.Replace("player", "turtle");
+                    yield return SyntaxFactory.XmlTextLiteral(token.LeadingTrivia, text, text, token.TrailingTrivia);
+                }
+                else
+                {
+                    yield return token;
+                }
             }
         }
     }
