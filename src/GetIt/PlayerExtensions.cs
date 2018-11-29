@@ -176,6 +176,15 @@ namespace GetIt
         }
 
         /// <summary>
+        /// Pauses execution of the player for a given time.
+        /// </summary>
+        /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
+        public static void Sleep(this PlayerOnScene player, double durationInMilliseconds)
+        {
+            Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds));
+        }
+
+        /// <summary>
         /// Shows a speech bubble next to the player.
         /// You can remove the speech bubble with <see cref="ShutUp"/>.
         /// </summary>
@@ -292,16 +301,30 @@ namespace GetIt
         }
 
         /// <summary>
-        /// Changes the size factor of the player.
+        /// Changes the size factor of the player that the original size is multiplied by.
         /// </summary>
         /// <param name="player">The player that gets its size changed.</param>
-        /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
+        /// <param name="change">The change of the size factor.</param>
         public static void ChangeSizeFactor(this PlayerOnScene player, double change) => player.SetSizeFactor(player.SizeFactor + change);
 
+        /// <summary>
+        /// Changes the costume of the player.
+        /// </summary>
+        /// <param name="player">The player that gets its costume changed.</param>
         public static void NextCostume(this PlayerOnScene player) => Game.DispatchMessageAndWaitForUpdate(new Message.NextCostume(player.Id));
 
+        /// <summary>
+        /// Calculates the direction from the player to the mouse pointer.
+        /// </summary>
+        /// <param name="player">The player.</param>
+        /// <returns>The direction from the player to the mouse pointer.</returns>
         public static Degrees GetDirectionToMouse(this PlayerOnScene player) => player.Position.AngleTo(Game.State.Mouse.Position);
 
+        /// <summary>
+        /// Calculates the distance from the player to the mouse pointer.
+        /// </summary>
+        /// <param name="player">The player.</param>
+        /// <returns>The distance from the player to the mouse pointer.</returns>
         public static double GetDistanceToMouse(this PlayerOnScene player) => player.Position.DistanceTo(Game.State.Mouse.Position);
 
         private static IDisposable OnKeyDown(this PlayerOnScene player, Option<KeyboardKey> key, Action<KeyboardKey> action)
@@ -310,22 +333,47 @@ namespace GetIt
             return Game.AddEventHandler(handler);
         }
 
+        /// <summary>
+        /// Registers an event handler that is called when a specific keyboard key is down.
+        /// </summary>
+        /// <param name="player">The player that gets passed to the event handler.</param>
+        /// <param name="key">The keyboard key that should be listened to.</param>
+        /// <param name="action">The event handler that should be called.</param>
+        /// <returns>The disposable subscription.</returns>
         public static IDisposable OnKeyDown(this PlayerOnScene player, KeyboardKey key, Action<PlayerOnScene> action)
         {
             return player.OnKeyDown(Some(key), _ => action(player));
         }
 
+        /// <summary>
+        /// Registers an event handler that is called when any keyboard key is down.
+        /// </summary>
+        /// <param name="player">The player that gets passed to the event handler.</param>
+        /// <param name="action">The event handler that should be called.</param>
+        /// <returns>The disposable subscription.</returns>
         public static IDisposable OnAnyKeyDown(this PlayerOnScene player, Action<PlayerOnScene, KeyboardKey> action)
         {
             return player.OnKeyDown(None, key => action(player, key));
         }
 
+        /// <summary>
+        /// Registers an event handler that is called when the mouse enters the player area.
+        /// </summary>
+        /// <param name="player">The player.</param>
+        /// <param name="action">The event handler that should be called.</param>
+        /// <returns>The disposable subscription.</returns>
         public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
             var handler = new EventHandler.MouseEnterPlayer(player.Id, () => action(player));
             return Game.AddEventHandler(handler);
         }
 
+        /// <summary>
+        /// Registers an event handler that is called when the mouse is clicked on the player.
+        /// </summary>
+        /// <param name="player">The player.</param>
+        /// <param name="action">The event handler that should be called.</param>
+        /// <returns>The disposable subscription.</returns>
         public static IDisposable OnClick(this PlayerOnScene player, Action<PlayerOnScene> action)
         {
             var handler = new EventHandler.ClickPlayer(player.Id, () => action(player));

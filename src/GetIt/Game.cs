@@ -32,8 +32,11 @@ namespace GetIt
     public static class Game
     {
         private static readonly ISubject<Message> dispatchSubject = new Subject<Message>();
-        public static State State { get; private set; }
+        internal static State State { get; private set; }
 
+        /// <summary>
+        /// Initializes and shows an empty scene with no players on it.
+        /// </summary>
         public static void ShowScene()
         {
             using (var signal = new ManualResetEventSlim())
@@ -507,35 +510,52 @@ namespace GetIt
             return Disposable.Create(() => Game.DispatchMessageAndWaitForUpdate(new Message.RemoveEventHandler(handler)));
         }
 
-        public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> fn)
+        /// <summary>
+        /// Adds a player to the scene and calls a method to control the player.
+        /// The method runs on a task pool thread so that multiple players can be controlled in parallel.
+        /// </summary>
+        /// <param name="player">The definition of the player that should be added.</param>
+        /// <param name="run">The method that is used to control the player.</param>
+        /// <returns>The added player.</returns>
+        public static PlayerOnScene AddPlayer(Player player, Action<PlayerOnScene> run)
         {
             DispatchMessageAndWaitForUpdate(new Message.AddPlayer(player));
             var p = new PlayerOnScene(player.Id);
-            TaskPoolScheduler.Default.Schedule(() => fn(p));
+            TaskPoolScheduler.Default.Schedule(() => run(p));
             return p;
         }
 
+        /// <summary>
+        /// Adds a player to the scene.
+        /// </summary>
+        /// <param name="player">The definition of the player that should be added.</param>
+        /// <returns>The added player.</returns>
         public static PlayerOnScene AddPlayer(Player player)
         {
             return AddPlayer(player, _ => {});
         }
 
+        /// <summary>
+        /// Initializes and shows an empty scene and adds the default player to it.
+        /// </summary>
         public static void ShowSceneAndAddTurtle()
         {
             ShowScene();
             Turtle.Default = AddPlayer(Turtle.DefaultPlayer, _ => {});
         }
 
-        public static void Sleep(double durationInMilliseconds)
-        {
-            Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds));
-        }
-
+        /// <summary>
+        /// Clears all drawings from the scene.
+        /// </summary>
         public static void ClearScene()
         {
             DispatchMessageAndWaitForUpdate(new Message.ClearScene());
         }
 
+        /// <summary>
+        /// Pauses execution until the mouse clicks at the scene.
+        /// </summary>
+        /// <returns>The position of the mouse click.</returns>
         public static Position WaitForMouseClick()
         {
             using (var signal = new ManualResetEventSlim())
@@ -564,13 +584,32 @@ namespace GetIt
             }
         }
 
+        /// <summary>
+        /// Pauses execution until a specific keyboard key is pressed.
+        /// </summary>
+        /// <param name="key">The keyboard key to wait for.</param>
         public static void WaitForKeyDown(KeyboardKey key) => WaitForKeyDown(Some(key));
+
+        /// <summary>
+        /// Pauses execution until any keyboard key is pressed.
+        /// </summary>
+        /// <returns>The keyboard key that is pressed.</returns>
         public static KeyboardKey WaitForAnyKeyDown() => WaitForKeyDown(None);
 
+        /// <summary>
+        /// Checks whether a given keyboard key is pressed.
+        /// </summary>
+        /// <param name="key">The keyboard key.</param>
+        /// <returns>True, if the keyboard key is pressed, otherwise false.</returns>
         public static bool IsKeyDown(KeyboardKey key)
         {
             return State.Keyboard.KeysPressed.Contains(key);
         }
+
+        /// <summary>
+        /// Checks whether any keyboard key is pressed.
+        /// </summary>
+        /// <returns>True, if any keyboard key is pressed, otherwise false.</returns>
         public static bool IsAnyKeyDown()
         {
             return !State.Keyboard.KeysPressed.IsEmpty();
