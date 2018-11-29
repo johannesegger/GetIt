@@ -43,7 +43,7 @@ namespace GetIt.Sample
                 Turtle.ShiftPenColor(10);
                 n++;
 
-                Game.Sleep(10);
+                Turtle.Sleep(10);
             }
         }
 
@@ -56,7 +56,7 @@ namespace GetIt.Sample
             {
                 Turtle.RotateClockwise(10);
                 Turtle.MoveInDirection(10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
         }
 
@@ -69,19 +69,19 @@ namespace GetIt.Sample
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Turtle.Say("Nice one");
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(-10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Turtle.ShutUp();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Turtle.Say("Done");
         }
@@ -97,19 +97,19 @@ namespace GetIt.Sample
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(-10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Game.ClearScene();
             for (var i = 0; i < 10; i++)
             {
                 Turtle.MoveInDirection(10);
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Game.ClearScene();
         }
@@ -128,7 +128,7 @@ namespace GetIt.Sample
             using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10)))
             using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10)))
             {
-                Game.Sleep(5000);
+                Turtle.Sleep(5000);
             }
             Turtle.Say("Game over");
         }
@@ -155,7 +155,7 @@ namespace GetIt.Sample
             for (int i = 0; i < 500; i++)
             {
                 Turtle.Say(new string('A', i));
-                Game.Sleep(20);
+                Turtle.Sleep(20);
             }
         }
 
@@ -167,28 +167,28 @@ namespace GetIt.Sample
 
             Turtle.TurnOnPen();
             Turtle.MoveTo(33, 33);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.MoveTo(66, 66);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.MoveTo(100, 100);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
 
             Turtle.MoveTo(100, 33);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.MoveTo(100, -33);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.MoveTo(100, -100);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             
             Turtle.MoveTo(66, -66);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOffPen();
             Turtle.MoveTo(33, -33);
-            Game.Sleep(100);
+            Turtle.Sleep(100);
             Turtle.TurnOnPen();
             Turtle.MoveToCenter();
         }
@@ -206,7 +206,7 @@ namespace GetIt.Sample
                 Turtle.SetDirection(direction);
                 Turtle.MoveInDirection(10);
                 Turtle.NextCostume();
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Turtle.Say("Geschnappt :-)");
         }
@@ -218,7 +218,7 @@ namespace GetIt.Sample
             Turtle.TurnOnPen();
             Turtle.SetPenWeight(50);
             Turtle.MoveInDirection(100);
-            Game.Sleep(1000);
+            Turtle.Sleep(1000);
             Turtle.MoveToCenter();
         }
 
@@ -241,13 +241,13 @@ namespace GetIt.Sample
 
             void controlLeftPlayer(PlayerOnScene player)
             {
-                player.MoveTo(Game.State.SceneBounds.Left + 20, 0);
+                player.MoveTo(Game.SceneBounds.Left + 20, 0);
                 using (player.OnKeyDown(KeyboardKey.W, p => p.MoveUp(10)))
                 using (player.OnKeyDown(KeyboardKey.S, p => p.MoveDown(10)))
                 {
                     while (!isGameOver)
                     {
-                        Game.Sleep(50);
+                        player.Sleep(50);
                     }
                 }
             }
@@ -261,13 +261,13 @@ namespace GetIt.Sample
 
             void controlRightPlayer(PlayerOnScene player)
             {
-                player.MoveTo(Game.State.SceneBounds.Right - 20, 0);
+                player.MoveTo(Game.SceneBounds.Right - 20, 0);
                 using (player.OnKeyDown(KeyboardKey.Up, p => p.MoveUp(10)))
                 using (player.OnKeyDown(KeyboardKey.Down, p => p.MoveDown(10)))
                 {
                     while (!isGameOver)
                     {
-                        Game.Sleep(50);
+                        player.Sleep(50);
                     }
                 }
             }
@@ -286,9 +286,9 @@ namespace GetIt.Sample
                 while (true)
                 {
                     player.MoveInDirection(10);
-                    player.BounceIfOnEdge();
-                    if (player.Bounds.Left <= Game.State.SceneBounds.Left
-                        || player.Bounds.Right >= Game.State.SceneBounds.Right)
+                    player.BounceOffWall();
+                    if (player.Bounds.Left <= Game.SceneBounds.Left
+                        || player.Bounds.Right >= Game.SceneBounds.Right)
                     {
                         isGameOver = true;
                         break;
@@ -305,7 +305,7 @@ namespace GetIt.Sample
                     {
                         player.SetDirection(180 - player.Direction);
                     }
-                    Game.Sleep(50);
+                    player.Sleep(50);
                 }
             }
 
@@ -395,7 +395,7 @@ namespace GetIt.Sample
                     Turtle.TurnDown();
                     Turtle.MoveInDirection(10);
                 }
-                Game.Sleep(50);
+                Turtle.Sleep(50);
             }
             Turtle.Say("Game over.");
         }

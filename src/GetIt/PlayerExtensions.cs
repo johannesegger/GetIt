@@ -211,7 +211,7 @@ namespace GetIt
         public static void Say(this PlayerOnScene player, string text, double durationInSeconds)
         {
             player.Say(text);
-            Game.Sleep(TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds);
+            player.Sleep(TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds);
             player.ShutUp();
         }
 
@@ -334,7 +334,7 @@ namespace GetIt
         }
 
         /// <summary>
-        /// Registers an event handler that is called when a specific keyboard key is down.
+        /// Registers an event handler that is called when a specific keyboard key is pressed.
         /// </summary>
         /// <param name="player">The player that gets passed to the event handler.</param>
         /// <param name="key">The keyboard key that should be listened to.</param>
@@ -346,7 +346,7 @@ namespace GetIt
         }
 
         /// <summary>
-        /// Registers an event handler that is called when any keyboard key is down.
+        /// Registers an event handler that is called when any keyboard key is pressed.
         /// </summary>
         /// <param name="player">The player that gets passed to the event handler.</param>
         /// <param name="action">The event handler that should be called.</param>

@@ -35,6 +35,11 @@ namespace GetIt
         internal static State State { get; private set; }
 
         /// <summary>
+        /// The bounds of the scene.
+        /// </summary>
+        public static Rectangle SceneBounds => State.SceneBounds;
+
+        /// <summary>
         /// Initializes and shows an empty scene with no players on it.
         /// </summary>
         public static void ShowScene()
