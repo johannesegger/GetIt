@@ -267,15 +267,35 @@ namespace GetIt
         /// <param name="value">The angle that the HUE value should be shifted by.</param>
         public static void ShiftPenColor(this PlayerOnScene player, Degrees value) => player.SetPen(player.Pen.WithHueShift(value));
 
+        /// <summary>
+        /// Sets the weight of the pen.
+        /// </summary>
+        /// <param name="player">The player that gets its pen weight set.</param>
+        /// <param name="weight">The new weight of the pen.</param>
         public static void SetPenWeight(this PlayerOnScene player, double weight) => player.SetPen(player.Pen.With(p => p.Weight, weight));
 
+        /// <summary>
+        /// Changes the weight of the pen.
+        /// </summary>
+        /// <param name="player">The player that gets its pen weight changed.</param>
+        /// <param name="change">The change of the pen weight.</param>
         public static void ChangePenWeight(this PlayerOnScene player, double change) => player.SetPenWeight(player.Pen.Weight + change);
 
+        /// <summary>
+        /// Sets the size of the player by multiplying the original size with a factor.
+        /// </summary>
+        /// <param name="player">The player that gets its size changed.</param>
+        /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
         public static void SetSizeFactor(this PlayerOnScene player, double sizeFactor)
         {
             Game.DispatchMessageAndWaitForUpdate(new Message.SetSizeFactor(player.Id, sizeFactor));
         }
 
+        /// <summary>
+        /// Changes the size factor of the player.
+        /// </summary>
+        /// <param name="player">The player that gets its size changed.</param>
+        /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
         public static void ChangeSizeFactor(this PlayerOnScene player, double change) => player.SetSizeFactor(player.SizeFactor + change);
 
         public static void NextCostume(this PlayerOnScene player) => Game.DispatchMessageAndWaitForUpdate(new Message.NextCostume(player.Id));
