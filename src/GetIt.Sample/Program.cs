@@ -23,7 +23,8 @@ namespace GetIt.Sample
             // Program15();
             // Program16();
             // Program17();
-            Program18();
+            // Program18();
+            Program19();
         }
 
         private static void Program1()
@@ -418,6 +419,29 @@ namespace GetIt.Sample
                         new Position(100, 150),
                         new Position(0, 150),
                         new Position(100, 100))));
+        }
+
+        private static void Program19()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            var ant = Game.AddPlayer(Player.CreateAnt());
+            ant.MoveRight(100);
+
+            var bug = Game.AddPlayer(Player.CreateBug());
+            bug.MoveRight(200);
+
+            var spider = Game.AddPlayer(Player.CreateSpider());
+            spider.MoveRight(300);
+
+            foreach (var player in new[] { ant, bug, spider })
+            {
+                player.OnKeyDown(KeyboardKey.Down, p => p.ChangeSizeFactor(-0.1));
+                player.OnKeyDown(KeyboardKey.Up, p => p.ChangeSizeFactor(0.1));
+                player.OnKeyDown(KeyboardKey.Left, p => p.RotateCounterClockwise(5));
+                player.OnKeyDown(KeyboardKey.Right, p => p.RotateClockwise(5));
+                player.OnKeyDown(KeyboardKey.Space, p => p.NextCostume());
+            }
         }
     }
 }
