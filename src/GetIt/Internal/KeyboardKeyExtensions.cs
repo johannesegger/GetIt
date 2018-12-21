@@ -11,6 +11,7 @@ namespace GetIt.Internal
             switch (key)
             {
                 case Key.Space: return KeyboardKey.Space;
+                case Key.Escape: return KeyboardKey.Escape;
                 case Key.Up: return KeyboardKey.Up;
                 case Key.Down: return KeyboardKey.Down;
                 case Key.Left: return KeyboardKey.Left;
