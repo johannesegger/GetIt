@@ -24,7 +24,8 @@ namespace GetIt.Sample
             // Program16();
             // Program17();
             // Program18();
-            Program19();
+            // Program19();
+            Program20();
         }
 
         private static void Program1()
@@ -442,6 +443,20 @@ namespace GetIt.Sample
                 player.OnKeyDown(KeyboardKey.Right, p => p.RotateClockwise(5));
                 player.OnKeyDown(KeyboardKey.Space, p => p.NextCostume());
             }
+        }
+
+        private static void Program20()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.OnKeyDown(KeyboardKey.Left, p => p.MoveLeft(10));
+
+            Turtle.Say("Sleeping");
+            Turtle.Sleep(5000);
+
+            var name = Turtle.Ask("What's your name?");
+
+            Turtle.Say($"Hi, {name}");
         }
     }
 }
