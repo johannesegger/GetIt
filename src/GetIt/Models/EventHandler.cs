@@ -4,7 +4,7 @@ using OneOf;
 
 namespace GetIt
 {
-    public abstract class EventHandler
+    internal abstract class EventHandler
         : OneOfBase<
             EventHandler.KeyDown,
             EventHandler.ClickPlayer,

@@ -5,7 +5,7 @@ using Avalonia.Markup.Xaml.Styling;
 
 namespace GetIt
 {
-    public class App : Application
+    internal class App : Application
     {
         public override void Initialize()
         {

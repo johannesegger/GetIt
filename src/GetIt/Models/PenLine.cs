@@ -1,7 +1,7 @@
 namespace GetIt
 {
     [Equals]
-    public sealed class PenLine
+    internal sealed class PenLine
     {
         public PenLine(Position start, Position end, double weight, RGBA color)
         {

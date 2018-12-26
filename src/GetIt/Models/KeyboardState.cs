@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 namespace GetIt
 {
     [Equals]
-    public class KeyboardState
+    internal class KeyboardState
     {
         public static readonly KeyboardState Empty = new KeyboardState(ImmutableHashSet<KeyboardKey>.Empty);
 

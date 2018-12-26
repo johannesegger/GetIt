@@ -12,7 +12,7 @@ using Unit = System.Reactive.Unit;
 
 namespace GetIt.Internal
 {
-    public class VStreamGeometry<TMessage> : IVDomNode<StreamGeometry, TMessage>
+    internal class VStreamGeometry<TMessage> : IVDomNode<StreamGeometry, TMessage>
     {
         public VStreamGeometry(string data)
         {

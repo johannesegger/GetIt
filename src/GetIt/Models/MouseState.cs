@@ -1,7 +1,7 @@
 namespace GetIt
 {
     [Equals]
-    public class MouseState
+    internal class MouseState
     {
         public static readonly MouseState Empty = new MouseState(Position.Zero);
 

@@ -2,7 +2,7 @@ using System;
 
 namespace GetIt
 {
-    public abstract class Event
+    internal abstract class Event
     {
         public class KeyDown : Event
         {

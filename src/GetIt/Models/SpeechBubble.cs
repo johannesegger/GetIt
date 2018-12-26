@@ -3,7 +3,7 @@ using OneOf;
 
 namespace GetIt
 {
-    public abstract class SpeechBubble : OneOfBase<SpeechBubble.Say, SpeechBubble.Ask>
+    internal abstract class SpeechBubble : OneOfBase<SpeechBubble.Say, SpeechBubble.Ask>
     {
         public class Say : SpeechBubble
         {

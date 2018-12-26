@@ -8,6 +8,9 @@ using static LanguageExt.Prelude;
 
 namespace GetIt
 {
+    /// <summary>
+    /// Defines extension methods for `PlayerOnScene`.
+    /// </summary>
     [CodeGeneration.Staticify("Turtle", "Default")]
     public static class PlayerExtensions
     {
@@ -98,8 +101,8 @@ namespace GetIt
         /// <param name="player">The player that should be moved.</param>
         public static void MoveToRandomPosition(this PlayerOnScene player)
         {
-            var x = rand.Next((int)Game.State.SceneBounds.Left, (int)Game.State.SceneBounds.Right);
-            var y = rand.Next((int)Game.State.SceneBounds.Bottom, (int)Game.State.SceneBounds.Top);
+            var x = rand.Next((int)Game.SceneBounds.Left, (int)Game.SceneBounds.Right);
+            var y = rand.Next((int)Game.SceneBounds.Bottom, (int)Game.SceneBounds.Top);
             player.MoveTo(x, y);
         }
 
@@ -157,19 +160,54 @@ namespace GetIt
         /// <param name="player">The player that should be rotated.</param>
         public static void TurnLeft(this PlayerOnScene player) => player.SetDirection(180);
 
+        private static bool TouchesTopOrBottomEdge(this PlayerOnScene player)
+        {
+            return player.Bounds.Top > Game.SceneBounds.Top
+                || player.Bounds.Bottom < Game.SceneBounds.Bottom;
+        }
+
+        private static bool TouchesLeftOrRightEdge(this PlayerOnScene player)
+        {
+            return player.Bounds.Right > Game.State.SceneBounds.Right
+                || player.Bounds.Left < Game.State.SceneBounds.Left;
+        }
+
+        /// <summary>
+        /// Checks whether a given player touches an edge of the scene.
+        /// </summary>
+        /// <param name="player">The player that might touch an edge of the scene.</param>
+        /// <returns>True, if the player touches an edge, otherwise false.</returns>
+        public static bool TouchesEdge(this PlayerOnScene player)
+        {
+            return player.TouchesLeftOrRightEdge() || player.TouchesTopOrBottomEdge();
+        }
+
+        /// <summary>
+        /// Checks whether a given player touches another player.
+        /// </summary>
+        /// <param name="player">The first player that might be touched.</param>
+        /// <param name="other">The second player that might be touched.</param>
+        /// <returns>True, if the two players touch each other, otherwise false.</returns>
+        public static bool TouchesPlayer(this PlayerOnScene player, PlayerOnScene other)
+        {
+            var maxLeftX = Math.Max(player.Bounds.Left, other.Bounds.Left);
+            var minRightX = Math.Min(player.Bounds.Right, other.Bounds.Right);
+            var maxBottomY = Math.Max(player.Bounds.Bottom, other.Bounds.Bottom);
+            var minTopY = Math.Min(player.Bounds.Top, other.Bounds.Top);
+            return maxLeftX < minRightX && maxBottomY < minTopY;
+        }
+
         /// <summary>
         /// Bounces the player off the wall if it currently touches it.
         /// </summary>
         /// <param name="player">The player that should bounce off the wall.</param>
         public static void BounceOffWall(this PlayerOnScene player)
         {
-            if(player.Bounds.Top > Game.State.SceneBounds.Top
-                || player.Bounds.Bottom < Game.State.SceneBounds.Bottom)
+            if(player.TouchesTopOrBottomEdge())
             {
                 player.SetDirection(360 - player.Direction);
             }
-            else if(player.Bounds.Right > Game.State.SceneBounds.Right
-                || player.Bounds.Left < Game.State.SceneBounds.Left)
+            else if(player.TouchesLeftOrRightEdge())
             {
                 player.SetDirection(180 - player.Direction);
             }
@@ -178,6 +216,7 @@ namespace GetIt
         /// <summary>
         /// Pauses execution of the player for a given time.
         /// </summary>
+        /// <param name="player">The player that pauses execution.</param>
         /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
         public static void Sleep(this PlayerOnScene player, double durationInMilliseconds)
         {

@@ -30,6 +30,9 @@ using Unit = System.Reactive.Unit;
 
 namespace GetIt
 {
+    /// <summary>
+    /// Defines methods to setup a game, add players, register globals events and more.
+    /// </summary>
     public static class Game
     {
         private static readonly ISubject<Message> dispatchSubject = new Subject<Message>();
@@ -468,7 +471,7 @@ namespace GetIt
                 .SetChildNodes(p => p.Children, player.Costume.Paths
                     .Select(path => VDomNode<Path>()
                         .Set(p => p.Fill, VDomNode<SolidColorBrush>()
-                            .Set(p => p.Color, path.Fill.ToAvaloniaColor()))
+                            .Set(p => p.Color, path.FillColor.ToAvaloniaColor()))
                         .Set(p => p.Data, new VStreamGeometry<Message>(path.Data))));
         }
 

@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 namespace GetIt
 {
     [Equals]
-    public sealed class State
+    internal sealed class State
     {
         public State(
             Rectangle sceneBounds,

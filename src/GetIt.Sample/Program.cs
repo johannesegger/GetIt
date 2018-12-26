@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GetIt.Sample
 {
@@ -25,7 +27,8 @@ namespace GetIt.Sample
             // Program17();
             // Program18();
             // Program19();
-            Program20();
+            // Program20();
+            Program21();
         }
 
         private static void Program1()
@@ -256,7 +259,7 @@ namespace GetIt.Sample
 
             var leftPlayer = Game.AddPlayer(
                 Player.Create(
-                    Costumes.CreateRectangle(
+                    Costume.CreateRectangle(
                         RGBAColor.DarkMagenta,
                         new Size(20, 150))),
                 controlLeftPlayer);
@@ -276,7 +279,7 @@ namespace GetIt.Sample
 
             var rightPlayer = Game.AddPlayer(
                 Player.Create(
-                    Costumes.CreateRectangle(
+                    Costume.CreateRectangle(
                         RGBAColor.Magenta,
                         new Size(20, 150))),
                 controlRightPlayer);
@@ -313,7 +316,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 Player.Create(
-                    Costumes.CreateCircle(RGBAColor.Black, 10)),
+                    Costume.CreateCircle(RGBAColor.Black, 10)),
                 controlBall);
         }
 
@@ -408,7 +411,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 Player.Create(
-                    Costumes.CreatePolygon(
+                    Costume.CreatePolygon(
                         RGBAColor.Pink,
                         new Position(50, 0),
                         new Position(150, 50),
@@ -457,6 +460,64 @@ namespace GetIt.Sample
             var name = Turtle.Ask("What's your name?");
 
             Turtle.Say($"Hi, {name}");
+        }
+
+        private static void Program21()
+        {
+            Game.ShowScene();
+
+            var player = Game.AddPlayer(Player.CreateTurtle());
+            player.SetDirection(Directions.Right);
+            void updateDirection(PlayerOnScene p, KeyboardKey key)
+            {
+                if (key == KeyboardKey.Right && p.Direction != Directions.Left)
+                {
+                    p.SetDirection(Directions.Right);
+                }
+                else if (key == KeyboardKey.Up && p.Direction != Directions.Down)
+                {
+                    p.SetDirection(Directions.Up);
+                }
+                else if (key == KeyboardKey.Left && p.Direction != Directions.Right)
+                {
+                    p.SetDirection(Directions.Left);
+                }
+                else if (key == KeyboardKey.Down && p.Direction != Directions.Up)
+                {
+                    p.SetDirection(Directions.Down);
+                }
+            }
+
+            IReadOnlyCollection<PlayerOnScene> points = Enumerable
+                .Range(0, 5)
+                .Select(_ =>
+                {
+                    var point = Game.AddPlayer(Player.CreateAnt());
+                    point.MoveToRandomPosition();
+                    return point;
+                })
+                .ToList();
+
+            var score = 0;
+            using (player.OnAnyKeyDown(updateDirection))
+            {
+                var delay = 200.0;
+                while (!player.TouchesEdge())
+                {
+                    points
+                        .Find(player.TouchesPlayer)
+                        .IfSome(p =>
+                        {
+                            score++;
+                            p.MoveToRandomPosition();
+                            delay = delay * 2/3;
+                        });
+                    player.MoveInDirection(10);
+                    player.Sleep(delay);
+                }
+            }
+            player.MoveToCenter();
+            player.Say($"Game over. Score: {score}");
         }
     }
 }
