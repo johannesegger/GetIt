@@ -20,7 +20,7 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="0.7.0" />
     <PackageReference Include="CodeGeneration.Roslyn.BuildTime" PrivateAssets="All" Version="0.4.88" />
-    <PackageReference Include="Elmish.Net" Version="0.4.0" />
+    <PackageReference Include="Elmish.Net" Version="0.4.2" />
     <PackageReference Include="Equals.Fody" PrivateAssets="All" Version="1.9.2" />
     <PackageReference Include="OneOf" Version="2.1.127" />
     <PackageReference Include="OneOf.Extended" Version="2.1.127" />
