@@ -360,10 +360,14 @@ namespace GetIt
                     .Attach(Canvas.LeftProperty, player.Bounds.Left - state.SceneBounds.Left)
                     .Attach(Canvas.BottomProperty, player.Bounds.Bottom - state.SceneBounds.Bottom);
                 
-                yield return
+                var speechBubbleContent =
                     player.SpeechBubble
-                        .Some(p => GetSpeechBubbleContent(player, state, p))
-                        .None(VDomNode<Panel>());
+                        .Select(p => GetSpeechBubbleContent(player, state, p))
+                        .IfNoneUnsafe((IVDomNode<Panel, Message>)null);
+                if (speechBubbleContent != null)
+                {
+                    yield return speechBubbleContent;
+                }
             }
 
             foreach (var line in state.PenLines)
