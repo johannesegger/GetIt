@@ -338,8 +338,8 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.Say("Click somewhere");
-            var position = Game.WaitForMouseClick();
-            Turtle.Say($"You clicked at {position}");
+            var clickEvent = Game.WaitForMouseClick();
+            Turtle.Say($"You clicked with mouse button {clickEvent.MouseButton} at {clickEvent.Position}");
         }
 
         private static void Program16()

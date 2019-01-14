@@ -316,8 +316,12 @@ namespace GetIt
                 .Set(p => p.Title, "GetIt")
                 .Set(p => p.Icon, Icon.Value, EqualityComparer.Create((WindowIcon icon) => 0))
                 .Subscribe(window => window
-                    .ObserveEvent(InputElement.TappedEvent)
-                    .Select(p => new Message.TriggerEvent(new Event.ClickScene(getPositionOfDefaultDevice(window)))))
+                    .ObserveEvent(InputElement.PointerReleasedEvent)
+                    .Select(p =>
+                    {
+                        var eventData = new MouseClickEvent(getPositionOfDefaultDevice(window), p.MouseButton.ToMouseButton());
+                        return new Message.TriggerEvent(new Event.ClickScene(eventData));
+                    }))
                 .Subscribe(window => Observable
                     .Merge(
                         window
@@ -590,16 +594,16 @@ namespace GetIt
         /// Pauses execution until the mouse clicks at the scene.
         /// </summary>
         /// <returns>The position of the mouse click.</returns>
-        public static Position WaitForMouseClick()
+        public static MouseClickEvent WaitForMouseClick()
         {
             using (var signal = new ManualResetEventSlim())
             {
-                var position = Position.Zero;
-                var handler = new EventHandler.ClickScene(p => { position = p; signal.Set(); });
+                var result = default(MouseClickEvent);
+                var handler = new EventHandler.ClickScene(r => { result = r; signal.Set(); });
                 using (AddEventHandler(handler))
                 {
                     signal.Wait();
-                    return position;
+                    return result;
                 }
             }
         }

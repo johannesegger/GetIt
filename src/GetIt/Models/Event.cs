@@ -26,12 +26,12 @@ namespace GetIt
 
         public class ClickScene : Event
         {
-            public ClickScene(Position position)
+            public ClickScene(MouseClickEvent eventData)
             {
-                Position = position;
+                EventData = eventData;
             }
 
-            public Position Position { get; }
+            public MouseClickEvent EventData { get; }
         }
 
         public class ClickPlayer : Event

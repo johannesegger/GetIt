@@ -38,9 +38,9 @@ namespace GetIt
         [Equals]
         public sealed class ClickScene : EventHandler
         {
-            private readonly Action<Position> handler;
+            private readonly Action<MouseClickEvent> handler;
 
-            public ClickScene(Action<Position> handler)
+            public ClickScene(Action<MouseClickEvent> handler)
             {
                 this.handler = handler;
             }
@@ -51,7 +51,7 @@ namespace GetIt
             {
                 if (ev is Event.ClickScene e)
                 {
-                    handler(e.Position);
+                    handler(e.EventData);
                 }
             }
         }
