@@ -44,6 +44,11 @@ namespace GetIt
         public static Rectangle SceneBounds => State.SceneBounds;
 
         /// <summary>
+        /// The current position of the mouse.
+        /// </summary>
+        public static Position MousePosition => State.Mouse.Position;
+
+        /// <summary>
         /// Initializes and shows an empty scene with no players on it.
         /// </summary>
         public static void ShowScene()
