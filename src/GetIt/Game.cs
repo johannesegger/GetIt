@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -341,59 +342,77 @@ namespace GetIt
                     .ObserveEvent(InputElement.KeyUpEvent)
                     .Choose(e => e.Key.TryGetKeyboardKey())
                     .Select(key => new Message.TriggerEvent(new Event.KeyUp(key))))
-                .Set(p => p.Content, VDomNode<Canvas>()
-                    .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
-                    .Subscribe(p => Observable
-                        .FromEventPattern(
-                            h => p.LayoutUpdated += h,
-                            h => p.LayoutUpdated -= h
-                        )
-                        .Select(_ => new Message.SetSceneSize(new Size(p.Bounds.Width, p.Bounds.Height)))));
+                .Set(p => p.Content, VDomNode<DockPanel>()
+                    .SetChildNodes(
+                        p => p.Children,
+                        VDomNode<ScrollViewer>()
+                            .Attach(DockPanel.DockProperty, Dock.Bottom)
+                            .Set(p => p.HorizontalScrollBarVisibility, ScrollBarVisibility.Auto)
+                            .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightGray))
+                            .Set(p => p.Content, VDomNode<StackPanel>()
+                                .Set(p => p.Orientation, Orientation.Horizontal)
+                                .SetChildNodes(p => p.Children, GetPlayerInfo(state))),
+                        VDomNode<Canvas>()
+                            .Set(p => p.ClipToBounds, true)
+                            .SetChildNodes(p => p.Children, GetSceneChildren(state, dispatch))
+                            .Subscribe(p => Observable
+                                .FromEventPattern(
+                                    h => p.LayoutUpdated += h,
+                                    h => p.LayoutUpdated -= h
+                                )
+                                .Select(_ => new Message.SetSceneSize(new Size(p.Bounds.Width, p.Bounds.Height))))));
         }
 
         private static IEnumerable<IVDomNode<Message>> GetSceneChildren(State state, Dispatch<Message> dispatch)
         {
-            foreach (var player in state.Players)
-            {
-                yield return VDomNode<ContentControl>()
-                    // .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightCoral))
-                    .Set(p => p.ZIndex, 10)
-                    .Set(p => p.Width, player.Size.Width)
-                    .Set(p => p.Height, player.Size.Height)
-                    .Set(p => p.RenderTransform, VDomNode<RotateTransform>()
-                        .Set(p => p.Angle, 360 - player.Direction.Value))
-                    .Set(p => p.Content, GetPlayerView(player)
-                        .Set(p => p.RenderTransform, VDomNode<ScaleTransform>()
-                            .Set(p => p.ScaleX, player.Size.Width / player.Costume.Size.Width)
-                            .Set(p => p.ScaleY, player.Size.Height / player.Costume.Size.Height)))
-                    .Attach(Canvas.LeftProperty, player.Bounds.Left - state.SceneBounds.Left)
-                    .Attach(Canvas.BottomProperty, player.Bounds.Bottom - state.SceneBounds.Bottom);
-                
-                var speechBubbleContent =
-                    player.SpeechBubble
-                        .Select(p => GetSpeechBubbleContent(player, state, p))
-                        .IfNoneUnsafe((IVDomNode<Panel, Message>)null);
-                if (speechBubbleContent != null)
-                {
-                    yield return speechBubbleContent;
-                }
-            }
-
-            foreach (var line in state.PenLines)
-            {
-                yield return VDomNode<Line>()
-                    .Set(p => p.StartPoint, GetScreenCoordinate(state, line.Start))
-                    .Set(p => p.EndPoint, GetScreenCoordinate(state, line.End))
-                    .Set(p => p.Stroke, VDomNode<SolidColorBrush>().Set(p => p.Color, line.Color.ToAvaloniaColor()))
-                    .Set(p => p.StrokeThickness, line.Weight)
-                    .Set(p => p.ZIndex, 5);
-            }
-
-            yield return VDomNode<WrapPanel>()
+            yield return VDomNode<Canvas>()
                 .Attach(Canvas.LeftProperty, 0)
                 .Attach(Canvas.BottomProperty, 0)
-                .SetChildNodes(p => p.Children, VDomNode<DockPanel>()
-                    .SetChildNodes(p => p.Children, GetPlayerInfo(state)));
+                .Set(p => p.ZIndex, 10)
+                .SetChildNodes(p => p.Children, GetPlayersView(state, dispatch));
+
+            yield return VDomNode<Canvas>()
+                .Set(p => p.ZIndex, 5)
+                .SetChildNodes(
+                    p => p.Children,
+                    state.PenLines.Select(line =>
+                        VDomNode<Line>()
+                            .Set(p => p.StartPoint, GetScreenCoordinate(state, line.Start))
+                            .Set(p => p.EndPoint, GetScreenCoordinate(state, line.End))
+                            .Set(p => p.Stroke, VDomNode<SolidColorBrush>().Set(p => p.Color, line.Color.ToAvaloniaColor()))
+                            .Set(p => p.StrokeThickness, line.Weight)));
+        }
+
+        private static IEnumerable<IVDomNode<Message>> GetPlayersView(State state, Dispatch<Message> dispatch)
+        {
+            foreach (var player in state.Players)
+            {
+                yield return VDomNode<Canvas>()
+                    .Attach(Canvas.LeftProperty, 0)
+                    .Attach(Canvas.BottomProperty, 0)
+                    .SetChildNodes(p => p.Children, GetFullPlayerView(player, state, dispatch));
+            }
+        }
+
+        private static IEnumerable<IVDomNode<Message>> GetFullPlayerView(Player player, State state, Dispatch<Message> dispatch)
+        {
+            yield return VDomNode<ContentControl>()
+                // .Set(p => p.Background, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.LightCoral))
+                .Set(p => p.Width, player.Size.Width)
+                .Set(p => p.Height, player.Size.Height)
+                .Set(p => p.RenderTransform, VDomNode<RotateTransform>()
+                    .Set(p => p.Angle, 360 - player.Direction.Value))
+                .Set(p => p.Content, GetPlayerView(player)
+                    .Set(p => p.RenderTransform, VDomNode<ScaleTransform>()
+                        .Set(p => p.ScaleX, player.Size.Width / player.Costume.Size.Width)
+                        .Set(p => p.ScaleY, player.Size.Height / player.Costume.Size.Height)))
+                .Attach(Canvas.LeftProperty, player.Bounds.Left - state.SceneBounds.Left)
+                .Attach(Canvas.BottomProperty, player.Bounds.Bottom - state.SceneBounds.Bottom);
+                    
+            foreach (var speechBubble in player.SpeechBubble)
+            {
+                yield return GetSpeechBubbleContent(player, state, speechBubble);
+            }
         }
 
         private static IVDomNode<Panel, Message> GetSpeechBubbleContent(Player player, State state, SpeechBubble speechBubble)
@@ -437,7 +456,6 @@ namespace GetIt
                             .Set(p => p.Foreground, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue))));
 
             return VDomNode<Grid>()
-                .Set(p => p.ZIndex, 7)
                 .Attach(Canvas.LeftProperty, player.Bounds.Right - state.SceneBounds.Left + 20)
                 .Attach(Canvas.BottomProperty, player.Bounds.Top - state.SceneBounds.Bottom)
                 .SetChildNodes(
