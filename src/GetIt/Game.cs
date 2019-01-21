@@ -418,11 +418,13 @@ namespace GetIt
 
         private static IVDomNode<Panel, Message> GetSpeechBubbleContent(Player player, State state, SpeechBubble speechBubble)
         {
+            var textColor = VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue);
             var content = speechBubble.Match<IVDomNode<IControl, Message>>(
                 (SpeechBubble.Say sayBubble) => VDomNode<TextBlock>()
                     .Set(p => p.MaxWidth, 300)
                     .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
                     .Set(p => p.FontSize, 15)
+                    .Set(p => p.Foreground, textColor)
                     .Set(p => p.TextWrapping, TextWrapping.Wrap)
                     .Set(p => p.Margin, new Thickness(10, 5))
                     .Set(p => p.Text, sayBubble.Text),
@@ -435,7 +437,7 @@ namespace GetIt
                             .Set(p => p.FontSize, 15)
                             .Set(p => p.Margin, new Thickness(10, 5))
                             .Set(p => p.Watermark, "Answer")
-                            .Set(p => p.Foreground, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue))
+                            .Set(p => p.Foreground, textColor)
                             .Attach(DockPanel.DockProperty, Dock.Bottom)
                             .Subscribe(element => Observable
                                 .FromEventPattern<TextInputEventArgs>(
@@ -454,7 +456,7 @@ namespace GetIt
                             .Set(p => p.TextWrapping, TextWrapping.Wrap)
                             .Set(p => p.Margin, new Thickness(10, 5))
                             .Set(p => p.Text, askBubble.Question)
-                            .Set(p => p.Foreground, VDomNode<SolidColorBrush>().Set(p => p.Color, Colors.SteelBlue))));
+                            .Set(p => p.Foreground, textColor)));
 
             return VDomNode<Grid>()
                 .Attach(Canvas.LeftProperty, player.Bounds.Right - state.SceneBounds.Left + 20)
