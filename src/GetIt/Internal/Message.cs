@@ -116,14 +116,12 @@ namespace GetIt.Internal
 
         public class ApplyAnswer : Message
         {
-            public ApplyAnswer(Guid playerId, string answer)
+            public ApplyAnswer(Guid playerId)
             {
                 PlayerId = playerId;
-                Answer = answer;
             }
 
             public Guid PlayerId { get; }
-            public string Answer { get; }
         }
 
         public class SetPen : Message

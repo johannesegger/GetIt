@@ -200,12 +200,12 @@ namespace GetIt
                     var answerHandler = currentPlayer.SpeechBubble
                         .Some(speechBubble => speechBubble
                             .Match(
-                                (SpeechBubble.Say say) => _ => {},
-                                (SpeechBubble.Ask ask) => ask.AnswerHandler))
-                        .None(_ => {});
+                                (SpeechBubble.Say say) => new Action(() => {}),
+                                (SpeechBubble.Ask ask) => () => ask.AnswerHandler(ask.Answer)))
+                        .None(() => {});
                     var newState = updatePlayer(state, m.PlayerId, player => player.With(p => p.SpeechBubble, None));
                     // Have `Game.State` set before executing `answerHandler`
-                    return Update(new Message.ExecuteAction(() => answerHandler(m.Answer)), newState);
+                    return Update(new Message.ExecuteAction(answerHandler), newState);
                 },
                 (Message.SetPen m) =>
                 {
@@ -440,16 +440,16 @@ namespace GetIt
                             .Set(p => p.Foreground, textColor)
                             .Attach(DockPanel.DockProperty, Dock.Bottom)
                             .Subscribe(element => Observable
-                                .FromEventPattern<TextInputEventArgs>(
-                                    h => element.TextInput += h,
-                                    h => element.TextInput -= h)
-                                .Select(_ => new Message.ApplyAnswer(player.Id, element.Text)))
+                                .FromEventPattern<KeyEventArgs>(
+                                    h => element.KeyUp += h,
+                                    h => element.KeyUp -= h)
+                                .Select(_ => new Message.UpdateAnswer(player.Id, element.Text)))
                             .Subscribe(element => Observable
                                 .FromEventPattern<KeyEventArgs>(
                                     h => element.KeyDown += h,
                                     h => element.KeyDown -= h)
                                 .Where(p => p.EventArgs.Key == Key.Enter)
-                                .Select(_ => new Message.ApplyAnswer(player.Id, element.Text))),
+                                .Select(_ => new Message.ApplyAnswer(player.Id))),
                         VDomNode<TextBlock>()
                             .Set(p => p.HorizontalAlignment, HorizontalAlignment.Center)
                             .Set(p => p.FontSize, 15)
