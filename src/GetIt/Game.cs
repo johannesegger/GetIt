@@ -102,6 +102,7 @@ namespace GetIt
                     appBuilder.Instance.Run(cts.Token);
                     Environment.Exit(0); // shut everything down when the UI thread exits
                 });
+                uiThread.Name = "Avalonia UI";
                 uiThread.IsBackground = false;
                 uiThread.Start();
                 signal.Wait();
