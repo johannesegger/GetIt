@@ -564,28 +564,8 @@ namespace GetIt.Sample
                 .ToList();
 
             var iterationDelayMs = 500;
-            var drawTourSlowly = false;
             Turtle.OnKeyDown(KeyboardKey.Down, _ => iterationDelayMs *= 2);
             Turtle.OnKeyDown(KeyboardKey.Up, _ => iterationDelayMs /= 2);
-            Turtle.OnKeyDown(KeyboardKey.A, _ => drawTourSlowly = !drawTourSlowly);
-
-            var sayId = true;
-            Turtle.OnKeyDown(KeyboardKey.Space, _ =>
-            {
-                cities.ForEach(city =>
-                {
-                    var player = cityPlayers.Single(p => p.Position.Equals(city.Position));
-                    if (sayId)
-                    {
-                        player.Say($"{city.Id}");
-                    }
-                    else
-                    {
-                        player.ShutUp();
-                    }
-                });
-                sayId = !sayId;
-            });
 
             double GetDistance(City a, City b)
             {
@@ -620,10 +600,6 @@ namespace GetIt.Sample
                 {
                     Turtle.MoveTo(city.Position);
                     Turtle.TurnOnPen();
-                    if (drawTourSlowly)
-                    {
-                        Turtle.Sleep(1000);
-                    }
                 }
             }
 
@@ -677,13 +653,19 @@ namespace GetIt.Sample
                 return p;
             }
 
-            bool IsValidTour(IReadOnlyCollection<City> tour)
+            double GetGeneticDiversity(IReadOnlyCollection<Individual> population)
             {
-                if (tour.Distinct().Count() != tour.Count)
-                {
-                    return false;
-                }
-                return true;
+                var maxEdges = Enumerable.Range(0, numberOfCities).Sum();
+                var minEdges = numberOfCities;
+                var edges = population
+                    .SelectMany(individual => individual.Tour
+                        .Append(individual.Tour.First())
+                        .Buffer(2, 1)
+                        .Where(b => b.Count == 2)
+                        .Select(b => b[0].Id.CompareTo(b[1].Id) < 0 ? (b[0], b[1]) : (b[1], b[0])))
+                    .Distinct()
+                    .Count();
+                return (double)(edges - minEdges) / (maxEdges - minEdges);
             }
 
             var populationSize = 500;
@@ -704,7 +686,7 @@ namespace GetIt.Sample
                         .Range(0, populationSize)
                         .Select(_ =>
                         {
-                            var tournamentSize = 5;
+                            var tournamentSize = 3;
                             var parent1 = TournamentSelect(population, tournamentSize);
                             var parent2 = TournamentSelect(population, tournamentSize);
                             var child = OrderCrossover(parent1, parent2);
@@ -714,14 +696,14 @@ namespace GetIt.Sample
                 })
                 .ForEach((population, index) =>
                 {
-                    population
-                        .ForEach(individual =>
-                        {
-                            System.Diagnostics.Debug.Assert(IsValidTour(individual.Tour));
-                        });
                     Game.ClearScene();
                     var fittest = population.MaxBy(individual => individual.Fitness)[0];
-                    Turtle.Say($"Iteration #{index}: Min distance: {Math.Abs(fittest.Fitness)}");
+                    var lines = new[] {
+                        $"Iteration: {index}",
+                        $"Min distance: {Math.Abs(fittest.Fitness)}",
+                        $"Genetic diversity: {GetGeneticDiversity(population):P2}"
+                    };
+                    Turtle.Say(string.Join(Environment.NewLine, lines));
                     DrawTour(fittest.Tour);
                     Turtle.Sleep(iterationDelayMs);
                 });
