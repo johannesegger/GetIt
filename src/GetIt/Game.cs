@@ -233,7 +233,7 @@ namespace GetIt
                 },
                 (Message.RemovePlayer m) =>
                 {
-                    var newState = state.With(p => p.Players, state.Players.Where(p => p.Id != m.PlayerId));
+                    var newState = state.With(p => p.Players, state.Players.Where(p => p.Id != m.PlayerId).ToImmutableList());
                     return (newState, Cmd.None<Message>());
                 },
                 (Message.ClearScene m) =>
