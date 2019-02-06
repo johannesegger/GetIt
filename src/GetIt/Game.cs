@@ -72,6 +72,18 @@ namespace GetIt
                             h => renderTimer.Tick -= h)
                         .Select(_ => Unit.Default);
 
+                    var pauseUpdateSceneSignal = pauseUpdateSceneSubject
+                        .Synchronize()
+                        .Scan(0, (sum, i) => sum + i)
+                        .StartWith(0)
+                        .Select(i => i > 0)
+                        .DistinctUntilChanged();
+
+                    var renderSignal = requestAnimationFrame
+                        .CombineLatest(pauseUpdateSceneSignal, (value, pause) => new { value, pause })
+                        .Where(p => !p.pause)
+                        .Select(p => p.value);
+
                     Observable
                         .FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
                             h => KeyboardDevice.Instance.PropertyChanged += h,
@@ -84,7 +96,7 @@ namespace GetIt
                         .Subscribe(window => FocusManager.Instance.Focus(window));
 
                     ElmishApp.Run(
-                        requestAnimationFrame,
+                        renderSignal,
                         Init(),
                         Update,
                         View,
@@ -672,6 +684,19 @@ namespace GetIt
         public static bool IsAnyKeyDown()
         {
             return !State.Keyboard.KeysPressed.IsEmpty();
+        }
+
+        private static readonly ISubject<int> pauseUpdateSceneSubject = new Subject<int>();
+
+        /// <summary>
+        /// Pauses redrawing the UI until the returned object is disposed.
+        /// For nested calls, all returned objects must be disposed to re-enable redrawing the UI.
+        /// </summary>
+        /// <returns>Object, that when disposed, re-enables redrawing the UI.</returns>
+        public static IDisposable PauseUpdateScene()
+        {
+            pauseUpdateSceneSubject.OnNext(1);
+            return Disposable.Create(() => pauseUpdateSceneSubject.OnNext(-1));
         }
     }
 }

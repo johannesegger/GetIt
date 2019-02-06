@@ -32,7 +32,8 @@ namespace GetIt.Sample
             // Program20();
             // Program21();
             // Program22();
-            Program23();
+            // Program23();
+            Program24();
         }
 
         private static void Program1()
@@ -718,6 +719,26 @@ namespace GetIt.Sample
             {
                 food.Sleep(2000);
             }
+        }
+
+        private static void Program24()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Sleep(1000);
+
+            using (Game.PauseUpdateScene())
+            {
+                Turtle.TurnOnPen();
+                var i = 0;
+                while (i++ < 180)
+                {
+                    Turtle.MoveInDirection(2);
+                    Turtle.RotateClockwise(2);
+                    Turtle.Sleep(10);
+                }
+            }
+            Turtle.Say("Batched statements are nice.");
         }
     }
 }
