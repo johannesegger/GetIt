@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net471</TargetFramework>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <Platform>x64</Platform>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.fs" />
@@ -10,6 +11,8 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Fabulous.SkiaSharp" Version="0.31.0" />
+    <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
@@ -20,13 +23,16 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <PackageReference Include="Xamarin.Forms" Version="3.4.0.1009999" />
-    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="3.4.0.1009999" />
+    <PackageReference Include="Xamarin.Forms" Version="3.5.0.129452" />
+    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="3.5.0.129452" />
     <PackageReference Include="Fabulous.Core" Version="0.31.0" />
     <PackageReference Include="Fabulous.LiveUpdate" Version="0.31.0" />
     <PackageReference Include="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="Fabulous.CustomControls" Version="0.31.0" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" /> <!-- workaround for VSMac bug https://github.com/mono/monodevelop/pull/5137 --> 
     <ProjectReference Include="../GetIt/GetIt.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SkiaSharp.Wpf\SkiaSharp.Wpf.csproj" />
   </ItemGroup>
 </Project>
