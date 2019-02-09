@@ -1,9 +1,13 @@
-module GetIt
+namespace GetIt
 
-type Say =
+type SayData =
     { Text: string }
 
-type Ask =
+type AskData =
     { Question: string
       Answer: string
       AnswerHandler: string -> unit }
+
+type SpeechBubble =
+    | Say of SayData
+    | Ask of AskData
