@@ -46,8 +46,8 @@ module App =
                     // Player.createWithCostumes [ Costume.createCircle RGBAColor.forestGreen 10. ]
                     // { Player.turtle with Direction = Degrees 45. }
                     // { Player.turtle with SizeFactor = 2. }
-                    { Player.turtle with Position = { X = 200.; Y = -200. } }
-                    // { Player.turtle with SpeechBubble = Some (Say { Text = "Hello,\r\nnice to meet you" }) }
+                    // { Player.turtle with Position = { X = 200.; Y = -200. } }
+                    { Player.turtle with SpeechBubble = Some (Say { Text = "Hello,\r\nnice to meet you" }) }
                 )
             ]
             |> Map.ofList
@@ -116,13 +116,13 @@ module App =
                     canvas.Clear()
 
                     // see https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/path-data
-                    canvas.Translate(single info.Width / 2.f, single info.Height / 2.f)
+                    canvas.Translate(float32 info.Width / 2.f, float32 info.Height / 2.f)
 
-                    let widthRatio = single info.Width / single player.Costume.Size.Width
-                    let heightRatio = single info.Height / single player.Costume.Size.Height
+                    let widthRatio = float32 info.Width / float32 player.Costume.Size.Width
+                    let heightRatio = float32 info.Height / float32 player.Costume.Size.Height
                     canvas.Scale(System.Math.Min(widthRatio, heightRatio))
 
-                    canvas.Translate(single player.Costume.Size.Width / -2.f, single player.Costume.Size.Height / -2.f)
+                    canvas.Translate(float32 player.Costume.Size.Width / -2.f, float32 player.Costume.Size.Height / -2.f)
 
                     player.Costume.Paths
                     |> List.iter (fun p ->
@@ -156,13 +156,80 @@ module App =
             )
 
         let getFullPlayerView (playerId, player: Player) =
-            View.ContentView(
-                widthRequest = player.Size.Width,
-                heightRequest = player.Size.Height,
-                content = getPlayerView player,
-                rotation = 360. - Degrees.value player.Direction
+            View.AbsoluteLayout(
+                backgroundColor = Color.DarkKhaki,
+                children = [
+                    yield
+                        View.ContentView(
+                            widthRequest = player.Size.Width,
+                            heightRequest = player.Size.Height,
+                            content = getPlayerView player,
+                            rotation = 360. - Degrees.value player.Direction
+                        )
+                        |> layoutFlags AbsoluteLayoutFlags.PositionProportional
+                        |> layoutBounds (Rectangle(0.5, 0.5, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+                        // |> layoutBounds (Rectangle(player.Bounds.Left - model.SceneBounds.Left, model.SceneBounds.Top - player.Bounds.Top, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+
+                    match player.SpeechBubble with
+                    | Some (Say data) ->
+                        yield
+                            View.AbsoluteLayout(
+                                translationX = 20.,
+                                translationY = model.SceneBounds.Bottom - player.Bounds.Top,
+                                children = [
+                                    View.SKCanvasView(
+                                        paintSurface = (fun args ->
+                                            let info = args.Info
+                                            let surface = args.Surface
+                                            let canvas = surface.Canvas
+
+                                            canvas.Clear()
+
+                                            let markerDrawHeight = 15.f
+                                            let markerRealHeight = 20.f
+
+                                            let borderRadius = 15.f
+                                            use outerBubble = new SKRoundRect(SKRect(0.f, 0.f, float32 info.Width, float32 info.Height - markerRealHeight), borderRadius, borderRadius)
+                                            use bubbleBorderPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.Black)
+                                            canvas.DrawRoundRect(outerBubble, bubbleBorderPaint)
+
+                                            let borderWidth = 5.f
+                                            use innerBubble = new SKRoundRect(SKRect(borderWidth, borderWidth, float32 info.Width - borderWidth, float32 info.Height - borderWidth - markerRealHeight), borderRadius - borderWidth, borderRadius - borderWidth)
+                                            use bubbleFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                                            canvas.DrawRoundRect(innerBubble, bubbleFillPaint)
+
+                                            canvas.Translate(SKPoint((float32 info.Width - markerRealHeight) / 2.f, float32 info.Height - markerRealHeight))
+
+                                            use markerBorderPaint = new SKPaint(Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Square, StrokeWidth = 5.f, Color = SKColors.Black)
+                                            let path = SKPath.ParseSvgPathData(sprintf "M0,0 L0,%f %f,0" markerDrawHeight markerDrawHeight)
+                                            canvas.DrawPath(path, markerBorderPaint)
+
+                                            canvas.Translate(SKPoint(2.f, -borderWidth))
+
+                                            use markerFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                                            canvas.DrawPath(path, markerFillPaint)
+                                        )
+                                    )
+                                    |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                                    |> layoutFlags AbsoluteLayoutFlags.All
+
+                                    View.Frame(
+                                        content = View.Label(
+                                            text = data.Text
+                                        ),
+                                        padding = 0.,
+                                        margin = Thickness(10., 10., 10., 25.)
+                                    )
+                                ]
+                            )
+                            |> layoutFlags AbsoluteLayoutFlags.PositionProportional
+                            |> layoutBounds (Rectangle(0.5, 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+                    | Some (Ask data) -> ()
+                    | None -> ()
+                ]
             )
-            |> layoutBounds (Rectangle(player.Bounds.Left - model.SceneBounds.Left, model.SceneBounds.Top - player.Bounds.Top, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+            |> layoutFlags AbsoluteLayoutFlags.All
+            |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
         let players = Map.toList model.Players
 
@@ -183,12 +250,7 @@ module App =
                 children = [
                     View.AbsoluteLayout(
                         verticalOptions = LayoutOptions.FillAndExpand,
-                        children = [
-                            View.AbsoluteLayout(
-                                verticalOptions = LayoutOptions.FillAndExpand,
-                                children = List.map getFullPlayerView players
-                            )
-                        ])
+                        children = List.map getFullPlayerView players)
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
                         //orientation = ScrollOrientation.Horizontal,
