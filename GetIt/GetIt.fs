@@ -166,15 +166,12 @@ module App =
                             content = getPlayerView player,
                             rotation = 360. - Degrees.value player.Direction
                         )
-                        |> layoutFlags AbsoluteLayoutFlags.PositionProportional
-                        |> layoutBounds (Rectangle(0.5, 0.5, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
-                        // |> layoutBounds (Rectangle(player.Bounds.Left - model.SceneBounds.Left, model.SceneBounds.Top - player.Bounds.Top, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+                        |> layoutBounds (Rectangle(player.Bounds.Left - model.SceneBounds.Left, model.SceneBounds.Top - player.Bounds.Top, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
 
                     match player.SpeechBubble with
                     | Some (Say data) ->
                         yield
                             View.AbsoluteLayout(
-                                translationX = 20.,
                                 translationY = model.SceneBounds.Bottom - player.Bounds.Top,
                                 children = [
                                     View.SKCanvasView(
@@ -222,8 +219,8 @@ module App =
                                     )
                                 ]
                             )
-                            |> layoutFlags AbsoluteLayoutFlags.PositionProportional
-                            |> layoutBounds (Rectangle(0.5, 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+                            |> layoutFlags AbsoluteLayoutFlags.YProportional
+                            |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left + 20., (* TODO *)1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
                     | Some (Ask data) -> ()
                     | None -> ()
                 ]
