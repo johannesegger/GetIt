@@ -1,13 +1,15 @@
 ﻿namespace GetIt
 
+open System
 open System.Diagnostics
+open System.Threading
 open Fabulous.Core
 open Fabulous.DynamicViews
 open SkiaSharp
 open SkiaSharp.Views.Forms
 open Xamarin.Forms
 
-module App = 
+module App =
     type Model =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, Player>
@@ -266,6 +268,20 @@ module App =
     // Note, this declaration is needed if you enable LiveUpdate
     let program = Program.mkProgram init update view
 
+    let showScene start =
+        use signal = new ManualResetEventSlim()
+        let uiThread = Thread(fun () ->
+            let cts = new CancellationTokenSource()
+            let exitCode = start signal.Set (fun () -> cts.Cancel())
+            Environment.Exit exitCode // shut everything down when the UI thread exits
+        )
+
+        uiThread.Name <- "Fabulous UI"
+        uiThread.SetApartmentState ApartmentState.STA
+        uiThread.IsBackground <- false
+        uiThread.Start()
+        signal.Wait()
+
 type App () as app = 
     inherit Application ()
 
@@ -314,5 +330,3 @@ type App () as app =
         Console.WriteLine "OnStart: using same logic as OnResume()"
         this.OnResume()
 #endif
-
-
