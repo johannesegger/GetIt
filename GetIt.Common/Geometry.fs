@@ -1,5 +1,8 @@
 namespace GetIt
 
+open System
+open Newtonsoft.Json
+
 type Position =
     { X: float
       Y: float }
@@ -16,9 +19,7 @@ type Size =
         { Width = size.Width * factor
           Height = size.Height * factor }
 
-module internal Size =
-    open System
-
+module Size =
     let scale boxSize size =
         let widthRatio = boxSize.Width / size.Width;
         let heightRatio = boxSize.Height / size.Height;
@@ -36,6 +37,7 @@ type Rectangle =
 
     member this.Bottom with get() = this.Position.Y
 
+[<JsonConverter(typeof<DegreesConverter>)>]
 type Degrees = private Degrees of double 
     with
         static member private Create(value) =
@@ -49,8 +51,21 @@ type Degrees = private Degrees of double
 
         static member op_Implicit value =
             Degrees.Create value
+
+and DegreesConverter() =
+    inherit JsonConverter()
+    override this.CanConvert(objectType: Type) : bool = objectType = typeof<Degrees>
+
+    override this.WriteJson(writer: JsonWriter, value: obj, serializer: JsonSerializer) : unit =
+        let (Degrees v) = value :?> Degrees
+        writer.WriteValue v
+
+    override this.ReadJson(reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) : obj =
+        let v = reader.Value :?> float
+        Degrees v :> obj
+
 module Degrees =
     [<CompiledName("Zero")>]
     let zero = Degrees 0.
 
-    let internal value (Degrees v) = v
+    let value (Degrees v) = v

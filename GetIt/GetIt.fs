@@ -1,15 +1,19 @@
 ﻿namespace GetIt
 
 open System
-open System.Diagnostics
 open System.Threading
 open Fabulous.Core
 open Fabulous.DynamicViews
 open SkiaSharp
-open SkiaSharp.Views.Forms
 open Xamarin.Forms
 
 module App =
+    type PenLine =
+        { Start: Position
+          End: Position
+          Weight: float
+          Color: RGBA }
+
     type Model =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, Player>
@@ -17,6 +21,14 @@ module App =
           MouseState: MouseState
           KeyboardState: KeyboardState
           EventHandlers: EventHandler list }
+
+    let initModel =
+        { SceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
+          Players = Map.empty
+          PenLines = []
+          MouseState = MouseState.empty
+          KeyboardState = KeyboardState.empty
+          EventHandlers = [] }
 
     type Msg = 
         | SetSceneSize of GetIt.Size
@@ -31,32 +43,13 @@ module App =
         | SetPen of PlayerId * Pen
         | SetSizeFactor of PlayerId * sizeFactor: float
         | NextCostume of PlayerId
-        | AddPlayer of Player
+        | AddPlayer of PlayerId * Player
         | RemovePlayer of PlayerId
         | ClearScene
         | AddEventHandler of EventHandler
         | RemoveEventHandler of EventHandler
         | TriggerEvent of Event
         | ExecuteAction of (unit -> unit)
-
-    let initModel =
-        { SceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
-          Players =
-            [
-                (
-                    PlayerId (System.Guid.NewGuid()),
-                    // Player.createWithCostumes [ Costume.createCircle RGBAColor.forestGreen 10. ]
-                    // { Player.turtle with Direction = Degrees 45. }
-                    // { Player.turtle with SizeFactor = 2. }
-                    // { Player.turtle with Position = { X = 200.; Y = -200. } }
-                    { Player.turtle with SpeechBubble = Some (Say { Text = "Hello,\r\nnice to meet you" }) }
-                )
-            ]
-            |> Map.ofList
-          PenLines = []
-          MouseState = MouseState.empty
-          KeyboardState = KeyboardState.empty
-          EventHandlers = [] }
 
     let init () = (initModel, Cmd.none)
 
@@ -73,7 +66,10 @@ module App =
         | SetMousePosition position ->
             (model, Cmd.none)
         | SetPlayerPosition (playerId, position) ->
-            (model, Cmd.none)
+            let player = Map.find playerId model.Players
+            let player' = { player with Position = position }
+            let model' = { model with Players = Map.add playerId player' model.Players }
+            (model', Cmd.none)
         | SetPlayerDirection (playerId, angle) ->
             (model, Cmd.none)
         | SetSpeechBubble (playerId, speechBubble) ->
@@ -88,8 +84,9 @@ module App =
             (model, Cmd.none)
         | NextCostume playerId ->
             (model, Cmd.none)
-        | AddPlayer player ->
-            (model, Cmd.none)
+        | AddPlayer (playerId, player) ->
+            let model' = { model with Players = Map.add playerId player model.Players }
+            (model', Cmd.none)
         | RemovePlayer playerId ->
             (model, Cmd.none)
         | ClearScene ->
@@ -248,8 +245,12 @@ module App =
             content = View.StackLayout(
                 children = [
                     View.AbsoluteLayout(
+                        widthRequest = model.SceneBounds.Size.Width,
+                        heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
+                    |> sizeChanged (fun _ -> dispatch (SetSceneSize { Width = 600.; Height = 400. }))
+                    // ViewElement.Create
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
                         //orientation = ScrollOrientation.Horizontal,
@@ -265,8 +266,19 @@ module App =
             )
         )
 
+    let dispatchSubject = new System.Reactive.Subjects.Subject<Msg>()
+    let dispatchMessage = dispatchSubject.OnNext
+
+    let subscription =
+        Cmd.ofSub (fun dispatch ->
+            let d = dispatchSubject.Subscribe(dispatch)
+            ()
+        )
+
     // Note, this declaration is needed if you enable LiveUpdate
-    let program = Program.mkProgram init update view
+    let program =
+        Program.mkProgram init update view
+        |> Program.withSubscription (fun _ -> subscription)
 
     let showScene start =
         use signal = new ManualResetEventSlim()
@@ -281,6 +293,14 @@ module App =
         uiThread.IsBackground <- false
         uiThread.Start()
         signal.Wait()
+        initModel.SceneBounds
+
+    let addPlayer player =
+        let playerId = PlayerId.create ()
+        dispatchMessage (AddPlayer (playerId, player))
+        playerId
+
+    let playerMoveTo playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
 
 type App () as app = 
     inherit Application ()

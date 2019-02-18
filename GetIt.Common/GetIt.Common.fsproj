@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Color.fs" />
+    <Compile Include="Geometry.fs" />
+    <Compile Include="Costume.fs" />
+    <Compile Include="SpeechBubble.fs" />
+    <Compile Include="Player.fs" />
+    <Compile Include="Input.fs" />
+    <Compile Include="Command.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
+</Project>

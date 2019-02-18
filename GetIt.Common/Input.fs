@@ -1,11 +1,5 @@
 namespace GetIt
 
-type MouseState =
-    { Position: Position }
-
-module internal MouseState =
-    let empty = { Position = Position.zero }
-
 type KeyboardKey =
     | Space
     | Escape
@@ -53,7 +47,7 @@ type KeyboardKey =
 type KeyboardState =
     { KeysPressed: KeyboardKey list }
 
-module internal KeyboardState =
+module KeyboardState =
     let empty = { KeysPressed = [] }
 
 type MouseButton =
@@ -61,11 +55,11 @@ type MouseButton =
     | Middle
     | Right
 
-type EventHandler =
-    | KeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
-    | ClickScene of handler: (Position -> MouseButton -> unit)
-    | ClickPlayer of playerId: PlayerId * handler: (unit -> unit)
-    | MouseEnterPlayer of playerId: PlayerId * handler: (unit -> unit)
+type MouseState =
+    { Position: Position }
+
+module MouseState =
+    let empty = { Position = Position.zero }
 
 type Event =
     | KeyDown of KeyboardKey
@@ -73,4 +67,3 @@ type Event =
     | ClickScene of Position * MouseButton
     | ClickPlayer of PlayerId
     | MouseEnterPlayer of PlayerId
-

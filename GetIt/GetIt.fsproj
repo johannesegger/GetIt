@@ -6,24 +6,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Models\Color.fs" />
-    <Compile Include="Models\Geometry.fs" />
-    <Compile Include="Models\Costume.fs" />
-    <Compile Include="Models\SpeechBubble.fs" />
-    <Compile Include="Models\Player.fs" />
-    <Compile Include="Models\Events.fs" />
     <Compile Include="GetIt.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fabulous.SkiaSharp" Version="0.31.0" />
+    <PackageReference Include="Fabulous.SkiaSharp" Version="0.32.0" />
     <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
+    <PackageReference Include="System.Reactive" Version="4.1.2" />
     <PackageReference Include="Xamarin.Forms" Version="3.5.0.129452" />
     <PackageReference Include="Xamarin.Essentials" Version="1.0.1" />
-    <PackageReference Include="Fabulous.Core" Version="0.31.0" />
-    <PackageReference Include="Fabulous.CustomControls" Version="0.31.0" />
-    <PackageReference Include="Fabulous.LiveUpdate" Version="0.31.0" />
+    <PackageReference Include="Fabulous.Core" Version="0.32.0" />
+    <PackageReference Include="Fabulous.CustomControls" Version="0.32.0" />
+    <PackageReference Include="Fabulous.LiveUpdate" Version="0.32.0" />
     <PackageReference Include="FSharp.Core" Version="4.5.2" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" /> <!-- workaround for VSMac bug https://github.com/mono/monodevelop/pull/5137 --> 
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
   </ItemGroup>
 </Project>

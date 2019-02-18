@@ -5,8 +5,7 @@ type SayData =
 
 type AskData =
     { Question: string
-      Answer: string
-      AnswerHandler: string -> unit }
+      Answer: string }
 
 type SpeechBubble =
     | Say of SayData

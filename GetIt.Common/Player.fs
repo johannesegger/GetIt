@@ -8,16 +8,11 @@ type Pen =
       Color: RGBA }
 
 module Pen =
-    [<CompiledName("Default")>]
     let ``default`` = { IsOn = false; Weight = 1.; Color = RGBAColor.black }
 
-type PenLine =
-    { Start: Position
-      End: Position
-      Weight: float
-      Color: RGBA }
-
 type PlayerId = PlayerId of Guid
+module PlayerId =
+    let create () = PlayerId (Guid.NewGuid())
 
 type Player =
     { SizeFactor: float
