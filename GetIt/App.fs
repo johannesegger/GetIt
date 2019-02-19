@@ -16,7 +16,7 @@ module App =
 
     type Model =
         { SceneBounds: GetIt.Rectangle
-          Players: Map<PlayerId, Player>
+          Players: Map<PlayerId, PlayerData>
           PenLines: PenLine list
           MouseState: MouseState
           KeyboardState: KeyboardState
@@ -30,7 +30,7 @@ module App =
           KeyboardState = KeyboardState.empty
           EventHandlers = [] }
 
-    type Msg = 
+    type Msg =
         | SetSceneSize of GetIt.Size
         | SetKeyboardKeyPressed of KeyboardKey
         | SetKeyboardKeyReleased of KeyboardKey
@@ -43,7 +43,7 @@ module App =
         | SetPen of PlayerId * Pen
         | SetSizeFactor of PlayerId * sizeFactor: float
         | NextCostume of PlayerId
-        | AddPlayer of PlayerId * Player
+        | AddPlayer of PlayerId * PlayerData
         | RemovePlayer of PlayerId
         | ClearScene
         | AddEventHandler of EventHandler
@@ -104,7 +104,7 @@ module App =
     let view (model: Model) dispatch =
         let skColor color = SKColor(color.Red, color.Green, color.Blue, color.Alpha)
 
-        let getPlayerView (player: Player) =
+        let getPlayerView (player: PlayerData) =
             View.SKCanvasView(
                 enableTouchEvents = true,
                 paintSurface = (fun args ->
@@ -154,7 +154,7 @@ module App =
                 ]
             )
 
-        let getFullPlayerView (playerId, player: Player) =
+        let getFullPlayerView (playerId, player: PlayerData) =
             View.AbsoluteLayout(
                 backgroundColor = Color.DarkKhaki,
                 children = [
@@ -300,7 +300,9 @@ module App =
         dispatchMessage (AddPlayer (playerId, player))
         playerId
 
-    let playerMoveTo playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
+    let updatePlayerPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
+
+    let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
 
 type App () as app = 
     inherit Application ()

@@ -69,3 +69,5 @@ module Degrees =
     let zero = Degrees 0.
 
     let value (Degrees v) = v
+
+    let toRadians (Degrees v) = v / 180. * Math.PI

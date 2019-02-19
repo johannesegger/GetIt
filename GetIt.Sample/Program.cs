@@ -13,10 +13,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.MoveTo(-100, 200);
-            Turtle.MoveTo(100, 200);
-            Turtle.MoveTo(100, -200);
-            Turtle.MoveTo(-100, -200);
+            Turtle.MoveTo(0, 0);
             // Turtle.SetPenWeight(1.5);
             // Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
             // Turtle.TurnOnPen();

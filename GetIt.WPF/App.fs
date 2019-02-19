@@ -35,9 +35,12 @@ module Main =
         | AddPlayer player ->
             let playerId = GetIt.App.addPlayer player
             [ AddedPlayer (playerId, player) ]
-        | MoveTo (playerId, position) ->
-            GetIt.App.playerMoveTo playerId position
+        | UpdatePosition (playerId, position) ->
+            GetIt.App.updatePlayerPosition playerId position
             [ UpdatedPosition (playerId, position) ]
+        | RemovePlayer playerId ->
+            GetIt.App.removePlayer playerId
+            [ RemovedPlayer playerId ]
 
     [<EntryPoint>]
     let main(_args) =

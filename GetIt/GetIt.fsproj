@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="GetIt.fs" />
+    <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fabulous.SkiaSharp" Version="0.32.0" />

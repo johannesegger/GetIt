@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="GetIt.fs" />
+    <Compile Include="Controller.fs" />
+    <Compile Include="Player.fs" />
   </ItemGroup>
 
   <ItemGroup>

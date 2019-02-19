@@ -1,5 +1,6 @@
 namespace GetIt
 
+open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
@@ -14,7 +15,7 @@ type EventHandler =
 
 type Model =
     { SceneBounds: Rectangle
-      Players: Map<PlayerId, Player>
+      Players: Map<PlayerId, PlayerData>
       MouseState: MouseState
       KeyboardState: KeyboardState
       EventHandlers: EventHandler list }
@@ -51,15 +52,8 @@ module internal InterProcessCommunication =
 #else
                 ProcessStartInfo("GetIt.WPF.exe")
 #endif
-            // startInfo.RedirectStandardOutput <- true
-            // startInfo.RedirectStandardError <- true
-            // startInfo.UseShellExecute <- false
             
             let proc = Process.Start(startInfo)
-            // let d1 = proc.OutputDataReceived.Subscribe(fun data -> printfn "[UI] %s" data.Data)
-            // let d2 = proc.ErrorDataReceived.Subscribe(fun data -> eprintfn "[UI] %s" data.Data)
-            // proc.BeginOutputReadLine()
-            // proc.BeginErrorReadLine()
 
             let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut)
             pipeClient.Connect()
@@ -77,6 +71,8 @@ module internal InterProcessCommunication =
             let player = Map.find playerId model.Players
             let player' = { player with Position = position }
             { model with Players = Map.add playerId player' model.Players }
+        | RemovedPlayer playerId ->
+            { model with Players = Map.remove playerId model.Players }
 
     let sendCommands (commands: RequestMsg list) =
         let (pipeWriter, pipeReader) = uiProcess.Force()
@@ -90,18 +86,49 @@ module internal InterProcessCommunication =
 
         Model.current <- List.fold applyMessage Model.current messages
 
+type Player(playerId) =
+    let mutable isDisposed = 0
+
+    member internal x.PlayerId with get() = playerId
+    member internal x.Player with get() = Map.find playerId Model.current.Players
+    /// <summary>
+    /// The actual size of the player.
+    /// </summary>
+    member x.Size with get() = x.Player.Size
+
+    /// <summary>
+    /// The factor that is used to resize the player.
+    /// </summary>
+    member x.SizeFactor with get() = x.Player.SizeFactor
+
+    /// <summary>
+    /// The position of the player.
+    /// </summary>
+    member x.Position with get() = x.Player.Position
+
+    /// <summary>
+    /// The actual bounds of the player.
+    /// </summary>
+    member x.Bounds with get() = x.Player.Bounds
+
+    /// <summary>
+    /// The direction of the player.
+    /// </summary>
+    member x.Direction with get() = x.Player.Direction
+
+    /// <summary>
+    /// The pen of the player.
+    /// </summary>
+    member x.Pen with get() = x.Player.Pen
+
+    interface IDisposable with
+        member x.Dispose() =
+            if Interlocked.Exchange(ref isDisposed, 1) = 0
+            then
+                InterProcessCommunication.sendCommands [ RemovePlayer x.PlayerId ]
+
 module Game =
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
         InterProcessCommunication.sendCommands [ ShowScene; AddPlayer Player.turtle ]
         Model.defaultTurtleId <- Map.toSeq Model.current.Players |> Seq.map fst |> Seq.tryHead
-
-module Turtle =
-    let getTurtleIdOrFail () =
-        match Model.defaultTurtleId with
-        | Some v -> v
-        | None -> failwith "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning."
-
-    [<CompiledName("MoveTo")>]
-    let moveTo x y =
-        InterProcessCommunication.sendCommands [ MoveTo (getTurtleIdOrFail(), { X = x; Y = y }) ]

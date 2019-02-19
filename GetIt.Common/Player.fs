@@ -14,7 +14,7 @@ type PlayerId = PlayerId of Guid
 module PlayerId =
     let create () = PlayerId (Guid.NewGuid())
 
-type Player =
+type PlayerData =
     { SizeFactor: float
       Position: Position
       Direction: Degrees
