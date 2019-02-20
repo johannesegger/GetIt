@@ -54,6 +54,10 @@ module App =
     let init () = (initModel, Cmd.none)
 
     let update msg model =
+        let updatePlayer playerId fn =
+            let player = Map.find playerId model.Players |> fn
+            { model with Players = Map.add playerId player model.Players }
+
         match msg with
         | SetSceneSize size ->
             let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
@@ -66,12 +70,11 @@ module App =
         | SetMousePosition position ->
             (model, Cmd.none)
         | SetPlayerPosition (playerId, position) ->
-            let player = Map.find playerId model.Players
-            let player' = { player with Position = position }
-            let model' = { model with Players = Map.add playerId player' model.Players }
+            let model' = updatePlayer playerId (fun p -> { p with Position = position })
             (model', Cmd.none)
         | SetPlayerDirection (playerId, angle) ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p -> { p with Direction = angle })
+            (model', Cmd.none)
         | SetSpeechBubble (playerId, speechBubble) ->
             (model, Cmd.none)
         | UpdateAnswer (playerId, answer) ->
@@ -300,18 +303,18 @@ module App =
         dispatchMessage (AddPlayer (playerId, player))
         playerId
 
+    let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
+
     let updatePlayerPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
 
-    let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
+    let updatePlayerDirection playerId angle = dispatchMessage (SetPlayerDirection (playerId, angle))
 
 type App () as app = 
     inherit Application ()
 
     let runner = 
         App.program
-#if DEBUG
-        |> Program.withConsoleTrace
-#endif
+        // |> Program.withConsoleTrace // this slows down execution by a lot, so uncomment with caution
         |> Program.runWithDynamicView app
 
 #if DEBUG
@@ -319,7 +322,7 @@ type App () as app =
     // See https://fsprojects.github.io/Fabulous/tools.html for further  instructions.
     //
     //do runner.EnableLiveUpdate()
-#endif    
+#endif
 
     // Uncomment this code to save the application state to app.Properties using Newtonsoft.Json
     // See https://fsprojects.github.io/Fabulous/models.html for further  instructions.

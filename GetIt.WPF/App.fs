@@ -34,13 +34,16 @@ module Main =
             [ InitializedScene sceneBounds ]
         | AddPlayer player ->
             let playerId = GetIt.App.addPlayer player
-            [ AddedPlayer (playerId, player) ]
-        | UpdatePosition (playerId, position) ->
-            GetIt.App.updatePlayerPosition playerId position
-            [ UpdatedPosition (playerId, position) ]
+            [ PlayerAdded (playerId, player) ]
         | RemovePlayer playerId ->
             GetIt.App.removePlayer playerId
-            [ RemovedPlayer playerId ]
+            [ PlayerRemoved playerId ]
+        | SetPosition (playerId, position) ->
+            GetIt.App.updatePlayerPosition playerId position
+            [ PositionSet (playerId, position) ]
+        | SetDirection (playerId, angle) ->
+            GetIt.App.updatePlayerDirection playerId angle
+            [ DirectionSet (playerId, angle) ]
 
     [<EntryPoint>]
     let main(_args) =

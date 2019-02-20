@@ -21,8 +21,6 @@ type Model =
       EventHandlers: EventHandler list }
 
 module Model =
-    let mutable defaultTurtleId = None
-
     let mutable current =
         { SceneBounds = { Position = Position.zero; Size = { Width = 0.; Height = 0. } }
           Players = Map.empty
@@ -66,13 +64,17 @@ module internal InterProcessCommunication =
     let private applyMessage model message =
         match message with
         | InitializedScene sceneBounds -> { model with SceneBounds = sceneBounds }
-        | AddedPlayer (playerId, player) -> { model with Players = Map.add playerId player model.Players }
-        | UpdatedPosition (playerId, position) ->
+        | PlayerAdded (playerId, player) -> { model with Players = Map.add playerId player model.Players }
+        | PlayerRemoved playerId ->
+            { model with Players = Map.remove playerId model.Players }
+        | PositionSet (playerId, position) ->
             let player = Map.find playerId model.Players
             let player' = { player with Position = position }
             { model with Players = Map.add playerId player' model.Players }
-        | RemovedPlayer playerId ->
-            { model with Players = Map.remove playerId model.Players }
+        | DirectionSet (playerId, angle) ->
+            let player = Map.find playerId model.Players
+            let player' = { player with Direction = angle }
+            { model with Players = Map.add playerId player' model.Players }
 
     let sendCommands (commands: RequestMsg list) =
         let (pipeWriter, pipeReader) = uiProcess.Force()
@@ -90,7 +92,7 @@ type Player(playerId) =
     let mutable isDisposed = 0
 
     member internal x.PlayerId with get() = playerId
-    member internal x.Player with get() = Map.find playerId Model.current.Players
+    member private x.Player with get() = Map.find playerId Model.current.Players
     /// <summary>
     /// The actual size of the player.
     /// </summary>
@@ -125,10 +127,15 @@ type Player(playerId) =
         member x.Dispose() =
             if Interlocked.Exchange(ref isDisposed, 1) = 0
             then
-                InterProcessCommunication.sendCommands [ RemovePlayer x.PlayerId ]
+                InterProcessCommunication.sendCommands [ RemovePlayer playerId ]
 
 module Game =
+    let mutable defaultTurtle = None // TODO reset to `None` when disposed
+
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
         InterProcessCommunication.sendCommands [ ShowScene; AddPlayer Player.turtle ]
-        Model.defaultTurtleId <- Map.toSeq Model.current.Players |> Seq.map fst |> Seq.tryHead
+        defaultTurtle <-
+            Map.toSeq Model.current.Players
+            |> Seq.tryHead
+            |> Option.map (fst >> (fun playerId -> new Player(playerId)))

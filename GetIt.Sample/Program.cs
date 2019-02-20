@@ -17,17 +17,17 @@ namespace GetIt.Sample
             // Turtle.SetPenWeight(1.5);
             // Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
             // Turtle.TurnOnPen();
-            // var n = 5;
-            // while (n < 400)
-            // {
-            //     Turtle.MoveInDirection(n);
-            //     Turtle.RotateCounterClockwise(89.5);
+            var n = 5;
+            while (n < 400)
+            {
+                Turtle.MoveInDirection(n);
+                Turtle.RotateCounterClockwise(89.5);
 
             //     Turtle.ShiftPenColor(10);
-            //     n++;
+                n++;
 
-            //     Turtle.Sleep(10);
-            // }
+                Turtle.Sleep(10);
+            }
         }
     }
 }
