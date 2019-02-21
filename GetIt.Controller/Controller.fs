@@ -92,8 +92,12 @@ module internal InterProcessCommunication =
         pipeWriter.Flush()
 
         let line = pipeReader.ReadLine()
-        let messages = JsonConvert.DeserializeObject<ResponseMsg list>(line, serializerSettings)
 
+        // Close the application if the UI has been closed (throwing an exception might confuse students)
+        if isNull line then
+            Environment.Exit 1
+
+        let messages = JsonConvert.DeserializeObject<ResponseMsg list>(line, serializerSettings)
         Model.current <- List.fold applyMessage Model.current messages
 
 type Player(playerId) =
