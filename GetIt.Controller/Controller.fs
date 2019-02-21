@@ -62,19 +62,27 @@ module internal InterProcessCommunication =
     let serializerSettings = JsonSerializerSettings(Formatting = Formatting.None)
 
     let private applyMessage model message =
+        let updatePlayer playerId fn =
+            let player = Map.find playerId model.Players |> fn
+            { model with Players = Map.add playerId player model.Players }
+
         match message with
         | InitializedScene sceneBounds -> { model with SceneBounds = sceneBounds }
         | PlayerAdded (playerId, player) -> { model with Players = Map.add playerId player model.Players }
         | PlayerRemoved playerId ->
             { model with Players = Map.remove playerId model.Players }
         | PositionSet (playerId, position) ->
-            let player = Map.find playerId model.Players
-            let player' = { player with Position = position }
-            { model with Players = Map.add playerId player' model.Players }
+            updatePlayer playerId (fun p -> { p with Position = position })
         | DirectionSet (playerId, angle) ->
-            let player = Map.find playerId model.Players
-            let player' = { player with Direction = angle }
-            { model with Players = Map.add playerId player' model.Players }
+            updatePlayer playerId (fun p -> { p with Direction = angle })
+        | SpeechBubbleSet (playerId, speechBubble) ->
+            updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
+        | PenSet (playerId, pen) ->
+            updatePlayer playerId (fun p -> { p with Pen = pen })
+        | SizeFactorSet (playerId, sizeFactor) ->
+            updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
+        | NextCostumeSet playerId ->
+            updatePlayer playerId Player.nextCostume
 
     let sendCommands (commands: RequestMsg list) =
         let (pipeWriter, pipeReader) = uiProcess.Force()

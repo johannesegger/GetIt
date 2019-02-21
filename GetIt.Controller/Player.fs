@@ -86,6 +86,53 @@ module private Raw =
     let sleep (player: GetIt.Player) (durationInMilliseconds: System.Double) =
         Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds))
 
+    let say (player: GetIt.Player) (text: System.String) =
+        InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, Some (Say text)) ]
+
+    let shutUp (player: GetIt.Player) =
+        InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, None) ]
+
+    let sayWithDuration (player: GetIt.Player) (text: System.String) (durationInSeconds: System.Double) =
+        say player text
+        sleep player (TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds)
+        shutUp player
+
+    let ask (player: GetIt.Player) (question: System.String) =
+        InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = "" })) ]
+
+    let setPen (player: GetIt.Player) (pen: GetIt.Pen) =
+        InterProcessCommunication.sendCommands [ SetPen (player.PlayerId, pen) ]
+
+    let turnOnPen (player: GetIt.Player) =
+        setPen player { player.Pen with IsOn = true }
+
+    let turnOffPen (player: GetIt.Player) =
+        setPen player { player.Pen with IsOn = false }
+
+    let togglePenOnOff (player: GetIt.Player) =
+        setPen player { player.Pen with IsOn = not player.Pen.IsOn }
+
+    let setPenColor (player: GetIt.Player) (color: GetIt.RGBA) =
+        setPen player { player.Pen with Color = color }
+
+    let shiftPenColor (player: GetIt.Player) (angle: GetIt.Degrees) =
+        setPen player { player.Pen with Color = Color.hueShift angle player.Pen.Color }
+
+    let setPenWeight (player: GetIt.Player) (weight: System.Double) =
+        setPen player { player.Pen with Weight = weight }
+
+    let changePenWeight (player: GetIt.Player) (weight: System.Double) =
+        setPenWeight player (player.Pen.Weight + weight)
+
+    let setSizeFactor (player: GetIt.Player) (sizeFactor: System.Double) =
+        InterProcessCommunication.sendCommands [ SetSizeFactor (player.PlayerId, sizeFactor) ]
+
+    let changeSizeFactor (player: GetIt.Player) (change: System.Double) =
+        setSizeFactor player (player.SizeFactor + change)
+
+    let nextCostume (player: GetIt.Player) =
+        InterProcessCommunication.sendCommands [ SetNextCostume (player.PlayerId) ]
+
 module Turtle =
     let private getTurtleOrFail () =
         match Game.defaultTurtle with
@@ -232,6 +279,107 @@ module Turtle =
     [<CompiledName("Sleep")>]
     let sleep (durationInMilliseconds: System.Double) =
         Raw.sleep (getTurtleOrFail ()) durationInMilliseconds
+
+    /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
+    /// <param name="text">The content of the speech bubble.</param>
+    /// <returns></returns>
+    [<CompiledName("Say")>]
+    let say (text: System.String) =
+        Raw.say (getTurtleOrFail ()) text
+
+    /// <summary>Removes the speech bubble of the player.</summary>
+    /// <returns></returns>
+    [<CompiledName("ShutUp")>]
+    let shutUp () =
+        Raw.shutUp (getTurtleOrFail ())
+
+    /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
+    /// <param name="text">The content of the speech bubble.</param>
+    /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
+    /// <returns></returns>
+    [<CompiledName("Say")>]
+    let sayWithDuration (text: System.String) (durationInSeconds: System.Double) =
+        Raw.sayWithDuration (getTurtleOrFail ()) text durationInSeconds
+
+    /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
+    /// <param name="question">The content of the speech bubble.</param>
+    /// <returns>The text the user typed in.</returns>
+    [<CompiledName("Ask")>]
+    let ask (question: System.String) =
+        Raw.ask (getTurtleOrFail ()) question
+
+    /// <summary>Sets the pen of the player.</summary>
+    /// <param name="pen">The pen that should be assigned to the player.</param>
+    /// <returns></returns>
+    [<CompiledName("SetPen")>]
+    let setPen (pen: GetIt.Pen) =
+        Raw.setPen (getTurtleOrFail ()) pen
+
+    /// <summary>Turns on the pen of the player.</summary>
+    /// <returns></returns>
+    [<CompiledName("TurnOnPen")>]
+    let turnOnPen () =
+        Raw.turnOnPen (getTurtleOrFail ())
+
+    /// <summary>Turns off the pen of the player.</summary>
+    /// <returns></returns>
+    [<CompiledName("TurnOffPen")>]
+    let turnOffPen () =
+        Raw.turnOffPen (getTurtleOrFail ())
+
+    /// <summary>Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.</summary>
+    /// <returns></returns>
+    [<CompiledName("TogglePenOnOff")>]
+    let togglePenOnOff () =
+        Raw.togglePenOnOff (getTurtleOrFail ())
+
+    /// <summary>Sets the pen color of the player.</summary>
+    /// <param name="color">The new color of the pen.</param>
+    /// <returns></returns>
+    [<CompiledName("SetPenColor")>]
+    let setPenColor (color: GetIt.RGBA) =
+        Raw.setPenColor (getTurtleOrFail ()) color
+
+    /// <summary>Shifts the HUE value of the pen color.</summary>
+    /// <param name="angle">The angle that the HUE value should be shifted by.</param>
+    /// <returns></returns>
+    [<CompiledName("ShiftPenColor")>]
+    let shiftPenColor (angle: GetIt.Degrees) =
+        Raw.shiftPenColor (getTurtleOrFail ()) angle
+
+    /// <summary>Sets the weight of the pen.</summary>
+    /// <param name="weight">The new weight of the pen.</param>
+    /// <returns></returns>
+    [<CompiledName("SetPenWeight")>]
+    let setPenWeight (weight: System.Double) =
+        Raw.setPenWeight (getTurtleOrFail ()) weight
+
+    /// <summary>Changes the weight of the pen.</summary>
+    /// <param name="weight">The change of the pen weight.</param>
+    /// <returns></returns>
+    [<CompiledName("ChangePenWeight")>]
+    let changePenWeight (weight: System.Double) =
+        Raw.changePenWeight (getTurtleOrFail ()) weight
+
+    /// <summary>Sets the size of the player by multiplying the original size with a factor.</summary>
+    /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
+    /// <returns></returns>
+    [<CompiledName("SetSizeFactor")>]
+    let setSizeFactor (sizeFactor: System.Double) =
+        Raw.setSizeFactor (getTurtleOrFail ()) sizeFactor
+
+    /// <summary>Changes the size factor of the player that the original size is multiplied by.</summary>
+    /// <param name="change">The change of the size factor.</param>
+    /// <returns></returns>
+    [<CompiledName("ChangeSizeFactor")>]
+    let changeSizeFactor (change: System.Double) =
+        Raw.changeSizeFactor (getTurtleOrFail ()) change
+
+    /// <summary>Changes the costume of the player.</summary>
+    /// <returns></returns>
+    [<CompiledName("NextCostume")>]
+    let nextCostume () =
+        Raw.nextCostume (getTurtleOrFail ())
 
 open System.Runtime.CompilerServices
 
@@ -398,3 +546,119 @@ type PlayerExtensions() =
     [<Extension>]
     static member Sleep(player: GetIt.Player, durationInMilliseconds: System.Double) =
         Raw.sleep player durationInMilliseconds
+
+    /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <param name="text">The content of the speech bubble.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Say(player: GetIt.Player, text: System.String) =
+        Raw.say player text
+
+    /// <summary>Removes the speech bubble of the player.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member ShutUp(player: GetIt.Player) =
+        Raw.shutUp player
+
+    /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <param name="text">The content of the speech bubble.</param>
+    /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Say(player: GetIt.Player, text: System.String, durationInSeconds: System.Double) =
+        Raw.sayWithDuration player text durationInSeconds
+
+    /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <param name="question">The content of the speech bubble.</param>
+    /// <returns>The text the user typed in.</returns>
+    [<Extension>]
+    static member Ask(player: GetIt.Player, question: System.String) =
+        Raw.ask player question
+
+    /// <summary>Sets the pen of the player.</summary>
+    /// <param name="player">The player that should get the pen.</param>
+    /// <param name="pen">The pen that should be assigned to the player.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member SetPen(player: GetIt.Player, pen: GetIt.Pen) =
+        Raw.setPen player pen
+
+    /// <summary>Turns on the pen of the player.</summary>
+    /// <param name="player">The player that should get its pen turned on.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member TurnOnPen(player: GetIt.Player) =
+        Raw.turnOnPen player
+
+    /// <summary>Turns off the pen of the player.</summary>
+    /// <param name="player">The player that should get its pen turned off.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member TurnOffPen(player: GetIt.Player) =
+        Raw.turnOffPen player
+
+    /// <summary>Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.</summary>
+    /// <param name="player">The player that should get its pen toggled.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member TogglePenOnOff(player: GetIt.Player) =
+        Raw.togglePenOnOff player
+
+    /// <summary>Sets the pen color of the player.</summary>
+    /// <param name="player">The player that should get its pen color set.</param>
+    /// <param name="color">The new color of the pen.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member SetPenColor(player: GetIt.Player, color: GetIt.RGBA) =
+        Raw.setPenColor player color
+
+    /// <summary>Shifts the HUE value of the pen color.</summary>
+    /// <param name="player">The player that should get its pen color shifted.</param>
+    /// <param name="angle">The angle that the HUE value should be shifted by.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member ShiftPenColor(player: GetIt.Player, angle: GetIt.Degrees) =
+        Raw.shiftPenColor player angle
+
+    /// <summary>Sets the weight of the pen.</summary>
+    /// <param name="player">The player that gets its pen weight set.</param>
+    /// <param name="weight">The new weight of the pen.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member SetPenWeight(player: GetIt.Player, weight: System.Double) =
+        Raw.setPenWeight player weight
+
+    /// <summary>Changes the weight of the pen.</summary>
+    /// <param name="player">The player that gets its pen weight changed.</param>
+    /// <param name="weight">The change of the pen weight.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member ChangePenWeight(player: GetIt.Player, weight: System.Double) =
+        Raw.changePenWeight player weight
+
+    /// <summary>Sets the size of the player by multiplying the original size with a factor.</summary>
+    /// <param name="player">The player that gets its size changed.</param>
+    /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member SetSizeFactor(player: GetIt.Player, sizeFactor: System.Double) =
+        Raw.setSizeFactor player sizeFactor
+
+    /// <summary>Changes the size factor of the player that the original size is multiplied by.</summary>
+    /// <param name="player">The player that gets its size changed.</param>
+    /// <param name="change">The change of the size factor.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member ChangeSizeFactor(player: GetIt.Player, change: System.Double) =
+        Raw.changeSizeFactor player change
+
+    /// <summary>Changes the costume of the player.</summary>
+    /// <param name="player">The player that gets its costume changed.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member NextCostume(player: GetIt.Player) =
+        Raw.nextCostume player

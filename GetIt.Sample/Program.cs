@@ -14,16 +14,16 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.MoveTo(0, 0);
-            // Turtle.SetPenWeight(1.5);
-            // Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
-            // Turtle.TurnOnPen();
+            Turtle.SetPenWeight(1.5);
+            Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
+            Turtle.TurnOnPen();
             var n = 5;
-            while (n < 400)
+            while (n < 200)
             {
                 Turtle.MoveInDirection(n);
                 Turtle.RotateCounterClockwise(89.5);
 
-            //     Turtle.ShiftPenColor(10);
+                Turtle.ShiftPenColor(10);
                 n++;
 
                 Turtle.Sleep(10);

@@ -34,6 +34,9 @@ type PlayerData =
               Size = this.Size }
 
 module Player =
+    let nextCostume player =
+        { player with CostumeIndex = (player.CostumeIndex + 1) % player.Costumes.Length }
+
     let createWithCostumes costumes =
         { SizeFactor = 1.
           Position = Position.zero

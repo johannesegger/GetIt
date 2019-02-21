@@ -1,5 +1,7 @@
 namespace GetIt
 
+open System
+
 type RGBA =
     { Red: byte
       Green: byte
@@ -7,6 +9,96 @@ type RGBA =
       Alpha: byte }
     override this.ToString() =
         sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
+
+open System.Runtime.CompilerServices
+
+[<Extension>]
+type RGBAExtensions() =
+    [<Extension>]
+    static member WithAlpha(color: RGBA, alpha: byte) =
+        { color with Alpha = alpha }
+
+type private HSLA =
+    { Hue: float
+      Saturation: float
+      Lightness: float
+      Alpha: float }
+    override this.ToString() =
+        sprintf "hsla(%f°, %f, %f, %f)" (this.Hue * 360.) this.Saturation this.Lightness this.Alpha
+
+// No idea what this does, got this from http://www.easyrgb.com/en/math.php
+module private HSLA =
+    let fromRGBA rgba =
+        let r = float rgba.Red / 255.0
+        let g = float rgba.Green / 255.0
+        let b = float rgba.Blue / 255.0
+
+        let min = Math.Min(r, Math.Min(g, b))
+        let max = Math.Max(r, Math.Max(g, b))
+        let delta = max - min
+
+        let lightness = (max + min) / 2.
+
+        let (hue, saturation) =
+            if delta = 0. // Gray, no chroma
+            then (0., 0.)
+            else // Chromatic data...
+                let saturation =
+                    if lightness < 0.5 then delta / (max + min)
+                    else delta / (2. - max - min)
+
+                let delR = ( ( ( max - r ) / 6. ) + ( max / 2. ) ) / max
+                let delG = ( ( ( max - g ) / 6. ) + ( max / 2. ) ) / max
+                let delB = ( ( ( max - b ) / 6. ) + ( max / 2. ) ) / max
+
+                let hue =
+                    if       r = max then delB - delG
+                    elif g = max then ( 1.0 / 3.0 ) + delR - delB
+                    else (*if ( b == max )*) ( 2.0 / 3.0 ) + delG - delR
+
+                let hue =
+                    if hue < 0. then hue + 1.
+                    elif hue > 1. then hue - 1.
+                    else hue
+                (hue, saturation)
+        { Hue = hue; Saturation = saturation; Lightness = lightness; Alpha = float rgba.Alpha / float System.Byte.MaxValue }
+
+    let toRGBA hsla =
+        let alpha = Math.Round(hsla.Alpha * 255.) |> byte
+        if hsla.Saturation = 0.
+        then
+            let value = Math.Round(hsla.Lightness * 255.) |> byte
+            { Red = value
+              Green = value
+              Blue = value
+              Alpha = alpha }
+        else
+            let var2 =
+                if hsla.Lightness < 0.5 then hsla.Lightness * (1. + hsla.Saturation)
+                else (hsla.Lightness + hsla.Saturation) - (hsla.Saturation * hsla.Lightness)
+
+            let var1 = 2. * hsla.Lightness - var2
+
+            let hueToRgb v1 v2 vH =
+                let vH =
+                    if vH < 0. then vH + 1.
+                    elif vH > 1. then vH - 1.
+                    else vH
+                if ( 6. * vH ) < 1. then v1 + ( v2 - v1 ) * 6. * vH
+                elif ( 2. * vH ) < 1. then v2
+                elif ( 3. * vH ) < 2. then v1 + ( v2 - v1 ) * ( ( 2.0 / 3.0 ) - vH ) * 6.
+                else v1
+            { Red = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue + ( 1.0 / 3.0 ) )) |> byte
+              Green = Math.Round(255. * hueToRgb var1 var2 hsla.Hue) |> byte
+              Blue = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue - ( 1.0 / 3.0 ) )) |> byte
+              Alpha = alpha }
+
+module Color =
+    let hueShift angle color =
+        let hslaColor = HSLA.fromRGBA color
+        let shiftedValue = hslaColor.Hue + (Degrees.value angle / 360.)
+        { hslaColor with Hue = shiftedValue }
+        |> HSLA.toRGBA
 
 // TODO do this in C#-specific assembly
 // module RGBA =

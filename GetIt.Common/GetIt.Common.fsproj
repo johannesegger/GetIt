@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Color.fs" />
     <Compile Include="Geometry.fs" />
+    <Compile Include="Color.fs" />
     <Compile Include="Costume.fs" />
     <Compile Include="SpeechBubble.fs" />
     <Compile Include="Player.fs" />

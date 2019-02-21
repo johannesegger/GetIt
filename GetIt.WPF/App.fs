@@ -39,11 +39,23 @@ module Main =
             GetIt.App.removePlayer playerId
             [ PlayerRemoved playerId ]
         | SetPosition (playerId, position) ->
-            GetIt.App.updatePlayerPosition playerId position
+            GetIt.App.setPosition playerId position
             [ PositionSet (playerId, position) ]
         | SetDirection (playerId, angle) ->
-            GetIt.App.updatePlayerDirection playerId angle
+            GetIt.App.setDirection playerId angle
             [ DirectionSet (playerId, angle) ]
+        | SetSpeechBubble (playerId, speechBubble) ->
+            GetIt.App.setSpeechBubble playerId speechBubble
+            [ SpeechBubbleSet (playerId, speechBubble) ]
+        | SetPen (playerId, pen) ->
+            GetIt.App.setPen playerId pen
+            [ PenSet (playerId, pen) ]
+        | SetSizeFactor (playerId, sizeFactor) ->
+            GetIt.App.setSizeFactor playerId sizeFactor
+            [ SizeFactorSet (playerId, sizeFactor) ]
+        | SetNextCostume playerId ->
+            GetIt.App.setNextCostume playerId
+            [ NextCostumeSet playerId ]
 
     [<EntryPoint>]
     let main(_args) =

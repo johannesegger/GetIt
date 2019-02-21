@@ -70,23 +70,41 @@ module App =
         | SetMousePosition position ->
             (model, Cmd.none)
         | SetPlayerPosition (playerId, position) ->
-            let model' = updatePlayer playerId (fun p -> { p with Position = position })
+            let model' =
+                let player = Map.find playerId model.Players
+                let player' = { player with Position = position }
+                { model with
+                    Players = Map.add playerId player' model.Players
+                    PenLines =
+                        if player.Pen.IsOn
+                        then
+                            let line =
+                                { Start = player.Position
+                                  End = player'.Position
+                                  Weight = player.Pen.Weight
+                                  Color = player.Pen.Color }
+                            line :: model.PenLines
+                        else model.PenLines }
             (model', Cmd.none)
         | SetPlayerDirection (playerId, angle) ->
             let model' = updatePlayer playerId (fun p -> { p with Direction = angle })
             (model', Cmd.none)
         | SetSpeechBubble (playerId, speechBubble) ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
+            (model', Cmd.none)
         | UpdateAnswer (playerId, answer) ->
             (model, Cmd.none)
         | ApplyAnswer playerId ->
             (model, Cmd.none)
         | SetPen (playerId, pen) ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p -> { p with Pen = pen })
+            (model', Cmd.none)
         | SetSizeFactor (playerId, sizeFactor) ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
+            (model', Cmd.none)
         | NextCostume playerId ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId Player.nextCostume
+            (model', Cmd.none)
         | AddPlayer (playerId, player) ->
             let model' = { model with Players = Map.add playerId player model.Players }
             (model', Cmd.none)
@@ -106,6 +124,7 @@ module App =
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
     let view (model: Model) dispatch =
         let skColor color = SKColor(color.Red, color.Green, color.Blue, color.Alpha)
+        let xfColor color = Color(float color.Red / 255., float color.Green / 255., float color.Blue / 255., float color.Alpha / 255.)
 
         let getPlayerView (player: PlayerData) =
             View.SKCanvasView(
@@ -161,6 +180,24 @@ module App =
             View.AbsoluteLayout(
                 backgroundColor = Color.DarkKhaki,
                 children = [
+                    // TODO put in separate container to minimize view diffs?
+                    yield!
+                        model.PenLines
+                        |> List.map (fun line ->
+                            let dx = line.End.X - line.Start.X
+                            let dy = line.End.Y - line.Start.Y
+                            View.BoxView(
+                                color = xfColor line.Color,
+                                widthRequest = Math.Sqrt(dx * dx + dy * dy),
+                                heightRequest = line.Weight,
+                                translationX = line.Start.X - model.SceneBounds.Left,
+                                translationY = model.SceneBounds.Top - line.Start.Y,
+                                rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
+                                anchorX = 0.,
+                                anchorY = 0.
+                            )
+                        )
+
                     yield
                         View.ContentView(
                             widthRequest = player.Size.Width,
@@ -171,7 +208,7 @@ module App =
                         |> layoutBounds (Rectangle(player.Bounds.Left - model.SceneBounds.Left, model.SceneBounds.Top - player.Bounds.Top, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
 
                     match player.SpeechBubble with
-                    | Some (Say data) ->
+                    | Some (Say text) ->
                         yield
                             View.AbsoluteLayout(
                                 translationY = model.SceneBounds.Bottom - player.Bounds.Top,
@@ -214,7 +251,7 @@ module App =
 
                                     View.Frame(
                                         content = View.Label(
-                                            text = data.Text
+                                            text = text
                                         ),
                                         padding = 0.,
                                         margin = Thickness(10., 10., 10., 25.)
@@ -305,9 +342,17 @@ module App =
 
     let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
 
-    let updatePlayerPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
+    let setPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
 
-    let updatePlayerDirection playerId angle = dispatchMessage (SetPlayerDirection (playerId, angle))
+    let setDirection playerId angle = dispatchMessage (SetPlayerDirection (playerId, angle))
+
+    let setSpeechBubble playerId speechBubble = dispatchMessage (SetSpeechBubble (playerId, speechBubble))
+
+    let setPen playerId pen = dispatchMessage (SetPen (playerId, pen))
+
+    let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
+
+    let setNextCostume playerId = dispatchMessage (NextCostume playerId)
 
 type App () as app = 
     inherit Application ()
