@@ -135,14 +135,23 @@ type Player(playerId) =
     /// </summary>
     member x.Pen with get() = x.Player.Pen
 
+    abstract member Dispose: unit -> unit
+    default x.Dispose() =
+        if Interlocked.Exchange(&isDisposed, 1) = 0
+        then
+            InterProcessCommunication.sendCommands [ RemovePlayer playerId ]
+
     interface IDisposable with
-        member x.Dispose() =
-            if Interlocked.Exchange(ref isDisposed, 1) = 0
-            then
-                InterProcessCommunication.sendCommands [ RemovePlayer playerId ]
+        member x.Dispose() = x.Dispose()
 
 module Game =
-    let mutable defaultTurtle = None // TODO reset to `None` when disposed
+    let mutable defaultTurtle = None
+
+    type DefaultPlayer(playerId) =
+        inherit Player(playerId)
+        override x.Dispose() =
+            base.Dispose()
+            defaultTurtle <- None
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
@@ -150,4 +159,4 @@ module Game =
         defaultTurtle <-
             Map.toSeq Model.current.Players
             |> Seq.tryHead
-            |> Option.map (fst >> (fun playerId -> new Player(playerId)))
+            |> Option.map (fst >> (fun playerId -> new DefaultPlayer(playerId) :> Player ))
