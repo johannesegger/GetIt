@@ -93,7 +93,7 @@ module internal InterProcessCommunication =
 
         let line = pipeReader.ReadLine()
 
-        // Close the application if the UI has been closed (throwing an exception might confuse students)
+        // Close the application if the UI has been closed (throwing an exception might be confusing)
         if isNull line then
             Environment.Exit 1
 
