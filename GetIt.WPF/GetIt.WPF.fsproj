@@ -34,6 +34,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SkiaSharp.Wpf\SkiaSharp.Wpf.csproj" />
-    <ProjectReference Include="..\GetIt\GetIt.fsproj" />
+    <ProjectReference Include="..\GetIt.UI\GetIt.UI.fsproj" />
   </ItemGroup>
 </Project>

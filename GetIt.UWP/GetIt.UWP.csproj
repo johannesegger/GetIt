@@ -141,7 +141,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GetIt\GetIt.fsproj">
+    <ProjectReference Include="..\GetIt.UI\GetIt.UI.fsproj">
       <Project>{554a3281-2f10-485e-beea-a7a547e416bc}</Project>
       <Name>GetIt</Name>
     </ProjectReference>
