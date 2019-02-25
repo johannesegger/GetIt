@@ -38,7 +38,7 @@ let commands =
                 Type = typeof<GetIt.Position>
                 Description = "The absolute destination position." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetPosition (player.PlayerId, position) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetPosition (player.PlayerId, position))" ] }
 
         { Name = "moveToXY"
           CompiledName = "MoveTo"
@@ -176,7 +176,7 @@ let commands =
                 Type = typeof<GetIt.Degrees>
                 Description = "The absolute angle." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetDirection (player.PlayerId, angle) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetDirection (player.PlayerId, angle))" ] }
 
         { Name = "rotateClockwise"
           CompiledName = "RotateClockwise"
@@ -308,7 +308,7 @@ let commands =
                 Type = typeof<string>
                 Description = "The content of the speech bubble." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, Some (Say text)) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))" ] }
 
         { Name = "shutUp"
           CompiledName = "ShutUp"
@@ -318,7 +318,7 @@ let commands =
                 Type = typeof<GetIt.Player>
                 Description = "The player that the speech bubble belongs to." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, None) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))" ] }
 
         { Name = "sayWithDuration"
           CompiledName = "Say"
@@ -350,7 +350,7 @@ let commands =
                 Type = typeof<string>
                 Description = "The content of the speech bubble." } ]
           Result = { Type = typeof<string>; Description = "The text the user typed in." }
-          Body = [ "InterProcessCommunication.sendCommands [ SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = \"\" })) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = \"\" })))" ] }
 
         { Name = "setPen"
           CompiledName = "SetPen"
@@ -363,7 +363,7 @@ let commands =
                 Type = typeof<GetIt.Pen>
                 Description = "The pen that should be assigned to the player." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetPen (player.PlayerId, pen) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetPen (player.PlayerId, pen))" ] }
 
         { Name = "turnOnPen"
           CompiledName = "TurnOnPen"
@@ -458,7 +458,7 @@ let commands =
                 Type = typeof<float>
                 Description = "The factor the original size should be multiplied by." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetSizeFactor (player.PlayerId, sizeFactor) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))" ] }
 
         { Name = "changeSizeFactor"
           CompiledName = "ChangeSizeFactor"
@@ -481,7 +481,7 @@ let commands =
                 Type = typeof<GetIt.Player>
                 Description = "The player that gets its costume changed." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "InterProcessCommunication.sendCommands [ SetNextCostume (player.PlayerId) ]" ] }
+          Body = [ "InterProcessCommunication.sendCommand (SetNextCostume (player.PlayerId))" ] }
 
         // TODO
         // /// <summary>

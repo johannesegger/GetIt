@@ -4,8 +4,11 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
+open System.Reactive.Linq
 open System.Threading
-open Newtonsoft.Json
+open System.Threading.Tasks
+open FSharp.Control.Reactive
+open Thoth.Json.Net
 
 type EventHandler =
     | KeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
@@ -53,52 +56,95 @@ module internal InterProcessCommunication =
             
             let proc = Process.Start(startInfo)
 
-            let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut)
+            let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut, PipeOptions.Asynchronous)
             pipeClient.Connect()
 
-            (new StreamWriter(pipeClient), new StreamReader(pipeClient))
+            let reader = new StreamReader(pipeClient)
+            let receiveObservable = MessageProcessing.getMessages reader UIToControllerMsg.decode
+
+            let subscription =
+                receiveObservable
+                |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
+                    // TODO handle events etc.
+                    ()
+                )
+
+            (new StreamWriter(pipeClient), receiveObservable)
         )
 
-    let serializerSettings = JsonSerializerSettings(Formatting = Formatting.None)
+    let private updatePlayer model playerId fn =
+        let player = Map.find playerId model.Players |> fn
+        { model with Players = Map.add playerId player model.Players }
 
-    let private applyMessage model message =
-        let updatePlayer playerId fn =
-            let player = Map.find playerId model.Players |> fn
-            { model with Players = Map.add playerId player model.Players }
-
+    let private applyUIToControllerMessage message model =
+        let updatePlayer = updatePlayer model
         match message with
+        | UIToControllerMsg.MsgProcessed -> model
         | InitializedScene sceneBounds -> { model with SceneBounds = sceneBounds }
-        | PlayerAdded (playerId, player) -> { model with Players = Map.add playerId player model.Players }
-        | PlayerRemoved playerId ->
+
+    let private applyControllerToUIMessage message model =
+        let updatePlayer = updatePlayer model
+        match message with
+        | ControllerToUIMsg.MsgProcessed -> model
+        | ShowScene -> model
+        | AddPlayer (playerId, player) -> { model with Players = Map.add playerId player model.Players }
+        | RemovePlayer playerId ->
             { model with Players = Map.remove playerId model.Players }
-        | PositionSet (playerId, position) ->
+        | SetPosition (playerId, position) ->
             updatePlayer playerId (fun p -> { p with Position = position })
-        | DirectionSet (playerId, angle) ->
+        | SetDirection (playerId, angle) ->
             updatePlayer playerId (fun p -> { p with Direction = angle })
-        | SpeechBubbleSet (playerId, speechBubble) ->
+        | SetSpeechBubble (playerId, speechBubble) ->
             updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
-        | PenSet (playerId, pen) ->
+        | SetPen (playerId, pen) ->
             updatePlayer playerId (fun p -> { p with Pen = pen })
-        | SizeFactorSet (playerId, sizeFactor) ->
+        | SetSizeFactor (playerId, sizeFactor) ->
             updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
-        | NextCostumeSet playerId ->
+        | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
 
-    let sendCommands (commands: RequestMsg list) =
-        let (pipeWriter, pipeReader) = uiProcess.Force()
+    let sendCommand command =
+        let (pipeWriter, receiveObservable) = uiProcess.Force()
 
-        let line = JsonConvert.SerializeObject(commands, serializerSettings)
+        let msgId = Guid.NewGuid()
+
+        use waitHandle = new ManualResetEventSlim()
+        let mutable response = None
+
+        use subscription =
+            receiveObservable
+            |> Observable.filter (fun (IdentifiableMsg (mId, msg)) -> mId = msgId)
+            |> Observable.first
+            |> Observable.subscribeWithCallbacks
+                (fun (IdentifiableMsg (mId, msg)) ->
+                    response <- Some (Ok msg)
+                    waitHandle.Set()
+                )
+                (fun e ->
+                    response <- Some (Error e)
+                    waitHandle.Set()
+                )
+                (fun () ->
+                    waitHandle.Set()
+                )
+
+        let line = Encode.toString 0 (ControllerToUIMsg.encode msgId command)
         pipeWriter.WriteLine(line)
         pipeWriter.Flush()
+        
+        waitHandle.Wait()
 
-        let line = pipeReader.ReadLine()
-
-        // Close the application if the UI has been closed (throwing an exception might be confusing)
-        if isNull line then
+        match response with
+        | Some (Ok msg) ->
+            Model.current <-
+                Model.current
+                |> applyControllerToUIMessage command
+                |> applyUIToControllerMessage  msg
+        | Some (Error e) ->
+            failwithf "Error while waiting for response: %O" e
+        | None ->
+            // Close the application if the UI has been closed (throwing an exception might be confusing)
             Environment.Exit 1
-
-        let messages = JsonConvert.DeserializeObject<ResponseMsg list>(line, serializerSettings)
-        Model.current <- List.fold applyMessage Model.current messages
 
 type Player(playerId) =
     let mutable isDisposed = 0
@@ -139,7 +185,7 @@ type Player(playerId) =
     default x.Dispose() =
         if Interlocked.Exchange(&isDisposed, 1) = 0
         then
-            InterProcessCommunication.sendCommands [ RemovePlayer playerId ]
+            InterProcessCommunication.sendCommand (RemovePlayer playerId)
 
     interface IDisposable with
         member x.Dispose() = x.Dispose()
@@ -155,7 +201,8 @@ module Game =
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
-        InterProcessCommunication.sendCommands [ ShowScene; AddPlayer Player.turtle ]
+        InterProcessCommunication.sendCommand ShowScene
+        InterProcessCommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
         defaultTurtle <-
             Map.toSeq Model.current.Players
             |> Seq.tryHead

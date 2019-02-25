@@ -15,7 +15,7 @@ namespace GetIt.Sample
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x40));
+            Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x80));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 200)
@@ -26,7 +26,7 @@ namespace GetIt.Sample
                 Turtle.ShiftPenColor(10);
                 n++;
 
-                Turtle.Sleep(10);
+                Turtle.Sleep(50);
             }
         }
     }

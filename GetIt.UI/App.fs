@@ -335,23 +335,13 @@ module App =
         signal.Wait()
         initModel.SceneBounds
 
-    let addPlayer player =
-        let playerId = PlayerId.create ()
-        dispatchMessage (AddPlayer (playerId, player))
-        playerId
-
+    let addPlayer playerId player = dispatchMessage (AddPlayer (playerId, player))
     let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
-
     let setPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
-
     let setDirection playerId angle = dispatchMessage (SetPlayerDirection (playerId, angle))
-
     let setSpeechBubble playerId speechBubble = dispatchMessage (SetSpeechBubble (playerId, speechBubble))
-
     let setPen playerId pen = dispatchMessage (SetPen (playerId, pen))
-
     let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
-
     let setNextCostume playerId = dispatchMessage (NextCostume playerId)
 
 type App () as app = 

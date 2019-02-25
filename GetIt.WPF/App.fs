@@ -4,7 +4,8 @@ open System
 open System.IO
 open System.IO.Pipes
 open System.Text
-open Newtonsoft.Json
+open FSharp.Control.Reactive
+open Thoth.Json.Net
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
 
@@ -20,6 +21,7 @@ type MainWindow() =
 module Main =
     let executeCommand cmd =
         match cmd with
+        | ControllerToUIMsg.MsgProcessed -> None
         | ShowScene ->
             let start onStarted onClosed =
                 let app = System.Windows.Application()
@@ -31,31 +33,31 @@ module Main =
                 onStarted()
                 app.Run(window)
             let sceneBounds = GetIt.App.showScene start
-            [ InitializedScene sceneBounds ]
-        | AddPlayer player ->
-            let playerId = GetIt.App.addPlayer player
-            [ PlayerAdded (playerId, player) ]
+            InitializedScene sceneBounds |> Some
+        | AddPlayer (playerId, player) ->
+            GetIt.App.addPlayer playerId player
+            Some UIToControllerMsg.MsgProcessed
         | RemovePlayer playerId ->
             GetIt.App.removePlayer playerId
-            [ PlayerRemoved playerId ]
+            Some UIToControllerMsg.MsgProcessed
         | SetPosition (playerId, position) ->
             GetIt.App.setPosition playerId position
-            [ PositionSet (playerId, position) ]
+            Some UIToControllerMsg.MsgProcessed
         | SetDirection (playerId, angle) ->
             GetIt.App.setDirection playerId angle
-            [ DirectionSet (playerId, angle) ]
+            Some UIToControllerMsg.MsgProcessed
         | SetSpeechBubble (playerId, speechBubble) ->
             GetIt.App.setSpeechBubble playerId speechBubble
-            [ SpeechBubbleSet (playerId, speechBubble) ]
+            Some UIToControllerMsg.MsgProcessed
         | SetPen (playerId, pen) ->
             GetIt.App.setPen playerId pen
-            [ PenSet (playerId, pen) ]
+            Some UIToControllerMsg.MsgProcessed
         | SetSizeFactor (playerId, sizeFactor) ->
             GetIt.App.setSizeFactor playerId sizeFactor
-            [ SizeFactorSet (playerId, sizeFactor) ]
+            Some UIToControllerMsg.MsgProcessed
         | SetNextCostume playerId ->
             GetIt.App.setNextCostume playerId
-            [ NextCostumeSet playerId ]
+            Some UIToControllerMsg.MsgProcessed
 
     [<EntryPoint>]
     let main(_args) =
@@ -63,28 +65,30 @@ module Main =
 
         while true do
             try
-                use pipeServer = new NamedPipeServerStream("GetIt", PipeDirection.InOut)
+                use pipeServer =
+                    new NamedPipeServerStream(
+                        "GetIt",
+                        PipeDirection.InOut,
+                        NamedPipeServerStream.MaxAllowedServerInstances,
+                        PipeTransmissionMode.Byte,
+                        PipeOptions.Asynchronous)
                 pipeServer.WaitForConnection()
 
                 use pipeReader = new StreamReader(pipeServer)
                 use pipeWriter = new StreamWriter(pipeServer)
-                let serializerSettings = JsonSerializerSettings(Formatting = Formatting.None)
 
-                let mutable requestLine = pipeReader.ReadLine()
-                while not <| isNull requestLine do
-                    let requestMessages = JsonConvert.DeserializeObject<RequestMsg list>(requestLine, serializerSettings)
-                    let responseMessages =
-                        requestMessages
-                        |> List.collect executeCommand
-
-                    let responseLine = JsonConvert.SerializeObject(responseMessages, serializerSettings)
-                    pipeWriter.WriteLine(responseLine)
-                    pipeWriter.Flush()
-
-                    requestLine <- pipeReader.ReadLine()
+                MessageProcessing.getMessages pipeReader ControllerToUIMsg.decode
+                |> Observable.toEnumerable
+                |> Seq.iter (fun (IdentifiableMsg (mId, msg)) ->
+                    executeCommand msg
+                    |> Option.map (UIToControllerMsg.encode mId >> Encode.toString 0)
+                    |> Option.iter (fun response ->
+                        pipeWriter.WriteLine response
+                        pipeWriter.Flush()
+                    )
+                )
             with
-            | :? IOException as e when e.Message = "Pipe is broken." ->
-                printfn "Pipe error. Controller might have closed the pipe. %O" e
+            | :? ObjectDisposedException -> () // Writer can't close pipe when reader already closed it.
             | e -> eprintfn "=== Unexpected exception: %O" e
 
         printfn "Pipe closed."
