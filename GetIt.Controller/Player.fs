@@ -13,7 +13,7 @@ module private Raw =
         player.Bounds.Right > Model.current.SceneBounds.Right || player.Bounds.Left < Model.current.SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
-        InterProcessCommunication.sendCommand (SetPosition (player.PlayerId, position))
+        UICommunication.sendCommand (SetPosition (player.PlayerId, position))
 
     let moveToXY (player: GetIt.Player) (x: System.Double) (y: System.Double) =
         moveTo player { X = x; Y = y; }
@@ -49,7 +49,7 @@ module private Raw =
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
-        InterProcessCommunication.sendCommand (SetDirection (player.PlayerId, angle))
+        UICommunication.sendCommand (SetDirection (player.PlayerId, angle))
 
     let rotateClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
         setDirection player (player.Direction - angle)
@@ -87,10 +87,10 @@ module private Raw =
         Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds))
 
     let say (player: GetIt.Player) (text: System.String) =
-        InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))
+        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))
 
     let shutUp (player: GetIt.Player) =
-        InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))
+        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))
 
     let sayWithDuration (player: GetIt.Player) (text: System.String) (durationInSeconds: System.Double) =
         say player text
@@ -98,10 +98,10 @@ module private Raw =
         shutUp player
 
     let ask (player: GetIt.Player) (question: System.String) =
-        InterProcessCommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = "" })))
+        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = "" })))
 
     let setPen (player: GetIt.Player) (pen: GetIt.Pen) =
-        InterProcessCommunication.sendCommand (SetPen (player.PlayerId, pen))
+        UICommunication.sendCommand (SetPen (player.PlayerId, pen))
 
     let turnOnPen (player: GetIt.Player) =
         setPen player { player.Pen with IsOn = true }
@@ -125,13 +125,13 @@ module private Raw =
         setPenWeight player (player.Pen.Weight + weight)
 
     let setSizeFactor (player: GetIt.Player) (sizeFactor: System.Double) =
-        InterProcessCommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))
+        UICommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))
 
     let changeSizeFactor (player: GetIt.Player) (change: System.Double) =
         setSizeFactor player (player.SizeFactor + change)
 
     let nextCostume (player: GetIt.Player) =
-        InterProcessCommunication.sendCommand (SetNextCostume (player.PlayerId))
+        UICommunication.sendCommand (SetNextCostume (player.PlayerId))
 
 module Turtle =
     let private getTurtleOrFail () =

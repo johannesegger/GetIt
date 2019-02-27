@@ -4,7 +4,9 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
+open System.Reactive
 open System.Reactive.Linq
+open System.Reactive.Subjects
 open System.Threading
 open System.Threading.Tasks
 open FSharp.Control.Reactive
@@ -31,7 +33,7 @@ module Model =
           KeyboardState = KeyboardState.empty
           EventHandlers = [] }
 
-module internal InterProcessCommunication =
+module internal UICommunication =
     let private uiProcess =
         lazy (
             // TODO determine UI technology based on host OS
@@ -59,17 +61,16 @@ module internal InterProcessCommunication =
             let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut, PipeOptions.Asynchronous)
             pipeClient.Connect()
 
-            let reader = new StreamReader(pipeClient)
-            let receiveObservable = MessageProcessing.getMessages reader UIToControllerMsg.decode
+            let subject = MessageProcessing.forStream pipeClient ControllerToUIMsg.encode UIToControllerMsg.decode
 
             let subscription =
-                receiveObservable
+                subject
                 |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
                     // TODO handle events etc.
-                    ()
+                    subject.OnNext(IdentifiableMsg(msgId, ControllerToUIMsg.MsgProcessed))
                 )
 
-            (new StreamWriter(pipeClient), receiveObservable)
+            subject
         )
 
     let private updatePlayer model playerId fn =
@@ -104,45 +105,17 @@ module internal InterProcessCommunication =
             updatePlayer playerId Player.nextCostume
 
     let sendCommand command =
-        let (pipeWriter, receiveObservable) = uiProcess.Force()
+        let connection = uiProcess.Force()
 
-        let msgId = Guid.NewGuid()
-
-        use waitHandle = new ManualResetEventSlim()
-        let mutable response = None
-
-        use subscription =
-            receiveObservable
-            |> Observable.filter (fun (IdentifiableMsg (mId, msg)) -> mId = msgId)
-            |> Observable.first
-            |> Observable.subscribeWithCallbacks
-                (fun (IdentifiableMsg (mId, msg)) ->
-                    response <- Some (Ok msg)
-                    waitHandle.Set()
-                )
-                (fun e ->
-                    response <- Some (Error e)
-                    waitHandle.Set()
-                )
-                (fun () ->
-                    waitHandle.Set()
-                )
-
-        let line = Encode.toString 0 (ControllerToUIMsg.encode msgId command)
-        pipeWriter.WriteLine(line)
-        pipeWriter.Flush()
-        
-        waitHandle.Wait()
-
-        match response with
-        | Some (Ok msg) ->
+        match MessageProcessing.sendCommand connection command with
+        | Ok msg ->
             Model.current <-
                 Model.current
                 |> applyControllerToUIMessage command
-                |> applyUIToControllerMessage  msg
-        | Some (Error e) ->
+                |> applyUIToControllerMessage msg
+        | Error (MessageProcessing.ErrorWhileWaitingForResponse e) ->
             failwithf "Error while waiting for response: %O" e
-        | None ->
+        | Error MessageProcessing.NoResponse ->
             // Close the application if the UI has been closed (throwing an exception might be confusing)
             Environment.Exit 1
 
@@ -185,25 +158,23 @@ type Player(playerId) =
     default x.Dispose() =
         if Interlocked.Exchange(&isDisposed, 1) = 0
         then
-            InterProcessCommunication.sendCommand (RemovePlayer playerId)
+            UICommunication.sendCommand (RemovePlayer playerId)
 
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
 module Game =
-    let mutable defaultTurtle = None
+    let mutable internal defaultTurtle = None
 
-    type DefaultPlayer(playerId) =
-        inherit Player(playerId)
-        override x.Dispose() =
-            base.Dispose()
-            defaultTurtle <- None
+    [<CompiledName("ShowScene")>]
+    let showScene () =
+        UICommunication.sendCommand ShowScene
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
-        InterProcessCommunication.sendCommand ShowScene
-        InterProcessCommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
+        showScene ()
+        UICommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
         defaultTurtle <-
             Map.toSeq Model.current.Players
             |> Seq.tryHead
-            |> Option.map (fst >> (fun playerId -> new DefaultPlayer(playerId) :> Player ))
+            |> Option.map (fst >> (fun playerId -> new Player(playerId)))

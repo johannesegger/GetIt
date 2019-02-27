@@ -2,7 +2,9 @@ namespace GetIt
 
 open System
 open System.IO
+open System.Reactive
 open System.Reactive.Linq
+open System.Reactive.Subjects
 open System.Threading
 open FSharp.Control.Reactive
 open Thoth.Json.Net
@@ -194,7 +196,7 @@ module ControllerToUIMsg =
         Decode.tuple2 Decode.guid (Decode.oneOf decoders)
         |> Decode.map IdentifiableMsg
 
-    let encode msgId msg =
+    let encode (IdentifiableMsg (msgId, msg)) =
         let encodeMsg msg =
             match msg with
             | ControllerToUIMsg.MsgProcessed ->
@@ -241,7 +243,7 @@ module UIToControllerMsg =
         Decode.tuple2 Decode.guid (Decode.oneOf decoders)
         |> Decode.map IdentifiableMsg
 
-    let encode msgId msg =
+    let encode (IdentifiableMsg (msgId, msg)) =
         let encodeMsg msg =
             match msg with
             | UIToControllerMsg.MsgProcessed ->
@@ -251,7 +253,8 @@ module UIToControllerMsg =
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
 module MessageProcessing =
-    let getMessages (reader: TextReader) decoder =
+    let private getMessageReceiver (stream: Stream) decoder =
+        let reader = new StreamReader(stream)
         Observable.Create(fun (obs: IObserver<_>) ->
             let rec loop () = async {
                 let! line = reader.ReadLineAsync() |> Async.AwaitTask
@@ -274,3 +277,55 @@ module MessageProcessing =
         )
         |> Observable.publish
         |> Observable.refCount
+
+    let private getMessageSender (stream: Stream) encode =
+        let writer = new StreamWriter(stream)
+        Observer.Create(
+            Action<_>(fun msg ->
+                let line =
+                    encode msg
+                    |> Encode.toString 0
+                writer.WriteLine(line)
+                writer.Flush()),
+            fun () -> try writer.Dispose() with _ -> ()
+        )
+
+    let forStream stream encode decode =
+        let receiver = getMessageReceiver stream decode
+        let sender = getMessageSender stream encode
+        Subject.Create<_, _>(sender, receiver)
+
+    type ResponseError =
+        | ErrorWhileWaitingForResponse of exn
+        | NoResponse
+
+    let sendCommand (connection: ISubject<_, _>) command =
+        let msgId = Guid.NewGuid()
+
+        use waitHandle = new ManualResetEventSlim()
+        let mutable response = None
+
+        use subscription =
+            connection
+            |> Observable.firstIf (fun (IdentifiableMsg (mId, msg)) -> mId = msgId)
+            |> Observable.subscribeWithCallbacks
+                (fun (IdentifiableMsg (mId, msg)) ->
+                    response <- Some (Ok msg)
+                    waitHandle.Set()
+                )
+                (fun e ->
+                    response <- Some (Error e)
+                    waitHandle.Set()
+                )
+                (fun () ->
+                    waitHandle.Set()
+                )
+
+        connection.OnNext(IdentifiableMsg (msgId, command))
+
+        waitHandle.Wait()
+
+        match response with
+        | Some (Ok msg) -> Ok msg
+        | Some (Error e) -> Error (ErrorWhileWaitingForResponse e)
+        | None -> Error NoResponse

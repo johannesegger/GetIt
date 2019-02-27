@@ -74,23 +74,16 @@ module Main =
                         PipeOptions.Asynchronous)
                 pipeServer.WaitForConnection()
 
-                use pipeReader = new StreamReader(pipeServer)
-                use pipeWriter = new StreamWriter(pipeServer)
+                let subject = MessageProcessing.forStream pipeServer UIToControllerMsg.encode ControllerToUIMsg.decode
 
-                MessageProcessing.getMessages pipeReader ControllerToUIMsg.decode
+                subject
                 |> Observable.toEnumerable
                 |> Seq.iter (fun (IdentifiableMsg (mId, msg)) ->
                     executeCommand msg
-                    |> Option.map (UIToControllerMsg.encode mId >> Encode.toString 0)
-                    |> Option.iter (fun response ->
-                        pipeWriter.WriteLine response
-                        pipeWriter.Flush()
-                    )
+                    |> Option.map (fun response -> IdentifiableMsg (mId, response))
+                    |> Option.iter subject.OnNext
                 )
             with
-            | :? ObjectDisposedException -> () // Writer can't close pipe when reader already closed it.
             | e -> eprintfn "=== Unexpected exception: %O" e
-
-        printfn "Pipe closed."
 
         0
