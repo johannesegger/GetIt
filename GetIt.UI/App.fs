@@ -200,6 +200,16 @@ module App =
 
                     yield
                         View.ContentView(
+                            gestureRecognizers = [
+                                View.ClickGestureRecognizer(
+                                    command = (fun () -> dispatch (TriggerEvent (ClickPlayer (playerId, Primary)))),
+                                    buttons = ButtonsMask.Primary
+                                )
+                                View.ClickGestureRecognizer(
+                                    command = (fun () -> dispatch (TriggerEvent (ClickPlayer (playerId, Secondary)))),
+                                    buttons = ButtonsMask.Secondary
+                                )
+                            ],
                             widthRequest = player.Size.Width,
                             heightRequest = player.Size.Height,
                             content = getPlayerView player,
@@ -285,12 +295,22 @@ module App =
             content = View.StackLayout(
                 children = [
                     View.AbsoluteLayout(
+                        gestureRecognizers = [
+                            // TODO fix click position
+                            View.ClickGestureRecognizer(
+                                command = (fun () -> dispatch (TriggerEvent (ClickScene (Position.zero, Primary)))),
+                                buttons = ButtonsMask.Primary
+                            )
+                            View.ClickGestureRecognizer(
+                                command = (fun () -> dispatch (TriggerEvent (ClickScene (Position.zero, Secondary)))),
+                                buttons = ButtonsMask.Secondary
+                            )
+                        ],
                         widthRequest = model.SceneBounds.Size.Width,
                         heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
                     |> sizeChanged (fun _ -> dispatch (SetSceneSize { Width = 600.; Height = 400. }))
-                    // ViewElement.Create
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
                         //orientation = ScrollOrientation.Horizontal,

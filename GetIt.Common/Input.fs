@@ -51,9 +51,8 @@ module KeyboardState =
     let empty = { KeysPressed = [] }
 
 type MouseButton =
-    | Left
-    | Middle
-    | Right
+    | Primary
+    | Secondary
 
 type MouseState =
     { Position: Position }
@@ -65,5 +64,5 @@ type Event =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
     | ClickScene of Position * MouseButton
-    | ClickPlayer of PlayerId
+    | ClickPlayer of PlayerId * MouseButton
     | MouseEnterPlayer of PlayerId
