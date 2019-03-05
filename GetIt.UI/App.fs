@@ -306,8 +306,8 @@ module App =
                         heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
-                    |> sizeChanged (fun _ ->
-                        let size = { Width = 600.; Height = 400. }
+                    |> sizeChanged (fun e ->
+                        let size = { Width = e.Width; Height = e.Height }
                         let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
                         dispatch (SetSceneBounds bounds)
                     )
