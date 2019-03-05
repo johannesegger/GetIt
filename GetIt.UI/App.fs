@@ -18,17 +18,13 @@ module App =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, PlayerData>
           PenLines: PenLine list
-          MouseState: MouseState
-          KeyboardState: KeyboardState
-          EventHandlers: EventHandler list }
+          MouseState: MouseState }
 
     let initModel =
         { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
           PenLines = []
-          MouseState = MouseState.empty
-          KeyboardState = KeyboardState.empty
-          EventHandlers = [] }
+          MouseState = MouseState.empty }
 
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
@@ -294,6 +290,7 @@ module App =
             content = View.StackLayout(
                 children = [
                     View.AbsoluteLayout(
+                        automationId = "scene",
                         gestureRecognizers = [
                             // TODO fix click position
                             View.ClickGestureRecognizer(

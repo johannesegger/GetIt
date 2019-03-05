@@ -4,13 +4,8 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
-open System.Reactive
-open System.Reactive.Linq
-open System.Reactive.Subjects
 open System.Threading
-open System.Threading.Tasks
 open FSharp.Control.Reactive
-open Thoth.Json.Net
 
 type EventHandler =
     | OnKeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
@@ -126,14 +121,14 @@ module internal UICommunication =
             updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
         | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
-        // | KeyDown key ->
-        //     { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
-        // | KeyUp key ->
-        //     { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
-        | MouseMove position ->
+        | ControllerEvent (KeyDown key) ->
+            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
+        | ControllerEvent (KeyUp key) ->
+            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
+        | ControllerEvent (MouseMove position) ->
             // "Real" position (relative to UI) will come from UI
             model
-        | MouseClick -> model
+        | ControllerEvent MouseClick -> model
 
     let sendCommand command =
         let connection = uiProcess.Force()
@@ -201,6 +196,17 @@ module Game =
     let showScene () =
         let sceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
         UICommunication.sendCommand (ShowScene sceneBounds)
+
+        // test
+        UICommunication.sendCommand (ControllerEvent (MouseMove Position.zero))
+        
+        let t = Thread(fun () ->
+            // TODO install mouse move handler
+            // TODO uninstall when pipe is closed
+            ()
+        )
+        t.IsBackground <- false
+        t.Start()
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =

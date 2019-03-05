@@ -3,9 +3,11 @@
 open System
 open System.IO.Pipes
 open System.Reactive.Linq
+open System.Windows
 open FSharp.Control.Reactive
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
+open Xamarin.Forms.Platform.WPF.Helpers
 
 [<assembly: ExportRenderer(typeof<SkiaSharp.Views.Forms.SKCanvasView>, typeof<SkiaSharp.Wpf.SKCanvasViewRenderer>)>]
 do ()
@@ -24,10 +26,10 @@ module Main =
         | ShowScene sceneBounds ->
             let start onStarted onClosed =
                 let app = System.Windows.Application()
+                app.Exit.Subscribe(fun args -> onClosed()) |> ignore
                 Forms.Init()
                 // ApplicationView.PreferredLaunchViewSize = new Size(480, 800);
                 let window = MainWindow()
-                Windows.Application.Current.Exit.Subscribe(fun args -> onClosed()) |> ignore
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
                 app.Run(window)
@@ -58,16 +60,27 @@ module Main =
         | SetNextCostume playerId ->
             GetIt.App.setNextCostume playerId
             Some ControllerMsgProcessed
-        | MouseMove position ->
-            // TODO translate absolute position to scene position and trigger UIEvent if needed
+        | ControllerEvent (KeyDown key) ->
             Some ControllerMsgProcessed
-        | MouseClick ->
+        | ControllerEvent (KeyUp key) ->
+            Some ControllerMsgProcessed
+        | ControllerEvent (MouseMove position) ->
             // TODO translate absolute position to scene position and trigger UIEvent if needed
+            let scene =
+               System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+                   let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+                   TreeHelper.FindChildren<FormsPanel>(window, true)
+                   |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                   |> Seq.tryHead
+               )
+
+            Some ControllerMsgProcessed
+        | ControllerEvent MouseClick ->
             Some ControllerMsgProcessed
 
     [<EntryPoint>]
     let main(_args) =
-        // System.Diagnostics.Debugger.Launch() |> ignore
+        System.Diagnostics.Debugger.Launch() |> ignore
 
         while true do
             try

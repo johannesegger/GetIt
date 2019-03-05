@@ -60,11 +60,11 @@ type MouseState =
 module MouseState =
     let empty = { Position = Position.zero }
 
-// type ControllerEvent =
-//     | KeyDown of KeyboardKey
-//     | KeyUp of KeyboardKey
-//     | MouseMove of Position
-//     | MouseClick
+type ControllerEvent =
+    | KeyDown of KeyboardKey
+    | KeyUp of KeyboardKey
+    | MouseMove of Position
+    | MouseClick
 
 type UIEvent =
     | ClickScene of Position * MouseButton

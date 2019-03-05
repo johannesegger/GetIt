@@ -20,8 +20,7 @@ type ControllerToUIMsg =
     | SetPen of PlayerId * Pen
     | SetSizeFactor of PlayerId * float
     | SetNextCostume of PlayerId
-    | MouseMove of Position
-    | MouseClick
+    | ControllerEvent of ControllerEvent
 
 type UIToControllerMsg =
     | ControllerMsgProcessed
@@ -306,8 +305,10 @@ module ControllerToUIMsg =
                 ("setPen", Decode.tuple2 decodePlayerId decodePen |> Decode.map SetPen)
                 ("setSizeFactor", Decode.tuple2 decodePlayerId Decode.float |> Decode.map SetSizeFactor)
                 ("setNextCostume", decodePlayerId |> Decode.map SetNextCostume)
-                ("mouseMove", decodePosition |> Decode.map MouseMove)
-                ("mouseClick", Decode.nil MouseClick)
+                ("keyDown", decodeKeyboardKey |> Decode.map (KeyDown >> ControllerEvent))
+                ("keyUp", decodeKeyboardKey |> Decode.map (KeyUp >> ControllerEvent))
+                ("mouseMove", decodePosition |> Decode.map (MouseMove >> ControllerEvent))
+                ("mouseClick", Decode.nil (ControllerEvent MouseClick))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -339,9 +340,13 @@ module ControllerToUIMsg =
                 Encode.object [ ("setSizeFactor", Encode.tuple2 encodePlayerId Encode.float (playerId, sizeFactor)) ]
             | SetNextCostume playerId ->
                 Encode.object [ ("setNextCostume", encodePlayerId playerId) ]
-            | MouseMove position ->
+            | ControllerEvent (KeyDown keyboardKey) ->
+                Encode.object [ ("keyDown", encodeKeyboardKey keyboardKey) ]
+            | ControllerEvent (KeyUp keyboardKey) ->
+                Encode.object [ ("keyUp", encodeKeyboardKey keyboardKey) ]
+            | ControllerEvent (MouseMove position) ->
                 Encode.object [ ("mouseMove", encodePosition position) ]
-            | MouseClick ->
+            | ControllerEvent MouseClick ->
                 Encode.object [ ("mouseClick", Encode.nil) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
