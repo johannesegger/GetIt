@@ -13,10 +13,10 @@ open FSharp.Control.Reactive
 open Thoth.Json.Net
 
 type EventHandler =
-    | KeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
-    | ClickScene of handler: (Position -> MouseButton -> unit)
-    | ClickPlayer of playerId: PlayerId * handler: (unit -> unit)
-    | MouseEnterPlayer of playerId: PlayerId * handler: (unit -> unit)
+    | OnKeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
+    | OnClickScene of handler: (Position -> MouseButton -> unit)
+    | OnClickPlayer of playerId: PlayerId * handler: (MouseButton -> unit)
+    | OnMouseEnterPlayer of playerId: PlayerId * handler: (unit -> unit)
 
 type Model =
     { SceneBounds: Rectangle
@@ -67,7 +67,7 @@ module internal UICommunication =
                 subject
                 |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
                     // TODO handle events etc.
-                    subject.OnNext(IdentifiableMsg(msgId, ControllerToUIMsg.MsgProcessed))
+                    subject.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
                 )
 
             subject
@@ -78,17 +78,40 @@ module internal UICommunication =
         { model with Players = Map.add playerId player model.Players }
 
     let private applyUIToControllerMessage message model =
-        let updatePlayer = updatePlayer model
+        let invokeEventHandlers fn =
+            model.EventHandlers
+            |> List.choose fn
+            |> Async.Parallel
+            |> Async.Ignore
+            |> Async.Start
+            model
+
         match message with
-        | UIToControllerMsg.MsgProcessed -> model
-        | InitializedScene sceneBounds -> { model with SceneBounds = sceneBounds }
+        | ControllerMsgProcessed -> model
+        | UIEvent (ClickScene (position, mouseButton)) ->
+            invokeEventHandlers (function
+                | OnClickScene handler -> Some (async { return handler position mouseButton })
+                | _ -> None
+            )
+        | UIEvent (ClickPlayer (playerId, mouseButton)) ->
+            invokeEventHandlers (function
+                | OnClickPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler mouseButton })
+                | _ -> None
+            )
+        | UIEvent (MouseEnterPlayer playerId) ->
+            invokeEventHandlers (function
+                | OnMouseEnterPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler () })
+                | _ -> None
+            )
 
     let private applyControllerToUIMessage message model =
         let updatePlayer = updatePlayer model
         match message with
-        | ControllerToUIMsg.MsgProcessed -> model
-        | ShowScene -> model
-        | AddPlayer (playerId, player) -> { model with Players = Map.add playerId player model.Players }
+        | UIMsgProcessed -> model
+        | ShowScene sceneBounds ->
+            { model with SceneBounds = sceneBounds }
+        | AddPlayer (playerId, player) ->
+            { model with Players = Map.add playerId player model.Players }
         | RemovePlayer playerId ->
             { model with Players = Map.remove playerId model.Players }
         | SetPosition (playerId, position) ->
@@ -103,6 +126,14 @@ module internal UICommunication =
             updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
         | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
+        // | KeyDown key ->
+        //     { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
+        // | KeyUp key ->
+        //     { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
+        | MouseMove position ->
+            // "Real" position (relative to UI) will come from UI
+            model
+        | MouseClick -> model
 
     let sendCommand command =
         let connection = uiProcess.Force()
@@ -168,7 +199,8 @@ module Game =
 
     [<CompiledName("ShowScene")>]
     let showScene () =
-        UICommunication.sendCommand ShowScene
+        let sceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
+        UICommunication.sendCommand (ShowScene sceneBounds)
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =

@@ -10,8 +10,8 @@ open FSharp.Control.Reactive
 open Thoth.Json.Net
 
 type ControllerToUIMsg =
-    | MsgProcessed
-    | ShowScene
+    | UIMsgProcessed
+    | ShowScene of bounds: Rectangle
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
     | SetPosition of PlayerId * Position
@@ -20,10 +20,12 @@ type ControllerToUIMsg =
     | SetPen of PlayerId * Pen
     | SetSizeFactor of PlayerId * float
     | SetNextCostume of PlayerId
+    | MouseMove of Position
+    | MouseClick
 
 type UIToControllerMsg =
-    | MsgProcessed
-    | InitializedScene of sceneBounds: Rectangle
+    | ControllerMsgProcessed
+    | UIEvent of UIEvent
 
 type IdentifiableMsg<'a> = IdentifiableMsg of Guid * 'a
 
@@ -95,6 +97,70 @@ module private Serialization =
         )
 
     let decodePlayerId = Decode.guid |> Decode.map PlayerId
+
+    let decodeRectangle =
+        Decode.object (fun get ->
+            { Position = get.Required.Field "position" decodePosition
+              Size = get.Required.Field "size" decodeSize }
+        )
+
+    let decodeKeyboardKey =
+        Decode.string
+        |> Decode.andThen (fun key ->
+            match key with
+            | "space" -> Decode.succeed Space
+            | "escape" -> Decode.succeed Escape
+            | "up" -> Decode.succeed Up
+            | "down" -> Decode.succeed Down
+            | "left" -> Decode.succeed Left
+            | "right" -> Decode.succeed Right
+            | "a" -> Decode.succeed A
+            | "b" -> Decode.succeed B
+            | "c" -> Decode.succeed C
+            | "d" -> Decode.succeed D
+            | "e" -> Decode.succeed E
+            | "f" -> Decode.succeed F
+            | "g" -> Decode.succeed G
+            | "h" -> Decode.succeed H
+            | "i" -> Decode.succeed I
+            | "j" -> Decode.succeed J
+            | "k" -> Decode.succeed K
+            | "l" -> Decode.succeed L
+            | "m" -> Decode.succeed M
+            | "n" -> Decode.succeed N
+            | "o" -> Decode.succeed O
+            | "p" -> Decode.succeed P
+            | "q" -> Decode.succeed Q
+            | "r" -> Decode.succeed R
+            | "s" -> Decode.succeed S
+            | "t" -> Decode.succeed T
+            | "u" -> Decode.succeed U
+            | "v" -> Decode.succeed V
+            | "w" -> Decode.succeed W
+            | "x" -> Decode.succeed X
+            | "y" -> Decode.succeed Y
+            | "z" -> Decode.succeed Z
+            | "0" -> Decode.succeed Digit0
+            | "1" -> Decode.succeed Digit1
+            | "2" -> Decode.succeed Digit2
+            | "3" -> Decode.succeed Digit3
+            | "4" -> Decode.succeed Digit4
+            | "5" -> Decode.succeed Digit5
+            | "6" -> Decode.succeed Digit6
+            | "7" -> Decode.succeed Digit7
+            | "8" -> Decode.succeed Digit8
+            | "9" -> Decode.succeed Digit9
+            | x -> Decode.fail (sprintf "Can't decode \"%s\" as keyboard key" x)
+        )
+
+    let decodeMouseButton =
+        Decode.string
+        |> Decode.andThen (fun key ->
+            match key with
+            | "primary" -> Decode.succeed Primary
+            | "secondary" -> Decode.succeed Secondary
+            | x -> Decode.fail (sprintf "Can't decode \"%s\" as mouse button" x)
+        )
 
     let encodePlayerId (PlayerId playerId) = Encode.guid playerId
 
@@ -172,14 +238,66 @@ module private Serialization =
             ("size", encodeSize rectangle.Size)
         ]
 
+    let encodeKeyboardKey key =
+        match key with
+        | Space -> "space"
+        | Escape -> "escape"
+        | Up -> "up"
+        | Down -> "down"
+        | Left -> "left"
+        | Right -> "right"
+        | A -> "a"
+        | B -> "b"
+        | C -> "c"
+        | D -> "d"
+        | E -> "e"
+        | F -> "f"
+        | G -> "g"
+        | H -> "h"
+        | I -> "i"
+        | J -> "j"
+        | K -> "k"
+        | L -> "l"
+        | M -> "m"
+        | N -> "n"
+        | O -> "o"
+        | P -> "p"
+        | Q -> "q"
+        | R -> "r"
+        | S -> "s"
+        | T -> "t"
+        | U -> "u"
+        | V -> "v"
+        | W -> "w"
+        | X -> "x"
+        | Y -> "y"
+        | Z -> "z"
+        | Digit0 -> "0"
+        | Digit1 -> "1"
+        | Digit2 -> "2"
+        | Digit3 -> "3"
+        | Digit4 -> "4"
+        | Digit5 -> "5"
+        | Digit6 -> "6"
+        | Digit7 -> "7"
+        | Digit8 -> "8"
+        | Digit9 -> "9"
+        |> Encode.string
+
+    let encodeMouseButton mouseButton =
+        match mouseButton with
+        | Primary -> "primary"
+        | Secondary -> "secondary"
+        |> Encode.string
+
 module ControllerToUIMsg =
     open Serialization
 
     let decode: Decode.Decoder<IdentifiableMsg<_>> =
         let decoders =
             [
-                ("messageProcessed", Decode.nil ControllerToUIMsg.MsgProcessed)
-                ("showScene", Decode.nil ShowScene)
+                ("messageProcessed", Decode.nil UIMsgProcessed)
+                ("showScene", decodeRectangle |> Decode.map ShowScene)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
                 ("setPosition", Decode.tuple2 decodePlayerId decodePosition |> Decode.map SetPosition)
@@ -188,6 +306,8 @@ module ControllerToUIMsg =
                 ("setPen", Decode.tuple2 decodePlayerId decodePen |> Decode.map SetPen)
                 ("setSizeFactor", Decode.tuple2 decodePlayerId Decode.float |> Decode.map SetSizeFactor)
                 ("setNextCostume", decodePlayerId |> Decode.map SetNextCostume)
+                ("mouseMove", decodePosition |> Decode.map MouseMove)
+                ("mouseClick", Decode.nil MouseClick)
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -199,10 +319,10 @@ module ControllerToUIMsg =
     let encode (IdentifiableMsg (msgId, msg)) =
         let encodeMsg msg =
             match msg with
-            | ControllerToUIMsg.MsgProcessed ->
+            | UIMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
-            | ShowScene ->
-                Encode.object [ ("showScene", Encode.nil) ]
+            | ShowScene bounds ->
+                Encode.object [ ("showScene", encodeRectangle bounds) ]
             | AddPlayer (playerId, playerData) ->
                 Encode.object [ ("addPlayer", Encode.tuple2 encodePlayerId encodePlayerData (playerId, playerData)) ]
             | RemovePlayer playerId ->
@@ -219,22 +339,23 @@ module ControllerToUIMsg =
                 Encode.object [ ("setSizeFactor", Encode.tuple2 encodePlayerId Encode.float (playerId, sizeFactor)) ]
             | SetNextCostume playerId ->
                 Encode.object [ ("setNextCostume", encodePlayerId playerId) ]
+            | MouseMove position ->
+                Encode.object [ ("mouseMove", encodePosition position) ]
+            | MouseClick ->
+                Encode.object [ ("mouseClick", Encode.nil) ]
+
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
 module UIToControllerMsg =
     open Serialization
     
     let decode: Decode.Decoder<IdentifiableMsg<_>> =
-        let decodeRectangle =
-            Decode.object (fun get ->
-                { Position = get.Required.Field "position" decodePosition
-                  Size = get.Required.Field "size" decodeSize }
-            )
-
         let decoders =
             [
-                ("messageProcessed", Decode.nil UIToControllerMsg.MsgProcessed)
-                ("initializedScene", decodeRectangle |> Decode.map InitializedScene)
+                ("messageProcessed", Decode.nil ControllerMsgProcessed)
+                ("clickScene", Decode.tuple2 decodePosition decodeMouseButton |> Decode.map (ClickScene >> UIEvent))
+                ("clickPlayer", Decode.tuple2 decodePlayerId decodeMouseButton |> Decode.map (ClickPlayer >> UIEvent))
+                ("mouseEnterPlayer", decodePlayerId |> Decode.map (MouseEnterPlayer >> UIEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -246,10 +367,15 @@ module UIToControllerMsg =
     let encode (IdentifiableMsg (msgId, msg)) =
         let encodeMsg msg =
             match msg with
-            | UIToControllerMsg.MsgProcessed ->
+            | ControllerMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
-            | InitializedScene sceneBounds ->
-                Encode.object [ ("initializedScene", encodeRectangle sceneBounds) ]
+            | UIEvent (ClickScene (position, mouseButton)) ->
+                Encode.object [ ("clickScene", Encode.tuple2 encodePosition encodeMouseButton (position, mouseButton)) ]
+            | UIEvent (ClickPlayer (playerId, mouseButton)) ->
+                Encode.object [ ("clickPlayer", Encode.tuple2 encodePlayerId encodeMouseButton (playerId, mouseButton)) ]
+            | UIEvent (MouseEnterPlayer playerId) ->
+                Encode.object [ ("mouseEnterPlayer", encodePlayerId playerId) ]
+
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
 module MessageProcessing =

@@ -19,6 +19,9 @@ type Size =
           Height = size.Height * factor }
 
 module Size =
+    let zero =
+        { Width = 0.; Height = 0. }
+
     let scale boxSize size =
         let widthRatio = boxSize.Width / size.Width;
         let heightRatio = boxSize.Height / size.Height;
@@ -35,6 +38,10 @@ type Rectangle =
     member this.Top with get() = this.Position.Y + this.Size.Height
 
     member this.Bottom with get() = this.Position.Y
+
+module Rectangle =
+    let zero =
+        { Position = Position.zero; Size = Size.zero }
 
 type Degrees = private Degrees of double 
     with

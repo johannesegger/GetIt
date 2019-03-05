@@ -45,10 +45,10 @@ type KeyboardKey =
     | Digit9
 
 type KeyboardState =
-    { KeysPressed: KeyboardKey list }
+    { KeysPressed: Set<KeyboardKey> }
 
 module KeyboardState =
-    let empty = { KeysPressed = [] }
+    let empty = { KeysPressed = Set.empty }
 
 type MouseButton =
     | Primary
@@ -60,9 +60,13 @@ type MouseState =
 module MouseState =
     let empty = { Position = Position.zero }
 
-type Event =
-    | KeyDown of KeyboardKey
-    | KeyUp of KeyboardKey
+// type ControllerEvent =
+//     | KeyDown of KeyboardKey
+//     | KeyUp of KeyboardKey
+//     | MouseMove of Position
+//     | MouseClick
+
+type UIEvent =
     | ClickScene of Position * MouseButton
     | ClickPlayer of PlayerId * MouseButton
     | MouseEnterPlayer of PlayerId

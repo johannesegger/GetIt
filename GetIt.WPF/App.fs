@@ -1,11 +1,9 @@
 ﻿namespace GetIt
 
 open System
-open System.IO
 open System.IO.Pipes
-open System.Text
+open System.Reactive.Linq
 open FSharp.Control.Reactive
-open Thoth.Json.Net
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
 
@@ -17,47 +15,55 @@ type MainWindow() =
     // do
     //     base.SizeToContent <- Windows.SizeToContent.WidthAndHeight
 
-
 module Main =
+    let private eventSubject = new System.Reactive.Subjects.Subject<UIEvent>()
+
     let executeCommand cmd =
         match cmd with
-        | ControllerToUIMsg.MsgProcessed -> None
-        | ShowScene ->
+        | UIMsgProcessed -> None
+        | ShowScene sceneBounds ->
             let start onStarted onClosed =
                 let app = System.Windows.Application()
                 Forms.Init()
                 // ApplicationView.PreferredLaunchViewSize = new Size(480, 800);
                 let window = MainWindow()
                 Windows.Application.Current.Exit.Subscribe(fun args -> onClosed()) |> ignore
-                window.LoadApplication(GetIt.App())
+                window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
                 app.Run(window)
-            let sceneBounds = GetIt.App.showScene start
-            InitializedScene sceneBounds |> Some
+            GetIt.App.showScene start
+            GetIt.App.setSceneBounds sceneBounds
+            Some ControllerMsgProcessed
         | AddPlayer (playerId, player) ->
             GetIt.App.addPlayer playerId player
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | RemovePlayer playerId ->
             GetIt.App.removePlayer playerId
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetPosition (playerId, position) ->
             GetIt.App.setPosition playerId position
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetDirection (playerId, angle) ->
             GetIt.App.setDirection playerId angle
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetSpeechBubble (playerId, speechBubble) ->
             GetIt.App.setSpeechBubble playerId speechBubble
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetPen (playerId, pen) ->
             GetIt.App.setPen playerId pen
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetSizeFactor (playerId, sizeFactor) ->
             GetIt.App.setSizeFactor playerId sizeFactor
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
         | SetNextCostume playerId ->
             GetIt.App.setNextCostume playerId
-            Some UIToControllerMsg.MsgProcessed
+            Some ControllerMsgProcessed
+        | MouseMove position ->
+            // TODO translate absolute position to scene position and trigger UIEvent if needed
+            Some ControllerMsgProcessed
+        | MouseClick ->
+            // TODO translate absolute position to scene position and trigger UIEvent if needed
+            Some ControllerMsgProcessed
 
     [<EntryPoint>]
     let main(_args) =
@@ -75,6 +81,11 @@ module Main =
                 pipeServer.WaitForConnection()
 
                 let subject = MessageProcessing.forStream pipeServer UIToControllerMsg.encode ControllerToUIMsg.decode
+
+                use eventSubscription =
+                    eventSubject
+                    |> Observable.map (fun evt -> IdentifiableMsg (Guid.NewGuid(), UIEvent evt))
+                    |> Observable.subscribe subject.OnNext
 
                 subject
                 |> Observable.toEnumerable

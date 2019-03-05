@@ -23,7 +23,7 @@ module App =
           EventHandlers: EventHandler list }
 
     let initModel =
-        { SceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
+        { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
           PenLines = []
           MouseState = MouseState.empty
@@ -31,7 +31,7 @@ module App =
           EventHandlers = [] }
 
     type Msg =
-        | SetSceneSize of GetIt.Size
+        | SetSceneBounds of GetIt.Rectangle
         | SetKeyboardKeyPressed of KeyboardKey
         | SetKeyboardKeyReleased of KeyboardKey
         | SetMousePosition of Position
@@ -48,19 +48,18 @@ module App =
         | ClearScene
         | AddEventHandler of EventHandler
         | RemoveEventHandler of EventHandler
-        | TriggerEvent of Event
+        | TriggerEvent of UIEvent
         | ExecuteAction of (unit -> unit)
 
     let init () = (initModel, Cmd.none)
 
-    let update msg model =
+    let update triggerEvent msg model =
         let updatePlayer playerId fn =
             let player = Map.find playerId model.Players |> fn
             { model with Players = Map.add playerId player model.Players }
 
         match msg with
-        | SetSceneSize size ->
-            let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
+        | SetSceneBounds bounds ->
             let model' = { model with SceneBounds = bounds }
             (model', Cmd.none)
         | SetKeyboardKeyPressed key ->
@@ -117,7 +116,7 @@ module App =
         | RemoveEventHandler eventHandler ->
             (model, Cmd.none)
         | TriggerEvent event ->
-            (model, Cmd.none)
+            (model, Cmd.ofAsyncMsgOption (async { triggerEvent event; return None }))
         | ExecuteAction action ->
             (model, Cmd.none)
 
@@ -310,7 +309,11 @@ module App =
                         heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
-                    |> sizeChanged (fun _ -> dispatch (SetSceneSize { Width = 600.; Height = 400. }))
+                    |> sizeChanged (fun _ ->
+                        let size = { Width = 600.; Height = 400. }
+                        let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
+                        dispatch (SetSceneBounds bounds)
+                    )
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
                         //orientation = ScrollOrientation.Horizontal,
@@ -336,8 +339,8 @@ module App =
         )
 
     // Note, this declaration is needed if you enable LiveUpdate
-    let program =
-        Program.mkProgram init update view
+    let program triggerEvent =
+        Program.mkProgram init (update triggerEvent) view
         |> Program.withSubscription (fun _ -> subscription)
 
     let showScene start =
@@ -353,8 +356,8 @@ module App =
         uiThread.IsBackground <- false
         uiThread.Start()
         signal.Wait()
-        initModel.SceneBounds
 
+    let setSceneBounds sceneBounds = dispatchMessage (SetSceneBounds sceneBounds)
     let addPlayer playerId player = dispatchMessage (AddPlayer (playerId, player))
     let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
     let setPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
@@ -364,11 +367,11 @@ module App =
     let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
     let setNextCostume playerId = dispatchMessage (NextCostume playerId)
 
-type App () as app = 
+type App (triggerEvent) as app = 
     inherit Application ()
 
     let runner = 
-        App.program
+        App.program triggerEvent
         // |> Program.withConsoleTrace // this slows down execution by a lot, so uncomment with caution
         |> Program.runWithDynamicView app
 
