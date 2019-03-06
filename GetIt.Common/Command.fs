@@ -358,6 +358,7 @@ module UIToControllerMsg =
         let decoders =
             [
                 ("messageProcessed", Decode.nil ControllerMsgProcessed)
+                ("setMousePosition", decodePosition |> Decode.map (SetMousePosition >> UIEvent))
                 ("clickScene", Decode.tuple2 decodePosition decodeMouseButton |> Decode.map (ClickScene >> UIEvent))
                 ("clickPlayer", Decode.tuple2 decodePlayerId decodeMouseButton |> Decode.map (ClickPlayer >> UIEvent))
                 ("mouseEnterPlayer", decodePlayerId |> Decode.map (MouseEnterPlayer >> UIEvent))
@@ -374,6 +375,8 @@ module UIToControllerMsg =
             match msg with
             | ControllerMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
+            | UIEvent (SetMousePosition position) ->
+                Encode.object [ ("setMousePosition", encodePosition position) ]
             | UIEvent (ClickScene (position, mouseButton)) ->
                 Encode.object [ ("clickScene", Encode.tuple2 encodePosition encodeMouseButton (position, mouseButton)) ]
             | UIEvent (ClickPlayer (playerId, mouseButton)) ->

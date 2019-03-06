@@ -30,7 +30,7 @@ module App =
         | SetSceneBounds of GetIt.Rectangle
         | SetKeyboardKeyPressed of KeyboardKey
         | SetKeyboardKeyReleased of KeyboardKey
-        | SetMousePosition of Position
+        | SetMousePosition of positionRelativeToSceneControl: Position
         | SetPlayerPosition of PlayerId * Position
         | SetPlayerDirection of PlayerId * Degrees
         | SetSpeechBubble of PlayerId * SpeechBubble option
@@ -62,8 +62,13 @@ module App =
             (model, Cmd.none)
         | SetKeyboardKeyReleased key ->
             (model, Cmd.none)
-        | SetMousePosition position ->
-            (model, Cmd.none)
+        | SetMousePosition positionRelativeToSceneControl ->
+            let position =
+                { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
+                  Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
+            let model' = { model with MouseState = { model.MouseState with Position = position } }
+            let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.SetMousePosition position))
+            (model', cmd)
         | SetPlayerPosition (playerId, position) ->
             let model' =
                 let player = Map.find playerId model.Players
@@ -363,6 +368,7 @@ module App =
     let setPen playerId pen = dispatchMessage (SetPen (playerId, pen))
     let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
     let setNextCostume playerId = dispatchMessage (NextCostume playerId)
+    let setMousePosition position = dispatchMessage (SetMousePosition position)
 
 type App (triggerEvent) as app = 
     inherit Application ()

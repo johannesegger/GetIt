@@ -29,6 +29,70 @@ module Model =
           EventHandlers = [] }
 
 module internal UICommunication =
+    let private applyUIToControllerMessage message model =
+        let invokeEventHandlers fn =
+            model.EventHandlers
+            |> List.choose fn
+            |> Async.Parallel
+            |> Async.Ignore
+            |> Async.Start
+            model
+
+        match message with
+        | ControllerMsgProcessed -> model
+        | UIEvent (SetMousePosition position) ->
+            { model with MouseState = { model.MouseState with Position = position } }
+        | UIEvent (ClickScene (position, mouseButton)) ->
+            invokeEventHandlers (function
+                | OnClickScene handler -> Some (async { return handler position mouseButton })
+                | _ -> None
+            )
+        | UIEvent (ClickPlayer (playerId, mouseButton)) ->
+            invokeEventHandlers (function
+                | OnClickPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler mouseButton })
+                | _ -> None
+            )
+        | UIEvent (MouseEnterPlayer playerId) ->
+            invokeEventHandlers (function
+                | OnMouseEnterPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler () })
+                | _ -> None
+            )
+
+    let private updatePlayer model playerId fn =
+        let player = Map.find playerId model.Players |> fn
+        { model with Players = Map.add playerId player model.Players }
+
+    let private applyControllerToUIMessage message model =
+        let updatePlayer = updatePlayer model
+        match message with
+        | UIMsgProcessed -> model
+        | ShowScene sceneBounds ->
+            { model with SceneBounds = sceneBounds }
+        | AddPlayer (playerId, player) ->
+            { model with Players = Map.add playerId player model.Players }
+        | RemovePlayer playerId ->
+            { model with Players = Map.remove playerId model.Players }
+        | SetPosition (playerId, position) ->
+            updatePlayer playerId (fun p -> { p with Position = position })
+        | SetDirection (playerId, angle) ->
+            updatePlayer playerId (fun p -> { p with Direction = angle })
+        | SetSpeechBubble (playerId, speechBubble) ->
+            updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
+        | SetPen (playerId, pen) ->
+            updatePlayer playerId (fun p -> { p with Pen = pen })
+        | SetSizeFactor (playerId, sizeFactor) ->
+            updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
+        | SetNextCostume playerId ->
+            updatePlayer playerId Player.nextCostume
+        | ControllerEvent (KeyDown key) ->
+            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
+        | ControllerEvent (KeyUp key) ->
+            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
+        | ControllerEvent (MouseMove position) ->
+            // Position on scene will come from UI
+            model
+        | ControllerEvent MouseClick -> model
+
     let private uiProcess =
         lazy (
             // TODO determine UI technology based on host OS
@@ -61,80 +125,20 @@ module internal UICommunication =
             let subscription =
                 subject
                 |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
-                    // TODO handle events etc.
+                    // TODO fix race conditions with other updates of `Model.current`
+                    Model.current <- applyUIToControllerMessage msg Model.current
                     subject.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
                 )
 
             subject
         )
 
-    let private updatePlayer model playerId fn =
-        let player = Map.find playerId model.Players |> fn
-        { model with Players = Map.add playerId player model.Players }
-
-    let private applyUIToControllerMessage message model =
-        let invokeEventHandlers fn =
-            model.EventHandlers
-            |> List.choose fn
-            |> Async.Parallel
-            |> Async.Ignore
-            |> Async.Start
-            model
-
-        match message with
-        | ControllerMsgProcessed -> model
-        | UIEvent (ClickScene (position, mouseButton)) ->
-            invokeEventHandlers (function
-                | OnClickScene handler -> Some (async { return handler position mouseButton })
-                | _ -> None
-            )
-        | UIEvent (ClickPlayer (playerId, mouseButton)) ->
-            invokeEventHandlers (function
-                | OnClickPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler mouseButton })
-                | _ -> None
-            )
-        | UIEvent (MouseEnterPlayer playerId) ->
-            invokeEventHandlers (function
-                | OnMouseEnterPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler () })
-                | _ -> None
-            )
-
-    let private applyControllerToUIMessage message model =
-        let updatePlayer = updatePlayer model
-        match message with
-        | UIMsgProcessed -> model
-        | ShowScene sceneBounds ->
-            { model with SceneBounds = sceneBounds }
-        | AddPlayer (playerId, player) ->
-            { model with Players = Map.add playerId player model.Players }
-        | RemovePlayer playerId ->
-            { model with Players = Map.remove playerId model.Players }
-        | SetPosition (playerId, position) ->
-            updatePlayer playerId (fun p -> { p with Position = position })
-        | SetDirection (playerId, angle) ->
-            updatePlayer playerId (fun p -> { p with Direction = angle })
-        | SetSpeechBubble (playerId, speechBubble) ->
-            updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
-        | SetPen (playerId, pen) ->
-            updatePlayer playerId (fun p -> { p with Pen = pen })
-        | SetSizeFactor (playerId, sizeFactor) ->
-            updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
-        | SetNextCostume playerId ->
-            updatePlayer playerId Player.nextCostume
-        | ControllerEvent (KeyDown key) ->
-            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
-        | ControllerEvent (KeyUp key) ->
-            { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
-        | ControllerEvent (MouseMove position) ->
-            // "Real" position (relative to UI) will come from UI
-            model
-        | ControllerEvent MouseClick -> model
-
     let sendCommand command =
         let connection = uiProcess.Force()
 
         match MessageProcessing.sendCommand connection command with
         | Ok msg ->
+            // TODO fix race conditions with other updates of `Model.current`
             Model.current <-
                 Model.current
                 |> applyControllerToUIMessage command
@@ -199,7 +203,7 @@ module Game =
 
         // test
         UICommunication.sendCommand (ControllerEvent (MouseMove Position.zero))
-        
+
         let t = Thread(fun () ->
             // TODO install mouse move handler
             // TODO uninstall when pipe is closed

@@ -65,15 +65,18 @@ module Main =
         | ControllerEvent (KeyUp key) ->
             Some ControllerMsgProcessed
         | ControllerEvent (MouseMove position) ->
-            // TODO translate absolute position to scene position and trigger UIEvent if needed
-            let scene =
-               System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-                   let window = System.Windows.Application.Current.MainWindow :?> MainWindow
-                   TreeHelper.FindChildren<FormsPanel>(window, true)
-                   |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-                   |> Seq.tryHead
-               )
-
+            System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+                let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+                TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
+                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                |> Seq.tryHead
+                |> Option.map (fun scene ->
+                    let screenPoint = System.Windows.Point(position.X, position.Y)
+                    let point = scene.PointFromScreen(screenPoint)
+                    { X = point.X; Y = point.Y }
+                )
+            )
+            |> Option.iter GetIt.App.setMousePosition
             Some ControllerMsgProcessed
         | ControllerEvent MouseClick ->
             Some ControllerMsgProcessed
