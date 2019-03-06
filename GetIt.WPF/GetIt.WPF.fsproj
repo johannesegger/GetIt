@@ -4,6 +4,8 @@
     <TargetFramework>net471</TargetFramework>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <Platform>x64</Platform>
+    <ShouldIncludeNativeSkiaSharp>True</ShouldIncludeNativeSkiaSharp>
+    <PreferredNativeSkiaSharp>x64</PreferredNativeSkiaSharp>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.fs" />
