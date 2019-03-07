@@ -8,7 +8,8 @@ open System.Threading
 open FSharp.Control.Reactive
 
 type EventHandler =
-    | OnKeyDown of key: KeyboardKey option * handler: (KeyboardKey -> unit)
+    | OnAnyKeyDown of handler: (KeyboardKey -> unit)
+    | OnKeyDown of key: KeyboardKey * handler: (unit -> unit)
     | OnClickScene of handler: (Position -> MouseButton -> unit)
     | OnClickPlayer of playerId: PlayerId * handler: (MouseButton -> unit)
     | OnMouseEnterPlayer of playerId: PlayerId * handler: (unit -> unit)
@@ -29,34 +30,38 @@ module Model =
           EventHandlers = [] }
 
 module internal UICommunication =
+    let private invokeEventHandlers model fn =
+        model.EventHandlers
+        |> List.choose fn
+        |> Async.Parallel
+        |> Async.Ignore
+        |> Async.Start
+        model
+
     let private applyUIToControllerMessage message model =
-        let invokeEventHandlers fn =
-            model.EventHandlers
-            |> List.choose fn
-            |> Async.Parallel
-            |> Async.Ignore
-            |> Async.Start
-            model
+        let invokeEventHandlers = invokeEventHandlers model
 
         match message with
         | ControllerMsgProcessed -> model
         | UIEvent (SetMousePosition position) ->
+            let hasBeenEntered (player: PlayerData) =
+                not (Rectangle.contains model.MouseState.Position player.Bounds) &&
+                Rectangle.contains position player.Bounds
+
+            let enteredPlayerIds =
+                model.Players
+                |> Map.toSeq
+                |> Seq.filter (snd >> hasBeenEntered)
+                |> Seq.map fst
+                |> Seq.toList
+            invokeEventHandlers (function
+                | OnMouseEnterPlayer (playerId, handler) when List.contains playerId enteredPlayerIds ->
+                    Some (async { return handler () })
+                | _ -> None
+            )
+            |> ignore
+            
             { model with MouseState = { model.MouseState with Position = position } }
-        | UIEvent (ClickScene (position, mouseButton)) ->
-            invokeEventHandlers (function
-                | OnClickScene handler -> Some (async { return handler position mouseButton })
-                | _ -> None
-            )
-        | UIEvent (ClickPlayer (playerId, mouseButton)) ->
-            invokeEventHandlers (function
-                | OnClickPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler mouseButton })
-                | _ -> None
-            )
-        | UIEvent (MouseEnterPlayer playerId) ->
-            invokeEventHandlers (function
-                | OnMouseEnterPlayer (playerId, handler) when playerId = playerId -> Some (async { return handler () })
-                | _ -> None
-            )
 
     let private updatePlayer model playerId fn =
         let player = Map.find playerId model.Players |> fn
@@ -64,6 +69,8 @@ module internal UICommunication =
 
     let private applyControllerToUIMessage message model =
         let updatePlayer = updatePlayer model
+        let invokeEventHandlers = invokeEventHandlers model
+
         match message with
         | UIMsgProcessed -> model
         | ShowScene sceneBounds ->
@@ -85,13 +92,44 @@ module internal UICommunication =
         | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
         | ControllerEvent (KeyDown key) ->
+            invokeEventHandlers (function
+                | OnAnyKeyDown handler ->
+                    Some (async { return handler key })
+                | OnKeyDown (handlerKey, handler) when handlerKey = key ->
+                    Some (async { return handler () })
+                | _ -> None
+            )
+            |> ignore
             { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
         | ControllerEvent (KeyUp key) ->
             { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
         | ControllerEvent (MouseMove position) ->
             // Position on scene will come from UI
             model
-        | ControllerEvent MouseClick -> model
+        | ControllerEvent (MouseClick mouseButton) ->
+            let clickedPlayerIds =
+                model.Players
+                |> Map.toSeq
+                |> Seq.filter (snd >> fun player -> Rectangle.contains model.MouseState.Position player.Bounds)
+                |> Seq.map fst
+                |> Seq.toList
+            invokeEventHandlers (function
+                | OnClickPlayer (playerId, handler) when List.contains playerId clickedPlayerIds ->
+                    Some (async { return handler mouseButton })
+                | _ -> None
+            )
+            |> ignore
+
+            if List.isEmpty clickedPlayerIds && Rectangle.contains model.MouseState.Position model.SceneBounds
+            then
+                invokeEventHandlers (function
+                    | OnClickScene handler ->
+                        Some (async { return handler model.MouseState.Position mouseButton })
+                    | _ -> None
+                )
+                |> ignore
+
+            model
 
     let private uiProcess =
         lazy (

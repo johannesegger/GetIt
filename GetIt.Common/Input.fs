@@ -64,11 +64,7 @@ type ControllerEvent =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
     | MouseMove of Position
-    | MouseClick
+    | MouseClick of MouseButton
 
 type UIEvent =
     | SetMousePosition of Position
-    // TODO remove all of these and trigger everything directly in controller?
-    | ClickScene of Position * MouseButton
-    | ClickPlayer of PlayerId * MouseButton
-    | MouseEnterPlayer of PlayerId

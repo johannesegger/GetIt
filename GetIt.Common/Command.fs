@@ -308,7 +308,7 @@ module ControllerToUIMsg =
                 ("keyDown", decodeKeyboardKey |> Decode.map (KeyDown >> ControllerEvent))
                 ("keyUp", decodeKeyboardKey |> Decode.map (KeyUp >> ControllerEvent))
                 ("mouseMove", decodePosition |> Decode.map (MouseMove >> ControllerEvent))
-                ("mouseClick", Decode.nil (ControllerEvent MouseClick))
+                ("mouseClick", decodeMouseButton |> Decode.map (MouseClick >> ControllerEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -346,8 +346,8 @@ module ControllerToUIMsg =
                 Encode.object [ ("keyUp", encodeKeyboardKey keyboardKey) ]
             | ControllerEvent (MouseMove position) ->
                 Encode.object [ ("mouseMove", encodePosition position) ]
-            | ControllerEvent MouseClick ->
-                Encode.object [ ("mouseClick", Encode.nil) ]
+            | ControllerEvent (MouseClick mouseButton) ->
+                Encode.object [ ("mouseClick", encodeMouseButton mouseButton) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
@@ -359,9 +359,6 @@ module UIToControllerMsg =
             [
                 ("messageProcessed", Decode.nil ControllerMsgProcessed)
                 ("setMousePosition", decodePosition |> Decode.map (SetMousePosition >> UIEvent))
-                ("clickScene", Decode.tuple2 decodePosition decodeMouseButton |> Decode.map (ClickScene >> UIEvent))
-                ("clickPlayer", Decode.tuple2 decodePlayerId decodeMouseButton |> Decode.map (ClickPlayer >> UIEvent))
-                ("mouseEnterPlayer", decodePlayerId |> Decode.map (MouseEnterPlayer >> UIEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -377,12 +374,6 @@ module UIToControllerMsg =
                 Encode.object [ ("messageProcessed", Encode.nil) ]
             | UIEvent (SetMousePosition position) ->
                 Encode.object [ ("setMousePosition", encodePosition position) ]
-            | UIEvent (ClickScene (position, mouseButton)) ->
-                Encode.object [ ("clickScene", Encode.tuple2 encodePosition encodeMouseButton (position, mouseButton)) ]
-            | UIEvent (ClickPlayer (playerId, mouseButton)) ->
-                Encode.object [ ("clickPlayer", Encode.tuple2 encodePlayerId encodeMouseButton (playerId, mouseButton)) ]
-            | UIEvent (MouseEnterPlayer playerId) ->
-                Encode.object [ ("mouseEnterPlayer", encodePlayerId playerId) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 

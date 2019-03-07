@@ -17,14 +17,12 @@ module App =
     type Model =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, PlayerData>
-          PenLines: PenLine list
-          MouseState: MouseState }
+          PenLines: PenLine list }
 
     let initModel =
         { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
-          PenLines = []
-          MouseState = MouseState.empty }
+          PenLines = [] }
 
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
@@ -66,9 +64,8 @@ module App =
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
-            let model' = { model with MouseState = { model.MouseState with Position = position } }
             let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.SetMousePosition position))
-            (model', cmd)
+            (model, cmd)
         | SetPlayerPosition (playerId, position) ->
             let model' =
                 let player = Map.find playerId model.Players
@@ -200,16 +197,6 @@ module App =
 
                     yield
                         View.ContentView(
-                            gestureRecognizers = [
-                                View.ClickGestureRecognizer(
-                                    command = (fun () -> dispatch (TriggerEvent (ClickPlayer (playerId, Primary)))),
-                                    buttons = ButtonsMask.Primary
-                                )
-                                View.ClickGestureRecognizer(
-                                    command = (fun () -> dispatch (TriggerEvent (ClickPlayer (playerId, Secondary)))),
-                                    buttons = ButtonsMask.Secondary
-                                )
-                            ],
                             widthRequest = player.Size.Width,
                             heightRequest = player.Size.Height,
                             content = getPlayerView player,
@@ -296,17 +283,6 @@ module App =
                 children = [
                     View.AbsoluteLayout(
                         automationId = "scene",
-                        gestureRecognizers = [
-                            // TODO fix click position
-                            View.ClickGestureRecognizer(
-                                command = (fun () -> dispatch (TriggerEvent (ClickScene (Position.zero, Primary)))),
-                                buttons = ButtonsMask.Primary
-                            )
-                            View.ClickGestureRecognizer(
-                                command = (fun () -> dispatch (TriggerEvent (ClickScene (Position.zero, Secondary)))),
-                                buttons = ButtonsMask.Secondary
-                            )
-                        ],
                         widthRequest = model.SceneBounds.Size.Width,
                         heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,

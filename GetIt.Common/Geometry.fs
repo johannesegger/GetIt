@@ -43,6 +43,12 @@ module Rectangle =
     let zero =
         { Position = Position.zero; Size = Size.zero }
 
+    let contains position (rectangle: Rectangle) =
+        rectangle.Left <= position.X &&
+        rectangle.Right >= position.X &&
+        rectangle.Top >= position.Y &&
+        rectangle.Bottom <= position.Y
+
 type Degrees = private Degrees of double 
     with
         static member private Create(value) =

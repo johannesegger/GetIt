@@ -78,7 +78,7 @@ module Main =
             )
             |> Option.iter GetIt.App.setMousePosition
             Some ControllerMsgProcessed
-        | ControllerEvent MouseClick ->
+        | ControllerEvent (MouseClick mouseButton) ->
             Some ControllerMsgProcessed
 
     [<EntryPoint>]
