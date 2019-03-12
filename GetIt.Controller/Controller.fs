@@ -6,6 +6,7 @@ open System.IO
 open System.IO.Pipes
 open System.Threading
 open FSharp.Control.Reactive
+open GetIt.Windows
 
 type EventHandler =
     | OnAnyKeyDown of handler: (KeyboardKey -> unit)
@@ -44,6 +45,7 @@ module internal UICommunication =
         match message with
         | ControllerMsgProcessed -> model
         | UIEvent (SetMousePosition position) ->
+            printfn "SetMousePosition: %O" position
             let hasBeenEntered (player: PlayerData) =
                 not (Rectangle.contains model.MouseState.Position player.Bounds) &&
                 Rectangle.contains position player.Bounds
@@ -239,12 +241,20 @@ module Game =
         let sceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
         UICommunication.sendCommand (ShowScene sceneBounds)
 
-        // test
-        UICommunication.sendCommand (ControllerEvent (MouseMove Position.zero))
-
         let t = Thread(fun () ->
-            // TODO install mouse move handler
+            let mouseHook = MouseHook()
+            mouseHook.add_MouseMove(fun evt ->
+                let position = { X = float evt.pt.x; Y = float evt.pt.y }
+                UICommunication.sendCommand (ControllerEvent (MouseMove position)))
+            mouseHook.Install()
+
+            let mutable msg = Unchecked.defaultof<_>
+            while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 MouseHook.MouseMessages.WM_MOUSEFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
+                WinNative.TranslateMessage(&msg) |> ignore
+                WinNative.DispatchMessage(&msg) |> ignore
+
             // TODO uninstall when pipe is closed
+
             ()
         )
         t.IsBackground <- false

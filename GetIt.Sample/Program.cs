@@ -6,8 +6,8 @@ namespace GetIt.Sample
     {
         static void Main(string[] args)
         {
-            // Program1();
-            Program5();
+            Program1();
+            // Program5();
         }
 
         private static void Program1()

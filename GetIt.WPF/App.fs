@@ -70,10 +70,12 @@ module Main =
                 TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
                 |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
                 |> Seq.tryHead
-                |> Option.map (fun scene ->
-                    let screenPoint = System.Windows.Point(position.X, position.Y)
-                    let point = scene.PointFromScreen(screenPoint)
-                    { X = point.X; Y = point.Y }
+                |> Option.bind (fun scene ->
+                    try
+                        let screenPoint = System.Windows.Point(position.X, position.Y)
+                        let point = scene.PointFromScreen(screenPoint)
+                        Some { X = point.X; Y = point.Y }
+                    with _ -> None
                 )
             )
             |> Option.iter GetIt.App.setMousePosition

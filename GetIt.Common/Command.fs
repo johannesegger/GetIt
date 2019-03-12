@@ -414,6 +414,7 @@ module MessageProcessing =
                 writer.Flush()),
             fun () -> try writer.Dispose() with _ -> ()
         )
+        |> Observer.Synchronize
 
     let forStream stream encode decode =
         let receiver = getMessageReceiver stream decode
