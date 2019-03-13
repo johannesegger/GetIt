@@ -4,6 +4,7 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
+open System.Reactive.Linq
 open System.Threading
 open FSharp.Control.Reactive
 open GetIt.Windows
@@ -45,7 +46,6 @@ module internal UICommunication =
         match message with
         | ControllerMsgProcessed -> model
         | UIEvent (SetMousePosition position) ->
-            printfn "SetMousePosition: %O" position
             let hasBeenEntered (player: PlayerData) =
                 not (Rectangle.contains model.MouseState.Position player.Bounds) &&
                 Rectangle.contains position player.Bounds
@@ -243,9 +243,19 @@ module Game =
 
         let t = Thread(fun () ->
             let mouseHook = MouseHook()
-            mouseHook.add_MouseMove(fun evt ->
-                let position = { X = float evt.pt.x; Y = float evt.pt.y }
-                UICommunication.sendCommand (ControllerEvent (MouseMove position)))
+            let d =
+                Observable.Create(fun (observer: IObserver<_>) ->
+                    let callback = MouseHook.MouseHookCallback(fun evt ->
+                        let position = { X = float evt.pt.x; Y = float evt.pt.y }
+                        observer.OnNext position)
+                    mouseHook.add_MouseMove(callback)
+                    Disposable.create (fun () ->
+                        mouseHook.remove_MouseMove(callback)
+                    )
+                )
+                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                |> Observable.subscribe (MouseMove >> ControllerEvent >> UICommunication.sendCommand)
+
             mouseHook.Install()
 
             let mutable msg = Unchecked.defaultof<_>
