@@ -21,19 +21,36 @@ type Model =
       Players: Map<PlayerId, PlayerData>
       MouseState: MouseState
       KeyboardState: KeyboardState
-      EventHandlers: EventHandler list }
+      EventHandlers: (Guid * EventHandler) list }
 
 module Model =
-    let mutable current =
+    let private gate = Object()
+
+    let mutable private current =
         { SceneBounds = { Position = Position.zero; Size = { Width = 0.; Height = 0. } }
           Players = Map.empty
           MouseState = MouseState.empty
           KeyboardState = KeyboardState.empty
           EventHandlers = [] }
 
+    let getCurrent () = current
+
+    let updateCurrent fn =
+        lock gate (fun () -> current <- fn current)
+
+    let addEventHandler eventHandler =
+        let eventHandlerId = Guid.NewGuid()
+        updateCurrent (fun model -> { model with EventHandlers = (eventHandlerId, eventHandler) :: model.EventHandlers })
+        Disposable.create (fun () ->
+            updateCurrent (fun model ->
+                { model with EventHandlers = model.EventHandlers |> List.filter (fst >> (<>) eventHandlerId) }
+            )
+        )
+
 module internal UICommunication =
     let private invokeEventHandlers model fn =
         model.EventHandlers
+        |> List.map snd
         |> List.choose fn
         |> Async.Parallel
         |> Async.Ignore
@@ -165,8 +182,7 @@ module internal UICommunication =
             let subscription =
                 subject
                 |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
-                    // TODO fix race conditions with other updates of `Model.current`
-                    Model.current <- applyUIToControllerMessage msg Model.current
+                    Model.updateCurrent (fun model -> applyUIToControllerMessage msg model)
                     subject.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
                 )
 
@@ -178,11 +194,7 @@ module internal UICommunication =
 
         match MessageProcessing.sendCommand connection command with
         | Ok msg ->
-            // TODO fix race conditions with other updates of `Model.current`
-            Model.current <-
-                Model.current
-                |> applyControllerToUIMessage command
-                |> applyUIToControllerMessage msg
+            Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg)
         | Error (MessageProcessing.ErrorWhileWaitingForResponse e) ->
             failwithf "Error while waiting for response: %O" e
         | Error MessageProcessing.NoResponse ->
@@ -193,7 +205,7 @@ type Player(playerId) =
     let mutable isDisposed = 0
 
     member internal x.PlayerId with get() = playerId
-    member private x.Player with get() = Map.find playerId Model.current.Players
+    member private x.Player with get() = Map.find playerId (Model.getCurrent().Players)
     /// <summary>
     /// The actual size of the player.
     /// </summary>
@@ -258,6 +270,8 @@ module Game =
 
             mouseHook.Install()
 
+            // TODO install keyboard hook
+
             let mutable msg = Unchecked.defaultof<_>
             while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 MouseHook.MouseMessages.WM_MOUSEFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
                 WinNative.TranslateMessage(&msg) |> ignore
@@ -275,6 +289,18 @@ module Game =
         showScene ()
         UICommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
         defaultTurtle <-
-            Map.toSeq Model.current.Players
+            Map.toSeq (Model.getCurrent().Players)
             |> Seq.tryHead
             |> Option.map (fst >> (fun playerId -> new Player(playerId)))
+
+    [<CompiledName("OnAnyKeyDown")>]
+    let onAnyKeyDown (action: Action<_>) =
+        Model.addEventHandler (OnAnyKeyDown action.Invoke)
+
+    [<CompiledName("OnKeyDown")>]
+    let onKeyDown (key, action: Action) =
+        Model.addEventHandler (OnKeyDown (key, action.Invoke))
+
+    [<CompiledName("OnClickScene")>]
+    let onClickScene (action: Action<_, _>) =
+        Model.addEventHandler (OnClickScene (curry action.Invoke))

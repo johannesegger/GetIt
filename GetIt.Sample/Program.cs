@@ -6,8 +6,8 @@ namespace GetIt.Sample
     {
         static void Main(string[] args)
         {
-            Program1();
-            // Program5();
+            // Program1();
+            Program5();
         }
 
         private static void Program1()
@@ -33,21 +33,21 @@ namespace GetIt.Sample
 
         private static void Program5()
         {
-            // Game.ShowSceneAndAddTurtle();
+            Game.ShowSceneAndAddTurtle();
 
-            // Turtle.Say("Move me with arrow keys");
-            // using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.ShutUp()))
-            // using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.ShutUp()))
-            // using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.ShutUp()))
-            // using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.ShutUp()))
-            // using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.MoveUp(10)))
-            // using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10)))
-            // using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10)))
-            // using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10)))
-            // {
-            //     Turtle.Sleep(5000);
-            // }
-            // Turtle.Say("Game over");
+            Turtle.Say("Move me with arrow keys");
+            using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.ShutUp()))
+            using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.MoveUp(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.MoveDown(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10)))
+            using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10)))
+            {
+                Turtle.Sleep(5000);
+            }
+            Turtle.Say("Game over");
         }
     }
 }

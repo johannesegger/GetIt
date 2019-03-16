@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
     <Compile Include="Geometry.fs" />
     <Compile Include="Color.fs" />
     <Compile Include="Costume.fs" />

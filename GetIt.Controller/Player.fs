@@ -7,10 +7,10 @@ module private Raw =
     let private rand = Random()
 
     let private touchesTopOrBottomEdge (player: GetIt.Player) =
-        player.Bounds.Top > Model.current.SceneBounds.Top || player.Bounds.Bottom < Model.current.SceneBounds.Bottom
+        player.Bounds.Top > Model.getCurrent().SceneBounds.Top || player.Bounds.Bottom < Model.getCurrent().SceneBounds.Bottom
 
     let private touchesLeftOrRightEdge (player: GetIt.Player) =
-        player.Bounds.Right > Model.current.SceneBounds.Right || player.Bounds.Left < Model.current.SceneBounds.Left
+        player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
         UICommunication.sendCommand (SetPosition (player.PlayerId, position))
@@ -44,8 +44,8 @@ module private Raw =
             (Math.Sin(directionRadians) * steps)
 
     let moveToRandomPosition (player: GetIt.Player) =
-        let x = rand.Next(int Model.current.SceneBounds.Left, int Model.current.SceneBounds.Right + 1)
-        let y = rand.Next(int Model.current.SceneBounds.Bottom, int Model.current.SceneBounds.Top + 1)
+        let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)
+        let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
@@ -132,6 +132,24 @@ module private Raw =
 
     let nextCostume (player: GetIt.Player) =
         UICommunication.sendCommand (SetNextCostume (player.PlayerId))
+
+    let getDirectionToMouse (player: GetIt.Player) =
+        player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
+
+    let getDistanceToMouse (player: GetIt.Player) =
+        player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)
+
+    let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
+        Model.addEventHandler (OnKeyDown (key, (fun () -> action.Invoke player)))
+
+    let onAnyKeyDown (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+        Model.addEventHandler (OnAnyKeyDown (fun key -> action.Invoke(player, key)))
+
+    let onMouseEnter (player: GetIt.Player) (action: System.Action<GetIt.Player>) =
+        Model.addEventHandler (OnMouseEnterPlayer (player.PlayerId, (fun () -> action.Invoke(player))))
+
+    let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+        Model.addEventHandler (OnClickPlayer (player.PlayerId, (fun mouseButton -> action.Invoke(player, mouseButton))))
 
 module Turtle =
     let private getTurtleOrFail () =
@@ -380,6 +398,47 @@ module Turtle =
     [<CompiledName("NextCostume")>]
     let nextCostume () =
         Raw.nextCostume (getTurtleOrFail ())
+
+    /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
+    /// <returns>The direction from the player to the mouse pointer.</returns>
+    [<CompiledName("GetDirectionToMouse")>]
+    let getDirectionToMouse () =
+        Raw.getDirectionToMouse (getTurtleOrFail ())
+
+    /// <summary>Calculates the distance from the player to the mouse pointer.</summary>
+    /// <returns>The distance from the player to the mouse pointer.</returns>
+    [<CompiledName("GetDistanceToMouse")>]
+    let getDistanceToMouse () =
+        Raw.getDistanceToMouse (getTurtleOrFail ())
+
+    /// <summary>Registers an event handler that is called when a specific keyboard key is pressed.</summary>
+    /// <param name="key">The keyboard key that should be listened to.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnKeyDown")>]
+    let onKeyDown (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
+        Raw.onKeyDown (getTurtleOrFail ()) key action
+
+    /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnAnyKeyDown")>]
+    let onAnyKeyDown (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+        Raw.onAnyKeyDown (getTurtleOrFail ()) action
+
+    /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnMouseEnter")>]
+    let onMouseEnter (action: System.Action<GetIt.Player>) =
+        Raw.onMouseEnter (getTurtleOrFail ()) action
+
+    /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnClick")>]
+    let onClick (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+        Raw.onClick (getTurtleOrFail ()) action
 
 open System.Runtime.CompilerServices
 
@@ -662,3 +721,50 @@ type PlayerExtensions() =
     [<Extension>]
     static member NextCostume(player: GetIt.Player) =
         Raw.nextCostume player
+
+    /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
+    /// <param name="player">The player.</param>
+    /// <returns>The direction from the player to the mouse pointer.</returns>
+    [<Extension>]
+    static member GetDirectionToMouse(player: GetIt.Player) =
+        Raw.getDirectionToMouse player
+
+    /// <summary>Calculates the distance from the player to the mouse pointer.</summary>
+    /// <param name="player">The player.</param>
+    /// <returns>The distance from the player to the mouse pointer.</returns>
+    [<Extension>]
+    static member GetDistanceToMouse(player: GetIt.Player) =
+        Raw.getDistanceToMouse player
+
+    /// <summary>Registers an event handler that is called when a specific keyboard key is pressed.</summary>
+    /// <param name="player">The player that gets passed to the event handler.</param>
+    /// <param name="key">The keyboard key that should be listened to.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnKeyDown(player: GetIt.Player, key: GetIt.KeyboardKey, action: System.Action<GetIt.Player>) =
+        Raw.onKeyDown player key action
+
+    /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
+    /// <param name="player">The player that gets passed to the event handler.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnAnyKeyDown(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+        Raw.onAnyKeyDown player action
+
+    /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
+    /// <param name="player">The player.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnMouseEnter(player: GetIt.Player, action: System.Action<GetIt.Player>) =
+        Raw.onMouseEnter player action
+
+    /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
+    /// <param name="player">The player.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnClick(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+        Raw.onClick player action

@@ -1,5 +1,6 @@
 ﻿open System
 open System.IO
+open System.Text.RegularExpressions
 
 module List =
     let intersperse sep ls =
@@ -161,8 +162,8 @@ let commands =
                 Description = "The player that should be moved." } ]
           Result = { Type = typeof<unit>; Description = "" }
           Body =
-            [ "let x = rand.Next(int Model.current.SceneBounds.Left, int Model.current.SceneBounds.Right + 1)"
-              "let y = rand.Next(int Model.current.SceneBounds.Bottom, int Model.current.SceneBounds.Top + 1)"
+            [ "let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)"
+              "let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)"
               "moveToXY player (float x) (float y)" ] }
 
         { Name = "setDirection"
@@ -483,74 +484,90 @@ let commands =
           Result = { Type = typeof<unit>; Description = "" }
           Body = [ "UICommunication.sendCommand (SetNextCostume (player.PlayerId))" ] }
 
-        // TODO
-        // /// <summary>
-        // /// Calculates the direction from the player to the mouse pointer.
-        // /// </summary>
-        // /// <param name="player">The player.</param>
-        // /// <returns>The direction from the player to the mouse pointer.</returns>
-        // public static Degrees GetDirectionToMouse(this PlayerOnScene player) => player.Position.AngleTo(Game.State.Mouse.Position);
+        { Name = "getDirectionToMouse"
+          CompiledName = "GetDirectionToMouse"
+          Summary = "Calculates the direction from the player to the mouse pointer."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player." } ]
+          Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to the mouse pointer." }
+          Body = [ "player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)" ] }
 
-        // /// <summary>
-        // /// Calculates the distance from the player to the mouse pointer.
-        // /// </summary>
-        // /// <param name="player">The player.</param>
-        // /// <returns>The distance from the player to the mouse pointer.</returns>
-        // public static double GetDistanceToMouse(this PlayerOnScene player) => player.Position.DistanceTo(Game.State.Mouse.Position);
+        { Name = "getDistanceToMouse"
+          CompiledName = "GetDistanceToMouse"
+          Summary = "Calculates the distance from the player to the mouse pointer."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player." } ]
+          Result = { Type = typeof<float>; Description = "The distance from the player to the mouse pointer." }
+          Body = [ "player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)" ] }
 
-        // private static IDisposable OnKeyDown(this PlayerOnScene player, Option<KeyboardKey> key, Action<KeyboardKey> action)
-        // {
-        //     var handler = new EventHandler.KeyDown(key, action);
-        //     return Game.AddEventHandler(handler);
-        // }
+        { Name = "onKeyDown"
+          CompiledName = "OnKeyDown"
+          Summary = "Registers an event handler that is called when a specific keyboard key is pressed."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that gets passed to the event handler." }
+              { Name = "key"
+                Type = typeof<GetIt.KeyboardKey>
+                Description = "The keyboard key that should be listened to." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.addEventHandler (OnKeyDown (key, (fun () -> action.Invoke player)))" ] }
 
-        // /// <summary>
-        // /// Registers an event handler that is called when a specific keyboard key is pressed.
-        // /// </summary>
-        // /// <param name="player">The player that gets passed to the event handler.</param>
-        // /// <param name="key">The keyboard key that should be listened to.</param>
-        // /// <param name="action">The event handler that should be called.</param>
-        // /// <returns>The disposable subscription.</returns>
-        // public static IDisposable OnKeyDown(this PlayerOnScene player, KeyboardKey key, Action<PlayerOnScene> action)
-        // {
-        //     return player.OnKeyDown(Some(key), _ => action(player));
-        // }
+        { Name = "onAnyKeyDown"
+          CompiledName = "OnAnyKeyDown"
+          Summary = "Registers an event handler that is called when any keyboard key is pressed."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that gets passed to the event handler." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.addEventHandler (OnAnyKeyDown (fun key -> action.Invoke(player, key)))" ] }
 
-        // /// <summary>
-        // /// Registers an event handler that is called when any keyboard key is pressed.
-        // /// </summary>
-        // /// <param name="player">The player that gets passed to the event handler.</param>
-        // /// <param name="action">The event handler that should be called.</param>
-        // /// <returns>The disposable subscription.</returns>
-        // public static IDisposable OnAnyKeyDown(this PlayerOnScene player, Action<PlayerOnScene, KeyboardKey> action)
-        // {
-        //     return player.OnKeyDown(None, key => action(player, key));
-        // }
+        { Name = "onMouseEnter"
+          CompiledName = "OnMouseEnter"
+          Summary = "Registers an event handler that is called when the mouse enters the player area."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.addEventHandler (OnMouseEnterPlayer (player.PlayerId, (fun () -> action.Invoke(player))))" ] }
 
-        // /// <summary>
-        // /// Registers an event handler that is called when the mouse enters the player area.
-        // /// </summary>
-        // /// <param name="player">The player.</param>
-        // /// <param name="action">The event handler that should be called.</param>
-        // /// <returns>The disposable subscription.</returns>
-        // public static IDisposable OnMouseEnter(this PlayerOnScene player, Action<PlayerOnScene> action)
-        // {
-        //     var handler = new EventHandler.MouseEnterPlayer(player.Id, () => action(player));
-        //     return Game.AddEventHandler(handler);
-        // }
-
-        // /// <summary>
-        // /// Registers an event handler that is called when the mouse is clicked on the player.
-        // /// </summary>
-        // /// <param name="player">The player.</param>
-        // /// <param name="action">The event handler that should be called.</param>
-        // /// <returns>The disposable subscription.</returns>
-        // public static IDisposable OnClick(this PlayerOnScene player, Action<PlayerOnScene> action)
-        // {
-        //     var handler = new EventHandler.ClickPlayer(player.Id, () => action(player));
-        //     return Game.AddEventHandler(handler);
-        // }
+        { Name = "onClick"
+          CompiledName = "OnClick"
+          Summary = "Registers an event handler that is called when the mouse is clicked on the player."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player, GetIt.MouseButton>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.addEventHandler (OnClickPlayer (player.PlayerId, (fun mouseButton -> action.Invoke(player, mouseButton))))" ] }
     ]
+
+let rec getFullName (t: Type) =
+    if t.IsGenericTypeParameter then t.Name
+    elif t.IsGenericType then
+      let rawName = Regex.Replace(t.Name, @"`\d+$", "")
+      let genericArgumentNames = Seq.map getFullName t.GenericTypeArguments
+      sprintf "%s.%s<%s>" t.Namespace rawName (String.concat ", " genericArgumentNames)
+    else
+      t.FullName
 
 [<EntryPoint>]
 let main _argv =
@@ -560,7 +577,7 @@ let main _argv =
             [
                 let parameterList =
                     command.Parameters
-                    |> List.map (fun p -> sprintf "(%s: %s)" p.Name p.Type.FullName)
+                    |> List.map (fun p -> sprintf "(%s: %s)" p.Name (getFullName p.Type))
                     |> String.concat " "
                 yield sprintf "let %s %s =" command.Name parameterList
                 yield!
@@ -576,10 +593,10 @@ let main _argv =
               "    let private rand = Random()"
               ""
               "    let private touchesTopOrBottomEdge (player: GetIt.Player) ="
-              "        player.Bounds.Top > Model.current.SceneBounds.Top || player.Bounds.Bottom < Model.current.SceneBounds.Bottom"
+              "        player.Bounds.Top > Model.getCurrent().SceneBounds.Top || player.Bounds.Bottom < Model.getCurrent().SceneBounds.Bottom"
               ""
               "    let private touchesLeftOrRightEdge (player: GetIt.Player) ="
-              "        player.Bounds.Right > Model.current.SceneBounds.Right || player.Bounds.Left < Model.current.SceneBounds.Left"
+              "        player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left"
               "" ]
 
     let defaultTurtleFuncs =
@@ -598,7 +615,7 @@ let main _argv =
                 yield sprintf "/// <returns>%s</returns>" command.Result.Description
                 let parameterListWithTypes =
                     parameters
-                    |> List.map (fun p -> sprintf "(%s: %s)" p.Name p.Type.FullName)
+                    |> List.map (fun p -> sprintf "(%s: %s)" p.Name (getFullName p.Type))
                     |> function
                     | [] -> [ "()" ]
                     | x -> x
@@ -639,7 +656,7 @@ let main _argv =
                 yield sprintf "/// <returns>%s</returns>" command.Result.Description
                 let parameterListWithTypes =
                     command.Parameters
-                    |> List.map (fun p -> sprintf "%s: %s" p.Name p.Type.FullName)
+                    |> List.map (fun p -> sprintf "%s: %s" p.Name (getFullName p.Type))
                     |> String.concat ", "
                 let parameterNames =
                     command.Parameters
