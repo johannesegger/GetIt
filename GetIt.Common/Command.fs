@@ -388,9 +388,10 @@ module MessageProcessing =
                     obs.OnCompleted()
                 else
                     match Decode.fromString decoder line with
-                    | Ok message -> obs.OnNext(message)
+                    | Ok message ->
+                        obs.OnNext(message)
+                        return! loop()
                     | Error e -> obs.OnError(exn e)
-                    return! loop()
             }
             let cts = new CancellationTokenSource()
             Async.Start (loop(), cts.Token)
