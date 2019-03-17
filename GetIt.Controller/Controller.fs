@@ -255,22 +255,88 @@ module Game =
 
         let t = Thread(fun () ->
             let mouseHook = MouseHook()
-            let d =
+            let d1 =
                 Observable.Create(fun (observer: IObserver<_>) ->
-                    let callback = MouseHook.MouseHookCallback(fun evt ->
-                        let position = { X = float evt.pt.x; Y = float evt.pt.y }
-                        observer.OnNext position)
+                    let callback = MouseHook.MouseHookCallback(observer.OnNext)
                     mouseHook.add_MouseMove(callback)
                     Disposable.create (fun () ->
                         mouseHook.remove_MouseMove(callback)
                     )
                 )
                 |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                |> Observable.map (fun evt -> { X = float evt.pt.x; Y = float evt.pt.y })
                 |> Observable.subscribe (MouseMove >> ControllerEvent >> UICommunication.sendCommand)
 
             mouseHook.Install()
 
-            // TODO install keyboard hook
+            let tryGetKeyboardKey key =
+                match key with
+                | KeyboardHook.VKeys.SPACE -> Some Space
+                | KeyboardHook.VKeys.ESCAPE -> Some Escape
+                | KeyboardHook.VKeys.UP -> Some Up
+                | KeyboardHook.VKeys.DOWN -> Some Down
+                | KeyboardHook.VKeys.LEFT -> Some Left
+                | KeyboardHook.VKeys.RIGHT -> Some Right
+                | KeyboardHook.VKeys.KEY_A -> Some A
+                | KeyboardHook.VKeys.KEY_B -> Some B
+                | KeyboardHook.VKeys.KEY_C -> Some C
+                | KeyboardHook.VKeys.KEY_D -> Some D
+                | KeyboardHook.VKeys.KEY_E -> Some E
+                | KeyboardHook.VKeys.KEY_F -> Some F
+                | KeyboardHook.VKeys.KEY_G -> Some G
+                | KeyboardHook.VKeys.KEY_H -> Some H
+                | KeyboardHook.VKeys.KEY_I -> Some I
+                | KeyboardHook.VKeys.KEY_J -> Some J
+                | KeyboardHook.VKeys.KEY_K -> Some K
+                | KeyboardHook.VKeys.KEY_L -> Some L
+                | KeyboardHook.VKeys.KEY_M -> Some M
+                | KeyboardHook.VKeys.KEY_N -> Some N
+                | KeyboardHook.VKeys.KEY_O -> Some O
+                | KeyboardHook.VKeys.KEY_P -> Some P
+                | KeyboardHook.VKeys.KEY_Q -> Some Q
+                | KeyboardHook.VKeys.KEY_R -> Some R
+                | KeyboardHook.VKeys.KEY_S -> Some S
+                | KeyboardHook.VKeys.KEY_T -> Some T
+                | KeyboardHook.VKeys.KEY_U -> Some U
+                | KeyboardHook.VKeys.KEY_V -> Some V
+                | KeyboardHook.VKeys.KEY_W -> Some W
+                | KeyboardHook.VKeys.KEY_X -> Some X
+                | KeyboardHook.VKeys.KEY_Y -> Some Y
+                | KeyboardHook.VKeys.KEY_Z -> Some Z
+                | KeyboardHook.VKeys.KEY_0 -> Some Digit0
+                | KeyboardHook.VKeys.KEY_1 -> Some Digit1
+                | KeyboardHook.VKeys.KEY_2 -> Some Digit2
+                | KeyboardHook.VKeys.KEY_3 -> Some Digit3
+                | KeyboardHook.VKeys.KEY_4 -> Some Digit4
+                | KeyboardHook.VKeys.KEY_5 -> Some Digit5
+                | KeyboardHook.VKeys.KEY_6 -> Some Digit6
+                | KeyboardHook.VKeys.KEY_7 -> Some Digit7
+                | KeyboardHook.VKeys.KEY_8 -> Some Digit8
+                | KeyboardHook.VKeys.KEY_9 -> Some Digit9
+                | _ -> None
+
+            let keyboardHook = KeyboardHook()
+            let d2 =
+                Observable.Create(fun (observer: IObserver<_>) ->
+                    let callback = KeyboardHook.KeyboardHookCallback(observer.OnNext)
+                    keyboardHook.add_KeyDown(callback)
+                    Disposable.create (fun () ->
+                        keyboardHook.remove_KeyDown(callback)
+                    )
+                )
+                |> Observable.choose tryGetKeyboardKey
+                |> Observable.subscribe (KeyDown >> ControllerEvent >> UICommunication.sendCommand)
+            let d3 =
+                Observable.Create(fun (observer: IObserver<_>) ->
+                    let callback = KeyboardHook.KeyboardHookCallback(observer.OnNext)
+                    keyboardHook.add_KeyUp(callback)
+                    Disposable.create (fun () ->
+                        keyboardHook.remove_KeyUp(callback)
+                    )
+                )
+                |> Observable.choose tryGetKeyboardKey
+                |> Observable.subscribe (KeyUp >> ControllerEvent >> UICommunication.sendCommand)
+            keyboardHook.Install()
 
             let mutable msg = Unchecked.defaultof<_>
             while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 MouseHook.MouseMessages.WM_MOUSEFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
