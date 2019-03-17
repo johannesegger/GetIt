@@ -339,7 +339,7 @@ module Game =
             keyboardHook.Install()
 
             let mutable msg = Unchecked.defaultof<_>
-            while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 MouseHook.MouseMessages.WM_MOUSEFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
+            while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 KeyboardHook.WM_KEYFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
                 WinNative.TranslateMessage(&msg) |> ignore
                 WinNative.DispatchMessage(&msg) |> ignore
 
@@ -347,6 +347,7 @@ module Game =
 
             ()
         )
+        t.Name <- "GlobalHooks"
         t.IsBackground <- false
         t.Start()
 

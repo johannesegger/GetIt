@@ -298,10 +298,13 @@ namespace GetIt.Windows
         /// Low-Level function declarations
         /// </summary>
         #region WinAPI
+
+        public const int WM_KEYFIRST = 0x100;
         private const int WM_KEYDOWN = 0x100;
         private const int WM_SYSKEYDOWN = 0x104;
         private const int WM_KEYUP = 0x101;
         private const int WM_SYSKEYUP = 0x105;
+        public const int WM_KEYLAST = 0x109;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr SetWindowsHookEx(int idHook, KeyboardHookHandler lpfn, IntPtr hMod, uint dwThreadId);
