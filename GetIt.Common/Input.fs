@@ -64,7 +64,8 @@ type ControllerEvent =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
     | MouseMove of Position
-    | MouseClick of MouseButton
+    | MouseClick of MouseButton * Position
 
 type UIEvent =
     | SetMousePosition of Position
+    | ApplyMouseClick of MouseButton * Position

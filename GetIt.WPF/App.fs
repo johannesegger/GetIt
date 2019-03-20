@@ -20,6 +20,21 @@ type MainWindow() =
 module Main =
     let private eventSubject = new System.Reactive.Subjects.Subject<UIEvent>()
 
+    let private tryGetPositionOnSceneControl positionOnScreen =
+        System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+            let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+            TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
+            |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+            |> Seq.tryHead
+            |> Option.bind (fun scene ->
+                try
+                    let screenPoint = System.Windows.Point(positionOnScreen.X, positionOnScreen.Y)
+                    let point = scene.PointFromScreen(screenPoint)
+                    Some { X = point.X; Y = point.Y }
+                with _ -> None
+            )
+        )
+
     let executeCommand cmd =
         match cmd with
         | UIMsgProcessed -> None
@@ -65,22 +80,12 @@ module Main =
         | ControllerEvent (KeyUp key) ->
             Some ControllerMsgProcessed
         | ControllerEvent (MouseMove position) ->
-            System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-                let window = System.Windows.Application.Current.MainWindow :?> MainWindow
-                TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
-                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-                |> Seq.tryHead
-                |> Option.bind (fun scene ->
-                    try
-                        let screenPoint = System.Windows.Point(position.X, position.Y)
-                        let point = scene.PointFromScreen(screenPoint)
-                        Some { X = point.X; Y = point.Y }
-                    with _ -> None
-                )
-            )
+            tryGetPositionOnSceneControl position
             |> Option.iter GetIt.App.setMousePosition
             Some ControllerMsgProcessed
-        | ControllerEvent (MouseClick mouseButton) ->
+        | ControllerEvent (MouseClick (mouseButton, position)) ->
+            tryGetPositionOnSceneControl position
+            |> Option.iter (GetIt.App.applyMouseClick mouseButton)
             Some ControllerMsgProcessed
 
     [<EntryPoint>]

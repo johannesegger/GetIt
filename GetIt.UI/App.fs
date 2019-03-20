@@ -29,6 +29,7 @@ module App =
         | SetKeyboardKeyPressed of KeyboardKey
         | SetKeyboardKeyReleased of KeyboardKey
         | SetMousePosition of positionRelativeToSceneControl: Position
+        | ApplyMouseClick of MouseButton * positionRelativeToSceneControl: Position
         | SetPlayerPosition of PlayerId * Position
         | SetPlayerDirection of PlayerId * Degrees
         | SetSpeechBubble of PlayerId * SpeechBubble option
@@ -65,6 +66,12 @@ module App =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
             let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.SetMousePosition position))
+            (model, cmd)
+        | ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
+            let position =
+                { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
+                  Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
+            let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.ApplyMouseClick (mouseButton, position)))
             (model, cmd)
         | SetPlayerPosition (playerId, position) ->
             let model' =
@@ -345,6 +352,7 @@ module App =
     let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
     let setNextCostume playerId = dispatchMessage (NextCostume playerId)
     let setMousePosition position = dispatchMessage (SetMousePosition position)
+    let applyMouseClick mouseButton position = dispatchMessage (ApplyMouseClick (mouseButton, position))
 
 type App (triggerEvent) as app = 
     inherit Application ()

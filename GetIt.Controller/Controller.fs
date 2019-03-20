@@ -4,7 +4,7 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
-open System.Reactive.Linq
+open System.Runtime.InteropServices
 open System.Threading
 open FSharp.Control.Reactive
 open GetIt.Windows
@@ -79,8 +79,32 @@ module internal UICommunication =
                 | _ -> None
             )
             |> ignore
-            
+
             { model with MouseState = { model.MouseState with Position = position } }
+        | UIEvent (ApplyMouseClick (mouseButton, position)) ->
+            let clickedPlayerIds =
+                model.Players
+                |> Map.toSeq
+                |> Seq.filter (snd >> fun player -> Rectangle.contains position player.Bounds)
+                |> Seq.map fst
+                |> Seq.toList
+            invokeEventHandlers (function
+                | OnClickPlayer (playerId, handler) when List.contains playerId clickedPlayerIds ->
+                    Some (async { return handler mouseButton })
+                | _ -> None
+            )
+            |> ignore
+
+            if List.isEmpty clickedPlayerIds && Rectangle.contains position model.SceneBounds
+            then
+                invokeEventHandlers (function
+                    | OnClickScene handler ->
+                        Some (async { return handler position mouseButton })
+                    | _ -> None
+                )
+                |> ignore
+
+            model
 
     let private updatePlayer model playerId fn =
         let player = Map.find playerId model.Players |> fn
@@ -125,29 +149,8 @@ module internal UICommunication =
         | ControllerEvent (MouseMove position) ->
             // Position on scene will come from UI
             model
-        | ControllerEvent (MouseClick mouseButton) ->
-            let clickedPlayerIds =
-                model.Players
-                |> Map.toSeq
-                |> Seq.filter (snd >> fun player -> Rectangle.contains model.MouseState.Position player.Bounds)
-                |> Seq.map fst
-                |> Seq.toList
-            invokeEventHandlers (function
-                | OnClickPlayer (playerId, handler) when List.contains playerId clickedPlayerIds ->
-                    Some (async { return handler mouseButton })
-                | _ -> None
-            )
-            |> ignore
-
-            if List.isEmpty clickedPlayerIds && Rectangle.contains model.MouseState.Position model.SceneBounds
-            then
-                invokeEventHandlers (function
-                    | OnClickScene handler ->
-                        Some (async { return handler model.MouseState.Position mouseButton })
-                    | _ -> None
-                )
-                |> ignore
-
+        | ControllerEvent (MouseClick (mouseButton, position)) ->
+            // Position on scene will come from UI
             model
 
     let private uiProcess =
@@ -171,7 +174,7 @@ module internal UICommunication =
 #else
                 ProcessStartInfo("GetIt.WPF.exe")
 #endif
-            
+
             let proc = Process.Start(startInfo)
 
             let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut, PipeOptions.Asynchronous)
@@ -253,103 +256,29 @@ module Game =
         let sceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
         UICommunication.sendCommand (ShowScene sceneBounds)
 
-        let t = Thread(fun () ->
-            let mouseHook = MouseHook()
-            let d1 =
-                Observable.Create(fun (observer: IObserver<_>) ->
-                    let callback = MouseHook.MouseHookCallback(observer.OnNext)
-                    mouseHook.add_MouseMove(callback)
-                    Disposable.create (fun () ->
-                        mouseHook.remove_MouseMove(callback)
-                    )
-                )
-                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
-                |> Observable.map (fun evt -> { X = float evt.pt.x; Y = float evt.pt.y })
-                |> Observable.subscribe (MouseMove >> ControllerEvent >> UICommunication.sendCommand)
+        let subject = new System.Reactive.Subjects.Subject<_>()
+        let (mouseMoveObservable, otherEventsObservable) =
+            subject
+            |> Observable.split (function
+                | MouseMove _ as x -> Choice1Of2 x
+                | x -> Choice2Of2 x
+            )
+        let d1 =
+            mouseMoveObservable
+            |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+            |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
 
-            mouseHook.Install()
+        let d2 =
+            otherEventsObservable
+            |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
 
-            let tryGetKeyboardKey key =
-                match key with
-                | KeyboardHook.VKeys.SPACE -> Some Space
-                | KeyboardHook.VKeys.ESCAPE -> Some Escape
-                | KeyboardHook.VKeys.UP -> Some Up
-                | KeyboardHook.VKeys.DOWN -> Some Down
-                | KeyboardHook.VKeys.LEFT -> Some Left
-                | KeyboardHook.VKeys.RIGHT -> Some Right
-                | KeyboardHook.VKeys.KEY_A -> Some A
-                | KeyboardHook.VKeys.KEY_B -> Some B
-                | KeyboardHook.VKeys.KEY_C -> Some C
-                | KeyboardHook.VKeys.KEY_D -> Some D
-                | KeyboardHook.VKeys.KEY_E -> Some E
-                | KeyboardHook.VKeys.KEY_F -> Some F
-                | KeyboardHook.VKeys.KEY_G -> Some G
-                | KeyboardHook.VKeys.KEY_H -> Some H
-                | KeyboardHook.VKeys.KEY_I -> Some I
-                | KeyboardHook.VKeys.KEY_J -> Some J
-                | KeyboardHook.VKeys.KEY_K -> Some K
-                | KeyboardHook.VKeys.KEY_L -> Some L
-                | KeyboardHook.VKeys.KEY_M -> Some M
-                | KeyboardHook.VKeys.KEY_N -> Some N
-                | KeyboardHook.VKeys.KEY_O -> Some O
-                | KeyboardHook.VKeys.KEY_P -> Some P
-                | KeyboardHook.VKeys.KEY_Q -> Some Q
-                | KeyboardHook.VKeys.KEY_R -> Some R
-                | KeyboardHook.VKeys.KEY_S -> Some S
-                | KeyboardHook.VKeys.KEY_T -> Some T
-                | KeyboardHook.VKeys.KEY_U -> Some U
-                | KeyboardHook.VKeys.KEY_V -> Some V
-                | KeyboardHook.VKeys.KEY_W -> Some W
-                | KeyboardHook.VKeys.KEY_X -> Some X
-                | KeyboardHook.VKeys.KEY_Y -> Some Y
-                | KeyboardHook.VKeys.KEY_Z -> Some Z
-                | KeyboardHook.VKeys.KEY_0 -> Some Digit0
-                | KeyboardHook.VKeys.KEY_1 -> Some Digit1
-                | KeyboardHook.VKeys.KEY_2 -> Some Digit2
-                | KeyboardHook.VKeys.KEY_3 -> Some Digit3
-                | KeyboardHook.VKeys.KEY_4 -> Some Digit4
-                | KeyboardHook.VKeys.KEY_5 -> Some Digit5
-                | KeyboardHook.VKeys.KEY_6 -> Some Digit6
-                | KeyboardHook.VKeys.KEY_7 -> Some Digit7
-                | KeyboardHook.VKeys.KEY_8 -> Some Digit8
-                | KeyboardHook.VKeys.KEY_9 -> Some Digit9
-                | _ -> None
+        let d3 =
+            if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                GetIt.Windows.DeviceEvents.register subject
+            else
+                failwithf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription
 
-            let keyboardHook = KeyboardHook()
-            let d2 =
-                Observable.Create(fun (observer: IObserver<_>) ->
-                    let callback = KeyboardHook.KeyboardHookCallback(observer.OnNext)
-                    keyboardHook.add_KeyDown(callback)
-                    Disposable.create (fun () ->
-                        keyboardHook.remove_KeyDown(callback)
-                    )
-                )
-                |> Observable.choose tryGetKeyboardKey
-                |> Observable.subscribe (KeyDown >> ControllerEvent >> UICommunication.sendCommand)
-            let d3 =
-                Observable.Create(fun (observer: IObserver<_>) ->
-                    let callback = KeyboardHook.KeyboardHookCallback(observer.OnNext)
-                    keyboardHook.add_KeyUp(callback)
-                    Disposable.create (fun () ->
-                        keyboardHook.remove_KeyUp(callback)
-                    )
-                )
-                |> Observable.choose tryGetKeyboardKey
-                |> Observable.subscribe (KeyUp >> ControllerEvent >> UICommunication.sendCommand)
-            keyboardHook.Install()
-
-            let mutable msg = Unchecked.defaultof<_>
-            while WinNative.GetMessage(&msg, IntPtr.Zero, uint32 KeyboardHook.WM_KEYFIRST, uint32 MouseHook.MouseMessages.WM_MOUSELAST) > 0 do
-                WinNative.TranslateMessage(&msg) |> ignore
-                WinNative.DispatchMessage(&msg) |> ignore
-
-            // TODO uninstall when pipe is closed
-
-            ()
-        )
-        t.Name <- "GlobalHooks"
-        t.IsBackground <- false
-        t.Start()
+        ()
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
     let showSceneAndAddTurtle() =
