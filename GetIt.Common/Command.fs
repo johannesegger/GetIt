@@ -385,16 +385,20 @@ module MessageProcessing =
         let reader = new StreamReader(stream)
         Observable.Create(fun (obs: IObserver<_>) ->
             let rec loop () = async {
-                let! line = reader.ReadLineAsync() |> Async.AwaitTask
-                if isNull line
-                then
-                    obs.OnCompleted()
-                else
+                let! line = async {
+                    try
+                        let! line = reader.ReadLineAsync() |> Async.AwaitTask
+                        return Option.ofObj line
+                    with _ -> return None
+                }
+                match line with
+                | Some line ->
                     match Decode.fromString decoder line with
                     | Ok message ->
                         obs.OnNext(message)
                         return! loop()
                     | Error e -> obs.OnError(exn e)
+                | None -> obs.OnCompleted()
             }
             let cts = new CancellationTokenSource()
             Async.Start (loop(), cts.Token)
