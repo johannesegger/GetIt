@@ -426,7 +426,7 @@ module MessageProcessing =
         Subject.Create<_, _>(sender, receiver)
 
     type ResponseError =
-        | ErrorWhileWaitingForResponse of exn
+        | ResponseError of exn
         | NoResponse
 
     let sendCommand (connection: ISubject<_, _>) command =
@@ -457,5 +457,5 @@ module MessageProcessing =
 
         match response with
         | Some (Ok msg) -> Ok msg
-        | Some (Error e) -> Error (ErrorWhileWaitingForResponse e)
+        | Some (Error e) -> Error (ResponseError e)
         | None -> Error NoResponse
