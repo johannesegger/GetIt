@@ -202,6 +202,7 @@ module internal UICommunication =
             failwithf "Error while waiting for response: %O" e
         | Error MessageProcessing.NoResponse ->
             // Close the application if the UI has been closed (throwing an exception might be confusing)
+            // TODO dispose subscriptions etc. ?
             Environment.Exit 1
 
 type Player(playerId) =

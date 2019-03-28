@@ -441,7 +441,8 @@ module MessageProcessing =
 
         use subscription =
             connection
-            |> Observable.firstIf (fun (IdentifiableMsg (mId, msg)) -> mId = msgId)
+            |> Observable.filter (fun (IdentifiableMsg (mId, msg)) -> mId = msgId)
+            |> Observable.take 1
             |> Observable.subscribeWithCallbacks
                 (fun (IdentifiableMsg (mId, msg)) ->
                     response <- Some (Ok msg)
