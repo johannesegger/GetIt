@@ -7,7 +7,8 @@ namespace GetIt.Sample
         static void Main(string[] args)
         {
             // Program1();
-            Program5();
+            // Program5();
+            Program8();
         }
 
         private static void Program1()
@@ -48,6 +49,19 @@ namespace GetIt.Sample
                 Turtle.Sleep(5000);
             }
             Turtle.Say("Game over");
+        }
+
+        private static void Program8()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Sleep(1000);
+
+            for (int i = 0; i < 500; i++)
+            {
+                Turtle.Say(new string('A', i));
+                Turtle.Sleep(20);
+            }
         }
     }
 }

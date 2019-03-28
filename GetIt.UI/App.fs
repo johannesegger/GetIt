@@ -256,6 +256,7 @@ module App =
 
                                     View.Frame(
                                         content = View.Label(
+                                            widthRequest = 150.,
                                             text = text
                                         ),
                                         padding = 0.,
@@ -264,7 +265,7 @@ module App =
                                 ]
                             )
                             |> layoutFlags AbsoluteLayoutFlags.YProportional
-                            |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left + 20., (* TODO *)1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+                            |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left - 75., 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
                     | Some (Ask data) -> ()
                     | None -> ()
                 ]
