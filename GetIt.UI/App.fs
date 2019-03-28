@@ -43,7 +43,6 @@ module App =
         | ClearScene
         | AddEventHandler of EventHandler
         | RemoveEventHandler of EventHandler
-        | TriggerEvent of UIEvent
         | ExecuteAction of (unit -> unit)
 
     let init () = (initModel, Cmd.none)
@@ -53,10 +52,14 @@ module App =
             let player = Map.find playerId model.Players |> fn
             { model with Players = Map.add playerId player model.Players }
 
+        let triggerEventCmd event =
+            Cmd.ofAsyncMsgOption (async { triggerEvent event; return None })
+
         match msg with
         | SetSceneBounds bounds ->
             let model' = { model with SceneBounds = bounds }
-            (model', Cmd.none)
+            let cmd = triggerEventCmd (UIEvent.SetSceneBounds bounds)
+            (model', cmd)
         | SetKeyboardKeyPressed key ->
             (model, Cmd.none)
         | SetKeyboardKeyReleased key ->
@@ -65,13 +68,13 @@ module App =
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
-            let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.SetMousePosition position))
+            let cmd = triggerEventCmd (UIEvent.SetMousePosition position)
             (model, cmd)
         | ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
-            let cmd = Cmd.ofMsg (TriggerEvent (UIEvent.ApplyMouseClick (mouseButton, position)))
+            let cmd = triggerEventCmd (UIEvent.ApplyMouseClick (mouseButton, position))
             (model, cmd)
         | SetPlayerPosition (playerId, position) ->
             let model' =
@@ -120,8 +123,6 @@ module App =
             (model, Cmd.none)
         | RemoveEventHandler eventHandler ->
             (model, Cmd.none)
-        | TriggerEvent event ->
-            (model, Cmd.ofAsyncMsgOption (async { triggerEvent event; return None }))
         | ExecuteAction action ->
             (model, Cmd.none)
 
@@ -290,8 +291,6 @@ module App =
                 children = [
                     View.AbsoluteLayout(
                         automationId = "scene",
-                        widthRequest = model.SceneBounds.Size.Width,
-                        heightRequest = model.SceneBounds.Size.Height,
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
                     |> sizeChanged (fun e ->

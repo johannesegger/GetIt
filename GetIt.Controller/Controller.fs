@@ -106,6 +106,9 @@ module internal UICommunication =
 
             model
 
+        | UIEvent (SetSceneBounds sceneBounds) ->
+            { model with SceneBounds = sceneBounds }
+
     let private updatePlayer model playerId fn =
         let player = Map.find playerId model.Players |> fn
         { model with Players = Map.add playerId player model.Players }
@@ -116,8 +119,9 @@ module internal UICommunication =
 
         match message with
         | UIMsgProcessed -> model
-        | ShowScene sceneBounds ->
-            { model with SceneBounds = sceneBounds }
+        | ShowScene windowSize ->
+            // Scene bounds will come from UI
+            model
         | AddPlayer (playerId, player) ->
             { model with Players = Map.add playerId player model.Players }
         | RemovePlayer playerId ->
@@ -254,8 +258,8 @@ module Game =
 
     [<CompiledName("ShowScene")>]
     let showScene () =
-        let sceneBounds = { Position = { X = -300.; Y = -200. }; Size = { Width = 600.; Height = 400. } }
-        UICommunication.sendCommand (ShowScene sceneBounds)
+        let windowSize = { Width = 800.; Height = 600. }
+        UICommunication.sendCommand (ShowScene windowSize)
 
         let subject = new System.Reactive.Subjects.Subject<_>()
         let (mouseMoveObservable, otherEventsObservable) =

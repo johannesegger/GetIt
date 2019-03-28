@@ -38,18 +38,18 @@ module Main =
     let executeCommand cmd =
         match cmd with
         | UIMsgProcessed -> None
-        | ShowScene sceneBounds ->
+        | ShowScene windowSize ->
             let start onStarted onClosed =
                 let app = System.Windows.Application()
                 app.Exit.Subscribe(fun args -> onClosed()) |> ignore
                 Forms.Init()
-                // ApplicationView.PreferredLaunchViewSize = new Size(480, 800);
                 let window = MainWindow()
+                window.Width <- windowSize.Width
+                window.Height <- windowSize.Height
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
                 app.Run(window)
             GetIt.App.showScene start
-            GetIt.App.setSceneBounds sceneBounds
             Some ControllerMsgProcessed
         | AddPlayer (playerId, player) ->
             GetIt.App.addPlayer playerId player

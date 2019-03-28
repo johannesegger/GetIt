@@ -11,7 +11,7 @@ open Thoth.Json.Net
 
 type ControllerToUIMsg =
     | UIMsgProcessed
-    | ShowScene of bounds: Rectangle
+    | ShowScene of windowSize: Size
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
     | SetPosition of PlayerId * Position
@@ -296,7 +296,7 @@ module ControllerToUIMsg =
         let decoders =
             [
                 ("messageProcessed", Decode.nil UIMsgProcessed)
-                ("showScene", decodeRectangle |> Decode.map ShowScene)
+                ("showScene", decodeSize |> Decode.map ShowScene)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
                 ("setPosition", Decode.tuple2 decodePlayerId decodePosition |> Decode.map SetPosition)
@@ -322,8 +322,8 @@ module ControllerToUIMsg =
             match msg with
             | UIMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
-            | ShowScene bounds ->
-                Encode.object [ ("showScene", encodeRectangle bounds) ]
+            | ShowScene windowSize ->
+                Encode.object [ ("showScene", encodeSize windowSize) ]
             | AddPlayer (playerId, playerData) ->
                 Encode.object [ ("addPlayer", Encode.tuple2 encodePlayerId encodePlayerData (playerId, playerData)) ]
             | RemovePlayer playerId ->
@@ -360,6 +360,7 @@ module UIToControllerMsg =
                 ("messageProcessed", Decode.nil ControllerMsgProcessed)
                 ("setMousePosition", decodePosition |> Decode.map (SetMousePosition >> UIEvent))
                 ("applyMouseClick", Decode.tuple2 decodeMouseButton decodePosition |> Decode.map (ApplyMouseClick >> UIEvent))
+                ("setSceneBounds", decodeRectangle |> Decode.map (SetSceneBounds >> UIEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -377,6 +378,8 @@ module UIToControllerMsg =
                 Encode.object [ ("setMousePosition", encodePosition position) ]
             | UIEvent (ApplyMouseClick (mouseButton, position)) ->
                 Encode.object [ ("applyMouseClick", Encode.tuple2 encodeMouseButton encodePosition (mouseButton, position)) ]
+            | UIEvent (SetSceneBounds sceneBounds) ->
+                Encode.object [ ("setSceneBounds", encodeRectangle sceneBounds) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
