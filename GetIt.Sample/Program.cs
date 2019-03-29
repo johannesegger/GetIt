@@ -7,8 +7,11 @@ namespace GetIt.Sample
         static void Main(string[] args)
         {
             // Program1();
-            // Program5();
-            Program8();
+            // Program2();
+            // Program3();
+            // Program4();
+            Program5();
+            // Program8();
         }
 
         private static void Program1()
@@ -30,6 +33,73 @@ namespace GetIt.Sample
 
                 Turtle.Sleep(50);
             }
+        }
+
+        private static void Program2()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.MoveTo(0, 0);
+            for (int i = 0; i < 36; i++)
+            {
+                Turtle.RotateClockwise(10);
+                Turtle.MoveInDirection(10);
+                Turtle.Sleep(50);
+            }
+        }
+
+        private static void Program3()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.MoveTo(0, 0);
+            Turtle.Say("Let's do it", 2);
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(10);
+                Turtle.Sleep(50);
+            }
+            Turtle.Say("Nice one");
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(-10);
+                Turtle.Sleep(50);
+            }
+            Turtle.ShutUp();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(10);
+                Turtle.Sleep(50);
+            }
+            Turtle.Say("Done");
+        }
+
+        private static void Program4()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.MoveTo(0, 0);
+            Turtle.SetPenWeight(1.5);
+            Turtle.SetPenColor(RGBAColor.Cyan);
+            Turtle.TurnOnPen();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(10);
+                Turtle.Sleep(50);
+            }
+            Game.ClearScene();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(-10);
+                Turtle.Sleep(50);
+            }
+            Game.ClearScene();
+            for (var i = 0; i < 10; i++)
+            {
+                Turtle.MoveInDirection(10);
+                Turtle.Sleep(50);
+            }
+            Game.ClearScene();
         }
 
         private static void Program5()
