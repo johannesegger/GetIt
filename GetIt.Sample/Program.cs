@@ -17,7 +17,8 @@ namespace GetIt.Sample
             // Program8();
             // Program9();
             // Program10();
-            Program11();
+            // Program11();
+            Program12();
         }
 
         private static void Program1()
@@ -221,6 +222,17 @@ namespace GetIt.Sample
             Turtle.MoveInDirection(100);
             Turtle.Sleep(1000);
             Turtle.MoveToCenter();
+        }
+
+        private static void Program12()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.OnKeyDown(KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
+            Turtle.OnKeyDown(KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
+            Turtle.OnKeyDown(KeyboardKey.Left, player => player.RotateCounterClockwise(5));
+            Turtle.OnKeyDown(KeyboardKey.Right, player => player.RotateClockwise(5));
+            Turtle.OnKeyDown(KeyboardKey.Space, player => player.NextCostume());
         }
     }
 }
