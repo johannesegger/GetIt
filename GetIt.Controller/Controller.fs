@@ -9,6 +9,8 @@ open System.Threading
 open FSharp.Control.Reactive
 open GetIt.Windows
 
+exception GetItException of string
+
 type EventHandler =
     | OnAnyKeyDown of handler: (KeyboardKey -> unit)
     | OnKeyDown of key: KeyboardKey * handler: (unit -> unit)
@@ -203,7 +205,7 @@ module internal UICommunication =
         | Ok msg ->
             Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg)
         | Error (MessageProcessing.ResponseError e) ->
-            failwithf "Error while waiting for response: %O" e
+            raise (GetItException (sprintf "Error while waiting for response: %O" e))
         | Error MessageProcessing.NoResponse ->
             // Close the application if the UI has been closed (throwing an exception might be confusing)
             // TODO dispose subscriptions etc. ?
@@ -281,7 +283,7 @@ module Game =
             if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
                 GetIt.Windows.DeviceEvents.register subject
             else
-                failwithf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription
+                raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
 
         ()
 
@@ -289,10 +291,10 @@ module Game =
     let showSceneAndAddTurtle() =
         showScene ()
         UICommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
-        defaultTurtle <-
-            Map.toSeq (Model.getCurrent().Players)
-            |> Seq.tryHead
-            |> Option.map (fst >> (fun playerId -> new Player(playerId)))
+        match Model.getCurrent().Players |> Map.toSeq |> Seq.tryHead with
+        | Some (turtleId, turtleData) -> defaultTurtle <- Some (new Player (turtleId))
+        | None ->
+            raise (GetItException "Error while adding default turtle")
 
     [<CompiledName("OnAnyKeyDown")>]
     let onAnyKeyDown (action: Action<_>) =
