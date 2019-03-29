@@ -15,7 +15,9 @@ namespace GetIt.Sample
             // Program6();
             // Program7();
             // Program8();
-            Program9();
+            // Program9();
+            // Program10();
+            Program11();
         }
 
         private static void Program1()
@@ -188,6 +190,37 @@ namespace GetIt.Sample
 
             Turtle.TurnOffPen();
             Turtle.MoveLeft(100);
+        }
+
+        private static void Program10()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("I'll try to catch you.", 2);
+
+            Turtle.TurnOnPen();
+            Turtle.SetPenColor(RGBAColor.Red);
+            while (Turtle.GetDistanceToMouse() > 10)
+            {
+                Turtle.ShiftPenColor(10);
+                var direction = Turtle.GetDirectionToMouse();
+                Turtle.SetDirection(direction);
+                Turtle.MoveInDirection(10);
+                Turtle.NextCostume();
+                Turtle.Sleep(50);
+            }
+            Turtle.Say("Geschnappt :-)");
+        }
+
+        private static void Program11()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.TurnOnPen();
+            Turtle.SetPenWeight(50);
+            Turtle.MoveInDirection(100);
+            Turtle.Sleep(1000);
+            Turtle.MoveToCenter();
         }
     }
 }
