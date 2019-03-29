@@ -12,6 +12,7 @@ open Thoth.Json.Net
 type ControllerToUIMsg =
     | UIMsgProcessed
     | ShowScene of windowSize: Size
+    | ClearScene
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
     | SetPosition of PlayerId * Position
@@ -297,6 +298,7 @@ module ControllerToUIMsg =
             [
                 ("messageProcessed", Decode.nil UIMsgProcessed)
                 ("showScene", decodeSize |> Decode.map ShowScene)
+                ("clearScene", Decode.nil ClearScene)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
                 ("setPosition", Decode.tuple2 decodePlayerId decodePosition |> Decode.map SetPosition)
@@ -324,6 +326,8 @@ module ControllerToUIMsg =
                 Encode.object [ ("messageProcessed", Encode.nil) ]
             | ShowScene windowSize ->
                 Encode.object [ ("showScene", encodeSize windowSize) ]
+            | ClearScene ->
+                Encode.object [ ("clearScene", Encode.nil) ]
             | AddPlayer (playerId, playerData) ->
                 Encode.object [ ("addPlayer", Encode.tuple2 encodePlayerId encodePlayerData (playerId, playerData)) ]
             | RemovePlayer playerId ->

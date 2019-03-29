@@ -51,6 +51,9 @@ module Main =
                 app.Run(window)
             GetIt.App.showScene start
             Some ControllerMsgProcessed
+        | ClearScene ->
+            GetIt.App.clearScene ()
+            Some ControllerMsgProcessed
         | AddPlayer (playerId, player) ->
             GetIt.App.addPlayer playerId player
             Some ControllerMsgProcessed

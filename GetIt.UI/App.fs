@@ -118,7 +118,8 @@ module App =
         | RemovePlayer playerId ->
             (model, Cmd.none)
         | ClearScene ->
-            (model, Cmd.none)
+            let model' = { model with PenLines = [] }
+            (model', Cmd.none)
         | AddEventHandler eventHandler ->
             (model, Cmd.none)
         | RemoveEventHandler eventHandler ->
@@ -342,6 +343,7 @@ module App =
         uiThread.Start()
         signal.Wait()
 
+    let clearScene () = dispatchMessage ClearScene
     let setSceneBounds sceneBounds = dispatchMessage (SetSceneBounds sceneBounds)
     let addPlayer playerId player = dispatchMessage (AddPlayer (playerId, player))
     let removePlayer playerId = dispatchMessage (RemovePlayer playerId)

@@ -124,6 +124,8 @@ module internal UICommunication =
         | ShowScene windowSize ->
             // Scene bounds will come from UI
             model
+        | ClearScene ->
+            model
         | AddPlayer (playerId, player) ->
             { model with Players = Map.add playerId player model.Players }
         | RemovePlayer playerId ->
@@ -295,13 +297,17 @@ module Game =
         ()
 
     [<CompiledName("ShowSceneAndAddTurtle")>]
-    let showSceneAndAddTurtle() =
+    let showSceneAndAddTurtle () =
         showScene ()
         UICommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
         match Model.getCurrent().Players |> Map.toSeq |> Seq.tryHead with
         | Some (turtleId, turtleData) -> defaultTurtle <- Some (new Player (turtleId))
         | None ->
             raise (GetItException "Error while adding default turtle")
+
+    [<CompiledName("ClearScene")>]
+    let clearScene () =
+        UICommunication.sendCommand ClearScene
 
     [<CompiledName("OnAnyKeyDown")>]
     let onAnyKeyDown (action: Action<_>) =
