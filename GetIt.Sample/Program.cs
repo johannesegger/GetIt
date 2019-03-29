@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace GetIt.Sample
 {
@@ -11,8 +12,10 @@ namespace GetIt.Sample
             // Program3();
             // Program4();
             // Program5();
-            Program6();
+            // Program6();
+            // Program7();
             // Program8();
+            Program9();
         }
 
         private static void Program1()
@@ -103,13 +106,6 @@ namespace GetIt.Sample
             Game.ClearScene();
         }
 
-        private static void Program6()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.OnMouseEnter(player => player.MoveToRandomPosition());
-        }
-
         private static void Program5()
         {
             Game.ShowSceneAndAddTurtle();
@@ -129,6 +125,21 @@ namespace GetIt.Sample
             Turtle.Say("Game over");
         }
 
+        private static void Program6()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.OnMouseEnter(player => player.MoveToRandomPosition());
+        }
+
+        private static void Program7()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Try and hit me, sucker!", 2);
+            Turtle.OnClick((player, mouseButton) => player.Say("Ouch, that hurts!", 2));
+        }
+
         private static void Program8()
         {
             Game.ShowSceneAndAddTurtle();
@@ -137,9 +148,46 @@ namespace GetIt.Sample
 
             for (int i = 0; i < 500; i++)
             {
-                Turtle.Say(new string('A', i));
+                Turtle.Say(new string(Enumerable.Range(0, i).Select(j => (char)('A' + j)).ToArray()));
                 Turtle.Sleep(20);
             }
+        }
+
+        private static void Program9()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.SetPenWeight(5);
+
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(33, 33);
+            Turtle.Sleep(100);
+            Turtle.TurnOffPen();
+            Turtle.MoveTo(66, 66);
+            Turtle.Sleep(100);
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(100, 100);
+            Turtle.Sleep(100);
+
+            Turtle.MoveTo(100, 33);
+            Turtle.Sleep(100);
+            Turtle.TurnOffPen();
+            Turtle.MoveTo(100, -33);
+            Turtle.Sleep(100);
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(100, -100);
+            Turtle.Sleep(100);
+            
+            Turtle.MoveTo(66, -66);
+            Turtle.Sleep(100);
+            Turtle.TurnOffPen();
+            Turtle.MoveTo(33, -33);
+            Turtle.Sleep(100);
+            Turtle.TurnOnPen();
+            Turtle.MoveToCenter();
+
+            Turtle.TurnOffPen();
+            Turtle.MoveLeft(100);
         }
     }
 }
