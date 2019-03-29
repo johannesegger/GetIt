@@ -155,7 +155,7 @@ module Turtle =
     let private getTurtleOrFail () =
         match Game.defaultTurtle with
         | Some player -> player
-        | None -> failwith "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning."
+        | None -> raise (GetItException "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
 
     /// <summary>Moves the player to a position.</summary>
     /// <param name="position">The absolute destination position.</param>

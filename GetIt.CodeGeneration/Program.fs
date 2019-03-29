@@ -639,7 +639,7 @@ let main _argv =
                 [ "let private getTurtleOrFail () ="
                   "    match Game.defaultTurtle with"
                   "    | Some player -> player"
-                  "    | None -> failwith \"Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.\"" ]
+                  "    | None -> raise (GetItException \"Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.\")" ]
                 |> List.map (sprintf "    %s")
               yield "" ]
 
