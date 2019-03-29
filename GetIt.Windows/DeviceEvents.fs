@@ -107,11 +107,21 @@ module DeviceEvents =
             let hasbuttonFlag flag =
                 rawInput.data.mouse.mouseData.buttonsStr.usButtonFlags.HasFlag(flag)
             [
+                let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
+                let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
+                let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
+                let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
+
                 let mutable point = Unchecked.defaultof<Win32.WinPoint>
                 if not <| Win32.GetCursorPos(&point) then
                     let errorCode = Marshal.GetLastWin32Error()
                     raise (Win32Exception (sprintf "GetCursorPos failed. Error code 0x%08x" errorCode))
-                let position = { X = float point.x; Y = float point.y }
+
+                // Use percent for position to support different screen sizes for controller and UI
+                let position = {
+                    X = float (point.x - virtualDesktopLeft) / float virtualDesktopWidth
+                    Y = float (point.y - virtualDesktopTop) / float virtualDesktopHeight
+                }
 
                 if rawInput.data.mouse.lLastX <> 0 || rawInput.data.mouse.lLastY <> 0 then
                     yield MouseMove position

@@ -8,6 +8,7 @@ open FSharp.Control.Reactive
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
 open Xamarin.Forms.Platform.WPF.Helpers
+open GetIt.Windows
 
 [<assembly: ExportRenderer(typeof<SkiaSharp.Views.Forms.SKCanvasView>, typeof<SkiaSharp.Wpf.SKCanvasViewRenderer>)>]
 do ()
@@ -23,14 +24,25 @@ module Main =
     let private tryGetPositionOnSceneControl positionOnScreen =
         System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
             let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+
             TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
             |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
             |> Seq.tryHead
             |> Option.bind (fun scene ->
                 try
-                    let screenPoint = System.Windows.Point(positionOnScreen.X, positionOnScreen.Y)
-                    let point = scene.PointFromScreen(screenPoint)
-                    Some { X = point.X; Y = point.Y }
+                    let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
+                    let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
+                    let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
+                    let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
+
+                    let screenPoint =
+                        System.Windows.Point(
+                            float virtualDesktopWidth * positionOnScreen.X + float virtualDesktopLeft,
+                            float virtualDesktopHeight * positionOnScreen.Y + float virtualDesktopTop
+                        )
+                    
+                    let scenePoint = scene.PointFromScreen(screenPoint)
+                    Some { X = scenePoint.X; Y = scenePoint.Y }
                 with _ -> None
             )
         )

@@ -38,5 +38,6 @@
     <ProjectReference Include="..\SkiaSharp.Wpf\SkiaSharp.Wpf.csproj" />
     <ProjectReference Include="..\GetIt.UI\GetIt.UI.fsproj" />
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
+    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
   </ItemGroup>
 </Project>
