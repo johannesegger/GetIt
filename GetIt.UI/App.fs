@@ -133,33 +133,34 @@ module App =
         let xfColor color = Color(float color.Red / 255., float color.Green / 255., float color.Blue / 255., float color.Alpha / 255.)
 
         let getPlayerView (player: PlayerData) =
-            View.SKCanvasView(
-                enableTouchEvents = true,
-                paintSurface = (fun args ->
-                    let info = args.Info
-                    let surface = args.Surface
-                    let canvas = surface.Canvas
+            // see https://github.com/fsprojects/Fabulous/issues/261
+            dependsOn player.Costume (fun model costume ->
+                View.SKCanvasView(
+                    invalidate = true,
+                    enableTouchEvents = true,
+                    paintSurface = (fun args ->
+                        let info = args.Info
+                        let surface = args.Surface
+                        let canvas = surface.Canvas
 
-                    canvas.Clear()
+                        canvas.Clear()
 
-                    // see https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/path-data
-                    canvas.Translate(float32 info.Width / 2.f, float32 info.Height / 2.f)
+                        // see https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/path-data
+                        canvas.Translate(float32 info.Width / 2.f, float32 info.Height / 2.f)
 
-                    let widthRatio = float32 info.Width / float32 player.Costume.Size.Width
-                    let heightRatio = float32 info.Height / float32 player.Costume.Size.Height
-                    canvas.Scale(System.Math.Min(widthRatio, heightRatio))
+                        let widthRatio = float32 info.Width / float32 costume.Size.Width
+                        let heightRatio = float32 info.Height / float32 costume.Size.Height
+                        canvas.Scale(System.Math.Min(widthRatio, heightRatio))
 
-                    canvas.Translate(float32 player.Costume.Size.Width / -2.f, float32 player.Costume.Size.Height / -2.f)
+                        canvas.Translate(float32 costume.Size.Width / -2.f, float32 costume.Size.Height / -2.f)
 
-                    player.Costume.Paths
-                    |> List.iter (fun p ->
-                        let path = SKPath.ParseSvgPathData(p.Data)
-                        use paint = new SKPaint(Style = SKPaintStyle.Fill, Color = skColor p.FillColor)
-                        canvas.DrawPath(path, paint)
+                        costume.Paths
+                        |> List.iter (fun p ->
+                            let path = SKPath.ParseSvgPathData(p.Data)
+                            use paint = new SKPaint(Style = SKPaintStyle.Fill, Color = skColor p.FillColor)
+                            canvas.DrawPath(path, paint)
+                        )
                     )
-                ),
-                touch = (fun args ->
-                    printfn "touch event at (%f, %f)" args.Location.X args.Location.Y
                 )
             )
 
