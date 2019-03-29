@@ -10,7 +10,8 @@ namespace GetIt.Sample
             // Program2();
             // Program3();
             // Program4();
-            Program5();
+            // Program5();
+            Program6();
             // Program8();
         }
 
@@ -100,6 +101,13 @@ namespace GetIt.Sample
                 Turtle.Sleep(50);
             }
             Game.ClearScene();
+        }
+
+        private static void Program6()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.OnMouseEnter(player => player.MoveToRandomPosition());
         }
 
         private static void Program5()
