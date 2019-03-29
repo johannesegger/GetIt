@@ -159,57 +159,62 @@ module internal UICommunication =
             // Position on scene will come from UI
             model
 
-    let private uiProcess =
-        lazy (
-            // TODO determine UI technology based on host OS
-            let startInfo =
+    let mutable private connection = None
+
+    let setupLocalConnectionToUIProcess() =
+        let localConnection =
+            if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                let startInfo =
 #if DEBUG
-                let path =
-                    let rec parentPaths path acc =
-                        if isNull path then List.rev acc
-                        else parentPaths (Path.GetDirectoryName path) (path :: acc)
-                    parentPaths (Path.GetFullPath ".") []
-                    |> Seq.choose (fun p ->
-                        let projectDir = Path.Combine(p, "GetIt.WPF")
-                        if Directory.Exists projectDir
-                        then Some projectDir
-                        else None
-                    )
-                    |> Seq.head
-                ProcessStartInfo("dotnet", sprintf "run --project %s" path)
+                    let path =
+                        let rec parentPaths path acc =
+                            if isNull path then List.rev acc
+                            else parentPaths (Path.GetDirectoryName path) (path :: acc)
+                        parentPaths (Path.GetFullPath ".") []
+                        |> Seq.choose (fun p ->
+                            let projectDir = Path.Combine(p, "GetIt.WPF")
+                            if Directory.Exists projectDir
+                            then Some projectDir
+                            else None
+                        )
+                        |> Seq.head
+                    ProcessStartInfo("dotnet", sprintf "run --project %s" path)
 #else
-                ProcessStartInfo("GetIt.WPF.exe")
+                    ProcessStartInfo("GetIt.WPF.exe")
 #endif
 
-            let proc = Process.Start(startInfo)
+                let proc = Process.Start(startInfo)
 
-            let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut, PipeOptions.Asynchronous)
-            pipeClient.Connect()
+                let pipeClient = new NamedPipeClientStream(".", "GetIt", PipeDirection.InOut, PipeOptions.Asynchronous)
+                pipeClient.Connect()
 
-            let subject = MessageProcessing.forStream pipeClient ControllerToUIMsg.encode UIToControllerMsg.decode
+                MessageProcessing.forStream pipeClient ControllerToUIMsg.encode UIToControllerMsg.decode
+            else
+                raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
 
-            let subscription =
-                subject
-                |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
-                    Model.updateCurrent (fun model -> applyUIToControllerMessage msg model)
-                    subject.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
-                )
+        let subscription =
+            localConnection
+            |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
+                Model.updateCurrent (fun model -> applyUIToControllerMessage msg model)
+                localConnection.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
+            )
 
-            subject
-        )
+        connection <- Some localConnection
 
     let sendCommand command =
-        let connection = uiProcess.Force()
-
-        match MessageProcessing.sendCommand connection command with
-        | Ok msg ->
-            Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg)
-        | Error (MessageProcessing.ResponseError e) ->
-            raise (GetItException (sprintf "Error while waiting for response: %O" e))
-        | Error MessageProcessing.NoResponse ->
-            // Close the application if the UI has been closed (throwing an exception might be confusing)
-            // TODO dispose subscriptions etc. ?
-            Environment.Exit 1
+        match connection with
+        | Some connection ->
+            match MessageProcessing.sendCommand connection command with
+            | Ok msg ->
+                Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg)
+            | Error (MessageProcessing.ResponseError e) ->
+                raise (GetItException (sprintf "Error while waiting for response: %O" e))
+            | Error MessageProcessing.NoResponse ->
+                // Close the application if the UI has been closed (throwing an exception might be confusing)
+                // TODO dispose subscriptions etc. ?
+                Environment.Exit 1
+        | None ->
+            raise (GetItException "Connection to UI not set up.")
 
 type Player(playerId) =
     let mutable isDisposed = 0
@@ -260,6 +265,8 @@ module Game =
 
     [<CompiledName("ShowScene")>]
     let showScene () =
+        UICommunication.setupLocalConnectionToUIProcess()
+
         let windowSize = { Width = 800.; Height = 600. }
         UICommunication.sendCommand (ShowScene windowSize)
 
