@@ -200,7 +200,7 @@ module App =
                                 translationY = model.SceneBounds.Top - line.Start.Y,
                                 rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
                                 anchorX = 0.,
-                                anchorY = 0.
+                                anchorY = 0.5
                             )
                         )
 
