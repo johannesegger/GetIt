@@ -258,7 +258,8 @@ module App =
                                     View.Frame(
                                         content = View.Label(
                                             widthRequest = 150.,
-                                            text = text
+                                            text = text,
+                                            horizontalTextAlignment = TextAlignment.Center
                                         ),
                                         padding = 0.,
                                         margin = Thickness(10., 10., 10., 25.)
