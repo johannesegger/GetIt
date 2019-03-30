@@ -18,7 +18,8 @@ namespace GetIt.Sample
             // Program9();
             // Program10();
             // Program11();
-            Program12();
+            // Program12();
+            Program13();
         }
 
         private static void Program1()
@@ -233,6 +234,90 @@ namespace GetIt.Sample
             Turtle.OnKeyDown(KeyboardKey.Left, player => player.RotateCounterClockwise(5));
             Turtle.OnKeyDown(KeyboardKey.Right, player => player.RotateClockwise(5));
             Turtle.OnKeyDown(KeyboardKey.Space, player => player.NextCostume());
+        }
+
+        private static void Program13()
+        {
+            Game.ShowScene();
+
+            Game.Sleep(1000);
+
+            var isGameOver = false;
+
+            void controlLeftPlayer(Player player)
+            {
+                player.MoveTo(Game.SceneBounds.Left + 20, 0);
+                using (player.OnKeyDown(KeyboardKey.W, p => p.MoveUp(10)))
+                using (player.OnKeyDown(KeyboardKey.S, p => p.MoveDown(10)))
+                {
+                    while (!isGameOver)
+                    {
+                        player.Sleep(50);
+                    }
+                }
+            }
+
+            var leftPlayer = Game.AddPlayer(
+                PlayerData.Create(
+                    Costume.CreateRectangle(
+                        RGBAColor.DarkMagenta,
+                        new Size(20, 150))),
+                controlLeftPlayer);
+
+            void controlRightPlayer(Player player)
+            {
+                player.MoveTo(Game.SceneBounds.Right - 20, 0);
+                using (player.OnKeyDown(KeyboardKey.Up, p => p.MoveUp(10)))
+                using (player.OnKeyDown(KeyboardKey.Down, p => p.MoveDown(10)))
+                {
+                    while (!isGameOver)
+                    {
+                        player.Sleep(50);
+                    }
+                }
+            }
+
+            var rightPlayer = Game.AddPlayer(
+                PlayerData.Create(
+                    Costume.CreateRectangle(
+                        RGBAColor.Magenta,
+                        new Size(20, 150))),
+                controlRightPlayer);
+
+            var rand = new Random();
+            void controlBall(Player player)
+            {
+                player.SetDirection(rand.Next(360));
+                while (true)
+                {
+                    player.MoveInDirection(10);
+                    player.BounceOffWall();
+                    if (player.Bounds.Left <= Game.SceneBounds.Left
+                        || player.Bounds.Right >= Game.SceneBounds.Right)
+                    {
+                        isGameOver = true;
+                        break;
+                    }
+                    if (player.Bounds.Left <= leftPlayer.Bounds.Right
+                        && player.Position.Y <= leftPlayer.Bounds.Top
+                        && player.Position.Y >= leftPlayer.Bounds.Bottom)
+                    {
+                        player.SetDirection(180 - player.Direction);
+                    }
+                    else if (player.Bounds.Right >= rightPlayer.Bounds.Left
+                        && player.Position.Y <= rightPlayer.Bounds.Top
+                        && player.Position.Y >= rightPlayer.Bounds.Bottom)
+                    {
+                        player.SetDirection(180 - player.Direction);
+                    }
+                    player.Sleep(50);
+                }
+            }
+
+            Game.AddPlayer(
+                PlayerData.Create(
+                    Costume.CreateCircle(RGBAColor.Black, 10)),
+                controlBall);
         }
     }
 }
