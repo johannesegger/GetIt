@@ -262,11 +262,14 @@ type Player(playerId) =
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
-module Game =
-    let mutable internal defaultTurtle = None
+module internal Game =
+    let mutable defaultTurtle = None
 
-    [<CompiledName("ShowScene")>]
-    let showScene () =
+[<AbstractClass; Sealed>]
+type Game() =
+    // static member val internal defaultTurtle = None with get, set
+
+    static member ShowScene () =
         UICommunication.setupLocalConnectionToUIProcess()
 
         let windowSize = { Width = 800.; Height = 600. }
@@ -296,27 +299,34 @@ module Game =
 
         ()
 
-    [<CompiledName("ShowSceneAndAddTurtle")>]
-    let showSceneAndAddTurtle () =
-        showScene ()
-        UICommunication.sendCommand (AddPlayer (PlayerId.create (), Player.turtle))
-        match Model.getCurrent().Players |> Map.toSeq |> Seq.tryHead with
-        | Some (turtleId, turtleData) -> defaultTurtle <- Some (new Player (turtleId))
-        | None ->
-            raise (GetItException "Error while adding default turtle")
+    static member AddPlayer (playerData: PlayerData, run: Action<_>) =
+        let playerId = PlayerId.create ()
+        UICommunication.sendCommand (AddPlayer (playerId, playerData))
+        let player = new Player(playerId)
+        async { run.Invoke player }
+        |> Async.Start
+        player
 
-    [<CompiledName("ClearScene")>]
-    let clearScene () =
+    static member ShowSceneAndAddTurtle () =
+        Game.ShowScene ()
+        let turtleId = PlayerId.create ()
+        UICommunication.sendCommand (AddPlayer (turtleId, Player.turtle))
+        Game.defaultTurtle <- Some (new Player (turtleId))
+
+    static member ClearScene () =
         UICommunication.sendCommand ClearScene
 
-    [<CompiledName("OnAnyKeyDown")>]
-    let onAnyKeyDown (action: Action<_>) =
+    static member Sleep (durationInMilliseconds) =
+        Thread.Sleep (TimeSpan.FromMilliseconds (durationInMilliseconds))
+
+    static member OnAnyKeyDown (action: Action<_>) =
         Model.addEventHandler (OnAnyKeyDown action.Invoke)
 
-    [<CompiledName("OnKeyDown")>]
-    let onKeyDown (key, action: Action) =
+    static member OnKeyDown (key, action: Action) =
         Model.addEventHandler (OnKeyDown (key, action.Invoke))
 
-    [<CompiledName("OnClickScene")>]
-    let onClickScene (action: Action<_, _>) =
+    static member OnClickScene (action: Action<_, _>) =
         Model.addEventHandler (OnClickScene (curry action.Invoke))
+
+    static member SceneBounds
+        with get() = Model.getCurrent().SceneBounds

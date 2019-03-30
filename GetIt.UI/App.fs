@@ -185,23 +185,23 @@ module App =
 
         let getFullPlayerView (playerId, player: PlayerData) =
             View.AbsoluteLayout(
-                backgroundColor = Color.DarkKhaki,
                 children = [
-                    // TODO put in separate container to minimize view diffs?
                     yield!
-                        model.PenLines
-                        |> List.map (fun line ->
-                            let dx = line.End.X - line.Start.X
-                            let dy = line.End.Y - line.Start.Y
-                            View.BoxView(
-                                color = xfColor line.Color,
-                                widthRequest = Math.Sqrt(dx * dx + dy * dy),
-                                heightRequest = line.Weight,
-                                translationX = line.Start.X - model.SceneBounds.Left,
-                                translationY = model.SceneBounds.Top - line.Start.Y - line.Weight / 2.,
-                                rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
-                                anchorX = 0.,
-                                anchorY = 0.5
+                        dependsOn (model.PenLines, model.SceneBounds) (fun model (penLines, sceneBounds) ->
+                            penLines
+                            |> List.map (fun line ->
+                                let dx = line.End.X - line.Start.X
+                                let dy = line.End.Y - line.Start.Y
+                                View.BoxView(
+                                    color = xfColor line.Color,
+                                    widthRequest = Math.Sqrt(dx * dx + dy * dy),
+                                    heightRequest = line.Weight,
+                                    translationX = line.Start.X - sceneBounds.Left,
+                                    translationY = sceneBounds.Top - line.Start.Y - line.Weight / 2.,
+                                    rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
+                                    anchorX = 0.,
+                                    anchorY = 0.5
+                                )
                             )
                         )
 

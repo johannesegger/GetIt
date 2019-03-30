@@ -33,18 +33,32 @@ type PlayerData =
                   Y = this.Position.Y - this.Size.Height / 2. }
               Size = this.Size }
 
-module Player =
-    let nextCostume player =
-        { player with CostumeIndex = (player.CostumeIndex + 1) % player.Costumes.Length }
-
-    let createWithCostumes costumes =
+    /// <summary>
+    /// Creates a player with a list of costumes.
+    /// The player is placed at (0,0), has 0 degrees rotation and the default pen.
+    /// </summary>
+    /// <param name="costumes">The costumes of the player.</param>
+    static member Create (costumes) =
         { SizeFactor = 1.
           Position = Position.zero
           Direction = Degrees.zero
           Pen = Pen.``default``
           SpeechBubble = None
-          Costumes = costumes
+          Costumes = Seq.toList costumes
           CostumeIndex = 0 }
+
+    /// <summary>
+    /// Creates a player with a single costume.
+    /// The player is placed at (0,0), has 0 degrees rotation and the default pen.
+    /// </summary>
+    /// <param name="costume">The costume of the player.</param>
+    static member Create (costume) =
+        PlayerData.Create ([ costume ])
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Player =
+    let nextCostume player =
+        { player with CostumeIndex = (player.CostumeIndex + 1) % player.Costumes.Length }
 
     let turtle =
         let costumes =
@@ -113,5 +127,5 @@ module Player =
                         ]
                 }
             ]
-        createWithCostumes costumes
+        PlayerData.Create costumes
 
