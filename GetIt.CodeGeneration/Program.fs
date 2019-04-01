@@ -351,7 +351,27 @@ let commands =
                 Type = typeof<string>
                 Description = "The content of the speech bubble." } ]
           Result = { Type = typeof<string>; Description = "The text the user typed in." }
-          Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = \"\" })))" ] }
+          Body =
+            [ "use enumerator ="
+              "    Model.observable"
+              "    |> Observable.skip 1 // Skip initial value"
+              "    |> Observable.choose (fun model ->"
+              "        match Map.tryFind player.PlayerId model.Players |> Option.bind (fun p -> p.SpeechBubble) with"
+              "        | Some (Ask askData) -> askData.Answer"
+              "        | Some (Say _) -> None"
+              "        | None -> None"
+              "    )"
+              "    |> Observable.take 1"
+              "    |> Observable.getEnumerator"
+              ""
+              "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))"
+              ""
+              "if not <| enumerator.MoveNext() then"
+              "    raise (GetItException \"Didn't get an answer.\")"
+              ""
+              "shutUp player"
+              ""
+              "enumerator.Current" ] }
 
         { Name = "setPen"
           CompiledName = "SetPen"
@@ -588,6 +608,7 @@ let main _argv =
         )
         |> List.intersperse [ "" ]
         |> List.collect id
+        |> List.map (fun line -> line.TrimEnd())
         |> List.append
             [ "module private Raw ="
               "    let private rand = Random()"
@@ -676,9 +697,16 @@ let main _argv =
               "[<Extension>]"
               "type PlayerExtensions() =" ]
 
+    let prelude =
+        [ "namespace GetIt"
+          ""
+          "open System"
+          "open System.Threading"
+          "open FSharp.Control.Reactive"
+        ]
     let lines =
         [
-            [ "namespace GetIt"; ""; "open System"; "open System.Threading" ]
+            prelude
             rawFuncs
             defaultTurtleFuncs
             extensionMethods
