@@ -338,6 +338,19 @@ type Game() =
     static member Sleep (durationInMilliseconds) =
         Thread.Sleep (TimeSpan.FromMilliseconds (durationInMilliseconds))
 
+    static member WaitForMouseClick () =
+        use signal = new ManualResetEventSlim()
+        let mutable mouseClickEvent = Unchecked.defaultof<_>
+        let fn position mouseButton =
+            mouseClickEvent <- {
+                Position = position
+                MouseButton = mouseButton
+            }
+            signal.Set()
+        use d = Model.addEventHandler (OnClickScene fn)
+        signal.Wait()
+        mouseClickEvent
+
     static member OnAnyKeyDown (action: Action<_>) =
         Model.addEventHandler (OnAnyKeyDown action.Invoke)
 
