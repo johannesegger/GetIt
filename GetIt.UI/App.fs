@@ -349,7 +349,7 @@ module App =
                     )
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
-                        //orientation = ScrollOrientation.Horizontal,
+                        orientation = ScrollOrientation.Horizontal,
                         padding = Thickness(20., 10.),
                         backgroundColor = Color.LightGray,
                         content = View.StackLayout(
