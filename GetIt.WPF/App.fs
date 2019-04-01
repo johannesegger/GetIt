@@ -15,8 +15,6 @@ do ()
 
 type MainWindow() =
     inherit FormsApplicationPage()
-    // do
-    //     base.SizeToContent <- Windows.SizeToContent.WidthAndHeight
 
 module Main =
     let private eventSubject = new System.Reactive.Subjects.Subject<UIEvent>()
@@ -105,7 +103,7 @@ module Main =
 
     [<EntryPoint>]
     let main(_args) =
-        System.Diagnostics.Debugger.Launch() |> ignore
+        // System.Diagnostics.Debugger.Launch() |> ignore
 
         while true do
             try

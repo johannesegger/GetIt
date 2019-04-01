@@ -161,7 +161,6 @@ module App =
             dependsOn player.Costume (fun model costume ->
                 View.SKCanvasView(
                     invalidate = true,
-                    enableTouchEvents = true,
                     paintSurface = (fun args ->
                         let info = args.Info
                         let surface = args.Surface
