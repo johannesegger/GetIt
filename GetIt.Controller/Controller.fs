@@ -4,6 +4,8 @@ open System
 open System.Diagnostics
 open System.IO
 open System.IO.Pipes
+open System.Reactive.Linq
+open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
 open FSharp.Control.Reactive
@@ -28,17 +30,21 @@ type Model =
 module Model =
     let private gate = Object()
 
-    let mutable private current =
-        { SceneBounds = { Position = Position.zero; Size = { Width = 0.; Height = 0. } }
-          Players = Map.empty
-          MouseState = MouseState.empty
-          KeyboardState = KeyboardState.empty
-          EventHandlers = [] }
+    let mutable private subject =
+        let initial =
+            { SceneBounds = { Position = Position.zero; Size = { Width = 0.; Height = 0. } }
+              Players = Map.empty
+              MouseState = MouseState.empty
+              KeyboardState = KeyboardState.empty
+              EventHandlers = [] }
+        new BehaviorSubject<_>(initial)
 
-    let getCurrent () = current
+    let observable = subject.AsObservable()
+
+    let getCurrent () = subject.Value
 
     let updateCurrent fn =
-        lock gate (fun () -> current <- fn current)
+        lock gate (fun () -> subject.OnNext(fn subject.Value))
 
     let addEventHandler eventHandler =
         let eventHandlerId = Guid.NewGuid()
@@ -59,8 +65,13 @@ module internal UICommunication =
         |> Async.Start
         model
 
+    let private updatePlayer model playerId fn =
+        let player = Map.find playerId model.Players |> fn
+        { model with Players = Map.add playerId player model.Players }
+
     let private applyUIToControllerMessage message model =
         let invokeEventHandlers = invokeEventHandlers model
+        let updatePlayer = updatePlayer model
 
         match message with
         | ControllerMsgProcessed -> model
@@ -107,13 +118,15 @@ module internal UICommunication =
                 |> ignore
 
             model
-
         | UIEvent (SetSceneBounds sceneBounds) ->
             { model with SceneBounds = sceneBounds }
-
-    let private updatePlayer model playerId fn =
-        let player = Map.find playerId model.Players |> fn
-        { model with Players = Map.add playerId player model.Players }
+        | UIEvent (AnswerQuestion (playerId, answer)) ->
+            updatePlayer playerId (fun p ->
+                match p.SpeechBubble with
+                | Some (Ask askData) -> { p with SpeechBubble = Some (Ask { askData with Answer = Some answer }) }
+                | Some (Say _)
+                | None -> p
+            )
 
     let private applyControllerToUIMessage message model =
         let updatePlayer = updatePlayer model
@@ -143,14 +156,23 @@ module internal UICommunication =
         | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
         | ControllerEvent (KeyDown key) ->
-            invokeEventHandlers (function
-                | OnAnyKeyDown handler ->
-                    Some (async { return handler key })
-                | OnKeyDown (handlerKey, handler) when handlerKey = key ->
-                    Some (async { return handler () })
-                | _ -> None
-            )
-            |> ignore
+            let hasActiveTextInput =
+                model.Players
+                |> Map.exists (fun playerId player ->
+                    match player.SpeechBubble with
+                    | Some (Ask askData) -> true
+                    | Some (Say _)
+                    | None -> false
+                )
+            if not hasActiveTextInput then
+                invokeEventHandlers (function
+                    | OnAnyKeyDown handler ->
+                        Some (async { return handler key })
+                    | OnKeyDown (handlerKey, handler) when handlerKey = key ->
+                        Some (async { return handler () })
+                    | _ -> None
+                )
+                |> ignore
             { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
         | ControllerEvent (KeyUp key) ->
             { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }
@@ -266,8 +288,6 @@ module internal Game =
 
 [<AbstractClass; Sealed>]
 type Game() =
-    // static member val internal defaultTurtle = None with get, set
-
     static member ShowScene () =
         UICommunication.setupLocalConnectionToUIProcess()
 

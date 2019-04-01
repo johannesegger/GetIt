@@ -2,6 +2,7 @@ namespace GetIt
 
 open System
 open System.Threading
+open FSharp.Control.Reactive
 
 module private Raw =
     let private rand = Random()
@@ -98,7 +99,26 @@ module private Raw =
         shutUp player
 
     let ask (player: GetIt.Player) (question: System.String) =
-        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = "" })))
+        use enumerator =
+            Model.observable
+            |> Observable.skip 1 // Skip initial value
+            |> Observable.choose (fun model ->
+                match Map.tryFind player.PlayerId model.Players |> Option.bind (fun p -> p.SpeechBubble) with
+                | Some (Ask askData) -> askData.Answer
+                | Some (Say _) -> None
+                | None -> None
+            )
+            |> Observable.take 1
+            |> Observable.getEnumerator
+
+        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))
+
+        if not <| enumerator.MoveNext() then
+            raise (GetItException "Didn't get an answer.")
+
+        shutUp player
+
+        enumerator.Current
 
     let setPen (player: GetIt.Player) (pen: GetIt.Pen) =
         UICommunication.sendCommand (SetPen (player.PlayerId, pen))

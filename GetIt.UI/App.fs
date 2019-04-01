@@ -100,9 +100,33 @@ module App =
             let model' = updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
             (model', Cmd.none)
         | UpdateAnswer (playerId, answer) ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p ->
+                match p.SpeechBubble with
+                | Some (Ask askData) -> { p with SpeechBubble = Some (Ask { askData with Answer = Some answer }) }
+                | Some (Say _)
+                | None -> p
+            )
+            (model', Cmd.none)
         | ApplyAnswer playerId ->
-            (model, Cmd.none)
+            let model' = updatePlayer playerId (fun p ->
+                match p.SpeechBubble with
+                | Some (Ask askData) -> { p with SpeechBubble = None }
+                | Some (Say _)
+                | None -> p
+            )
+
+            let cmd =
+                model.Players
+                |> Map.tryFind playerId
+                |> Option.bind (fun p ->
+                    match p.SpeechBubble with
+                    | Some (Ask askData) -> Option.defaultValue "" askData.Answer |> Some
+                    | Some (Say _)
+                    | None -> None
+                )
+                |> Option.map (fun answer -> triggerEventCmd (UIEvent.AnswerQuestion (playerId, answer)))
+                |> Option.defaultValue Cmd.none
+            (model', cmd)
         | SetPen (playerId, pen) ->
             let model' = updatePlayer playerId (fun p -> { p with Pen = pen })
             (model', Cmd.none)
@@ -183,6 +207,57 @@ module App =
                 ]
             )
 
+        let speechBubble (player: PlayerData) content =
+            View.AbsoluteLayout(
+                translationY = model.SceneBounds.Bottom - player.Bounds.Top,
+                children = [
+                    View.SKCanvasView(
+                        paintSurface = (fun args ->
+                            let info = args.Info
+                            let surface = args.Surface
+                            let canvas = surface.Canvas
+
+                            canvas.Clear()
+
+                            let markerDrawHeight = 15.f
+                            let markerRealHeight = 20.f
+
+                            let borderRadius = 15.f
+                            use outerBubble = new SKRoundRect(SKRect(0.f, 0.f, float32 info.Width, float32 info.Height - markerRealHeight), borderRadius, borderRadius)
+                            use bubbleBorderPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.Black)
+                            canvas.DrawRoundRect(outerBubble, bubbleBorderPaint)
+
+                            let borderWidth = 5.f
+                            use innerBubble = new SKRoundRect(SKRect(borderWidth, borderWidth, float32 info.Width - borderWidth, float32 info.Height - borderWidth - markerRealHeight), borderRadius - borderWidth, borderRadius - borderWidth)
+                            use bubbleFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                            canvas.DrawRoundRect(innerBubble, bubbleFillPaint)
+
+                            canvas.Translate(SKPoint((float32 info.Width - markerRealHeight) / 2.f, float32 info.Height - markerRealHeight))
+
+                            use markerBorderPaint = new SKPaint(Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Square, StrokeWidth = 5.f, Color = SKColors.Black)
+                            let path = SKPath.ParseSvgPathData(sprintf "M0,0 L0,%f %f,0" markerDrawHeight markerDrawHeight)
+                            canvas.DrawPath(path, markerBorderPaint)
+
+                            canvas.Translate(SKPoint(2.f, -borderWidth))
+
+                            use markerFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                            canvas.DrawPath(path, markerFillPaint)
+                        )
+                    )
+                    |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                    |> layoutFlags AbsoluteLayoutFlags.All
+
+                    View.Frame(
+                        widthRequest = 150.,
+                        content = content,
+                        padding = 0.,
+                        margin = Thickness(10., 10., 10., 25.)
+                    )
+                ]
+            )
+            |> layoutFlags AbsoluteLayoutFlags.YProportional
+            |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left - 75., 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+
         let getFullPlayerView (playerId, player: PlayerData) =
             View.AbsoluteLayout(
                 children = [
@@ -217,59 +292,28 @@ module App =
                     match player.SpeechBubble with
                     | Some (Say text) ->
                         yield
-                            View.AbsoluteLayout(
-                                translationY = model.SceneBounds.Bottom - player.Bounds.Top,
+                            View.Label(
+                                text = text,
+                                horizontalTextAlignment = TextAlignment.Center
+                            )
+                            |> speechBubble player
+                    | Some (Ask data) ->
+                        yield
+                            View.StackLayout(
                                 children = [
-                                    View.SKCanvasView(
-                                        paintSurface = (fun args ->
-                                            let info = args.Info
-                                            let surface = args.Surface
-                                            let canvas = surface.Canvas
-
-                                            canvas.Clear()
-
-                                            let markerDrawHeight = 15.f
-                                            let markerRealHeight = 20.f
-
-                                            let borderRadius = 15.f
-                                            use outerBubble = new SKRoundRect(SKRect(0.f, 0.f, float32 info.Width, float32 info.Height - markerRealHeight), borderRadius, borderRadius)
-                                            use bubbleBorderPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.Black)
-                                            canvas.DrawRoundRect(outerBubble, bubbleBorderPaint)
-
-                                            let borderWidth = 5.f
-                                            use innerBubble = new SKRoundRect(SKRect(borderWidth, borderWidth, float32 info.Width - borderWidth, float32 info.Height - borderWidth - markerRealHeight), borderRadius - borderWidth, borderRadius - borderWidth)
-                                            use bubbleFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
-                                            canvas.DrawRoundRect(innerBubble, bubbleFillPaint)
-
-                                            canvas.Translate(SKPoint((float32 info.Width - markerRealHeight) / 2.f, float32 info.Height - markerRealHeight))
-
-                                            use markerBorderPaint = new SKPaint(Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Square, StrokeWidth = 5.f, Color = SKColors.Black)
-                                            let path = SKPath.ParseSvgPathData(sprintf "M0,0 L0,%f %f,0" markerDrawHeight markerDrawHeight)
-                                            canvas.DrawPath(path, markerBorderPaint)
-
-                                            canvas.Translate(SKPoint(2.f, -borderWidth))
-
-                                            use markerFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
-                                            canvas.DrawPath(path, markerFillPaint)
-                                        )
+                                    View.Label(
+                                        text = data.Question,
+                                        horizontalTextAlignment = TextAlignment.Center
                                     )
-                                    |> layoutBounds (Rectangle(0., 0., 1., 1.))
-                                    |> layoutFlags AbsoluteLayoutFlags.All
-
-                                    View.Frame(
-                                        content = View.Label(
-                                            widthRequest = 150.,
-                                            text = text,
-                                            horizontalTextAlignment = TextAlignment.Center
-                                        ),
-                                        padding = 0.,
-                                        margin = Thickness(10., 10., 10., 25.)
+                                    View.Entry(
+                                        text = Option.defaultValue "" data.Answer,
+                                        placeholder = "Answer",
+                                        textChanged = (fun ev -> dispatch (UpdateAnswer (playerId, ev.NewTextValue))),
+                                        completed = (fun text -> dispatch (ApplyAnswer playerId))
                                     )
                                 ]
                             )
-                            |> layoutFlags AbsoluteLayoutFlags.YProportional
-                            |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left - 75., 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
-                    | Some (Ask data) -> ()
+                            |> speechBubble player
                     | None -> ()
                 ]
             )

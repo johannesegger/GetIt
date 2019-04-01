@@ -70,3 +70,4 @@ type UIEvent =
     | SetMousePosition of Position
     | ApplyMouseClick of MouseButton * Position
     | SetSceneBounds of Rectangle
+    | AnswerQuestion of PlayerId * string

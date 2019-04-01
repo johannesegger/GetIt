@@ -19,7 +19,8 @@ namespace GetIt.Sample
             // Program10();
             // Program11();
             // Program12();
-            Program13();
+            // Program13();
+            Program14();
         }
 
         private static void Program1()
@@ -318,6 +319,19 @@ namespace GetIt.Sample
                 PlayerData.Create(
                     Costume.CreateCircle(RGBAColor.Black, 10)),
                 controlBall);
+        }
+
+        private static void Program14()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            int age;
+            string input = Turtle.Ask("How old are you?");
+            while (!int.TryParse(input, out age))
+            {
+                input = Turtle.Ask("Are you kidding? That's not a number. How old are you?");
+            }
+            Turtle.Say($"{age}? You're looking good for your age!");
         }
     }
 }

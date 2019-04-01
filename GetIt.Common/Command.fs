@@ -56,7 +56,7 @@ module private Serialization =
     let decodeAskData =
         Decode.object (fun get ->
             { Question = get.Required.Field "question" Decode.string
-              Answer = get.Required.Field "answer" Decode.string }
+              Answer = get.Required.Field "answer" (Decode.option Decode.string) }
         )
 
     let decodeSpeechBubble =
@@ -190,7 +190,7 @@ module private Serialization =
     let encodeAskData askData =
         Encode.object [
             ("question", Encode.string askData.Question)
-            ("answer", Encode.string askData.Answer)
+            ("answer", Encode.option Encode.string askData.Answer)
         ]
 
     let encodeSpeechBubble speechBubble =
@@ -365,6 +365,7 @@ module UIToControllerMsg =
                 ("setMousePosition", decodePosition |> Decode.map (SetMousePosition >> UIEvent))
                 ("applyMouseClick", Decode.tuple2 decodeMouseButton decodePosition |> Decode.map (ApplyMouseClick >> UIEvent))
                 ("setSceneBounds", decodeRectangle |> Decode.map (SetSceneBounds >> UIEvent))
+                ("answerQuestion", Decode.tuple2 decodePlayerId Decode.string |> Decode.map (AnswerQuestion >> UIEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -384,6 +385,8 @@ module UIToControllerMsg =
                 Encode.object [ ("applyMouseClick", Encode.tuple2 encodeMouseButton encodePosition (mouseButton, position)) ]
             | UIEvent (SetSceneBounds sceneBounds) ->
                 Encode.object [ ("setSceneBounds", encodeRectangle sceneBounds) ]
+            | UIEvent (AnswerQuestion (playerId, answer)) ->
+                Encode.object [ ("answerQuestion", Encode.tuple2 encodePlayerId Encode.string (playerId, answer)) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 
