@@ -335,6 +335,7 @@ module App =
         //         View.Button(text = "Reset", horizontalOptions = LayoutOptions.Center, command = (fun () -> dispatch Reset), canExecute = (model <> initModel))
         //     ])
             content = View.StackLayout(
+                spacing = 0.,
                 children = [
                     View.AbsoluteLayout(
                         isClippedToBounds = true,
