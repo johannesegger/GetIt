@@ -2,8 +2,14 @@ namespace GetIt
 
 open System
 
-type Degrees = private Degrees of double 
+type Degrees = private Degrees of float
     with
+        static member op_Equality (x: Degrees, y: Degrees) = x = y
+        static member op_Inequality (x: Degrees, y: Degrees) = x <> y
+        static member op_GreaterThan (x: Degrees, y: Degrees) = x > y
+        static member op_GreaterThanOrEqual (x: Degrees, y: Degrees) = x >= y
+        static member op_LessThan (x: Degrees, y: Degrees) = x < y
+        static member op_LessThanOrEqual (x: Degrees, y: Degrees) = x <= y
         static member private Create(value) =
             Degrees ((value % 360. + 360.) % 360.)
 
