@@ -318,12 +318,14 @@ type Game() =
 
         ()
 
-    static member AddPlayer (playerData: PlayerData, run: Action<_>) =
+    static member AddPlayer (playerData: PlayerData) =
         let playerId = PlayerId.create ()
         UICommunication.sendCommand (AddPlayer (playerId, playerData))
-        let player = new Player(playerId)
-        async { run.Invoke player }
-        |> Async.Start
+        new Player(playerId)
+
+    static member AddPlayer (playerData, run: Action<_>) =
+        let player = Game.AddPlayer playerData
+        async { run.Invoke player } |> Async.Start
         player
 
     static member ShowSceneAndAddTurtle () =
