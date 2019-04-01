@@ -24,6 +24,31 @@ module Degrees =
 
     let toRadians (Degrees v) = v / 180. * Math.PI
 
+/// <summary>
+/// Defines some common directions.
+/// </summary>
+[<AbstractClass; Sealed>]
+type Directions =
+    /// <summary>
+    /// Right direction.
+    /// </summary>
+    static member Right = Degrees.op_Implicit 0.
+
+    /// <summary>
+    /// Up direction.
+    /// </summary>
+    static member Up = Degrees.op_Implicit 90.
+
+    /// <summary>
+    /// Left direction.
+    /// </summary>
+    static member Left = Degrees.op_Implicit 180.
+
+    /// <summary>
+    /// Down direction.
+    /// </summary>
+    static member Down = Degrees.op_Implicit 270.
+
 type Position =
     { X: float
       Y: float }
