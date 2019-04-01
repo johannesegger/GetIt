@@ -25,7 +25,9 @@ namespace GetIt.Sample
             // Program16();
             // Program17();
             // Program18();
-            Program19();
+            // Program19();
+            // Program20();
+            Program21();
         }
 
         private static void Program1()
@@ -452,6 +454,77 @@ namespace GetIt.Sample
                 player.OnKeyDown(KeyboardKey.Right, p => p.RotateClockwise(5));
                 player.OnKeyDown(KeyboardKey.Space, p => p.NextCostume());
             }
+        }
+
+        private static void Program20()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.OnKeyDown(KeyboardKey.Left, p => p.MoveLeft(10));
+
+            Turtle.Say("Sleeping");
+            Turtle.Sleep(5000);
+
+            var name = Turtle.Ask("What's your name?");
+
+            Turtle.Say($"Hi, {name}");
+        }
+
+        private static void Program21()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.SetDirection(Directions.Right);
+            Turtle.Say("Try to eat some ants", 1);
+
+            void updateDirection(Player p, KeyboardKey key)
+            {
+                if (key == KeyboardKey.Right && p.Direction != Directions.Left)
+                {
+                    p.SetDirection(Directions.Right);
+                }
+                else if (key == KeyboardKey.Up && p.Direction != Directions.Down)
+                {
+                    p.SetDirection(Directions.Up);
+                }
+                else if (key == KeyboardKey.Left && p.Direction != Directions.Right)
+                {
+                    p.SetDirection(Directions.Left);
+                }
+                else if (key == KeyboardKey.Down && p.Direction != Directions.Up)
+                {
+                    p.SetDirection(Directions.Down);
+                }
+            }
+
+            System.Collections.Generic.IReadOnlyCollection<Player> points = Enumerable
+                .Range(0, 5)
+                .Select(_ =>
+                {
+                    var point = Game.AddPlayer(PlayerData.Ant);
+                    point.MoveToRandomPosition();
+                    return point;
+                })
+                .ToList();
+
+            var score = 0;
+            using (Turtle.OnAnyKeyDown(updateDirection))
+            {
+                var delay = 200.0;
+                while (!Turtle.TouchesEdge())
+                {
+                    foreach (var point in points.Where(Turtle.TouchesPlayer))
+                    {
+                        score++;
+                        point.MoveToRandomPosition();
+                        delay = delay * 2/3;
+                    }
+                    Turtle.MoveInDirection(10);
+                    Turtle.Sleep(delay);
+                }
+            }
+            Turtle.MoveToCenter();
+            Turtle.Say($"Game over. Score: {score}");
         }
     }
 }
