@@ -21,7 +21,11 @@ namespace GetIt.Sample
             // Program12();
             // Program13();
             // Program14();
-            Program15();
+            // Program15();
+            // Program16();
+            // Program17();
+            // Program18();
+            Program19();
         }
 
         private static void Program1()
@@ -342,6 +346,112 @@ namespace GetIt.Sample
             Turtle.Say("Click somewhere");
             var clickEvent = Game.WaitForMouseClick();
             Turtle.Say($"You clicked with mouse button {clickEvent.MouseButton} at {clickEvent.Position}");
+        }
+
+        private static void Program16()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Press any key to start");
+            var key = Game.WaitForAnyKeyDown();
+            Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            Turtle.Say("Game over.");
+        }
+
+        private static void Program17()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Move me with arrow keys", 2);
+            while (!Game.IsKeyDown(KeyboardKey.Space))
+            {
+                if (Game.IsKeyDown(KeyboardKey.Left) && Game.IsKeyDown(KeyboardKey.Up))
+                {
+                    Turtle.SetDirection(135);
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Left) && Game.IsKeyDown(KeyboardKey.Down))
+                {
+                    Turtle.SetDirection(225);
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right) && Game.IsKeyDown(KeyboardKey.Up))
+                {
+                    Turtle.SetDirection(45);
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right) && Game.IsKeyDown(KeyboardKey.Down))
+                {
+                    Turtle.SetDirection(315);
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Left))
+                {
+                    Turtle.TurnLeft();
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Right))
+                {
+                    Turtle.TurnRight();
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Up))
+                {
+                    Turtle.TurnUp();
+                    Turtle.MoveInDirection(10);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.Down))
+                {
+                    Turtle.TurnDown();
+                    Turtle.MoveInDirection(10);
+                }
+                Turtle.Sleep(50);
+            }
+            Turtle.Say("Game over.");
+        }
+
+        private static void Program18()
+        {
+            Game.ShowScene();
+
+            Game.AddPlayer(
+                PlayerData.Create(
+                    Costume.CreatePolygon(
+                        RGBAColor.Pink,
+                        new Position(50, 0),
+                        new Position(150, 50),
+                        new Position(250, 0),
+                        new Position(200, 100),
+                        new Position(300, 150),
+                        new Position(200, 150),
+                        new Position(150, 250),
+                        new Position(100, 150),
+                        new Position(0, 150),
+                        new Position(100, 100))));
+        }
+
+        private static void Program19()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            var ant = Game.AddPlayer(PlayerData.Ant);
+            ant.MoveRight(100);
+
+            var bug = Game.AddPlayer(PlayerData.Bug);
+            bug.MoveRight(200);
+
+            var spider = Game.AddPlayer(PlayerData.Spider);
+            spider.MoveRight(300);
+
+            foreach (var player in new[] { ant, bug, spider })
+            {
+                player.OnKeyDown(KeyboardKey.Down, p => p.ChangeSizeFactor(-0.1));
+                player.OnKeyDown(KeyboardKey.Up, p => p.ChangeSizeFactor(0.1));
+                player.OnKeyDown(KeyboardKey.Left, p => p.RotateCounterClockwise(5));
+                player.OnKeyDown(KeyboardKey.Right, p => p.RotateClockwise(5));
+                player.OnKeyDown(KeyboardKey.Space, p => p.NextCostume());
+            }
         }
     }
 }
