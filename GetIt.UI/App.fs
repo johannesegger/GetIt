@@ -337,6 +337,7 @@ module App =
             content = View.StackLayout(
                 children = [
                     View.AbsoluteLayout(
+                        isClippedToBounds = true,
                         automationId = "scene",
                         verticalOptions = LayoutOptions.FillAndExpand,
                         children = List.map getFullPlayerView players)
