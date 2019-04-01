@@ -353,6 +353,27 @@ type Game() =
         signal.Wait()
         mouseClickEvent
 
+    static member WaitForKeyDown key =
+        use signal = new ManualResetEventSlim()
+        let fn () =
+            signal.Set()
+        use d = Model.addEventHandler (OnKeyDown (key, fn))
+        signal.Wait()
+
+    static member WaitForAnyKeyDown () =
+        use signal = new ManualResetEventSlim()
+        let mutable keyboardKey = Unchecked.defaultof<_>
+        let fn key =
+            keyboardKey <- key
+            signal.Set()
+        use d = Model.addEventHandler (OnAnyKeyDown fn)
+        signal.Wait()
+        keyboardKey
+
+    static member IsKeyDown key =
+        Model.getCurrent().KeyboardState.KeysPressed
+        |> Set.contains key
+
     static member OnAnyKeyDown (action: Action<_>) =
         Model.addEventHandler (OnAnyKeyDown action.Invoke)
 
