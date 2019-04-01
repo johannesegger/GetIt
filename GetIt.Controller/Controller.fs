@@ -331,7 +331,7 @@ type Game() =
     static member ShowSceneAndAddTurtle () =
         Game.ShowScene ()
         let turtleId = PlayerId.create ()
-        UICommunication.sendCommand (AddPlayer (turtleId, Player.turtle))
+        UICommunication.sendCommand (AddPlayer (turtleId, PlayerData.Turtle))
         Game.defaultTurtle <- Some (new Player (turtleId))
 
     static member ClearScene () =

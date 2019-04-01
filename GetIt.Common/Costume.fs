@@ -1,5 +1,7 @@
 namespace GetIt
 
+open System
+
 type GeometryPath =
     { FillColor: RGBA
       Data: string }
@@ -20,8 +22,11 @@ type Costume =
                     ]
             }
 
-        static member CreatePolygon (fillColor, points) =
-            let points = List.map (fun p -> { p with Y = -p.Y }) points
+        static member CreatePolygon (fillColor, [<ParamArray>] points) =
+            let points =
+                points
+                |> Array.map (fun p -> { p with Y = -p.Y })
+                |> List.ofArray
 
             let minX = (List.minBy (fun p -> p.X) points).X
             let maxX = (List.maxBy (fun p -> p.X) points).X
@@ -47,10 +52,10 @@ type Costume =
 
         static member CreateRectangle (fillColor, size) =
             let points =
-                [
+                [|
                     { X = 0.; Y = 0. }
                     { X = 0.; Y = size.Height }
                     { X = size.Width; Y = size.Height }
                     { X = size.Width; Y = 0. }
-                ]
+                |]
             Costume.CreatePolygon (fillColor, points)
