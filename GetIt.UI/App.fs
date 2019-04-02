@@ -189,7 +189,6 @@ module App =
 
         let getPlayerInfoView (playerId, player) =
             let boxSize = { Width = 30.; Height = 30. }
-            // let size = Size.scale boxSize player.Costume.Size
             View.StackLayout(
                 orientation = StackOrientation.Horizontal,
                 children = [
@@ -243,8 +242,8 @@ module App =
                             canvas.DrawPath(path, markerFillPaint)
                         )
                     )
-                    |> layoutBounds (Rectangle(0., 0., 1., 1.))
                     |> layoutFlags AbsoluteLayoutFlags.All
+                    |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
                     View.Frame(
                         widthRequest = 150.,
@@ -254,38 +253,12 @@ module App =
                     )
                 ]
             )
-            |> layoutFlags AbsoluteLayoutFlags.YProportional
             |> layoutBounds (Rectangle(player.Bounds.Right - model.SceneBounds.Left - 75., 1., AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize))
+            |> layoutFlags AbsoluteLayoutFlags.YProportional
 
         let getFullPlayerView (playerId, player: PlayerData) =
             View.AbsoluteLayout(
                 children = [
-                    // yield
-                    //     View.AbsoluteLayout(
-                    //         children =
-                    //             (
-                    //                 model.PenLines
-                    //                 |> List.map (fun line ->
-                    //                     dependsOn (line, model.SceneBounds) (fun model (line, sceneBounds) ->
-                    //                         let dx = line.End.X - line.Start.X
-                    //                         let dy = line.End.Y - line.Start.Y
-                    //                         View.BoxView(
-                    //                             color = xfColor line.Color,
-                    //                             widthRequest = Math.Sqrt(dx * dx + dy * dy),
-                    //                             heightRequest = line.Weight,
-                    //                             translationX = line.Start.X - sceneBounds.Left,
-                    //                             translationY = sceneBounds.Top - line.Start.Y - line.Weight / 2.,
-                    //                             rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
-                    //                             anchorX = 0.,
-                    //                             anchorY = 0.5
-                    //                         )
-                    //                     )
-                    //                 )
-                    //             )
-                    //     )
-                    // |> layoutFlags AbsoluteLayoutFlags.All
-                    // |> layoutBounds (Rectangle(0., 0., 1., 1.))
-
                     yield
                         View.ContentView(
                             widthRequest = player.Size.Width,
@@ -326,21 +299,26 @@ module App =
             |> layoutFlags AbsoluteLayoutFlags.All
             |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
+        let getPenLineView penLine =
+            dependsOn (penLine, model.SceneBounds) (fun model (penLine, sceneBounds) ->
+                let dx = penLine.End.X - penLine.Start.X
+                let dy = penLine.End.Y - penLine.Start.Y
+                View.BoxView(
+                    color = xfColor penLine.Color,
+                    widthRequest = Math.Sqrt(dx * dx + dy * dy),
+                    heightRequest = penLine.Weight,
+                    translationX = penLine.Start.X - sceneBounds.Left,
+                    translationY = sceneBounds.Top - penLine.Start.Y - penLine.Weight / 2.,
+                    rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
+                    anchorX = 0.,
+                    anchorY = 0.5
+                )
+            )
+
         let players = Map.toList model.Players
 
         View.ContentPage(
             title = "GetIt",
-        //   content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
-        //     children = [ 
-        //         View.Label(text = sprintf "%d" model.Count, horizontalOptions = LayoutOptions.Center, widthRequest=200.0, horizontalTextAlignment=TextAlignment.Center)
-        //         View.Button(text = "Increment", command = (fun () -> dispatch Increment), horizontalOptions = LayoutOptions.Center)
-        //         View.Button(text = "Decrement", command = (fun () -> dispatch Decrement), horizontalOptions = LayoutOptions.Center)
-        //         View.Label(text = "Timer", horizontalOptions = LayoutOptions.Center)
-        //         View.Switch(isToggled = model.TimerOn, toggled = (fun on -> dispatch (TimerToggled on.Value)), horizontalOptions = LayoutOptions.Center)
-        //         View.Slider(minimumMaximum = (0.0, 10.0), value = double model.Step, valueChanged = (fun args -> dispatch (SetStep (int (args.NewValue + 0.5)))), horizontalOptions = LayoutOptions.FillAndExpand)
-        //         View.Label(text = sprintf "Step size: %d" model.Step, horizontalOptions = LayoutOptions.Center) 
-        //         View.Button(text = "Reset", horizontalOptions = LayoutOptions.Center, command = (fun () -> dispatch Reset), canExecute = (model <> initModel))
-        //     ])
             content = View.StackLayout(
                 spacing = 0.,
                 children = [
@@ -348,7 +326,17 @@ module App =
                         isClippedToBounds = true,
                         automationId = "scene",
                         verticalOptions = LayoutOptions.FillAndExpand,
-                        children = List.map getFullPlayerView players)
+                        children =
+                            [
+                                View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
+                                |> layoutFlags AbsoluteLayoutFlags.All
+                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
+
+                                View.AbsoluteLayout(children = List.map getFullPlayerView players)
+                                |> layoutFlags AbsoluteLayoutFlags.All
+                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                            ]
+                    )
                     |> sizeChanged (fun e ->
                         let size = { Width = e.Width; Height = e.Height }
                         let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
