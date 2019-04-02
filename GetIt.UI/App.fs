@@ -90,7 +90,7 @@ module App =
                                   End = player'.Position
                                   Weight = player.Pen.Weight
                                   Color = player.Pen.Color }
-                            line :: model.PenLines
+                            model.PenLines @ [ line ]
                         else model.PenLines }
             (model', Cmd.none)
         | SetPlayerDirection (playerId, angle) ->
@@ -260,24 +260,31 @@ module App =
         let getFullPlayerView (playerId, player: PlayerData) =
             View.AbsoluteLayout(
                 children = [
-                    yield!
-                        dependsOn (model.PenLines, model.SceneBounds) (fun model (penLines, sceneBounds) ->
-                            penLines
-                            |> List.map (fun line ->
-                                let dx = line.End.X - line.Start.X
-                                let dy = line.End.Y - line.Start.Y
-                                View.BoxView(
-                                    color = xfColor line.Color,
-                                    widthRequest = Math.Sqrt(dx * dx + dy * dy),
-                                    heightRequest = line.Weight,
-                                    translationX = line.Start.X - sceneBounds.Left,
-                                    translationY = sceneBounds.Top - line.Start.Y - line.Weight / 2.,
-                                    rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
-                                    anchorX = 0.,
-                                    anchorY = 0.5
-                                )
-                            )
-                        )
+                    // yield
+                    //     View.AbsoluteLayout(
+                    //         children =
+                    //             (
+                    //                 model.PenLines
+                    //                 |> List.map (fun line ->
+                    //                     dependsOn (line, model.SceneBounds) (fun model (line, sceneBounds) ->
+                    //                         let dx = line.End.X - line.Start.X
+                    //                         let dy = line.End.Y - line.Start.Y
+                    //                         View.BoxView(
+                    //                             color = xfColor line.Color,
+                    //                             widthRequest = Math.Sqrt(dx * dx + dy * dy),
+                    //                             heightRequest = line.Weight,
+                    //                             translationX = line.Start.X - sceneBounds.Left,
+                    //                             translationY = sceneBounds.Top - line.Start.Y - line.Weight / 2.,
+                    //                             rotation = 360. - Math.Atan2(dy, dx) * 180. / Math.PI,
+                    //                             anchorX = 0.,
+                    //                             anchorY = 0.5
+                    //                         )
+                    //                     )
+                    //                 )
+                    //             )
+                    //     )
+                    // |> layoutFlags AbsoluteLayoutFlags.All
+                    // |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
                     yield
                         View.ContentView(
