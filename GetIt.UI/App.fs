@@ -26,8 +26,6 @@ module App =
 
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
-        | SetKeyboardKeyPressed of KeyboardKey
-        | SetKeyboardKeyReleased of KeyboardKey
         | SetMousePosition of positionRelativeToSceneControl: Position
         | ApplyMouseClick of MouseButton * positionRelativeToSceneControl: Position
         | SetPlayerPosition of PlayerId * Position
@@ -41,9 +39,6 @@ module App =
         | AddPlayer of PlayerId * PlayerData
         | RemovePlayer of PlayerId
         | ClearScene
-        | AddEventHandler of EventHandler
-        | RemoveEventHandler of EventHandler
-        | ExecuteAction of (unit -> unit)
 
     let init () = (initModel, Cmd.none)
 
@@ -60,10 +55,6 @@ module App =
             let model' = { model with SceneBounds = bounds }
             let cmd = triggerEventCmd (UIEvent.SetSceneBounds bounds)
             (model', cmd)
-        | SetKeyboardKeyPressed key ->
-            (model, Cmd.none)
-        | SetKeyboardKeyReleased key ->
-            (model, Cmd.none)
         | SetMousePosition positionRelativeToSceneControl ->
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
@@ -144,12 +135,6 @@ module App =
         | ClearScene ->
             let model' = { model with PenLines = [] }
             (model', Cmd.none)
-        | AddEventHandler eventHandler ->
-            (model, Cmd.none)
-        | RemoveEventHandler eventHandler ->
-            (model, Cmd.none)
-        | ExecuteAction action ->
-            (model, Cmd.none)
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
     let view (model: Model) dispatch =
