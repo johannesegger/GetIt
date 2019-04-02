@@ -131,7 +131,8 @@ module App =
             let model' = { model with Players = Map.add playerId player model.Players }
             (model', Cmd.none)
         | RemovePlayer playerId ->
-            (model, Cmd.none)
+            let model' = { model with Players = Map.remove playerId model.Players }
+            (model', Cmd.none)
         | ClearScene ->
             let model' = { model with PenLines = [] }
             (model', Cmd.none)
