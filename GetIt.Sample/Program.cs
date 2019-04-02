@@ -36,7 +36,8 @@ namespace GetIt.Sample
             // Program19();
             // Program20();
             // Program21();
-            Program22();
+            // Program22();
+            Program23();
         }
 
         private static void Program1()
@@ -722,6 +723,18 @@ namespace GetIt.Sample
                     DrawTour(fittest.Tour);
                     Turtle.Sleep(iterationDelayMs);
                 });
+        }
+
+        private static void Program23()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            using (var food = Game.AddPlayer(PlayerData.Bug))
+            {
+                food.Say("I'm just here for 2 more seconds", 1);
+                food.MoveToRandomPosition();
+                food.Sleep(2000);
+            }
         }
     }
 }
