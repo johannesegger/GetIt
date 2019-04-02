@@ -565,6 +565,8 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
+            Turtle.Say("TSP solver", 1);
+
             var rand = new Random();
             var numberOfCities = 30;
             var cityPlayers = Enumerable
