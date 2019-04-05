@@ -374,6 +374,11 @@ type Game() =
         Model.getCurrent().KeyboardState.KeysPressed
         |> Set.contains key
 
+    static member IsAnyKeyDown key =
+        Model.getCurrent().KeyboardState.KeysPressed
+        |> Set.isEmpty
+        |> not
+
     static member OnAnyKeyDown (action: Action<_>) =
         Model.addEventHandler (OnAnyKeyDown action.Invoke)
 
