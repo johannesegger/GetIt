@@ -43,10 +43,12 @@ type Costume =
                 |> Array.map (fun p -> { p with Y = -p.Y })
                 |> List.ofArray
 
-            let minX = (List.minBy (fun p -> p.X) points).X
-            let maxX = (List.maxBy (fun p -> p.X) points).X
-            let minY = (List.minBy (fun p -> p.Y) points).Y
-            let maxY = (List.maxBy (fun p -> p.Y) points).Y
+            let xs = points |> List.map (fun p -> p.X)
+            let ys = points |> List.map (fun p -> p.Y)
+            let minX = List.min xs
+            let maxX = List.max xs
+            let minY = List.min ys
+            let maxY = List.max ys
 
             let path =
                 points
