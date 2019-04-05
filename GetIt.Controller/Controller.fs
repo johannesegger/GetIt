@@ -389,4 +389,7 @@ type Game() =
         Model.addEventHandler (OnClickScene (curry action.Invoke))
 
     static member SceneBounds
-        with get() = Model.getCurrent().SceneBounds
+        with get () = Model.getCurrent().SceneBounds
+
+    static member MousePosition
+        with get () = Model.getCurrent().MouseState.Position
