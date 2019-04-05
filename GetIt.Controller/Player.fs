@@ -132,7 +132,7 @@ module private Raw =
     let togglePenOnOff (player: GetIt.Player) =
         setPen player { player.Pen with IsOn = not player.Pen.IsOn }
 
-    let setPenColor (player: GetIt.Player) (color: GetIt.RGBA) =
+    let setPenColor (player: GetIt.Player) (color: GetIt.RGBAColor) =
         setPen player { player.Pen with Color = color }
 
     let shiftPenColor (player: GetIt.Player) (angle: GetIt.Degrees) =
@@ -375,7 +375,7 @@ module Turtle =
     /// <param name="color">The new color of the pen.</param>
     /// <returns></returns>
     [<CompiledName("SetPenColor")>]
-    let setPenColor (color: GetIt.RGBA) =
+    let setPenColor (color: GetIt.RGBAColor) =
         Raw.setPenColor (getTurtleOrFail ()) color
 
     /// <summary>Shifts the HUE value of the pen color.</summary>
@@ -692,7 +692,7 @@ type PlayerExtensions() =
     /// <param name="color">The new color of the pen.</param>
     /// <returns></returns>
     [<Extension>]
-    static member SetPenColor(player: GetIt.Player, color: GetIt.RGBA) =
+    static member SetPenColor(player: GetIt.Player, color: GetIt.RGBAColor) =
         Raw.setPenColor player color
 
     /// <summary>Shifts the HUE value of the pen color.</summary>

@@ -2,30 +2,53 @@ namespace GetIt
 
 open System
 
+/// Defines a pen used to draw lines.
 type Pen =
-    { IsOn: bool
-      Weight: float
-      Color: RGBA }
+    {
+        /// True, if the pen is turned on, otherwise false.
+        IsOn: bool
+        /// The thickness of the pen.
+        Weight: float
+        /// The color of the pen.
+        Color: RGBAColor
+    }
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Pen =
-    let ``default`` = { IsOn = false; Weight = 1.; Color = RGBAColor.black }
+    let ``default`` = { IsOn = false; Weight = 1.; Color = RGBAColors.black }
 
+/// The ID that uniquely identifies a player on the scene.
 type PlayerId = PlayerId of Guid
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module PlayerId =
     let create () = PlayerId (Guid.NewGuid())
 
+/// Holds data that defines a player.
+/// The player doesn't necessarily have been added to the scene.
 type PlayerData =
-    { SizeFactor: float
-      Position: Position
-      Direction: Degrees
-      Pen: Pen
-      SpeechBubble: SpeechBubble option
-      Costumes: Costume list
-      CostumeIndex: int }
+    {
+        /// The factor that is used to change the size of the player.
+        SizeFactor: float
+        /// The position of the player's center point.
+        Position: Position
+        /// The rotation of the player.
+        Direction: Degrees
+        /// The pen that belongs to the player.
+        Pen: Pen
+        /// The current speech bubble that belongs to the player.
+        SpeechBubble: SpeechBubble option
+        /// The costumes of the player.
+        Costumes: Costume list
+        /// The index of the current costume.
+        CostumeIndex: int
+    }
+    /// The current costume of the player.
     member this.Costume with get() = this.Costumes |> List.item this.CostumeIndex
 
+    /// The current size of the player.
     member this.Size with get() = this.Costume.Size * this.SizeFactor
 
+    /// The rectangular bounds of the player.
     member this.Bounds
         with get() =
             { Position =
@@ -55,6 +78,7 @@ type PlayerData =
     static member Create costume =
         PlayerData.Create [ costume ]
 
+    /// A turtle player.
     static member Turtle =
         let costumes =
             [
@@ -124,6 +148,7 @@ type PlayerData =
             ]
         PlayerData.Create costumes
 
+    /// An ant player.
     static member Ant =
         let costumes =
             [
@@ -147,6 +172,7 @@ type PlayerData =
             ]
         PlayerData.Create costumes
 
+    /// A bug player.
     static member Bug =
         let costumes =
             [
@@ -170,6 +196,7 @@ type PlayerData =
             ]
         PlayerData.Create costumes
 
+    /// A spider player.
     static member Spider =
         let costumes =
             [

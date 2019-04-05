@@ -2,14 +2,26 @@ namespace GetIt
 
 open System
 
-type GeometryPath =
-    { FillColor: RGBA
-      Data: string }
+/// Defines a colored geometry path.
+type GeometryPath = {
+    /// Color that is used to fill the path.
+    FillColor: RGBAColor
+    /// SVG path data (see https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/path-data).
+    Data: string
+}
 
+/// Defines a player costume.
 type Costume =
-    { Size: Size
-      Paths: GeometryPath list }
+    {
+        /// The size of the costume.
+        Size: Size
+        /// The paths that define the costume.
+        Paths: GeometryPath list
+    }
     with
+        ///<summary>Creates a circle costume.</summary>
+        ///<param name="fillColor">The color that is used to fill the circle.</param>
+        ///<param name="radius">The radius of the circle.</param>
         static member CreateCircle (fillColor, radius) =
             {
                 Size = { Width = 2. * radius; Height = 2. * radius }
@@ -22,6 +34,9 @@ type Costume =
                     ]
             }
 
+        ///<summary>Creates a polygon costume.</summary>
+        ///<param name="fillColor">The color that is used to fill the polygon.</param>
+        ///<param name="points">The points that define the polygon.</param>
         static member CreatePolygon (fillColor, [<ParamArray>] points) =
             let points =
                 points
@@ -50,6 +65,9 @@ type Costume =
                 ]
             }
 
+        ///<summary>Creates a rectangle costume.</summary>
+        ///<param name="fillColor">The color that is used to fill the rectangle.</param>
+        ///<param name="size">The size of the rectangle.</param>
         static member CreateRectangle (fillColor, size) =
             let points =
                 [|

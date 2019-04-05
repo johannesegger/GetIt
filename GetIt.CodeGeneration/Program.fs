@@ -8,7 +8,6 @@ module List =
             | [] -> [x]
             | xs -> x::sep::xs) ls []
 
-
 type Parameter =
     { Name: string
       Type: Type
@@ -424,7 +423,7 @@ let commands =
                 Type = typeof<GetIt.Player>
                 Description = "The player that should get its pen color set." }
               { Name = "color"
-                Type = typeof<GetIt.RGBA>
+                Type = typeof<GetIt.RGBAColor>
                 Description = "The new color of the pen." } ]
           Result = { Type = typeof<unit>; Description = "" }
           Body = [ "setPen player { player.Pen with Color = color }" ] }

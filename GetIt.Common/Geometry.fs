@@ -22,46 +22,38 @@ type Degrees = private Degrees of float
         static member op_Implicit value =
             Degrees.Create value
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Degrees =
-    [<CompiledName("Zero")>]
     let zero = Degrees 0.
 
     let value (Degrees v) = v
 
     let toRadians (Degrees v) = v / 180. * Math.PI
 
-/// <summary>
 /// Defines some common directions.
-/// </summary>
 [<AbstractClass; Sealed>]
 type Directions =
-    /// <summary>
     /// Right direction.
-    /// </summary>
     static member Right = Degrees.op_Implicit 0.
-
-    /// <summary>
     /// Up direction.
-    /// </summary>
     static member Up = Degrees.op_Implicit 90.
-
-    /// <summary>
     /// Left direction.
-    /// </summary>
     static member Left = Degrees.op_Implicit 180.
-
-    /// <summary>
     /// Down direction.
-    /// </summary>
     static member Down = Degrees.op_Implicit 270.
 
+/// Defines a two-dimensional position.
 type Position =
-    { X: float
-      Y: float }
+    {
+        /// The horizontal coordinate of the position.
+        X: float
+        /// The vertical coordinate of the position.
+        Y: float
+    }
     override this.ToString() = sprintf "(%.2f, %.2f)" this.X this.Y
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Position =
-    [<CompiledName("Zero")>]
     let zero = { X = 0.; Y = 0. }
 
     let angleTo positionTo positionFrom =
@@ -75,13 +67,19 @@ module Position =
         let dy = positionTo.Y - positionFrom.Y
         Math.Sqrt (dx * dx + dy * dy)
 
+/// Defines a two-dimensional size.
 type Size =
-    { Width: float
-      Height: float }
+    {
+        /// The horizontal size.
+        Width: float
+        /// The vertical size.
+        Height: float
+    }
     static member (*) (size, factor) =
         { Width = size.Width * factor
           Height = size.Height * factor }
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Size =
     let zero =
         { Width = 0.; Height = 0. }
@@ -92,17 +90,24 @@ module Size =
         let ratio = Math.Min(widthRatio, heightRatio);
         size * ratio
 
+/// Defines a rectangle in a two-dimensional coordinate system.
 type Rectangle =
-    { Position: Position
-      Size: Size }
+    {
+        /// The position of the rectangle.
+        Position: Position
+        /// The size of the rectangle.
+        Size: Size
+    }
+    /// The x-coordinate of the left edge.
     member this.Left with get() = this.Position.X
-
+    /// The x-coordinate of the right edge.
     member this.Right with get() = this.Position.X + this.Size.Width
-
+    /// The y-coordinate of the top edge.
     member this.Top with get() = this.Position.Y + this.Size.Height
-
+    /// The y-coordinate of the bottom edge.
     member this.Bottom with get() = this.Position.Y
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Rectangle =
     let zero =
         { Position = Position.zero; Size = Size.zero }

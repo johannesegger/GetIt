@@ -2,11 +2,17 @@ namespace GetIt
 
 open System
 
-type RGBA =
-    { Red: byte
-      Green: byte
-      Blue: byte
-      Alpha: byte }
+type RGBAColor =
+    {
+        /// The red part of the color.
+        Red: byte
+        /// The green part of the color.
+        Green: byte
+        /// The blue part of the color.
+        Blue: byte
+        /// The alpha part of the color that defines the opacity.
+        Alpha: byte
+    }
     override this.ToString() =
         sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
 
@@ -14,15 +20,18 @@ open System.Runtime.CompilerServices
 
 [<Extension>]
 type RGBAExtensions() =
+    /// Creates a new color based on an existing one with a different alpha value.
     [<Extension>]
-    static member WithAlpha(color: RGBA, alpha: byte) =
+    static member WithAlpha(color: RGBAColor, alpha: byte) =
         { color with Alpha = alpha }
 
 type private HSLA =
-    { Hue: float
-      Saturation: float
-      Lightness: float
-      Alpha: float }
+    {
+        Hue: float
+        Saturation: float
+        Lightness: float
+        Alpha: float
+    }
     override this.ToString() =
         sprintf "hsla(%f°, %f, %f, %f)" (this.Hue * 360.) this.Saturation this.Lightness this.Alpha
 
@@ -93,6 +102,7 @@ module private HSLA =
               Blue = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue - ( 1.0 / 3.0 ) )) |> byte
               Alpha = alpha }
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Color =
     let hueShift angle color =
         let hslaColor = HSLA.fromRGBA color
@@ -100,12 +110,7 @@ module Color =
         { hslaColor with Hue = shiftedValue }
         |> HSLA.toRGBA
 
-// TODO do this in C#-specific assembly
-// module RGBA =
-//    [<CompiledName("WithAlpha")>]
-//    let withAlpha (color, alpha) = { color with Alpha = alpha }
-
-module RGBAColor =
+module RGBAColors =
     [<CompiledName("AliceBlue")>]
     let aliceBlue = { Red = 0xf0uy; Green = 0xf8uy; Blue = 0xffuy; Alpha = 0xffuy }
     [<CompiledName("AntiqueWhite")>]

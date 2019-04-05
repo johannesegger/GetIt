@@ -46,7 +46,7 @@ namespace GetIt.Sample
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColor.Cyan.WithAlpha(0x80));
+            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x80));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 200)
@@ -106,7 +106,7 @@ namespace GetIt.Sample
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColor.Cyan);
+            Turtle.SetPenColor(RGBAColors.Cyan);
             Turtle.TurnOnPen();
             for (var i = 0; i < 10; i++)
             {
@@ -219,7 +219,7 @@ namespace GetIt.Sample
             Turtle.Say("I'll try to catch you.", 2);
 
             Turtle.TurnOnPen();
-            Turtle.SetPenColor(RGBAColor.Red);
+            Turtle.SetPenColor(RGBAColors.Red);
             while (Turtle.GetDistanceToMouse() > 10)
             {
                 Turtle.ShiftPenColor(10);
@@ -278,7 +278,7 @@ namespace GetIt.Sample
             var leftPlayer = Game.AddPlayer(
                 PlayerData.Create(
                     Costume.CreateRectangle(
-                        RGBAColor.DarkMagenta,
+                        RGBAColors.DarkMagenta,
                         new Size(20, 150))),
                 controlLeftPlayer);
 
@@ -298,7 +298,7 @@ namespace GetIt.Sample
             var rightPlayer = Game.AddPlayer(
                 PlayerData.Create(
                     Costume.CreateRectangle(
-                        RGBAColor.Magenta,
+                        RGBAColors.Magenta,
                         new Size(20, 150))),
                 controlRightPlayer);
 
@@ -334,7 +334,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreateCircle(RGBAColor.Black, 10)),
+                    Costume.CreateCircle(RGBAColors.Black, 10)),
                 controlBall);
         }
 
@@ -430,7 +430,7 @@ namespace GetIt.Sample
             Game.AddPlayer(
                 PlayerData.Create(
                     Costume.CreatePolygon(
-                        RGBAColor.Pink,
+                        RGBAColors.Pink,
                         new Position(50, 0),
                         new Position(150, 50),
                         new Position(250, 0),
@@ -572,7 +572,7 @@ namespace GetIt.Sample
             var numberOfCities = 30;
             var cityPlayers = Enumerable
                 .Range(0, numberOfCities)
-                .Select(_ => Game.AddPlayer(PlayerData.Create(Costume.CreateCircle(RGBAColor.DarkRed, 5))))
+                .Select(_ => Game.AddPlayer(PlayerData.Create(Costume.CreateCircle(RGBAColors.DarkRed, 5))))
                 .ToList();
             cityPlayers
                 .ForEach(p => p.MoveToRandomPosition());

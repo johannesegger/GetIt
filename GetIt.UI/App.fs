@@ -12,7 +12,7 @@ module App =
         { Start: Position
           End: Position
           Weight: float
-          Color: RGBA }
+          Color: RGBAColor }
 
     type Model =
         { SceneBounds: GetIt.Rectangle
