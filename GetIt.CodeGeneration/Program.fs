@@ -712,5 +712,5 @@ let main _argv =
         ]
         |> List.intersperse [ "" ]
         |> List.collect id
-    File.WriteAllLines("GetIt.Controller\\Player.fs", lines)
+    File.WriteAllLines("GetIt.Controller\\Player.generated.fs", lines)
     0

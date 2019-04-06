@@ -6,8 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Controller.fs" />
+    <Compile Include="Model.fs" />
+    <Compile Include="UICommunication.fs" />
     <Compile Include="Player.fs" />
+    <Compile Include="Game.fs" />
+    <Compile Include="Player.generated.fs" />
   </ItemGroup>
 
   <ItemGroup>
