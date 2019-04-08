@@ -155,7 +155,14 @@ module internal UICommunication =
                         |> Seq.head
                     ProcessStartInfo("dotnet", sprintf "run --project %s" path)
 #else
-                    ProcessStartInfo("GetIt.WPF.exe")
+                    let baseDir =
+                        System.Reflection.Assembly.GetExecutingAssembly().Location
+                        |> Path.GetDirectoryName
+                        |> Path.GetDirectoryName
+                        |> Path.GetDirectoryName
+                    let path = Path.Combine(baseDir, "runtimes", "win-x64", "native", "GetIt.UI", "GetIt.WPF.exe")
+                    printfn "Starting %s" path
+                    ProcessStartInfo(path)
 #endif
 
                 let proc = Process.Start(startInfo)

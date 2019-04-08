@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>GetIt</id>
+    <version>0.16.12</version>
+    <title>GetIt</title>
+    <authors>JEgger</authors>
+    <owners>JEgger</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/johannesegger/GetIt</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>.NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.</description>
+    <dependencies>
+      <dependency id="FSharp.Control.Reactive" version="4.1.0" />
+      <dependency id="Thoth.Json.Net" version="2.5.0" />
+      <dependency id="SharpLibWin32" version="0.2.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\Release\netstandard2.0\GetIt.Controller.dll" target="lib\netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\GetIt.Controller.xml" target="lib\netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\GetIt.Common.dll" target="lib\netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\GetIt.Common.xml" target="lib\netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\GetIt.Windows.dll" target="lib\netstandard2.0" />
+    <file src="..\GetIt.WPF\bin\x64\Release\net471\publish\**\*.*" target="runtimes\win-x64\native\GetIt.UI" />
+  </files>
+</package>
