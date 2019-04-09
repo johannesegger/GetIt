@@ -3,6 +3,7 @@ namespace GetIt
 open System
 open System.IO
 open System.Reactive
+open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Threading
@@ -423,16 +424,20 @@ module MessageProcessing =
 
     let private getMessageSender (stream: Stream) encode =
         let writer = new StreamWriter(stream)
+        let gate = new obj()
         Observer.Create(
             Action<_>(fun msg ->
                 let line =
                     encode msg
                     |> Encode.toString 0
-                writer.WriteLine(line)
-                writer.Flush()),
+                lock gate (fun () ->
+                    writer.WriteLine(line)
+                    writer.Flush()
+                )
+            ),
             fun () -> try writer.Dispose() with _ -> ()
         )
-        |> Observer.Synchronize
+        |> fun o -> o.NotifyOn(ThreadPoolScheduler.Instance)
 
     let forStream stream encode decode =
         let receiver = getMessageReceiver stream decode
