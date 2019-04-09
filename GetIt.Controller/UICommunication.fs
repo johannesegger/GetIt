@@ -161,7 +161,6 @@ module internal UICommunication =
                         |> Path.GetDirectoryName
                         |> Path.GetDirectoryName
                     let path = Path.Combine(baseDir, "runtimes", "win-x64", "native", "GetIt.UI", "GetIt.WPF.exe")
-                    printfn "Starting %s" path
                     ProcessStartInfo(path)
 #endif
 
