@@ -163,6 +163,10 @@ module DeviceEvents =
                     Win32.DefWindowProc(hWnd, msg, wParam, lParam)
             )
 
+            // Prevent GC'ing the allocated delegate (see https://github.com/johannesegger/GetIt/issues/8 and https://stackoverflow.com/a/16544880/1293659)
+            let wndProcHandle = GCHandle.Alloc wndProc
+            use disposableWndProcHandle = Disposable.create wndProcHandle.Free
+
             let mutable windowClass =
                 Win32.WNDCLASSEX(
                     cbSize = Marshal.SizeOf(typeof<Win32.WNDCLASSEX>),
