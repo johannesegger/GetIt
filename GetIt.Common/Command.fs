@@ -440,6 +440,7 @@ module MessageProcessing =
         Subject.Create<_, _>(sender, receiver)
 
     type ResponseError =
+        | ConnectionClosed of exn
         | ResponseError of exn
         | NoResponse
 
@@ -466,11 +467,18 @@ module MessageProcessing =
                     waitHandle.Set()
                 )
 
-        connection.OnNext(IdentifiableMsg (msgId, command))
+        let sendResult =
+            try
+                connection.OnNext(IdentifiableMsg (msgId, command))
+                Ok ()
+            with e -> Error (ConnectionClosed e)
 
-        waitHandle.Wait()
+        match sendResult with
+        | Ok () ->
+            waitHandle.Wait()
 
-        match response with
-        | Some (Ok msg) -> Ok msg
-        | Some (Error e) -> Error (ResponseError e)
-        | None -> Error NoResponse
+            match response with
+            | Some (Ok msg) -> Ok msg
+            | Some (Error e) -> Error (ResponseError e)
+            | None -> Error NoResponse
+        | Error e -> Error e
