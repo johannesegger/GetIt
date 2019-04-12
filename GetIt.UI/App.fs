@@ -1,6 +1,8 @@
 ﻿namespace GetIt
 
 open System
+open System.IO
+open System.Text
 open System.Threading
 open Fabulous.Core
 open Fabulous.DynamicViews
@@ -163,12 +165,12 @@ module App =
 
                         canvas.Translate(float32 costume.Size.Width / -2.f, float32 costume.Size.Height / -2.f)
 
-                        costume.Paths
-                        |> List.iter (fun p ->
-                            let path = SKPath.ParseSvgPathData(p.Data)
-                            use paint = new SKPaint(Style = SKPaintStyle.Fill, Color = skColor p.FillColor)
-                            canvas.DrawPath(path, paint)
-                        )
+                        let svgPicture =
+                            use stream = new MemoryStream(Encoding.UTF8.GetBytes costume.SvgData)
+                            let svg = SKSvg()
+                            svg.Load(stream)
+
+                        canvas.DrawPicture(svgPicture)
                     )
                 )
             )

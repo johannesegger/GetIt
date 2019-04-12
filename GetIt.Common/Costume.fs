@@ -2,46 +2,32 @@ namespace GetIt
 
 open System
 
-/// Defines a colored geometry path.
-type GeometryPath = {
-    /// Color that is used to fill the path.
-    FillColor: RGBAColor
-    /// SVG path data (see https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/path-data).
-    Data: string
-}
-
 /// Defines a player costume.
 type Costume =
     {
         /// The size of the costume.
         Size: Size
-        /// The paths that define the costume.
-        Paths: GeometryPath list
+        /// The definition of the costume in SVG format.
+        SvgData: string
     }
     with
         ///<summary>Creates a circle costume.</summary>
         ///<param name="fillColor">The color that is used to fill the circle.</param>
         ///<param name="radius">The radius of the circle.</param>
         static member CreateCircle (fillColor, radius) =
+            let size = { Width = 2. * radius; Height = 2. * radius }
             {
-                Size = { Width = 2. * radius; Height = 2. * radius }
-                Paths =
-                    [
-                        { FillColor = fillColor
-                          Data =
-                            sprintf "M 0,%f A %f,%f 0 1 0 %f,%f A %f,%f 0 1 0 0,%f"
-                                radius radius radius (2. * radius) radius radius radius radius}
-                    ]
+                Size = size
+                SvgData =
+                    sprintf """<svg width="%f" height="%f"><circle cx="%f" cy="%f" r="%f" style="fill:%s;fill-opacity:%f" /></svg>"""
+                        size.Width size.Height radius radius radius (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
             }
 
         ///<summary>Creates a polygon costume.</summary>
         ///<param name="fillColor">The color that is used to fill the polygon.</param>
         ///<param name="points">The points that define the polygon.</param>
         static member CreatePolygon (fillColor, [<ParamArray>] points) =
-            let points =
-                points
-                |> Array.map (fun p -> { p with Y = -p.Y })
-                |> List.ofArray
+            let points = Array.toList points
 
             let xs = points |> List.map (fun p -> p.X)
             let ys = points |> List.map (fun p -> p.Y)
@@ -50,21 +36,16 @@ type Costume =
             let minY = List.min ys
             let maxY = List.max ys
 
-            let path =
+            let pointString =
                 points
-                |> List.mapi (fun i p ->
-                    let x = p.X - minX
-                    let y = p.Y - minY
-                    sprintf "%s %f,%f" (if i > 0 then "L " else "") x y
-                )
+                |> List.map (fun p -> sprintf "%f,%f" p.X (maxY - p.Y))
                 |> String.concat " "
-                |> sprintf "M %s Z"
 
-            { Size = { Width = maxX - minX; Height = maxY - minY }
-              Paths =
-                [
-                    { FillColor = fillColor; Data = path }
-                ]
+            let size = { Width = maxX - minX; Height = maxY - minY }
+            { Size = size
+              SvgData =
+                sprintf """<svg width="%f" height="%f"><polygon points="%s" style="fill:%s;fill-opacity:%f;" /></svg>"""
+                    size.Width size.Height pointString (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
             }
 
         ///<summary>Creates a rectangle costume.</summary>

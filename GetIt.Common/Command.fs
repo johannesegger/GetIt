@@ -74,16 +74,10 @@ module private Serialization =
               Height = get.Required.Field "height" Decode.float }
         )
 
-    let decodeGeometryPath =
-        Decode.object (fun get ->
-            { FillColor = get.Required.Field "fillColor" decodeRgba
-              Data = get.Required.Field "data" Decode.string }
-        )
-
     let decodeCostume =
         Decode.object (fun get ->
             { Size = get.Required.Field "size" decodeSize
-              Paths = get.Required.Field "paths" (Decode.list decodeGeometryPath) }
+              SvgData = get.Required.Field "svgData" Decode.string }
         )
 
     let decodePlayerData =
@@ -210,16 +204,10 @@ module private Serialization =
             ("height", Encode.float size.Height)
         ]
 
-    let encodeGeometryPath geometryPath =
-        Encode.object [
-            ("fillColor", encodeRgba geometryPath.FillColor)
-            ("data", Encode.string geometryPath.Data)
-        ]
-
     let encodeCostume costume =
         Encode.object [
             ("size", encodeSize costume.Size)
-            ("paths", Encode.list (List.map encodeGeometryPath costume.Paths))
+            ("svgData", Encode.string costume.SvgData)
         ]
 
     let encodePlayerData playerData =

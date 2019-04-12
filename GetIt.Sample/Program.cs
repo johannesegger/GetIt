@@ -334,7 +334,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreateCircle(RGBAColors.Black, 10)),
+                    Costume.CreateCircle(RGBAColors.Black.WithAlpha(128), 10)),
                 controlBall);
         }
 
@@ -445,7 +445,9 @@ namespace GetIt.Sample
 
         private static void Program19()
         {
-            Game.ShowSceneAndAddTurtle();
+            Game.ShowScene();
+
+            var turtle = Game.AddPlayer(PlayerData.Turtle);
 
             var ant = Game.AddPlayer(PlayerData.Ant);
             ant.MoveRight(100);
@@ -456,7 +458,7 @@ namespace GetIt.Sample
             var spider = Game.AddPlayer(PlayerData.Spider);
             spider.MoveRight(300);
 
-            foreach (var player in new[] { ant, bug, spider })
+            foreach (var player in new[] { turtle, ant, bug, spider })
             {
                 player.OnKeyDown(KeyboardKey.Down, p => p.ChangeSizeFactor(-0.1));
                 player.OnKeyDown(KeyboardKey.Up, p => p.ChangeSizeFactor(0.1));

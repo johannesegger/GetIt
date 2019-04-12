@@ -16,6 +16,12 @@ type RGBAColor =
     override this.ToString() =
         sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
 
+module RGBAColor =
+    let rgbHexNotation v =
+        sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
+    let transparency v =
+        float v.Alpha / float Byte.MaxValue
+
 open System.Runtime.CompilerServices
 
 [<Extension>]
