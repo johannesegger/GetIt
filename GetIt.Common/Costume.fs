@@ -1,6 +1,7 @@
 namespace GetIt
 
 open System
+open System.IO
 
 /// Defines a player costume.
 type Costume =
@@ -60,3 +61,15 @@ type Costume =
                     { X = size.Width; Y = 0. }
                 |]
             Costume.CreatePolygon (fillColor, points)
+
+        ///<summary>Creates a costume from an SVG file.</summary>
+        ///<param name="path">The path to the SVG file.</param>
+        static member Load (path) =
+            try
+                let content = File.ReadAllText path
+                let (width, height) = Svg.getSizeFromSvgDocument content
+                {
+                    Size = { Width = width; Height = height }
+                    SvgData = content
+                }
+            with e -> raise (GetItException (sprintf "Error while loading costume from path %s: %O" path e))

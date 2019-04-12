@@ -37,7 +37,8 @@ namespace GetIt.Sample
             // Program20();
             // Program21();
             // Program22();
-            Program23();
+            // Program23();
+            Program24();
         }
 
         private static void Program1()
@@ -737,6 +738,12 @@ namespace GetIt.Sample
                 food.MoveToRandomPosition();
                 food.Sleep(2000);
             }
+        }
+
+        private static void Program24()
+        {
+            Game.ShowScene();
+            Game.AddPlayer(PlayerData.Create(Costume.Load(@"assets\Turtle2.svg")));
         }
     }
 }

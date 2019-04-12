@@ -5,8 +5,6 @@ open System.Reactive.Linq
 open System.Reactive.Subjects
 open FSharp.Control.Reactive
 
-exception GetItException of string
-
 type internal EventHandler =
     | OnAnyKeyDown of handler: (KeyboardKey -> unit)
     | OnKeyDown of key: KeyboardKey * handler: (unit -> unit)
