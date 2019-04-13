@@ -58,6 +58,7 @@ module Main =
                 let window = MainWindow()
                 window.Width <- windowSize.Width
                 window.Height <- windowSize.Height
+                window.Title <- "Get It"
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
                 app.Run(window)

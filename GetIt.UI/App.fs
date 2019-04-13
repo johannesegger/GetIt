@@ -334,46 +334,49 @@ module App =
         let players =
             model.PlayerOrder
             |> List.map (fun playerId -> playerId, Map.find playerId model.Players)
+        View.NavigationPage(
+            pages = [
+                View.ContentPage(
+                    content = View.StackLayout(
+                        spacing = 0.,
+                        children = [
+                            View.AbsoluteLayout(
+                                backgroundColor = Color.Tomato,
+                                isClippedToBounds = true,
+                                automationId = "scene",
+                                verticalOptions = LayoutOptions.FillAndExpand,
+                                children =
+                                    [
+                                        View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
+                                        |> layoutFlags AbsoluteLayoutFlags.All
+                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
-        View.ContentPage(
-            title = "GetIt",
-            content = View.StackLayout(
-                spacing = 0.,
-                children = [
-                    View.AbsoluteLayout(
-                        isClippedToBounds = true,
-                        automationId = "scene",
-                        verticalOptions = LayoutOptions.FillAndExpand,
-                        children =
-                            [
-                                View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
-                                |> layoutFlags AbsoluteLayoutFlags.All
-                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
-
-                                View.AbsoluteLayout(children = List.map getFullPlayerView players)
-                                |> layoutFlags AbsoluteLayoutFlags.All
-                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
-                            ]
+                                        View.AbsoluteLayout(children = List.map getFullPlayerView players)
+                                        |> layoutFlags AbsoluteLayoutFlags.All
+                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                                    ]
+                            )
+                            |> sizeChanged (fun e ->
+                                let size = { Width = e.Width; Height = e.Height }
+                                let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
+                                dispatch (SetSceneBounds bounds)
+                            )
+                            View.ScrollView(
+                                verticalOptions = LayoutOptions.End,
+                                orientation = ScrollOrientation.Horizontal,
+                                padding = Thickness(20., 10.),
+                                backgroundColor = Color.LightGray,
+                                content = View.StackLayout(
+                                    spacing = 0.,
+                                    orientation = StackOrientation.Horizontal,
+                                    children = List.map getPlayerInfoView players
+                                )
+                            )
+                        ]
                     )
-                    |> sizeChanged (fun e ->
-                        let size = { Width = e.Width; Height = e.Height }
-                        let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
-                        dispatch (SetSceneBounds bounds)
-                    )
-                    View.ScrollView(
-                        verticalOptions = LayoutOptions.End,
-                        orientation = ScrollOrientation.Horizontal,
-                        padding = Thickness(20., 10.),
-                        backgroundColor = Color.LightGray,
-                        content = View.StackLayout(
-                            spacing = 0.,
-                            orientation = StackOrientation.Horizontal,
-                            children = List.map getPlayerInfoView players
-                        )
-                    )
-                ]
-            )
-        )
+                )
+                |> hasNavigationBar false
+            ])
 
     let dispatchSubject = new System.Reactive.Subjects.Subject<Msg>()
     let dispatchMessage = dispatchSubject.OnNext
