@@ -19,11 +19,13 @@ module App =
     type Model =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, PlayerData>
+          PlayerOrder: PlayerId list
           PenLines: PenLine list }
 
     let initModel =
         { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
+          PlayerOrder = []
           PenLines = [] }
 
     type Msg =
@@ -130,7 +132,11 @@ module App =
             let model' = updatePlayer playerId Player.nextCostume
             (model', Cmd.none)
         | AddPlayer (playerId, player) ->
-            let model' = { model with Players = Map.add playerId player model.Players }
+            let model' =
+                { model with
+                    Players = Map.add playerId player model.Players
+                    PlayerOrder = model.PlayerOrder @ [ playerId ]
+                }
             (model', Cmd.none)
         | RemovePlayer playerId ->
             let model' = { model with Players = Map.remove playerId model.Players }
@@ -303,7 +309,9 @@ module App =
                 )
             )
 
-        let players = Map.toList model.Players
+        let players =
+            model.PlayerOrder
+            |> List.map (fun playerId -> playerId, Map.find playerId model.Players)
 
         View.ContentPage(
             title = "GetIt",
