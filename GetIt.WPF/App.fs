@@ -21,27 +21,29 @@ module Main =
 
     let private tryGetPositionOnSceneControl positionOnScreen =
         System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-            let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+            if isNull System.Windows.Application.Current.MainWindow then None
+            else
+                let window = System.Windows.Application.Current.MainWindow :?> MainWindow
 
-            TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
-            |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-            |> Seq.tryHead
-            |> Option.bind (fun scene ->
-                try
-                    let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
-                    let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
-                    let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
-                    let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
+                TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
+                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                |> Seq.tryHead
+                |> Option.bind (fun scene ->
+                    try
+                        let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
+                        let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
+                        let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
+                        let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
 
-                    let screenPoint =
-                        System.Windows.Point(
-                            float virtualDesktopWidth * positionOnScreen.X + float virtualDesktopLeft,
-                            float virtualDesktopHeight * positionOnScreen.Y + float virtualDesktopTop
-                        )
+                        let screenPoint =
+                            System.Windows.Point(
+                                float virtualDesktopWidth * positionOnScreen.X + float virtualDesktopLeft,
+                                float virtualDesktopHeight * positionOnScreen.Y + float virtualDesktopTop
+                            )
                     
-                    let scenePoint = scene.PointFromScreen(screenPoint)
-                    Some { X = scenePoint.X; Y = scenePoint.Y }
-                with _ -> None
+                        let scenePoint = scene.PointFromScreen(screenPoint)
+                        Some { X = scenePoint.X; Y = scenePoint.Y }
+                    with _ -> None
             )
         )
 
