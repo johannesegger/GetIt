@@ -10,8 +10,8 @@
     <Reference Include="PresentationFramework" />
     <PackageReference Include="SkiaSharp.Views" Version="1.68.0" />
     <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
-    <PackageReference Include="Xamarin.Forms" Version="3.5.0.129452" />
-    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="3.5.0.129452" />
+    <PackageReference Include="Xamarin.Forms" Version="3.6.0.293080" />
+    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="3.6.0.293080" />
   </ItemGroup>
 
 </Project>
