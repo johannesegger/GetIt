@@ -173,7 +173,7 @@ module App =
 
                         let svgPicture =
                             use stream = new MemoryStream(Encoding.UTF8.GetBytes costume.SvgData)
-                            let svg = SKSvg()
+                            let svg = SkiaSharp.Extended.Svg.SKSvg()
                             svg.Load(stream)
 
                         canvas.DrawPicture(svgPicture)
@@ -216,23 +216,45 @@ module App =
 
                             let borderRadius = 15.f
                             use outerBubble = new SKRoundRect(SKRect(0.f, 0.f, float32 info.Width, float32 info.Height - markerRealHeight), borderRadius, borderRadius)
-                            use bubbleBorderPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.Black)
+                            use bubbleBorderPaint =
+                                new SKPaint(
+                                    Style = SKPaintStyle.Fill,
+                                    Color = SKColors.Black,
+                                    IsAntialias = true
+                                )
                             canvas.DrawRoundRect(outerBubble, bubbleBorderPaint)
 
                             let borderWidth = 5.f
                             use innerBubble = new SKRoundRect(SKRect(borderWidth, borderWidth, float32 info.Width - borderWidth, float32 info.Height - borderWidth - markerRealHeight), borderRadius - borderWidth, borderRadius - borderWidth)
-                            use bubbleFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                            use bubbleFillPaint =
+                                new SKPaint(
+                                    Style = SKPaintStyle.Fill,
+                                    Color = SKColors.WhiteSmoke,
+                                    IsAntialias = true
+                                )
                             canvas.DrawRoundRect(innerBubble, bubbleFillPaint)
 
                             canvas.Translate(SKPoint((float32 info.Width - markerRealHeight) / 2.f, float32 info.Height - markerRealHeight))
 
-                            use markerBorderPaint = new SKPaint(Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Square, StrokeWidth = 5.f, Color = SKColors.Black)
+                            use markerBorderPaint =
+                                new SKPaint(
+                                    Style = SKPaintStyle.Stroke,
+                                    StrokeCap = SKStrokeCap.Square,
+                                    StrokeWidth = 5.f,
+                                    Color = SKColors.Black,
+                                    IsAntialias = true
+                                )
                             let path = SKPath.ParseSvgPathData(sprintf "M0,0 L0,%f %f,0" markerDrawHeight markerDrawHeight)
                             canvas.DrawPath(path, markerBorderPaint)
 
                             canvas.Translate(SKPoint(2.f, -borderWidth))
 
-                            use markerFillPaint = new SKPaint(Style = SKPaintStyle.Fill, Color = SKColors.WhiteSmoke)
+                            use markerFillPaint =
+                                new SKPaint(
+                                    Style = SKPaintStyle.Fill,
+                                    Color = SKColors.WhiteSmoke,
+                                    IsAntialias = true
+                                )
                             canvas.DrawPath(path, markerFillPaint)
                         )
                     )
