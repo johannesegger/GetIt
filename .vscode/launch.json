@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.1/GetIt.Sample.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/GetIt.Sample",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart"
