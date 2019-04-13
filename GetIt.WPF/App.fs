@@ -4,6 +4,7 @@ open System
 open System.IO.Pipes
 open System.Reactive.Linq
 open System.Windows
+open System.Windows.Media.Imaging
 open FSharp.Control.Reactive
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
@@ -47,6 +48,16 @@ module Main =
             )
         )
 
+    let windowIcon =
+        use stream = typeof<GetIt.App>.Assembly.GetManifestResourceStream("GetIt.UI.icon.png")
+        let bitmap = BitmapImage()
+        bitmap.BeginInit()
+        bitmap.StreamSource <- stream
+        bitmap.CacheOption <- BitmapCacheOption.OnLoad
+        bitmap.EndInit()
+        bitmap.Freeze()
+        bitmap
+
     let executeCommand cmd =
         match cmd with
         | UIMsgProcessed -> None
@@ -60,6 +71,7 @@ module Main =
                 window.Height <- windowSize.Height
                 window.Title <- "Get It"
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
+                window.Icon <- windowIcon
                 onStarted()
                 app.Run(window)
             GetIt.App.showScene start
