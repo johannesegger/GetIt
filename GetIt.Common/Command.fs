@@ -10,9 +10,13 @@ open System.Threading
 open FSharp.Control.Reactive
 open Thoth.Json.Net
 
+type WindowSize =
+    | SpecificSize of Size
+    | Maximized
+
 type ControllerToUIMsg =
     | UIMsgProcessed
-    | ShowScene of windowSize: Size
+    | ShowScene of WindowSize
     | ClearScene
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
@@ -73,6 +77,12 @@ module private Serialization =
             { Width = get.Required.Field "width" Decode.float
               Height = get.Required.Field "height" Decode.float }
         )
+
+    let decodeWindowSize =
+        Decode.oneOf [
+            Decode.field "specificSize" decodeSize |> Decode.map SpecificSize
+            Decode.field "maximized" (Decode.nil Maximized)
+        ]
 
     let decodeCostume =
         Decode.object (fun get ->
@@ -204,6 +214,11 @@ module private Serialization =
             ("height", Encode.float size.Height)
         ]
 
+    let encodeWindowSize windowSize =
+        match windowSize with
+        | SpecificSize size -> Encode.object [ ("specificSize", encodeSize size) ]
+        | Maximized -> Encode.object [ ("maximized", Encode.nil) ]
+
     let encodeCostume costume =
         Encode.object [
             ("size", encodeSize costume.Size)
@@ -286,7 +301,7 @@ module ControllerToUIMsg =
         let decoders =
             [
                 ("messageProcessed", Decode.nil UIMsgProcessed)
-                ("showScene", decodeSize |> Decode.map ShowScene)
+                ("showScene", decodeWindowSize |> Decode.map ShowScene)
                 ("clearScene", Decode.nil ClearScene)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
@@ -314,7 +329,7 @@ module ControllerToUIMsg =
             | UIMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
             | ShowScene windowSize ->
-                Encode.object [ ("showScene", encodeSize windowSize) ]
+                Encode.object [ ("showScene", encodeWindowSize windowSize) ]
             | ClearScene ->
                 Encode.object [ ("clearScene", Encode.nil) ]
             | AddPlayer (playerId, playerData) ->

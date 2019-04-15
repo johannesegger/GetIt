@@ -39,7 +39,11 @@ namespace GetIt.Sample
             // Program22();
             // Program23();
             // Program24();
-            Program25();
+            // Program25();
+            // Program26();
+            // Program27();
+            // Program28();
+            Program29();
         }
 
         private static void Program1()
@@ -755,6 +759,26 @@ namespace GetIt.Sample
                 Turtle.Say($"Mouse position: {Game.MousePosition}");
                 Game.Sleep(50);
             }
+        }
+
+        private static void Program26()
+        {
+            Game.ShowScene(1000, 350);
+        }
+
+        private static void Program27()
+        {
+            Game.ShowMaximizedScene();
+        }
+
+        private static void Program28()
+        {
+            Game.ShowSceneAndAddTurtle(1000, 350);
+        }
+
+        private static void Program29()
+        {
+            Game.ShowMaximizedSceneAndAddTurtle();
         }
     }
 }

@@ -5,21 +5,12 @@ open System.Runtime.InteropServices
 open System.Threading
 open FSharp.Control.Reactive
 
-module Game =
+module internal Game =
     let mutable defaultTurtle = None
 
-/// <summary>
-/// Defines methods to setup a game, add players, register global events and more.
-/// </summary>
-[<AbstractClass; Sealed>]
-type Game() =
-    /// <summary>
-    /// Initializes and shows an empty scene with no players on it.
-    /// </summary>
-    static member ShowScene () =
+    let showScene windowSize =
         UICommunication.setupLocalConnectionToUIProcess()
 
-        let windowSize = { Width = 800.; Height = 600. }
         UICommunication.sendCommand (ShowScene windowSize)
 
         let subject = new System.Reactive.Subjects.Subject<_>()
@@ -45,6 +36,34 @@ type Game() =
                 raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
 
         ()
+
+    let addTurtle () =
+        let turtleId = PlayerId.create ()
+        UICommunication.sendCommand (AddPlayer (turtleId, PlayerData.Turtle))
+        defaultTurtle <- Some (new Player (turtleId))
+
+/// <summary>
+/// Defines methods to setup a game, add players, register global events and more.
+/// </summary>
+[<AbstractClass; Sealed>]
+type Game() =
+    /// <summary>
+    /// Initializes and shows an empty scene with the default size and no players on it.
+    /// </summary>
+    static member ShowScene () =
+        Game.showScene (SpecificSize { Width = 800.; Height = 600. })
+
+    /// <summary>
+    /// Initializes and shows an empty scene with a specific size and no players on it.
+    /// </summary>
+    static member ShowScene (windowWidth, windowHeight) =
+        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
+
+    /// <summary>
+    /// Initializes and shows an empty scene with maximized size and no players on it.
+    /// </summary>
+    static member ShowMaximizedScene () =
+        Game.showScene Maximized
 
     /// <summary>
     /// Adds a player to the scene.
@@ -73,9 +92,21 @@ type Game() =
     /// </summary>
     static member ShowSceneAndAddTurtle () =
         Game.ShowScene ()
-        let turtleId = PlayerId.create ()
-        UICommunication.sendCommand (AddPlayer (turtleId, PlayerData.Turtle))
-        Game.defaultTurtle <- Some (new Player (turtleId))
+        Game.addTurtle ()
+
+    /// <summary>
+    /// Initializes and shows an empty scene with a specific size and adds the default player to it.
+    /// </summary>
+    static member ShowSceneAndAddTurtle (windowWidth, windowHeight) =
+        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
+        Game.addTurtle ()
+
+    /// <summary>
+    /// Initializes and shows an empty scene with maximized size and adds the default player to it.
+    /// </summary>
+    static member ShowMaximizedSceneAndAddTurtle () =
+        Game.showScene Maximized
+        Game.addTurtle ()
 
     /// <summary>
     /// Clears all drawings from the scene.

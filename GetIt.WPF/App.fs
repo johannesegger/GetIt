@@ -72,8 +72,12 @@ module Main =
                 app.Exit.Subscribe(fun args -> onClosed()) |> ignore
                 Forms.Init()
                 let window = MainWindow()
-                window.Width <- windowSize.Width
-                window.Height <- windowSize.Height
+                match windowSize with
+                | SpecificSize size ->
+                    window.Width <- size.Width
+                    window.Height <- size.Height
+                | Maximized ->
+                    window.WindowState <- WindowState.Maximized
                 window.Title <- "Get It"
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
                 window.Icon <- windowIcon
