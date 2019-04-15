@@ -13,7 +13,7 @@
     <dependencies>
       <dependency id="FSharp.Control.Reactive" version="4.1.0" />
       <dependency id="Thoth.Json.Net" version="2.5.0" />
-      <dependency id="SharpLibWin32" version="0.2.0" />
+      <dependency id="SharpLibWin32" version="0.2.1" />
     </dependencies>
   </metadata>
   <files>

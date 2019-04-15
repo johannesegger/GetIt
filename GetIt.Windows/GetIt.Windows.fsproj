@@ -14,9 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpLibWin32" Version="0.2.0">
-      <NoWarn>NU1701</NoWarn>
-    </PackageReference>
+    <PackageReference Include="SharpLibWin32" Version="0.2.1" />
   </ItemGroup>
 
 </Project>
