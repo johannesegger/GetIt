@@ -26,7 +26,11 @@ module Main =
             else
                 let window = System.Windows.Application.Current.MainWindow :?> MainWindow
 
-                TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
+                // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
+                let navigationPage =
+                    TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
+                    |> Seq.head
+                TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
                 |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
                 |> Seq.tryHead
                 |> Option.bind (fun scene ->
