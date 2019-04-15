@@ -341,7 +341,6 @@ module App =
                         spacing = 0.,
                         children = [
                             View.AbsoluteLayout(
-                                backgroundColor = Color.Tomato,
                                 isClippedToBounds = true,
                                 automationId = "scene",
                                 verticalOptions = LayoutOptions.FillAndExpand,
