@@ -38,7 +38,8 @@ namespace GetIt.Sample
             // Program21();
             // Program22();
             // Program23();
-            Program24();
+            // Program24();
+            Program25();
         }
 
         private static void Program1()
@@ -744,6 +745,16 @@ namespace GetIt.Sample
         {
             Game.ShowScene();
             Game.AddPlayer(PlayerData.Create(Costume.Load(@"assets\Turtle2.svg")));
+        }
+
+        private static void Program25()
+        {
+            Game.ShowSceneAndAddTurtle();
+            while (true)
+            {
+                Turtle.Say($"Mouse position: {Game.MousePosition}");
+                Game.Sleep(50);
+            }
         }
     }
 }
