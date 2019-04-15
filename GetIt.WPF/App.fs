@@ -27,12 +27,13 @@ module Main =
                 let window = System.Windows.Application.Current.MainWindow :?> MainWindow
 
                 // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
-                let navigationPage =
-                    TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
-                    |> Seq.head
-                TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
-                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
                 |> Seq.tryHead
+                |> Option.bind (fun navigationPage ->
+                    TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
+                    |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                    |> Seq.tryHead
+                )
                 |> Option.bind (fun scene ->
                     try
                         let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
