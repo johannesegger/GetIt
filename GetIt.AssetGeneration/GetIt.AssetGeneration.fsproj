@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="Sprites.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
