@@ -138,7 +138,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Move me with arrow keys");
+            Turtle.Say("Move me with arrow keys. Press <Space> to quit.");
             using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.ShutUp()))
             using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.ShutUp()))
             using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.ShutUp()))
@@ -148,7 +148,7 @@ namespace GetIt.Sample
             using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.MoveLeft(10)))
             using (Turtle.OnKeyDown(KeyboardKey.Right, player => player.MoveRight(10)))
             {
-                Turtle.Sleep(5000);
+                Game.WaitForKeyDown(KeyboardKey.Space);
             }
             Turtle.Say("Game over");
         }
