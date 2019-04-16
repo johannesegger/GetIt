@@ -23,6 +23,20 @@ type PlayerId = PlayerId of Guid
 module PlayerId =
     let create () = PlayerId (Guid.NewGuid())
 
+/// Holds data that defines an ask bubble.
+type AskData =
+    {
+        /// The question inside the ask bubble.
+        Question: string
+        /// The current answer of the user
+        Answer: string option
+    }
+
+/// Defines the different types of speech bubbles.
+type SpeechBubble =
+    | Say of string
+    | Ask of AskData
+
 /// Holds data that defines a player.
 /// The player doesn't necessarily have been added to the scene.
 type PlayerData =

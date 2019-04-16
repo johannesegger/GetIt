@@ -10,7 +10,6 @@
     <Compile Include="Geometry.fs" />
     <Compile Include="Color.fs" />
     <Compile Include="SvgImage.fs" />
-    <Compile Include="SpeechBubble.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Input.fs" />
     <Compile Include="Command.fs" />
