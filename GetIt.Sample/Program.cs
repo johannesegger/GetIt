@@ -44,7 +44,8 @@ namespace GetIt.Sample
             // Program27();
             // Program28();
             // Program29();
-            Program30();
+            // Program30();
+            Program31();
         }
 
         private static void Program1()
@@ -792,6 +793,18 @@ namespace GetIt.Sample
             Game.WaitForKeyDown(KeyboardKey.Space);
             Turtle.ShutUp();
             Game.SetBackground(Background.None);
+        }
+
+        private static void Program31()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            var color = RGBAColor.SelectRandom(RGBAColors.Red, RGBAColors.Green, RGBAColors.Blue);
+            Turtle.Say($"Chose color {color}");
+            Turtle.TurnOnPen();
+            Turtle.SetPenColor(color);
+            Turtle.SetPenWeight(5);
+            Turtle.MoveRight(100);
         }
     }
 }

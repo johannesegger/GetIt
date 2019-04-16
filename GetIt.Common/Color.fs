@@ -15,6 +15,9 @@ type RGBAColor =
     }
     override this.ToString() =
         sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
+    static member SelectRandom([<ParamArray>] colors) =
+        let index = RandomNumberGenerator.``default``.Next(Array.length colors)
+        Array.item index colors
 
 module RGBAColor =
     let rgbHexNotation v =

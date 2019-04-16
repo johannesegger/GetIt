@@ -1,5 +1,6 @@
 namespace GetIt
 
+open System
 open System.IO
 open System.Text.RegularExpressions
 open System.Xml
@@ -55,3 +56,7 @@ module Svg =
         |> function
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
+
+module RandomNumberGenerator =
+    [<CompiledName("Default")>]
+    let ``default`` = Random()
