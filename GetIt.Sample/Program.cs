@@ -285,7 +285,7 @@ namespace GetIt.Sample
 
             var leftPlayer = Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreateRectangle(
+                    SvgImage.CreateRectangle(
                         RGBAColors.DarkMagenta,
                         new Size(20, 150))),
                 controlLeftPlayer);
@@ -305,7 +305,7 @@ namespace GetIt.Sample
 
             var rightPlayer = Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreateRectangle(
+                    SvgImage.CreateRectangle(
                         RGBAColors.Magenta,
                         new Size(20, 150))),
                 controlRightPlayer);
@@ -342,7 +342,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreateCircle(RGBAColors.Black.WithAlpha(128), 10)),
+                    SvgImage.CreateCircle(RGBAColors.Black.WithAlpha(128), 10)),
                 controlBall);
         }
 
@@ -437,7 +437,7 @@ namespace GetIt.Sample
 
             Game.AddPlayer(
                 PlayerData.Create(
-                    Costume.CreatePolygon(
+                    SvgImage.CreatePolygon(
                         RGBAColors.Pink,
                         new Position(50, 0),
                         new Position(150, 50),
@@ -582,7 +582,7 @@ namespace GetIt.Sample
             var numberOfCities = 30;
             var cityPlayers = Enumerable
                 .Range(0, numberOfCities)
-                .Select(_ => Game.AddPlayer(PlayerData.Create(Costume.CreateCircle(RGBAColors.DarkRed, 5))))
+                .Select(_ => Game.AddPlayer(PlayerData.Create(SvgImage.CreateCircle(RGBAColors.DarkRed, 5))))
                 .ToList();
             cityPlayers
                 .ForEach(p => p.MoveToRandomPosition());
@@ -750,7 +750,7 @@ namespace GetIt.Sample
         private static void Program24()
         {
             Game.ShowScene();
-            Game.AddPlayer(PlayerData.Create(Costume.Load(@"assets\Turtle2.svg")));
+            Game.AddPlayer(PlayerData.Create(SvgImage.Load(@"assets\Turtle2.svg")));
         }
 
         private static void Program25()
