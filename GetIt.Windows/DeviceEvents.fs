@@ -52,6 +52,7 @@ module DeviceEvents =
                 [
                     0x20us, Space
                     0x1Bus, Escape
+                    0x0Dus, Enter
                     0x26us, Up
                     0x28us, Down
                     0x25us, Left

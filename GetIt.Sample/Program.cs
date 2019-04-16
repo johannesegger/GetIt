@@ -789,8 +789,8 @@ namespace GetIt.Sample
             Game.SetBackground(Background.Baseball1);
             Turtle.TurnOnPen();
             Turtle.MoveTo(50, 100);
-            Turtle.Say("Press <Space> to reset the background.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
+            Turtle.Say("Press <Enter> to reset the background.");
+            Game.WaitForKeyDown(KeyboardKey.Enter);
             Turtle.ShutUp();
             Game.SetBackground(Background.None);
         }

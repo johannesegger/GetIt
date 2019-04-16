@@ -3,6 +3,7 @@ namespace GetIt
 type KeyboardKey =
     | Space
     | Escape
+    | Enter
     | Up
     | Down
     | Left

@@ -116,6 +116,7 @@ module private Serialization =
             match key with
             | "space" -> Decode.succeed Space
             | "escape" -> Decode.succeed Escape
+            | "enter" -> Decode.succeed Enter
             | "up" -> Decode.succeed Up
             | "down" -> Decode.succeed Down
             | "left" -> Decode.succeed Left
@@ -247,6 +248,7 @@ module private Serialization =
         match key with
         | Space -> "space"
         | Escape -> "escape"
+        | Enter -> "enter"
         | Up -> "up"
         | Down -> "down"
         | Left -> "left"
