@@ -115,6 +115,9 @@ module Main =
             // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
             clipSceneBounds ()
             Some ControllerMsgProcessed
+        | SetBackground background ->
+            GetIt.App.setBackground background
+            Some ControllerMsgProcessed
         | ClearScene ->
             GetIt.App.clearScene ()
             Some ControllerMsgProcessed

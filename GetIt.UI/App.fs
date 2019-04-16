@@ -20,13 +20,15 @@ module App =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, PlayerData>
           PlayerOrder: PlayerId list
-          PenLines: PenLine list }
+          PenLines: PenLine list
+          Background: SvgImage }
 
     let initModel =
         { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
           PlayerOrder = []
-          PenLines = [] }
+          PenLines = []
+          Background = Background.none }
 
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
@@ -43,6 +45,7 @@ module App =
         | AddPlayer of PlayerId * PlayerData
         | RemovePlayer of PlayerId
         | ClearScene
+        | SetBackground of SvgImage
 
     let init () = (initModel, Cmd.none)
 
@@ -143,6 +146,9 @@ module App =
             (model', Cmd.none)
         | ClearScene ->
             let model' = { model with PenLines = [] }
+            (model', Cmd.none)
+        | SetBackground background ->
+            let model' = { model with Background = background }
             (model', Cmd.none)
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
@@ -331,6 +337,31 @@ module App =
                 )
             )
 
+        let backgroundView =
+            dependsOn model.Background (fun model background ->
+                View.SKCanvasView(
+                    invalidate = true,
+                    paintSurface = (fun args ->
+                        let info = args.Info
+                        let surface = args.Surface
+                        let canvas = surface.Canvas
+
+                        canvas.Clear()
+
+                        let widthRatio = float32 info.Width / float32 background.Size.Width
+                        let heightRatio = float32 info.Height / float32 background.Size.Height
+                        canvas.Scale(System.Math.Max(widthRatio, heightRatio))
+
+                        let svgPicture =
+                            use stream = new MemoryStream(Encoding.UTF8.GetBytes background.SvgData)
+                            let svg = SkiaSharp.Extended.Svg.SKSvg()
+                            svg.Load(stream)
+
+                        canvas.DrawPicture(svgPicture)
+                    )
+                )
+            )
+
         let players =
             model.PlayerOrder
             |> List.map (fun playerId -> playerId, Map.find playerId model.Players)
@@ -345,6 +376,10 @@ module App =
                                 verticalOptions = LayoutOptions.FillAndExpand,
                                 children =
                                     [
+                                        backgroundView
+                                        |> layoutFlags AbsoluteLayoutFlags.All
+                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
+
                                         View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
                                         |> layoutFlags AbsoluteLayoutFlags.All
                                         |> layoutBounds (Rectangle(0., 0., 1., 1.))
@@ -404,6 +439,7 @@ module App =
         uiThread.Start()
         signal.Wait()
 
+    let setBackground background = dispatchMessage (SetBackground background)
     let clearScene () = dispatchMessage ClearScene
     let setSceneBounds sceneBounds = dispatchMessage (SetSceneBounds sceneBounds)
     let addPlayer playerId player = dispatchMessage (AddPlayer (playerId, player))

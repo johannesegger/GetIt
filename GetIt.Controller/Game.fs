@@ -109,6 +109,12 @@ type Game() =
         Game.addTurtle ()
 
     /// <summary>
+    /// Sets the scene background.
+    /// </summary>
+    static member SetBackground (background) =
+        UICommunication.sendCommand (SetBackground background)
+
+    /// <summary>
     /// Clears all drawings from the scene.
     /// </summary>
     static member ClearScene () =

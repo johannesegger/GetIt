@@ -38,7 +38,7 @@ type PlayerData =
         /// The current speech bubble that belongs to the player.
         SpeechBubble: SpeechBubble option
         /// The costumes of the player.
-        Costumes: Costume list
+        Costumes: SvgImage list
         /// The index of the current costume.
         CostumeIndex: int
     }

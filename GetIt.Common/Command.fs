@@ -17,6 +17,7 @@ type WindowSize =
 type ControllerToUIMsg =
     | UIMsgProcessed
     | ShowScene of WindowSize
+    | SetBackground of SvgImage
     | ClearScene
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
@@ -84,7 +85,7 @@ module private Serialization =
             Decode.field "maximized" (Decode.nil Maximized)
         ]
 
-    let decodeCostume =
+    let decodeSvgImage =
         Decode.object (fun get ->
             { Size = get.Required.Field "size" decodeSize
               SvgData = get.Required.Field "svgData" Decode.string }
@@ -97,7 +98,7 @@ module private Serialization =
               Direction = get.Required.Field "direction" decodeDegrees
               Pen = get.Required.Field "pen" decodePen
               SpeechBubble = get.Required.Field "speechBubble" decodeOptionalSpeechBubble
-              Costumes = get.Required.Field "costumes" (Decode.list decodeCostume)
+              Costumes = get.Required.Field "costumes" (Decode.list decodeSvgImage)
               CostumeIndex = get.Required.Field "costumeIndex" Decode.int }
         )
 
@@ -219,10 +220,10 @@ module private Serialization =
         | SpecificSize size -> Encode.object [ ("specificSize", encodeSize size) ]
         | Maximized -> Encode.object [ ("maximized", Encode.nil) ]
 
-    let encodeCostume costume =
+    let encodeSvgImage svgImage =
         Encode.object [
-            ("size", encodeSize costume.Size)
-            ("svgData", Encode.string costume.SvgData)
+            ("size", encodeSize svgImage.Size)
+            ("svgData", Encode.string svgImage.SvgData)
         ]
 
     let encodePlayerData playerData =
@@ -232,7 +233,7 @@ module private Serialization =
             ("direction", encodeDegrees playerData.Direction)
             ("pen", encodePen playerData.Pen)
             ("speechBubble", encodeOptionalSpeechBubble playerData.SpeechBubble)
-            ("costumes", Encode.list (List.map encodeCostume playerData.Costumes))
+            ("costumes", Encode.list (List.map encodeSvgImage playerData.Costumes))
             ("costumeIndex", Encode.int playerData.CostumeIndex)
         ]
 
@@ -302,6 +303,7 @@ module ControllerToUIMsg =
             [
                 ("messageProcessed", Decode.nil UIMsgProcessed)
                 ("showScene", decodeWindowSize |> Decode.map ShowScene)
+                ("setBackground", decodeSvgImage |> Decode.map SetBackground)
                 ("clearScene", Decode.nil ClearScene)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
@@ -330,6 +332,8 @@ module ControllerToUIMsg =
                 Encode.object [ ("messageProcessed", Encode.nil) ]
             | ShowScene windowSize ->
                 Encode.object [ ("showScene", encodeWindowSize windowSize) ]
+            | SetBackground background ->
+                Encode.object [ ("setBackground", encodeSvgImage background) ]
             | ClearScene ->
                 Encode.object [ ("clearScene", Encode.nil) ]
             | AddPlayer (playerId, playerData) ->

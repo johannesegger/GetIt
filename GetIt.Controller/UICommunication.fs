@@ -88,6 +88,8 @@ module internal UICommunication =
         | ShowScene windowSize ->
             // Scene bounds will come from UI
             model
+        | SetBackground background ->
+            model
         | ClearScene ->
             model
         | AddPlayer (playerId, player) ->

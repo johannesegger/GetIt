@@ -43,7 +43,8 @@ namespace GetIt.Sample
             // Program26();
             // Program27();
             // Program28();
-            Program29();
+            // Program29();
+            Program30();
         }
 
         private static void Program1()
@@ -779,6 +780,18 @@ namespace GetIt.Sample
         private static void Program29()
         {
             Game.ShowMaximizedSceneAndAddTurtle();
+        }
+
+        private static void Program30()
+        {
+            Game.ShowSceneAndAddTurtle(Background.Baseball1.Size.Width * 2, Background.Baseball1.Size.Height * 2);
+            Game.SetBackground(Background.Baseball1);
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(50, 100);
+            Turtle.Say("Press <Space> to reset the background.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            Turtle.ShutUp();
+            Game.SetBackground(Background.None);
         }
     }
 }
