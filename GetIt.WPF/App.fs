@@ -63,6 +63,34 @@ module Main =
         bitmap.Freeze()
         bitmap
 
+    let private clipSceneBounds () =
+        let rec clipSceneBounds' retries =
+            if retries = 0 then failwith "Can't clip scene bounds"
+            else
+                try
+                    System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+                        if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
+                        else
+                            let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+
+                            // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
+                            TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
+                            |> Seq.tryHead
+                            |> Option.bind (fun navigationPage ->
+                                TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
+                                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                                |> Seq.tryHead
+                            )
+                            |> function
+                            | Some sceneControl -> sceneControl.ClipToBounds <- true
+                            | None -> failwith "Scene control not found"
+                    )
+                with e ->
+                    printfn "Clipping scene bounds failed: %O (Retries: %d)" e retries
+                    System.Threading.Thread.Sleep(100)
+                    clipSceneBounds' (retries - 1)
+        clipSceneBounds' 10
+
     let executeCommand cmd =
         match cmd with
         | UIMsgProcessed -> None
@@ -84,6 +112,8 @@ module Main =
                 onStarted()
                 app.Run(window)
             GetIt.App.showScene start
+            // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
+            clipSceneBounds ()
             Some ControllerMsgProcessed
         | ClearScene ->
             GetIt.App.clearScene ()

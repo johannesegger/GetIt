@@ -341,7 +341,6 @@ module App =
                         spacing = 0.,
                         children = [
                             View.AbsoluteLayout(
-                                isClippedToBounds = true,
                                 automationId = "scene",
                                 verticalOptions = LayoutOptions.FillAndExpand,
                                 children =
