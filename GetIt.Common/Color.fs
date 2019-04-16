@@ -19,7 +19,7 @@ type RGBAColor =
         let index = RandomNumberGenerator.``default``.Next(Array.length colors)
         Array.item index colors
 
-module RGBAColor =
+module internal RGBAColor =
     let rgbHexNotation v =
         sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
     let transparency v =
