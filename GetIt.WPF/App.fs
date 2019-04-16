@@ -53,7 +53,7 @@ module Main =
             )
         )
 
-    let windowIcon =
+    let private windowIcon =
         use stream = typeof<GetIt.App>.Assembly.GetManifestResourceStream("GetIt.UI.icon.png")
         let bitmap = BitmapImage()
         bitmap.BeginInit()
@@ -107,8 +107,8 @@ module Main =
                 | Maximized ->
                     window.WindowState <- WindowState.Maximized
                 window.Title <- "Get It"
-                window.LoadApplication(GetIt.App eventSubject.OnNext)
                 window.Icon <- windowIcon
+                window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
                 app.Run(window)
             GetIt.App.showScene start
