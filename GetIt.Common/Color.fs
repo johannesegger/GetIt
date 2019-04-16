@@ -13,26 +13,24 @@ type RGBAColor =
         /// The alpha part of the color that defines the opacity.
         Alpha: byte
     }
-    override this.ToString() =
-        sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
-    static member SelectRandom([<ParamArray>] colors) =
-        let index = RandomNumberGenerator.``default``.Next(Array.length colors)
-        Array.item index colors
+    with
+        /// Creates a new color based on an existing one with a different alpha value.
+        member this.WithAlpha(alpha: byte) =
+            { this with Alpha = alpha }
+
+        override this.ToString() =
+            sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
+
+        /// Randomly selects a color from a list of colors
+        static member SelectRandom([<ParamArray>] colors) =
+            let index = RandomNumberGenerator.``default``.Next(Array.length colors)
+            Array.item index colors
 
 module internal RGBAColor =
     let rgbHexNotation v =
         sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
     let transparency v =
         float v.Alpha / float Byte.MaxValue
-
-open System.Runtime.CompilerServices
-
-[<Extension>]
-type RGBAExtensions() =
-    /// Creates a new color based on an existing one with a different alpha value.
-    [<Extension>]
-    static member WithAlpha(color: RGBAColor, alpha: byte) =
-        { color with Alpha = alpha }
 
 type private HSLA =
     {
