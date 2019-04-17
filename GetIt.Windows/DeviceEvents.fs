@@ -43,6 +43,23 @@ module DeviceEvents =
 
         Marshal.PtrToStructure(rawInputBuffer, typeof<SharpLib.Win32.RAWINPUT>) :?> SharpLib.Win32.RAWINPUT
 
+    let private getCurrentMousePosition () =
+        let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
+        let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
+        let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
+        let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
+
+        let mutable point = Unchecked.defaultof<Win32.WinPoint>
+        if not <| Win32.GetCursorPos(&point) then
+            let errorCode = Marshal.GetLastWin32Error()
+            raise (Win32Exception (sprintf "GetCursorPos failed. Error code 0x%08x" errorCode))
+
+        // Use percent for position to support different screen sizes for controller and UI
+        {
+            X = float (point.x - virtualDesktopLeft) / float virtualDesktopWidth
+            Y = float (point.y - virtualDesktopTop) / float virtualDesktopHeight
+        }
+
     let private processMessage messageLParam =
         let rawInput = getRawInputData messageLParam
 
@@ -108,21 +125,7 @@ module DeviceEvents =
             let hasbuttonFlag flag =
                 rawInput.data.mouse.mouseData.buttonsStr.usButtonFlags.HasFlag(flag)
             [
-                let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
-                let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
-                let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
-                let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
-
-                let mutable point = Unchecked.defaultof<Win32.WinPoint>
-                if not <| Win32.GetCursorPos(&point) then
-                    let errorCode = Marshal.GetLastWin32Error()
-                    raise (Win32Exception (sprintf "GetCursorPos failed. Error code 0x%08x" errorCode))
-
-                // Use percent for position to support different screen sizes for controller and UI
-                let position = {
-                    X = float (point.x - virtualDesktopLeft) / float virtualDesktopWidth
-                    Y = float (point.y - virtualDesktopTop) / float virtualDesktopHeight
-                }
+                let position = getCurrentMousePosition ()
 
                 if rawInput.data.mouse.lLastX <> 0 || rawInput.data.mouse.lLastY <> 0 then
                     yield MouseMove position
@@ -256,5 +259,8 @@ module DeviceEvents =
         messageLoopThread.Start()
 
         waitHandle.Wait()
+
+        let position = getCurrentMousePosition ()
+        subject.OnNext (MouseMove position)
 
         Disposable.create (fun () -> Win32.SendMessage(windowHandle, shutDownMessage, UIntPtr.Zero, IntPtr.Zero) |> ignore)
