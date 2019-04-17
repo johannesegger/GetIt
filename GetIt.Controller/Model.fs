@@ -24,7 +24,7 @@ module internal Model =
 
     let mutable private subject =
         let initial =
-            { SceneBounds = { Position = Position.zero; Size = { Width = 0.; Height = 0. } }
+            { SceneBounds = Rectangle.zero
               Players = Map.empty
               MouseState = MouseState.empty
               KeyboardState = KeyboardState.empty

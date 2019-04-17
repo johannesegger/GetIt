@@ -11,29 +11,50 @@ module internal Game =
     let showScene windowSize =
         UICommunication.setupLocalConnectionToUIProcess()
 
-        UICommunication.sendCommand (ShowScene windowSize)
+        do
+            use enumerator =
+                Model.observable
+                |> Observable.filter (fun model -> model.SceneBounds <> Rectangle.zero)
+                |> Observable.take 1
+                |> Observable.getEnumerator
 
-        let subject = new System.Reactive.Subjects.Subject<_>()
-        let (mouseMoveObservable, otherEventsObservable) =
-            subject
-            |> Observable.split (function
-                | MouseMove _ as x -> Choice1Of2 x
-                | x -> Choice2Of2 x
-            )
-        let d1 =
-            mouseMoveObservable
-            |> Observable.sample (TimeSpan.FromMilliseconds 50.)
-            |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
+            UICommunication.sendCommand (ShowScene windowSize)
 
-        let d2 =
-            otherEventsObservable
-            |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
+            if not <| enumerator.MoveNext() then
+                raise (GetItException "UI didn't initialize properly: Didn't receive scene size).")
 
-        let d3 =
-            if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-                GetIt.Windows.DeviceEvents.register subject
-            else
-                raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
+        do
+            use enumerator =
+                Model.observable
+                |> Observable.skip 1 // Skip initial value
+                |> Observable.filter (fun model -> model.MouseState.Position <> Position.zero) // TODO not absolutely correct because mouse might be at (0, 0) - for now it's good enough
+                |> Observable.take 1
+                |> Observable.getEnumerator
+
+            let subject = new System.Reactive.Subjects.Subject<_>()
+            let (mouseMoveObservable, otherEventsObservable) =
+                subject
+                |> Observable.split (function
+                    | MouseMove _ as x -> Choice1Of2 x
+                    | x -> Choice2Of2 x
+                )
+            let d1 =
+                mouseMoveObservable
+                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
+
+            let d2 =
+                otherEventsObservable
+                |> Observable.subscribe (ControllerEvent >> UICommunication.sendCommand)
+
+            let d3 =
+                if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                    GetIt.Windows.DeviceEvents.register subject
+                else
+                    raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
+
+            if not <| enumerator.MoveNext() then
+                raise (GetItException "UI didn't initialize properly: Didn't receive mouse position).")
 
         ()
 
