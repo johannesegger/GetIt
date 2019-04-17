@@ -142,7 +142,11 @@ module App =
                 }
             (model', Cmd.none)
         | RemovePlayer playerId ->
-            let model' = { model with Players = Map.remove playerId model.Players }
+            let model' =
+                { model with
+                    Players = Map.remove playerId model.Players
+                    PlayerOrder = model.PlayerOrder |> List.filter ((<>) playerId)
+                }
             (model', Cmd.none)
         | ClearScene ->
             let model' = { model with PenLines = [] }
