@@ -4,9 +4,10 @@ open System.Text.RegularExpressions
 
 module List =
     let intersperse sep ls =
-        List.foldBack (fun x -> function
+        (ls, [])
+        ||> List.foldBack (fun x -> function
             | [] -> [x]
-            | xs -> x::sep::xs) ls []
+            | xs -> x::sep::xs)
 
 type Parameter =
     { Name: string
