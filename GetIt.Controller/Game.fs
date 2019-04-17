@@ -193,10 +193,11 @@ type Game() =
     /// Checks whether any keyboard key is pressed.
     /// </summary>
     /// <returns>True, if any keyboard key is pressed, otherwise false.</returns>
-    static member IsAnyKeyDown key =
-        Model.getCurrent().KeyboardState.KeysPressed
-        |> Set.isEmpty
-        |> not
+    static member IsAnyKeyDown
+        with get () =
+            Model.getCurrent().KeyboardState.KeysPressed
+            |> Set.isEmpty
+            |> not
 
     /// <summary>
     /// Registers an event handler that is called when any keyboard key is pressed.
