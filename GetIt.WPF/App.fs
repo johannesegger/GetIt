@@ -86,7 +86,7 @@ module Main =
                             | None -> failwith "Scene control not found"
                     )
                 with e ->
-                    printfn "Clipping scene bounds failed: %O (Retries: %d)" e retries
+                    printfn "Clipping scene bounds failed: %s (Retries: %d)" e.Message retries
                     System.Threading.Thread.Sleep(100)
                     clipSceneBounds' (retries - 1)
         clipSceneBounds' 10
