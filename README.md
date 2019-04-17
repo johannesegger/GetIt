@@ -10,3 +10,4 @@
 
 * Turtle icon created by [vectorportal.com](https://www.vectorportal.com).
 * Ant, bug and spider icon created by [Vecteezy](https://www.vecteezy.com).
+* Backgrounds exported from [Scratch](https://scratch.mit.edu).
