@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.1/GetIt.Sample.dll",
+            "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.2/GetIt.Sample.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
