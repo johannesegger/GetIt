@@ -139,6 +139,7 @@ module internal UICommunication =
     let mutable private connection = None
 
     let setupLocalConnectionToUIProcess() =
+        if Option.isSome connection then raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
         let localConnection =
             if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
                 let startInfo =
