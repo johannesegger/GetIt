@@ -5,7 +5,8 @@ open System.IO
 open System.Text.RegularExpressions
 open System.Xml
 
-exception GetItException of string
+type GetItException (message: string) =
+    inherit Exception (message)
 
 [<AutoOpen>]
 module Utils =
