@@ -446,7 +446,6 @@ module MessageProcessing =
             ),
             fun () -> try writer.Dispose() with _ -> ()
         )
-        |> fun o -> o.NotifyOn(ThreadPoolScheduler.Instance)
 
     let forStream stream encode decode =
         let receiver = getMessageReceiver stream decode

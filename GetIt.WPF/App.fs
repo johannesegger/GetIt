@@ -2,7 +2,7 @@
 
 open System
 open System.IO.Pipes
-open System.Reactive.Linq
+open System.Reactive.Concurrency
 open System.Windows
 open System.Windows.Media.Imaging
 open FSharp.Control.Reactive
@@ -178,6 +178,7 @@ module Main =
                 use eventSubscription =
                     eventSubject
                     |> Observable.map (fun evt -> IdentifiableMsg (Guid.NewGuid(), UIEvent evt))
+                    |> Observable.observeOn ThreadPoolScheduler.Instance
                     |> Observable.subscribe subject.OnNext
 
                 subject
