@@ -71,6 +71,8 @@ type Game() =
     /// <param name="player">The definition of the player that should be added.</param>
     /// <returns>The added player.</returns>
     static member AddPlayer (playerData: PlayerData) =
+        if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
+
         let playerId = PlayerId.create ()
         UICommunication.sendCommand (AddPlayer (playerId, playerData))
         new Player(playerId)
@@ -83,6 +85,9 @@ type Game() =
     /// <param name="run">The method that is used to control the player.</param>
     /// <returns>The added player.</returns>
     static member AddPlayer (playerData, run: Action<_>) =
+        if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
+        if obj.ReferenceEquals(run, null) then raise (ArgumentNullException "run")
+
         let player = Game.AddPlayer playerData
         async { run.Invoke player } |> Async.Start
         player
@@ -112,6 +117,8 @@ type Game() =
     /// Sets the scene background.
     /// </summary>
     static member SetBackground (background) =
+        if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
+
         UICommunication.sendCommand (SetBackground background)
 
     /// <summary>
@@ -149,6 +156,8 @@ type Game() =
     /// </summary>
     /// <param name="key">The keyboard key to wait for.</param>
     static member WaitForKeyDown key =
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+
         use signal = new ManualResetEventSlim()
         let fn () =
             signal.Set()
@@ -175,6 +184,8 @@ type Game() =
     /// <param name="key">The keyboard key.</param>
     /// <returns>True, if the keyboard key is pressed, otherwise false.</returns>
     static member IsKeyDown key =
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+
         Model.getCurrent().KeyboardState.KeysPressed
         |> Set.contains key
 
@@ -193,6 +204,8 @@ type Game() =
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
     static member OnAnyKeyDown (action: Action<_>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+
         Model.addEventHandler (OnAnyKeyDown action.Invoke)
 
     /// <summary>
@@ -202,6 +215,9 @@ type Game() =
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
     static member OnKeyDown (key, action: Action) =
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+
         Model.addEventHandler (OnKeyDown (key, action.Invoke))
 
     /// <summary>
@@ -210,6 +226,8 @@ type Game() =
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
     static member OnClickScene (action: Action<_, _>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+
         Model.addEventHandler (OnClickScene (curry action.Invoke))
 
     /// <summary>

@@ -182,6 +182,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("MoveTo")>]
     let moveTo (position: GetIt.Position) =
+        if obj.ReferenceEquals(position, null) then raise (ArgumentNullException "position")
         Raw.moveTo (getTurtleOrFail ()) position
 
     /// <summary>Moves the player to a position.</summary>
@@ -252,6 +253,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("SetDirection")>]
     let setDirection (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.setDirection (getTurtleOrFail ()) angle
 
     /// <summary>Rotates the player clockwise by a specific angle.</summary>
@@ -259,6 +261,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("RotateClockwise")>]
     let rotateClockwise (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.rotateClockwise (getTurtleOrFail ()) angle
 
     /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
@@ -266,6 +269,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("RotateCounterClockwise")>]
     let rotateCounterClockwise (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.rotateCounterClockwise (getTurtleOrFail ()) angle
 
     /// <summary>Rotates the player so that it looks up.</summary>
@@ -303,6 +307,7 @@ module Turtle =
     /// <returns>True, if the two players touch each other, otherwise false.</returns>
     [<CompiledName("TouchesPlayer")>]
     let touchesPlayer (other: GetIt.Player) =
+        if obj.ReferenceEquals(other, null) then raise (ArgumentNullException "other")
         Raw.touchesPlayer (getTurtleOrFail ()) other
 
     /// <summary>Bounces the player off the wall if it currently touches it.</summary>
@@ -323,6 +328,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("Say")>]
     let say (text: System.String) =
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.say (getTurtleOrFail ()) text
 
     /// <summary>Removes the speech bubble of the player.</summary>
@@ -337,6 +343,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("Say")>]
     let sayWithDuration (text: System.String) (durationInSeconds: System.Double) =
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.sayWithDuration (getTurtleOrFail ()) text durationInSeconds
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
@@ -344,6 +351,7 @@ module Turtle =
     /// <returns>The text the user typed in.</returns>
     [<CompiledName("Ask")>]
     let ask (question: System.String) =
+        if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask (getTurtleOrFail ()) question
 
     /// <summary>Sets the pen of the player.</summary>
@@ -351,6 +359,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("SetPen")>]
     let setPen (pen: GetIt.Pen) =
+        if obj.ReferenceEquals(pen, null) then raise (ArgumentNullException "pen")
         Raw.setPen (getTurtleOrFail ()) pen
 
     /// <summary>Turns on the pen of the player.</summary>
@@ -376,6 +385,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("SetPenColor")>]
     let setPenColor (color: GetIt.RGBAColor) =
+        if obj.ReferenceEquals(color, null) then raise (ArgumentNullException "color")
         Raw.setPenColor (getTurtleOrFail ()) color
 
     /// <summary>Shifts the HUE value of the pen color.</summary>
@@ -383,6 +393,7 @@ module Turtle =
     /// <returns></returns>
     [<CompiledName("ShiftPenColor")>]
     let shiftPenColor (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.shiftPenColor (getTurtleOrFail ()) angle
 
     /// <summary>Sets the weight of the pen.</summary>
@@ -437,6 +448,8 @@ module Turtle =
     /// <returns>The disposable subscription.</returns>
     [<CompiledName("OnKeyDown")>]
     let onKeyDown (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onKeyDown (getTurtleOrFail ()) key action
 
     /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
@@ -444,6 +457,7 @@ module Turtle =
     /// <returns>The disposable subscription.</returns>
     [<CompiledName("OnAnyKeyDown")>]
     let onAnyKeyDown (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onAnyKeyDown (getTurtleOrFail ()) action
 
     /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
@@ -451,6 +465,7 @@ module Turtle =
     /// <returns>The disposable subscription.</returns>
     [<CompiledName("OnMouseEnter")>]
     let onMouseEnter (action: System.Action<GetIt.Player>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onMouseEnter (getTurtleOrFail ()) action
 
     /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
@@ -458,6 +473,7 @@ module Turtle =
     /// <returns>The disposable subscription.</returns>
     [<CompiledName("OnClick")>]
     let onClick (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onClick (getTurtleOrFail ()) action
 
 open System.Runtime.CompilerServices
@@ -470,6 +486,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveTo(player: GetIt.Player, position: GetIt.Position) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(position, null) then raise (ArgumentNullException "position")
         Raw.moveTo player position
 
     /// <summary>Moves the player to a position.</summary>
@@ -479,6 +497,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveTo(player: GetIt.Player, x: System.Double, y: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveToXY player x y
 
     /// <summary>Moves the player to the center of the scene.</summary>
@@ -486,6 +505,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveToCenter(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveToCenter player
 
     /// <summary>Moves the player to the center of the scene.</summary>
@@ -495,6 +515,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveBy(player: GetIt.Player, deltaX: System.Double, deltaY: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveBy player deltaX deltaY
 
     /// <summary>Moves the player horizontally.</summary>
@@ -503,6 +524,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveRight(player: GetIt.Player, steps: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveRight player steps
 
     /// <summary>Moves the player horizontally.</summary>
@@ -511,6 +533,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveLeft(player: GetIt.Player, steps: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveLeft player steps
 
     /// <summary>Moves the player vertically.</summary>
@@ -519,6 +542,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveUp(player: GetIt.Player, steps: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveUp player steps
 
     /// <summary>Moves the player vertically.</summary>
@@ -527,6 +551,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveDown(player: GetIt.Player, steps: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveDown player steps
 
     /// <summary>Moves the player forward.</summary>
@@ -535,6 +560,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveInDirection(player: GetIt.Player, steps: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveInDirection player steps
 
     /// <summary>Moves the player to a random position on the scene.</summary>
@@ -542,6 +568,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member MoveToRandomPosition(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveToRandomPosition player
 
     /// <summary>Sets the rotation of the player to a specific angle.</summary>
@@ -550,6 +577,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member SetDirection(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.setDirection player angle
 
     /// <summary>Rotates the player clockwise by a specific angle.</summary>
@@ -558,6 +587,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member RotateClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.rotateClockwise player angle
 
     /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
@@ -566,6 +597,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member RotateCounterClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.rotateCounterClockwise player angle
 
     /// <summary>Rotates the player so that it looks up.</summary>
@@ -573,6 +606,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnUp(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnUp player
 
     /// <summary>Rotates the player so that it looks to the right.</summary>
@@ -580,6 +614,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnRight(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnRight player
 
     /// <summary>Rotates the player so that it looks down.</summary>
@@ -587,6 +622,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnDown(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnDown player
 
     /// <summary>Rotates the player so that it looks to the left.</summary>
@@ -594,6 +630,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnLeft(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnLeft player
 
     /// <summary>Checks whether a given player touches an edge of the scene.</summary>
@@ -601,6 +638,7 @@ type PlayerExtensions() =
     /// <returns>True, if the player touches an edge, otherwise false.</returns>
     [<Extension>]
     static member TouchesEdge(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.touchesEdge player
 
     /// <summary>Checks whether a given player touches another player.</summary>
@@ -609,6 +647,8 @@ type PlayerExtensions() =
     /// <returns>True, if the two players touch each other, otherwise false.</returns>
     [<Extension>]
     static member TouchesPlayer(player: GetIt.Player, other: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(other, null) then raise (ArgumentNullException "other")
         Raw.touchesPlayer player other
 
     /// <summary>Bounces the player off the wall if it currently touches it.</summary>
@@ -616,6 +656,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member BounceOffWall(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.bounceOffWall player
 
     /// <summary>Pauses execution of the player for a given time.</summary>
@@ -624,6 +665,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member Sleep(player: GetIt.Player, durationInMilliseconds: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.sleep player durationInMilliseconds
 
     /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
@@ -632,6 +674,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member Say(player: GetIt.Player, text: System.String) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.say player text
 
     /// <summary>Removes the speech bubble of the player.</summary>
@@ -639,6 +683,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member ShutUp(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.shutUp player
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
@@ -648,6 +693,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member Say(player: GetIt.Player, text: System.String, durationInSeconds: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.sayWithDuration player text durationInSeconds
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
@@ -656,6 +703,8 @@ type PlayerExtensions() =
     /// <returns>The text the user typed in.</returns>
     [<Extension>]
     static member Ask(player: GetIt.Player, question: System.String) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask player question
 
     /// <summary>Sets the pen of the player.</summary>
@@ -664,6 +713,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member SetPen(player: GetIt.Player, pen: GetIt.Pen) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(pen, null) then raise (ArgumentNullException "pen")
         Raw.setPen player pen
 
     /// <summary>Turns on the pen of the player.</summary>
@@ -671,6 +722,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnOnPen(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnOnPen player
 
     /// <summary>Turns off the pen of the player.</summary>
@@ -678,6 +730,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TurnOffPen(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnOffPen player
 
     /// <summary>Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.</summary>
@@ -685,6 +738,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member TogglePenOnOff(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.togglePenOnOff player
 
     /// <summary>Sets the pen color of the player.</summary>
@@ -693,6 +747,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member SetPenColor(player: GetIt.Player, color: GetIt.RGBAColor) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(color, null) then raise (ArgumentNullException "color")
         Raw.setPenColor player color
 
     /// <summary>Shifts the HUE value of the pen color.</summary>
@@ -701,6 +757,8 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member ShiftPenColor(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.shiftPenColor player angle
 
     /// <summary>Sets the weight of the pen.</summary>
@@ -709,6 +767,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member SetPenWeight(player: GetIt.Player, weight: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.setPenWeight player weight
 
     /// <summary>Changes the weight of the pen.</summary>
@@ -717,6 +776,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member ChangePenWeight(player: GetIt.Player, weight: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.changePenWeight player weight
 
     /// <summary>Sets the size of the player by multiplying the original size with a factor.</summary>
@@ -725,6 +785,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member SetSizeFactor(player: GetIt.Player, sizeFactor: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.setSizeFactor player sizeFactor
 
     /// <summary>Changes the size factor of the player that the original size is multiplied by.</summary>
@@ -733,6 +794,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member ChangeSizeFactor(player: GetIt.Player, change: System.Double) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.changeSizeFactor player change
 
     /// <summary>Changes the costume of the player.</summary>
@@ -740,6 +802,7 @@ type PlayerExtensions() =
     /// <returns></returns>
     [<Extension>]
     static member NextCostume(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.nextCostume player
 
     /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
@@ -747,6 +810,7 @@ type PlayerExtensions() =
     /// <returns>The direction from the player to the mouse pointer.</returns>
     [<Extension>]
     static member GetDirectionToMouse(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.getDirectionToMouse player
 
     /// <summary>Calculates the distance from the player to the mouse pointer.</summary>
@@ -754,6 +818,7 @@ type PlayerExtensions() =
     /// <returns>The distance from the player to the mouse pointer.</returns>
     [<Extension>]
     static member GetDistanceToMouse(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.getDistanceToMouse player
 
     /// <summary>Registers an event handler that is called when a specific keyboard key is pressed.</summary>
@@ -763,6 +828,9 @@ type PlayerExtensions() =
     /// <returns>The disposable subscription.</returns>
     [<Extension>]
     static member OnKeyDown(player: GetIt.Player, key: GetIt.KeyboardKey, action: System.Action<GetIt.Player>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onKeyDown player key action
 
     /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
@@ -771,6 +839,8 @@ type PlayerExtensions() =
     /// <returns>The disposable subscription.</returns>
     [<Extension>]
     static member OnAnyKeyDown(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onAnyKeyDown player action
 
     /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
@@ -779,6 +849,8 @@ type PlayerExtensions() =
     /// <returns>The disposable subscription.</returns>
     [<Extension>]
     static member OnMouseEnter(player: GetIt.Player, action: System.Action<GetIt.Player>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onMouseEnter player action
 
     /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
@@ -787,4 +859,6 @@ type PlayerExtensions() =
     /// <returns>The disposable subscription.</returns>
     [<Extension>]
     static member OnClick(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onClick player action

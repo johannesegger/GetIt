@@ -589,6 +589,11 @@ let rec getFullName (t: Type) =
     else
       t.FullName
 
+let nullGuards (parameters: Parameter list) =
+    parameters
+    |> List.filter (fun p -> p.Type.IsClass)
+    |> List.map (fun p -> sprintf "if obj.ReferenceEquals(%s, null) then raise (ArgumentNullException \"%s\")" p.Name p.Name)
+
 [<EntryPoint>]
 let main _argv =
     let rawFuncs =
@@ -648,6 +653,9 @@ let main _argv =
                     |> String.concat " "
                 yield sprintf "[<CompiledName(\"%s\")>]" command.CompiledName
                 yield sprintf "let %s %s =" command.Name parameterListWithTypes
+                yield!
+                    nullGuards parameters
+                    |> List.map (sprintf "    %s")
                 yield sprintf "    Raw.%s %s" command.Name parameterNames
             ]
             |> List.map (sprintf "    %s")
@@ -685,6 +693,9 @@ let main _argv =
                     |> String.concat " "
                 yield "[<Extension>]"
                 yield sprintf "static member %s(%s) =" command.CompiledName parameterListWithTypes
+                yield!
+                    nullGuards command.Parameters
+                    |> List.map (sprintf "    %s")
                 yield sprintf "    Raw.%s %s" command.Name parameterNames
             ]
             |> List.map (sprintf "    %s")
