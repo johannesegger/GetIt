@@ -158,7 +158,8 @@ namespace GetIt.Sample
         private static void Program6()
         {
             Game.ShowSceneAndAddTurtle();
-
+            Turtle.Say("Try and catch me");
+            Turtle.OnMouseEnter(player => player.ShutUp());
             Turtle.OnMouseEnter(player => player.MoveToRandomPosition());
         }
 
@@ -223,8 +224,6 @@ namespace GetIt.Sample
         private static void Program10()
         {
             Game.ShowSceneAndAddTurtle();
-
-            Turtle.Say("I'll try to catch you.", 2);
 
             Turtle.TurnOnPen();
             Turtle.SetPenColor(RGBAColors.Red);
