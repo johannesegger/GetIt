@@ -198,4 +198,4 @@ module internal UICommunication =
                 // TODO dispose subscriptions etc. ?
                 Environment.Exit 1
         | None ->
-            raise (GetItException "Connection to UI not set up.")
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
