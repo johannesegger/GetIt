@@ -179,7 +179,7 @@ module internal UICommunication =
         let subscription =
             localConnection
             |> Observable.subscribe(fun (IdentifiableMsg (msgId, msg)) ->
-                Model.updateCurrent (fun model -> applyUIToControllerMessage msg model)
+                Model.updateCurrent (fun model -> UIToControllerMsg msg, applyUIToControllerMessage msg model)
                 localConnection.OnNext(IdentifiableMsg(msgId, UIMsgProcessed))
             )
 
@@ -190,7 +190,7 @@ module internal UICommunication =
         | Some connection ->
             match MessageProcessing.sendCommand connection command with
             | Ok msg ->
-                Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg)
+                Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg >> (fun model -> UIToControllerMsg msg, model))
             | Error (MessageProcessing.ResponseError e) ->
                 raise (GetItException (sprintf "Error while waiting for response: %O" e))
             | Error MessageProcessing.NoResponse

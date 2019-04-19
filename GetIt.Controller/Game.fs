@@ -14,7 +14,12 @@ module internal Game =
         do
             use enumerator =
                 Model.observable
-                |> Observable.filter (fun model -> model.SceneBounds <> Rectangle.zero)
+                |> Observable.skip 1 // Skip initial value
+                |> Observable.filter (fun (modelChangeEvent, model) ->
+                    match modelChangeEvent with
+                    | UIToControllerMsg (UIEvent (SetSceneBounds sceneBounds)) -> true
+                    | _ -> false
+                )
                 |> Observable.take 1
                 |> Observable.getEnumerator
 
@@ -27,7 +32,11 @@ module internal Game =
             use enumerator =
                 Model.observable
                 |> Observable.skip 1 // Skip initial value
-                |> Observable.filter (fun model -> model.MouseState.Position <> Position.zero) // TODO not absolutely correct because mouse might be at (0, 0) - for now it's good enough
+                |> Observable.filter (fun (modelChangeEvent, model) ->
+                    match modelChangeEvent with
+                    | UIToControllerMsg (UIEvent (SetMousePosition position)) -> true
+                    | _ -> false
+                )
                 |> Observable.take 1
                 |> Observable.getEnumerator
 

@@ -102,11 +102,10 @@ module private Raw =
         use enumerator =
             Model.observable
             |> Observable.skip 1 // Skip initial value
-            |> Observable.choose (fun model ->
-                match Map.tryFind player.PlayerId model.Players |> Option.bind (fun p -> p.SpeechBubble) with
-                | Some (Ask askData) -> askData.Answer
-                | Some (Say _) -> None
-                | None -> None
+            |> Observable.choose (fun (modelChangeEvent, model) ->
+                match modelChangeEvent with
+                | UIToControllerMsg (UIEvent (AnswerQuestion (playerId, answer))) when playerId = player.PlayerId -> Some answer
+                | _ -> None
             )
             |> Observable.take 1
             |> Observable.getEnumerator

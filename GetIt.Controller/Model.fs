@@ -19,6 +19,11 @@ type internal Model =
       KeyboardState: KeyboardState
       EventHandlers: (Guid * EventHandler) list }
 
+type internal ModelChangeEvent =
+    | Initial
+    | UIToControllerMsg of UIToControllerMsg
+    | AddEventHandler of EventHandler
+
 module internal Model =
     let private gate = Object()
 
@@ -29,20 +34,25 @@ module internal Model =
               MouseState = MouseState.empty
               KeyboardState = KeyboardState.empty
               EventHandlers = [] }
-        new BehaviorSubject<_>(initial)
+        new BehaviorSubject<_>(Initial, initial)
 
     let observable = subject.AsObservable()
 
-    let getCurrent () = subject.Value
+    let getCurrent () = snd subject.Value
 
     let updateCurrent fn =
-        lock gate (fun () -> subject.OnNext(fn subject.Value))
+        lock gate (fun () -> subject.OnNext(fn (snd subject.Value)))
 
     let addEventHandler eventHandler =
         let eventHandlerId = Guid.NewGuid()
-        updateCurrent (fun model -> { model with EventHandlers = (eventHandlerId, eventHandler) :: model.EventHandlers })
+        updateCurrent (fun model ->
+            AddEventHandler eventHandler,
+            { model with EventHandlers = (eventHandlerId, eventHandler) :: model.EventHandlers }
+        )
+
         Disposable.create (fun () ->
             updateCurrent (fun model ->
+                AddEventHandler eventHandler,
                 { model with EventHandlers = model.EventHandlers |> List.filter (fst >> (<>) eventHandlerId) }
             )
         )
