@@ -19,6 +19,7 @@ type ControllerToUIMsg =
     | ShowScene of WindowSize
     | SetBackground of SvgImage
     | ClearScene
+    | MakeScreenshot
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
     | SetPosition of PlayerId * Position
@@ -307,6 +308,7 @@ module ControllerToUIMsg =
                 ("showScene", decodeWindowSize |> Decode.map ShowScene)
                 ("setBackground", decodeSvgImage |> Decode.map SetBackground)
                 ("clearScene", Decode.nil ClearScene)
+                ("makeScreenshot", Decode.nil MakeScreenshot)
                 ("addPlayer", Decode.tuple2 decodePlayerId decodePlayerData |> Decode.map AddPlayer)
                 ("removePlayer", decodePlayerId |> Decode.map RemovePlayer)
                 ("setPosition", Decode.tuple2 decodePlayerId decodePosition |> Decode.map SetPosition)
@@ -338,6 +340,8 @@ module ControllerToUIMsg =
                 Encode.object [ ("setBackground", encodeSvgImage background) ]
             | ClearScene ->
                 Encode.object [ ("clearScene", Encode.nil) ]
+            | MakeScreenshot ->
+                Encode.object [ ("makeScreenshot", Encode.nil) ]
             | AddPlayer (playerId, playerData) ->
                 Encode.object [ ("addPlayer", Encode.tuple2 encodePlayerId encodePlayerData (playerId, playerData)) ]
             | RemovePlayer playerId ->
@@ -376,6 +380,7 @@ module UIToControllerMsg =
                 ("applyMouseClick", Decode.tuple2 decodeMouseButton decodePosition |> Decode.map (ApplyMouseClick >> UIEvent))
                 ("setSceneBounds", decodeRectangle |> Decode.map (SetSceneBounds >> UIEvent))
                 ("answerQuestion", Decode.tuple2 decodePlayerId Decode.string |> Decode.map (AnswerQuestion >> UIEvent))
+                ("screenshot", Decode.string |> Decode.map (Convert.FromBase64String >> PngImage >> Screenshot >> UIEvent))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -397,6 +402,8 @@ module UIToControllerMsg =
                 Encode.object [ ("setSceneBounds", encodeRectangle sceneBounds) ]
             | UIEvent (AnswerQuestion (playerId, answer)) ->
                 Encode.object [ ("answerQuestion", Encode.tuple2 encodePlayerId Encode.string (playerId, answer)) ]
+            | UIEvent (Screenshot (PngImage data)) ->
+                Encode.object [ ("screenshot", Encode.string (Convert.ToBase64String data)) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 

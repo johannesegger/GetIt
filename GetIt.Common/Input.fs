@@ -71,8 +71,11 @@ type ControllerEvent =
     | MouseMove of Position
     | MouseClick of MouseButton * Position
 
+type PngImage = PngImage of byte[]
+
 type UIEvent =
     | SetMousePosition of Position
     | ApplyMouseClick of MouseButton * Position
     | SetSceneBounds of Rectangle
     | AnswerQuestion of PlayerId * string
+    | Screenshot of PngImage

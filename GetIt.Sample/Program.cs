@@ -804,6 +804,10 @@ namespace GetIt.Sample
             Turtle.SetPenColor(color);
             Turtle.SetPenWeight(5);
             Turtle.MoveRight(100);
+
+            // Game.Print(PrintConfig.Create("print-template.html", "Brother HL-5140 series").Set("name", "Johannes Egger"));
+            Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
+            Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
         }
     }
 }

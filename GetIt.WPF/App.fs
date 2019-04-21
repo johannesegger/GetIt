@@ -1,10 +1,13 @@
 ﻿namespace GetIt
 
 open System
+open System.IO
 open System.IO.Pipes
 open System.Reactive.Concurrency
 open System.Windows
+open System.Windows.Media
 open System.Windows.Media.Imaging
+open System.Windows.Threading
 open FSharp.Control.Reactive
 open Xamarin.Forms
 open Xamarin.Forms.Platform.WPF
@@ -63,9 +66,9 @@ module Main =
         bitmap.Freeze()
         bitmap
 
-    let private clipSceneBounds () =
-        let rec clipSceneBounds' retries =
-            if retries = 0 then failwith "Can't clip scene bounds"
+    let private doWithSceneControl fn =
+        let rec execute retries =
+            if retries = 0 then failwith "Can't execute function with scene control: No more retries left."
             else
                 try
                     System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
@@ -82,14 +85,23 @@ module Main =
                                 |> Seq.tryHead
                             )
                             |> function
-                            | Some sceneControl -> sceneControl.ClipToBounds <- true
+                            | Some sceneControl -> fn (sceneControl :> FrameworkElement)
                             | None -> failwith "Scene control not found"
                     )
                 with e ->
-                    printfn "Clipping scene bounds failed: %s (Retries: %d)" e.Message retries
+                    printfn "Executing function with scene control failed: %s (Retries: %d)" e.Message retries
                     System.Threading.Thread.Sleep(100)
-                    clipSceneBounds' (retries - 1)
-        clipSceneBounds' 10
+                    execute (retries - 1)
+        execute 10
+
+    let controlToImage (control: FrameworkElement) =
+        let renderTargetBitmap = RenderTargetBitmap(int control.ActualWidth, int control.ActualHeight, 96., 96., PixelFormats.Pbgra32)
+        renderTargetBitmap.Render control
+        let encoder = PngBitmapEncoder()
+        encoder.Frames.Add(BitmapFrame.Create renderTargetBitmap)
+        use stream = new MemoryStream()
+        encoder.Save stream
+        stream.ToArray() |> PngImage
 
     let executeCommand cmd =
         match cmd with
@@ -113,7 +125,7 @@ module Main =
                 app.Run(window)
             GetIt.App.showScene start
             // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
-            clipSceneBounds ()
+            doWithSceneControl (fun sceneControl -> sceneControl.ClipToBounds <- true)
             Some ControllerMsgProcessed
         | SetBackground background ->
             GetIt.App.setBackground background
@@ -121,6 +133,13 @@ module Main =
         | ClearScene ->
             GetIt.App.clearScene ()
             Some ControllerMsgProcessed
+        | MakeScreenshot ->
+            let sceneImage =
+                System.Windows.Application.Current.Dispatcher.Invoke(
+                    (fun () -> controlToImage System.Windows.Application.Current.MainWindow),
+                    DispatcherPriority.ApplicationIdle // ensure rendering happened
+                )
+            Some (UIEvent (Screenshot sceneImage))
         | AddPlayer (playerId, player) ->
             GetIt.App.addPlayer playerId player
             Some ControllerMsgProcessed

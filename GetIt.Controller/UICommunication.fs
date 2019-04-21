@@ -78,6 +78,8 @@ module internal UICommunication =
                 | Some (Say _)
                 | None -> p
             )
+        | UIEvent (Screenshot (PngImage data)) ->
+            model
 
     let private applyControllerToUIMessage message model =
         let updatePlayer = updatePlayer model
@@ -91,6 +93,8 @@ module internal UICommunication =
         | SetBackground background ->
             model
         | ClearScene ->
+            model
+        | MakeScreenshot ->
             model
         | AddPlayer (playerId, player) ->
             { model with Players = Map.add playerId player model.Players }

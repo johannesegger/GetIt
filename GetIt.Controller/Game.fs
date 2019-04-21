@@ -1,9 +1,52 @@
 namespace GetIt
 
 open System
+open System.Diagnostics
+open System.IO
 open System.Runtime.InteropServices
+open System.Text
 open System.Threading
 open FSharp.Control.Reactive
+open Thoth.Json.Net
+
+type PrintConfig =
+    {
+        TemplatePath: string
+        TemplateParams: Map<string, string>
+        PrinterName: string
+    }
+    with
+        static member Create (templatePath, printerName) =
+            {
+                TemplatePath = templatePath
+                TemplateParams = Map.empty
+                PrinterName = printerName
+            }
+        /// Read the print config from the environment.
+        static member CreateFromEnvironment () =
+            let decoder =
+                Decode.object (fun get ->
+                    let templateParamsDecoder =
+                        Decode.list (Decode.tuple2 Decode.string Decode.string)
+                        |> Decode.map Map.ofList
+                    {
+                        TemplatePath = get.Required.Field "templatePath" Decode.string
+                        TemplateParams =
+                            get.Optional.Field "templateParams" templateParamsDecoder
+                            |> Option.defaultValue Map.empty
+                        PrinterName = get.Required.Field "printerName" Decode.string
+                    }
+                )
+            let envVarName = "GET_IT_PRINT_CONFIG"
+            let configString = Environment.GetEnvironmentVariable envVarName
+            if isNull configString then raise (GetItException (sprintf "Can't read config from environment: Environment variable \"%s\" doesn't exist." envVarName))
+            match Decode.fromString decoder configString with
+            | Ok printConfig -> printConfig
+            | Error e -> raise (GetItException (sprintf "Can't read config from environment: %s" e))
+
+        /// Set the value of a template parameter.
+        member this.Set (key, value) =
+            { this with TemplateParams = Map.add key value this.TemplateParams }
 
 module internal Game =
     let mutable defaultTurtle = None
@@ -156,6 +199,66 @@ type Game() =
     /// </summary>
     static member ClearScene () =
         UICommunication.sendCommand ClearScene
+
+    /// Prints the scene. The print config is read from the environment.
+    static member Print printConfig =
+        use enumerator =
+            Model.observable
+            |> Observable.skip 1 // Skip initial value
+            |> Observable.choose (fun (modelChangeEvent, model) ->
+                match modelChangeEvent with
+                | UIToControllerMsg (UIEvent (Screenshot (PngImage data))) -> Some data
+                | _ -> None
+            )
+            |> Observable.take 1
+            |> Observable.getEnumerator
+
+        UICommunication.sendCommand MakeScreenshot
+
+        if not <| enumerator.MoveNext() then
+            raise (GetItException "Didn't receive screenshot from UI.")
+
+        let base64ImageData =
+            enumerator.Current
+            |> Convert.ToBase64String
+            |> sprintf "data:image/png;base64, %s"
+
+        let instantiatePrintTemplate (templateContent: string) screenshotSrc =
+            let templateParams =
+                printConfig.TemplateParams
+                |> Map.add "screenshot" screenshotSrc
+            (templateContent, templateParams)
+            ||> Map.fold (fun content key value -> content.Replace(sprintf "%%%s%%" key, value))
+
+        let printHtmlDocument documentContent =
+            let pdfPath = Path.Combine(Path.GetTempPath(), sprintf "%O.pdf" (Guid.NewGuid()))
+            do
+                let htmlPath = Path.Combine(Path.GetTempPath(), sprintf "%O.html" (Guid.NewGuid()))
+                File.WriteAllText(htmlPath, documentContent, Encoding.UTF8)
+                use d = Disposable.create (fun () -> try File.Delete(htmlPath) with _ -> ())
+
+                let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf.exe", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
+                try
+                    use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
+                    wkHtmlToPdfProcess.WaitForExit()
+                with e -> raise (GetItException ("Error while printing scene: Ensure `wkhtmltopdf` is installed", e))
+
+            do
+                use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
+
+                let sumatraStartInfo = ProcessStartInfo("sumatrapdf.exe", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
+                try
+                    use sumatraProcess = Process.Start(sumatraStartInfo)
+                    sumatraProcess.WaitForExit()
+                with e -> raise (GetItException ("Error while printing scene: Ensure `sumatrapdf` is installed.", e))
+
+        let htmlTemplate =
+            try
+                File.ReadAllText printConfig.TemplatePath
+            with e -> raise (GetItException ("Error while printing scene: Can't read print template.", e))
+
+        let htmlDocument = instantiatePrintTemplate htmlTemplate base64ImageData
+        printHtmlDocument htmlDocument
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.
