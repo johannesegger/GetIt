@@ -115,26 +115,18 @@ module internal Game =
         UICommunication.sendCommand (AddPlayer (turtleId, PlayerData.Turtle))
         defaultTurtle <- Some (new Player (turtleId))
 
-/// <summary>
 /// Defines methods to setup a game, add players, register global events and more.
-/// </summary>
 [<AbstractClass; Sealed>]
 type Game() =
-    /// <summary>
     /// Initializes and shows an empty scene with the default size and no players on it.
-    /// </summary>
     static member ShowScene () =
         Game.showScene (SpecificSize { Width = 800.; Height = 600. })
 
-    /// <summary>
     /// Initializes and shows an empty scene with a specific size and no players on it.
-    /// </summary>
     static member ShowScene (windowWidth, windowHeight) =
         Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
 
-    /// <summary>
     /// Initializes and shows an empty scene with maximized size and no players on it.
-    /// </summary>
     static member ShowMaximizedScene () =
         Game.showScene Maximized
 
@@ -165,38 +157,28 @@ type Game() =
         async { run.Invoke player } |> Async.Start
         player
 
-    /// <summary>
     /// Initializes and shows an empty scene and adds the default player to it.
-    /// </summary>
     static member ShowSceneAndAddTurtle () =
         Game.ShowScene ()
         Game.addTurtle ()
 
-    /// <summary>
     /// Initializes and shows an empty scene with a specific size and adds the default player to it.
-    /// </summary>
     static member ShowSceneAndAddTurtle (windowWidth, windowHeight) =
         Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
         Game.addTurtle ()
 
-    /// <summary>
     /// Initializes and shows an empty scene with maximized size and adds the default player to it.
-    /// </summary>
     static member ShowMaximizedSceneAndAddTurtle () =
         Game.showScene Maximized
         Game.addTurtle ()
 
-    /// <summary>
     /// Sets the scene background.
-    /// </summary>
     static member SetBackground (background) =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
 
         UICommunication.sendCommand (SetBackground background)
 
-    /// <summary>
     /// Clears all drawings from the scene.
-    /// </summary>
     static member ClearScene () =
         UICommunication.sendCommand ClearScene
 
@@ -364,14 +346,10 @@ type Game() =
 
         Model.addEventHandler (OnClickScene (curry action.Invoke))
 
-    /// <summary>
     /// The bounds of the scene.
-    /// </summary>
     static member SceneBounds
         with get () = Model.getCurrent().SceneBounds
 
-    /// <summary>
     /// The current position of the mouse.
-    /// </summary>
     static member MousePosition
         with get () = Model.getCurrent().MouseState.Position
