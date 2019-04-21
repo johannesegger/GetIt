@@ -192,7 +192,7 @@ module internal UICommunication =
             | Ok msg ->
                 Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg >> (fun model -> UIToControllerMsg msg, model))
             | Error (MessageProcessing.ResponseError e) ->
-                raise (GetItException (sprintf "Error while waiting for response: %O" e))
+                raise (GetItException ("Error while waiting for response.", e))
             | Error MessageProcessing.NoResponse
             | Error (MessageProcessing.ConnectionClosed _) ->
                 // Close the application if the UI has been closed (throwing an exception might be confusing)

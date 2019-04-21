@@ -72,7 +72,7 @@ type SvgImage =
                     Size = { Width = width; Height = height }
                     SvgData = content
                 }
-            with e -> raise (GetItException (sprintf "Error while loading costume from path %s: %O" path e))
+            with e -> raise (GetItException (sprintf "Error while loading costume from path \"%s\"" path, e))
 
 /// Defines some scene backgrounds.
 module Background =
