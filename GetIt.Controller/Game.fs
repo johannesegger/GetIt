@@ -182,7 +182,10 @@ type Game() =
     static member ClearScene () =
         UICommunication.sendCommand ClearScene
 
-    /// Prints the scene. The print config is read from the environment.
+    /// <summary>
+    /// Prints the scene. Note that `wkhtmltopdf` and `SumatraPDF` must be installed.
+    /// </summary>
+    /// <param name="printConfig">The configuration used for printing.</param>
     static member Print printConfig =
         use enumerator =
             Model.observable
