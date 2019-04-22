@@ -187,6 +187,8 @@ type Game() =
     /// </summary>
     /// <param name="printConfig">The configuration used for printing.</param>
     static member Print printConfig =
+        if obj.ReferenceEquals(printConfig, null) then raise (ArgumentNullException "printConfig")
+
         use enumerator =
             Model.observable
             |> Observable.skip 1 // Skip initial value
