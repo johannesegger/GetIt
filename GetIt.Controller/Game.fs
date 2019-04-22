@@ -228,19 +228,26 @@ type Game() =
                 use d = Disposable.create (fun () -> try File.Delete(htmlPath) with _ -> ())
 
                 let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
-                try
-                    use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
-                    wkHtmlToPdfProcess.WaitForExit()
-                with e -> raise (GetItException ("Error while printing scene: Ensure `wkhtmltopdf` is installed", e))
-
+                let exitCode =
+                    try
+                        use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
+                        wkHtmlToPdfProcess.WaitForExit()
+                        wkHtmlToPdfProcess.ExitCode
+                    with e -> raise (GetItException ("Error while printing scene: Ensure `wkhtmltopdf` is installed", e))
+                if exitCode <> 0 then
+                    raise (GetItException (sprintf "wkhtmltopdf exited with non-zero exit code (%d)." exitCode))
             do
                 use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
 
                 let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
-                try
-                    use sumatraProcess = Process.Start(sumatraStartInfo)
-                    sumatraProcess.WaitForExit()
-                with e -> raise (GetItException ("Error while printing scene: Ensure `sumatrapdf` is installed.", e))
+                let exitCode =
+                    try
+                        use sumatraProcess = Process.Start(sumatraStartInfo)
+                        sumatraProcess.WaitForExit()
+                        sumatraProcess.ExitCode
+                    with e -> raise (GetItException ("Error while printing scene: Ensure `sumatrapdf` is installed.", e))
+                if exitCode <> 0 then
+                    raise (GetItException (sprintf "SumatraPDF exited with non-zero exit code (%d). Ensure that printer \"%s\" is connected." exitCode printConfig.PrinterName))
 
         let htmlTemplate =
             try
