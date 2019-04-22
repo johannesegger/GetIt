@@ -219,7 +219,7 @@ type Game() =
                 File.WriteAllText(htmlPath, documentContent, Encoding.UTF8)
                 use d = Disposable.create (fun () -> try File.Delete(htmlPath) with _ -> ())
 
-                let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf.exe", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
+                let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
                 try
                     use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
                     wkHtmlToPdfProcess.WaitForExit()
@@ -228,7 +228,7 @@ type Game() =
             do
                 use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
 
-                let sumatraStartInfo = ProcessStartInfo("sumatrapdf.exe", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
+                let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
                 try
                     use sumatraProcess = Process.Start(sumatraStartInfo)
                     sumatraProcess.WaitForExit()
