@@ -103,7 +103,7 @@ module internal Game =
                 if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
                     GetIt.Windows.DeviceEvents.register subject
                 else
-                    raise (GetItException (sprintf "Operating system \"%s\" is not supported" RuntimeInformation.OSDescription))
+                    raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
             if not <| enumerator.MoveNext() then
                 raise (GetItException "UI didn't initialize properly: Didn't receive mouse position).")
