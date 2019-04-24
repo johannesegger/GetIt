@@ -92,7 +92,7 @@ module Main =
                     printfn "Executing function with scene control failed: %s (Retries: %d)" e.Message retries
                     System.Threading.Thread.Sleep(100)
                     execute (retries - 1)
-        execute 10
+        execute 50
 
     let controlToImage (control: FrameworkElement) =
         let renderTargetBitmap = RenderTargetBitmap(int control.ActualWidth, int control.ActualHeight, 96., 96., PixelFormats.Pbgra32)
