@@ -86,29 +86,29 @@ module Main =
     let private doWithSceneControl fn =
         let rec execute retries =
             if retries = 0 then failwith "Can't execute function with scene control: No more retries left."
-            else
-                try
-                    System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-                        if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
-                        else
-                            let window = System.Windows.Application.Current.MainWindow :?> MainWindow
 
-                            // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
-                            TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
-                            |> Seq.tryHead
-                            |> Option.bind (fun navigationPage ->
-                                TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
-                                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-                                |> Seq.tryHead
-                            )
-                            |> function
-                            | Some sceneControl -> fn (sceneControl :> FrameworkElement)
-                            | None -> failwith "Scene control not found"
+            try
+                System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+                    if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
+
+                    let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+
+                    // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
+                    TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
+                    |> Seq.tryHead
+                    |> Option.bind (fun navigationPage ->
+                        TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
+                        |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                        |> Seq.tryHead
                     )
-                with e ->
-                    printfn "Executing function with scene control failed: %s (Retries: %d)" e.Message retries
-                    System.Threading.Thread.Sleep(100)
-                    execute (retries - 1)
+                    |> function
+                    | Some sceneControl -> fn (sceneControl :> FrameworkElement)
+                    | None -> failwith "Scene control not found"
+                )
+            with e ->
+                printfn "Executing function with scene control failed: %s (Retries: %d)" e.Message retries
+                System.Threading.Thread.Sleep(100)
+                execute (retries - 1)
         execute 50
 
     let controlToImage (control: FrameworkElement) =
