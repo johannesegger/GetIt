@@ -53,7 +53,7 @@ module internal Game =
 
     let showScene windowSize =
         if UICommunication.isInsideBatch () then
-            raise (GetItException "Can't use `ShowScene` while batching commands.")
+            raise (GetItException "Can't show scene while batching commands.")
 
         UICommunication.setupLocalConnectionToUIProcess()
 
@@ -191,7 +191,7 @@ type Game() =
     /// <param name="printConfig">The configuration used for printing.</param>
     static member Print printConfig =
         if UICommunication.isInsideBatch () then
-            raise (GetItException "Can't use `Print` while batching commands.")
+            raise (GetItException "Can't print scene while batching commands.")
 
         if obj.ReferenceEquals(printConfig, null) then raise (ArgumentNullException "printConfig")
 
