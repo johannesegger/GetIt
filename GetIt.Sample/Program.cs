@@ -45,7 +45,8 @@ namespace GetIt.Sample
             // Program28();
             // Program29();
             // Program30();
-            Program31();
+            // Program31();
+            Program32();
         }
 
         private static void Program1()
@@ -721,16 +722,19 @@ namespace GetIt.Sample
                 })
                 .ForEach((population, index) =>
                 {
-                    Game.ClearScene();
-                    var fittest = population.MaxBy(individual => individual.Fitness).First();
-                    var lines = new[] {
-                        $"Iteration: {index}",
-                        $"Min distance: {Math.Abs(fittest.Fitness)}",
-                        $"Genetic diversity: {GetGeneticDiversity(population):P2}"
-                    };
-                    Turtle.Say(string.Join(Environment.NewLine, lines));
-                    DrawTour(fittest.Tour);
-                    Turtle.Sleep(iterationDelayMs);
+                    using (Game.BatchCommands())
+                    {
+                        Game.ClearScene();
+                        var fittest = population.MaxBy(individual => individual.Fitness).First();
+                        var lines = new[] {
+                            $"Iteration: {index}",
+                            $"Min distance: {Math.Abs(fittest.Fitness)}",
+                            $"Genetic diversity: {GetGeneticDiversity(population):P2}"
+                        };
+                        Turtle.Say(string.Join(Environment.NewLine, lines));
+                        DrawTour(fittest.Tour);
+                        Turtle.Sleep(iterationDelayMs);
+                    }
                 });
         }
 
@@ -808,6 +812,50 @@ namespace GetIt.Sample
             // Game.Print(PrintConfig.Create("print-template.html", "Brother HL-5140 series").Set("name", "Johannes Egger"));
             Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
             Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
+        }
+
+        private static void Program32()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.SetPenWeight(5);
+
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(33, 33);
+            Turtle.Sleep(100);
+            Turtle.TurnOffPen();
+            Turtle.MoveTo(66, 66);
+            Turtle.Sleep(100);
+            Turtle.TurnOnPen();
+            Turtle.MoveTo(100, 100);
+            Turtle.Sleep(100);
+
+            using (Game.BatchCommands())
+            {
+                Turtle.MoveTo(100, 33);
+                Turtle.Sleep(100);
+                Turtle.TurnOffPen();
+                using (Game.BatchCommands())
+                {
+                    Turtle.MoveTo(100, -33);
+                }
+                Turtle.Sleep(100);
+                Turtle.TurnOnPen();
+                Turtle.MoveTo(100, -100);
+                Turtle.Sleep(100);
+            }
+
+            Turtle.MoveTo(66, -66);
+            Turtle.Sleep(100);
+            Turtle.TurnOffPen();
+            Turtle.MoveTo(33, -33);
+            Turtle.Sleep(100);
+            Turtle.TurnOnPen();
+            Turtle.MoveToCenter();
+
+            Turtle.TurnOffPen();
+            Turtle.MoveLeft(100);
+            Turtle.Say("Awesome");
         }
     }
 }

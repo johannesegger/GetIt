@@ -103,6 +103,33 @@ module Main =
         encoder.Save stream
         stream.ToArray() |> PngImage
 
+    let rec controllerToUIMsgToUIMessage = function
+        | UIMsgProcessed -> None
+        | ShowScene windowSize -> None
+        | SetBackground background -> App.SetBackground background |> Some
+        | ClearScene -> App.ClearScene |> Some
+        | MakeScreenshot -> None
+        | AddPlayer (playerId, player) -> App.AddPlayer (playerId, player) |> Some
+        | RemovePlayer playerId -> App.RemovePlayer playerId |> Some
+        | SetPosition (playerId, position) -> App.SetPlayerPosition (playerId, position) |> Some
+        | SetDirection (playerId, angle) -> App.SetPlayerDirection (playerId, angle) |> Some
+        | SetSpeechBubble (playerId, speechBubble) -> App.SetSpeechBubble (playerId, speechBubble) |> Some
+        | SetPen (playerId, pen) -> App.SetPen (playerId, pen) |> Some
+        | SetSizeFactor (playerId, sizeFactor) -> App.SetSizeFactor (playerId, sizeFactor) |> Some
+        | SetNextCostume playerId -> App.NextCostume playerId |> Some
+        | ControllerEvent (KeyDown key) -> None
+        | ControllerEvent (KeyUp key) -> None
+        | ControllerEvent (MouseMove position) ->
+            tryGetPositionOnSceneControl position
+            |> Option.map App.SetMousePosition
+        | ControllerEvent (MouseClick (mouseButton, position)) ->
+            tryGetPositionOnSceneControl position
+            |> Option.map (fun p -> App.ApplyMouseClick (mouseButton, p))
+        | Batch messages ->
+            List.choose controllerToUIMsgToUIMessage messages
+            |> App.Batch
+            |> Some
+
     let executeCommand cmd =
         match cmd with
         | UIMsgProcessed -> None
@@ -127,12 +154,6 @@ module Main =
             // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
             doWithSceneControl (fun sceneControl -> sceneControl.ClipToBounds <- true)
             Some ControllerMsgProcessed
-        | SetBackground background ->
-            GetIt.App.setBackground background
-            Some ControllerMsgProcessed
-        | ClearScene ->
-            GetIt.App.clearScene ()
-            Some ControllerMsgProcessed
         | MakeScreenshot ->
             let sceneImage =
                 System.Windows.Application.Current.Dispatcher.Invoke(
@@ -140,41 +161,20 @@ module Main =
                     DispatcherPriority.ApplicationIdle // ensure rendering happened
                 )
             Some (UIEvent (Screenshot sceneImage))
-        | AddPlayer (playerId, player) ->
-            GetIt.App.addPlayer playerId player
-            Some ControllerMsgProcessed
-        | RemovePlayer playerId ->
-            GetIt.App.removePlayer playerId
-            Some ControllerMsgProcessed
-        | SetPosition (playerId, position) ->
-            GetIt.App.setPosition playerId position
-            Some ControllerMsgProcessed
-        | SetDirection (playerId, angle) ->
-            GetIt.App.setDirection playerId angle
-            Some ControllerMsgProcessed
-        | SetSpeechBubble (playerId, speechBubble) ->
-            GetIt.App.setSpeechBubble playerId speechBubble
-            Some ControllerMsgProcessed
-        | SetPen (playerId, pen) ->
-            GetIt.App.setPen playerId pen
-            Some ControllerMsgProcessed
-        | SetSizeFactor (playerId, sizeFactor) ->
-            GetIt.App.setSizeFactor playerId sizeFactor
-            Some ControllerMsgProcessed
-        | SetNextCostume playerId ->
-            GetIt.App.setNextCostume playerId
-            Some ControllerMsgProcessed
-        | ControllerEvent (KeyDown key) ->
-            Some ControllerMsgProcessed
-        | ControllerEvent (KeyUp key) ->
-            Some ControllerMsgProcessed
-        | ControllerEvent (MouseMove position) ->
-            tryGetPositionOnSceneControl position
-            |> Option.iter GetIt.App.setMousePosition
-            Some ControllerMsgProcessed
-        | ControllerEvent (MouseClick (mouseButton, position)) ->
-            tryGetPositionOnSceneControl position
-            |> Option.iter (GetIt.App.applyMouseClick mouseButton)
+        | SetBackground _
+        | ClearScene
+        | AddPlayer _
+        | RemovePlayer _
+        | SetPosition _
+        | SetDirection _
+        | SetSpeechBubble _
+        | SetPen _
+        | SetSizeFactor _
+        | SetNextCostume _
+        | ControllerEvent _
+        | Batch _ as x ->
+            controllerToUIMsgToUIMessage x
+            |> Option.iter App.dispatchMessage
             Some ControllerMsgProcessed
 
     [<EntryPoint>]

@@ -13,6 +13,7 @@ type GetItException =
 [<AutoOpen>]
 module Utils =
     let curry fn a b = fn (a, b)
+    let flip fn a b = fn b a
 
 module Svg =
     let parseViewBox (text: string) =

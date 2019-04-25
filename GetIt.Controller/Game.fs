@@ -52,6 +52,9 @@ module internal Game =
     let mutable defaultTurtle = None
 
     let showScene windowSize =
+        if UICommunication.isInsideBatch () then
+            raise (GetItException "Can't use `ShowScene` while batching commands.")
+
         UICommunication.setupLocalConnectionToUIProcess()
 
         do
@@ -187,6 +190,9 @@ type Game() =
     /// </summary>
     /// <param name="printConfig">The configuration used for printing.</param>
     static member Print printConfig =
+        if UICommunication.isInsideBatch () then
+            raise (GetItException "Can't use `Print` while batching commands.")
+
         if obj.ReferenceEquals(printConfig, null) then raise (ArgumentNullException "printConfig")
 
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
@@ -256,6 +262,9 @@ type Game() =
 
         let htmlDocument = instantiatePrintTemplate htmlTemplate base64ImageData
         printHtmlDocument htmlDocument
+
+    static member BatchCommands () =
+        UICommunication.batchMessages ()
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.

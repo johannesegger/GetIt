@@ -46,10 +46,11 @@ module App =
         | RemovePlayer of PlayerId
         | ClearScene
         | SetBackground of SvgImage
+        | Batch of Msg list
 
     let init () = (initModel, Cmd.none)
 
-    let update triggerEvent msg model =
+    let rec update triggerEvent msg model =
         let updatePlayer playerId fn =
             let player = Map.find playerId model.Players |> fn
             { model with Players = Map.add playerId player model.Players }
@@ -154,6 +155,14 @@ module App =
         | SetBackground background ->
             let model' = { model with Background = background }
             (model', Cmd.none)
+        | Batch messages ->
+            let updateAndMerge (model, cmd) msg =
+                let (model', cmd') = update triggerEvent msg model
+                model', Cmd.batch [ cmd; cmd' ]
+            let (model', cmd) =
+                ((model, Cmd.none), messages)
+                ||> List.fold updateAndMerge
+            (model', cmd)
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
     let view (model: Model) dispatch =
@@ -443,19 +452,6 @@ module App =
         uiThread.Start()
         signal.Wait()
 
-    let setBackground background = dispatchMessage (SetBackground background)
-    let clearScene () = dispatchMessage ClearScene
-    let setSceneBounds sceneBounds = dispatchMessage (SetSceneBounds sceneBounds)
-    let addPlayer playerId player = dispatchMessage (AddPlayer (playerId, player))
-    let removePlayer playerId = dispatchMessage (RemovePlayer playerId)
-    let setPosition playerId position = dispatchMessage (SetPlayerPosition (playerId, position))
-    let setDirection playerId angle = dispatchMessage (SetPlayerDirection (playerId, angle))
-    let setSpeechBubble playerId speechBubble = dispatchMessage (SetSpeechBubble (playerId, speechBubble))
-    let setPen playerId pen = dispatchMessage (SetPen (playerId, pen))
-    let setSizeFactor playerId sizeFactor = dispatchMessage (SetSizeFactor (playerId, sizeFactor))
-    let setNextCostume playerId = dispatchMessage (NextCostume playerId)
-    let setMousePosition position = dispatchMessage (SetMousePosition position)
-    let applyMouseClick mouseButton position = dispatchMessage (ApplyMouseClick (mouseButton, position))
 
 type App (triggerEvent) as app = 
     inherit Application ()
