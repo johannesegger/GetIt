@@ -17,6 +17,7 @@ type WindowSize =
 type ControllerToUIMsg =
     | UIMsgProcessed
     | ShowScene of WindowSize
+    | SetWindowTitle of string option
     | SetBackground of SvgImage
     | ClearScene
     | MakeScreenshot
@@ -307,6 +308,7 @@ module ControllerToUIMsg =
             [
                 ("messageProcessed", Decode.nil UIMsgProcessed)
                 ("showScene", decodeWindowSize |> Decode.map ShowScene)
+                ("setWindowTitle", Decode.option Decode.string |> Decode.map SetWindowTitle)
                 ("setBackground", decodeSvgImage |> Decode.map SetBackground)
                 ("clearScene", Decode.nil ClearScene)
                 ("makeScreenshot", Decode.nil MakeScreenshot)
@@ -339,6 +341,8 @@ module ControllerToUIMsg =
                 Encode.object [ ("messageProcessed", Encode.nil) ]
             | ShowScene windowSize ->
                 Encode.object [ ("showScene", encodeWindowSize windowSize) ]
+            | SetWindowTitle text ->
+                Encode.object [ ("setWindowTitle", Encode.option Encode.string text) ]
             | SetBackground background ->
                 Encode.object [ ("setBackground", encodeSvgImage background) ]
             | ClearScene ->

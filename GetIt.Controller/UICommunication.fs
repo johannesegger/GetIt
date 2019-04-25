@@ -92,12 +92,10 @@ module internal UICommunication =
         | ShowScene windowSize ->
             // Scene bounds will come from UI
             model
-        | SetBackground background ->
-            model
-        | ClearScene ->
-            model
-        | MakeScreenshot ->
-            model
+        | SetWindowTitle text -> model
+        | SetBackground background -> model
+        | ClearScene -> model
+        | MakeScreenshot -> model
         | AddPlayer (playerId, player) ->
             { model with Players = Map.add playerId player model.Players }
         | RemovePlayer playerId ->

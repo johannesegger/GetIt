@@ -46,7 +46,8 @@ namespace GetIt.Sample
             // Program29();
             // Program30();
             // Program31();
-            Program32();
+            // Program32();
+            Program33();
         }
 
         private static void Program1()
@@ -856,6 +857,24 @@ namespace GetIt.Sample
             Turtle.TurnOffPen();
             Turtle.MoveLeft(100);
             Turtle.Say("Awesome");
+        }
+
+        private static void Program33()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Window title is changing.", 1);
+            Game.SetWindowTitle("1");
+            Turtle.Sleep(1000);
+            Game.SetWindowTitle(" ");
+            Turtle.Sleep(1000);
+            Game.SetWindowTitle("2");
+            Turtle.Sleep(1000);
+            Game.SetWindowTitle("");
+            Turtle.Sleep(1000);
+            Game.SetWindowTitle("3");
+            Turtle.Sleep(1000);
+            Game.SetWindowTitle(null);
         }
     }
 }

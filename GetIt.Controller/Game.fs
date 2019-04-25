@@ -175,6 +175,13 @@ type Game() =
         Game.showScene Maximized
         Game.addTurtle ()
 
+    static member SetWindowTitle (text) =
+        if UICommunication.isInsideBatch () then
+            raise (GetItException "Can't set window title while batching commands.")
+
+        let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
+        UICommunication.sendCommand (SetWindowTitle textOpt)
+
     /// Sets the scene background.
     static member SetBackground (background) =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")

@@ -66,6 +66,23 @@ module Main =
         bitmap.Freeze()
         bitmap
 
+    let private doWithWindow fn =
+        let rec execute retries =
+            if retries = 0 then failwith "Can't execute function with window: No more retries left."
+
+            try
+                System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
+                    if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
+
+                    let window = System.Windows.Application.Current.MainWindow :?> MainWindow
+                    fn window
+                )
+            with e ->
+                printfn "Executing function with window failed: %s (Retries: %d)" e.Message retries
+                System.Threading.Thread.Sleep(100)
+                execute (retries - 1)
+        execute 50
+
     let private doWithSceneControl fn =
         let rec execute retries =
             if retries = 0 then failwith "Can't execute function with scene control: No more retries left."
@@ -103,9 +120,17 @@ module Main =
         encoder.Save stream
         stream.ToArray() |> PngImage
 
+    let setWindowTitle (window: Window) text =
+        let title =
+            match text with
+            | Some text -> sprintf "Get It - %s" text
+            | None -> "Get It"
+        window.Title <- title
+
     let rec controllerToUIMsgToUIMessage = function
         | UIMsgProcessed -> None
         | ShowScene windowSize -> None
+        | SetWindowTitle text -> None
         | SetBackground background -> App.SetBackground background |> Some
         | ClearScene -> App.ClearScene |> Some
         | MakeScreenshot -> None
@@ -145,7 +170,7 @@ module Main =
                     window.Height <- size.Height
                 | Maximized ->
                     window.WindowState <- WindowState.Maximized
-                window.Title <- "Get It"
+                setWindowTitle window None
                 window.Icon <- windowIcon
                 window.LoadApplication(GetIt.App eventSubject.OnNext)
                 onStarted()
@@ -153,6 +178,9 @@ module Main =
             GetIt.App.showScene start
             // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
             doWithSceneControl (fun sceneControl -> sceneControl.ClipToBounds <- true)
+            Some ControllerMsgProcessed
+        | SetWindowTitle text ->
+            doWithWindow (fun window -> setWindowTitle window text)
             Some ControllerMsgProcessed
         | MakeScreenshot ->
             let sceneImage =
