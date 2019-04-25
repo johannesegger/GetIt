@@ -46,8 +46,7 @@ namespace GetIt.Sample
             // Program29();
             // Program30();
             // Program31();
-            // Program32();
-            Program33();
+            Program32();
         }
 
         private static void Program1()
@@ -548,198 +547,7 @@ namespace GetIt.Sample
             Turtle.Say($"Game over. Score: {score}");
         }
 
-        [Equals]
-        private class City
-        {
-            public City(Guid id, Position position)
-            {
-                Id = id;
-                Position = position;
-            }
-
-            public Guid Id { get; }
-            [IgnoreDuringEquals] public Position Position { get; }
-        }
-
-        private class Individual
-        {
-            public Individual(ImmutableList<City> tour, double fitness)
-            {
-                Tour = tour;
-                Fitness = fitness;
-            }
-
-            public ImmutableList<City> Tour { get; }
-            public double Fitness { get; }
-        }
-
         private static void Program22()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.Say("TSP solver", 1);
-
-            var rand = new Random();
-            var numberOfCities = 30;
-            var cityPlayers = Enumerable
-                .Range(0, numberOfCities)
-                .Select(_ => Game.AddPlayer(PlayerData.Create(SvgImage.CreateCircle(RGBAColors.DarkRed, 5))))
-                .ToList();
-            cityPlayers
-                .ForEach(p => p.MoveToRandomPosition());
-            var cities = cityPlayers
-                .Select(p => new City(Guid.NewGuid(), p.Position))
-                .ToList();
-
-            var iterationDelayMs = 500;
-            Turtle.OnKeyDown(KeyboardKey.Down, _ => iterationDelayMs *= 2);
-            Turtle.OnKeyDown(KeyboardKey.Up, _ => iterationDelayMs /= 2);
-
-            double GetDistance(City a, City b)
-            {
-                var dx = a.Position.X - b.Position.X;
-                var dy = a.Position.Y - b.Position.Y;
-                return Math.Sqrt(dx * dx + dy * dy);
-            }
-
-            double CalculateFitness(IReadOnlyList<City> individual)
-            {
-                if (individual.Count < 2)
-                {
-                    return 0;
-                }
-
-                var distance = individual
-                    .Concat(new [] { individual[0] })
-                    .Window(2)
-                    .Sum(b => GetDistance(b[0], b[1]));
-                return -distance;
-            }
-
-            void DrawTour(IReadOnlyList<City> tour)
-            {
-                if (tour.Count < 2)
-                {
-                    return;
-                }
-                Turtle.TurnOffPen();
-                foreach (var city in tour.Concat(new [] { tour[0] }))
-                {
-                    Turtle.MoveTo(city.Position);
-                    Turtle.TurnOnPen();
-                }
-            }
-
-            Individual TournamentSelect(IEnumerable<Individual> individuals, int size)
-            {
-                return individuals
-                    .Shuffle()
-                    .Take(size)
-                    .MaxBy(p => p.Fitness)
-                    .First();
-            }
-
-            Individual OrderCrossover(Individual p1, Individual p2)
-            {
-                var startIdx = rand.Next(0, p1.Tour.Count);
-                var endIdx = rand.Next(0, p1.Tour.Count);
-                if (startIdx <= endIdx)
-                {
-                    var p1Tour = p1.Tour.Skip(startIdx).Take(endIdx - startIdx).ToList();
-                    var p2RemainingTour = p2.Tour.Except(p1Tour).ToList();
-                    var tour = p2RemainingTour
-                        .Take(startIdx)
-                        .Concat(p1Tour)
-                        .Concat(p2RemainingTour.Skip(startIdx))
-                        .ToImmutableList();
-                    return new Individual(tour, CalculateFitness(tour));
-                }
-                else
-                {
-                    var p1Tour1 = p1.Tour.Take(endIdx + 1).ToList();
-                    var p1Tour2 = p1.Tour.Skip(startIdx).ToList();
-                    var p2RemainingTour = p2.Tour.Except(p1Tour1).Except(p1Tour2).ToList();
-                    var tour = p1Tour1
-                        .Concat(p2RemainingTour)
-                        .Concat(p1Tour2)
-                        .ToImmutableList();
-                    return new Individual(tour, CalculateFitness(tour));
-                }
-            }
-
-            Individual TwoOptChange(Individual p, double probability)
-            {
-                if (rand.NextDouble() < probability)
-                {
-                    var idx1 = rand.Next(0, p.Tour.Count);
-                    var idx2 = (idx1 + 1) % p.Tour.Count;
-                    var tour = p.Tour
-                        .SetItem(idx1, p.Tour[idx2])
-                        .SetItem(idx2, p.Tour[idx1]);
-                    return new Individual(tour, CalculateFitness(tour));
-                }
-                return p;
-            }
-
-            double GetGeneticDiversity(IReadOnlyCollection<Individual> population)
-            {
-                var maxEdges = Enumerable.Range(0, numberOfCities).Sum();
-                var minEdges = numberOfCities;
-                var edges = population
-                    .SelectMany(individual => individual.Tour
-                        .Append(individual.Tour.First())
-                        .Window(2)
-                        .Select(b => b[0].Id.CompareTo(b[1].Id) < 0 ? (b[0], b[1]) : (b[1], b[0])))
-                    .Distinct()
-                    .Count();
-                return (double)(edges - minEdges) / (maxEdges - minEdges);
-            }
-
-            var populationSize = 500;
-            var iterations = 1000;
-            var mutationProbability = 0.05;
-
-            var initialPopulation = Enumerable
-                .Range(0, populationSize)
-                .Select(_ => cities.Shuffle().ToImmutableList())
-                .Select(tour => new Individual(tour, CalculateFitness(tour)))
-                .ToImmutableList();
-
-            Enumerable
-                .Range(0, iterations)
-                .Scan(initialPopulation, (population, iteration) =>
-                {
-                    return Enumerable
-                        .Range(0, populationSize)
-                        .Select(_ =>
-                        {
-                            var tournamentSize = 3;
-                            var parent1 = TournamentSelect(population, tournamentSize);
-                            var parent2 = TournamentSelect(population, tournamentSize);
-                            var child = OrderCrossover(parent1, parent2);
-                            return TwoOptChange(child, mutationProbability);
-                        })
-                        .ToImmutableList();
-                })
-                .ForEach((population, index) =>
-                {
-                    using (Game.BatchCommands())
-                    {
-                        Game.ClearScene();
-                        var fittest = population.MaxBy(individual => individual.Fitness).First();
-                        var lines = new[] {
-                            $"Iteration: {index}",
-                            $"Min distance: {Math.Abs(fittest.Fitness)}",
-                            $"Genetic diversity: {GetGeneticDiversity(population):P2}"
-                        };
-                        Turtle.Say(string.Join(Environment.NewLine, lines));
-                        DrawTour(fittest.Tour);
-                        Turtle.Sleep(iterationDelayMs);
-                    }
-                });
-        }
-
-        private static void Program23()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -751,13 +559,13 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program24()
+        private static void Program23()
         {
             Game.ShowScene();
             Game.AddPlayer(PlayerData.Create(SvgImage.Load(@"assets\Turtle2.svg")));
         }
 
-        private static void Program25()
+        private static void Program24()
         {
             Game.ShowSceneAndAddTurtle();
             while (true)
@@ -767,27 +575,27 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program26()
+        private static void Program25()
         {
             Game.ShowScene(1000, 350);
         }
 
-        private static void Program27()
+        private static void Program26()
         {
             Game.ShowMaximizedScene();
         }
 
-        private static void Program28()
+        private static void Program27()
         {
             Game.ShowSceneAndAddTurtle(1000, 350);
         }
 
-        private static void Program29()
+        private static void Program28()
         {
             Game.ShowMaximizedSceneAndAddTurtle();
         }
 
-        private static void Program30()
+        private static void Program29()
         {
             Game.ShowSceneAndAddTurtle(Background.Baseball1.Size.Width * 2, Background.Baseball1.Size.Height * 2);
             Game.SetBackground(Background.Baseball1);
@@ -799,7 +607,7 @@ namespace GetIt.Sample
             Game.SetBackground(Background.None);
         }
 
-        private static void Program31()
+        private static void Program30()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -815,7 +623,7 @@ namespace GetIt.Sample
             Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
         }
 
-        private static void Program32()
+        private static void Program31()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -859,7 +667,7 @@ namespace GetIt.Sample
             Turtle.Say("Awesome");
         }
 
-        private static void Program33()
+        private static void Program32()
         {
             Game.ShowSceneAndAddTurtle();
 
