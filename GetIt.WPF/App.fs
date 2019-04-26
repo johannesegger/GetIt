@@ -127,7 +127,7 @@ module Main =
             | None -> "Get It"
         window.Title <- title
 
-    let rec controllerToUIMsgToUIMessage = function
+    let controllerToUIMsgToUIMessage = function
         | UIMsgProcessed -> None
         | ShowScene windowSize -> None
         | SetWindowTitle text -> None
@@ -150,10 +150,8 @@ module Main =
         | ControllerEvent (MouseClick (mouseButton, position)) ->
             tryGetPositionOnSceneControl position
             |> Option.map (fun p -> App.ApplyMouseClick (mouseButton, p))
-        | Batch messages ->
-            List.choose controllerToUIMsgToUIMessage messages
-            |> App.Batch
-            |> Some
+        | StartBatch -> Some App.StartBatch
+        | ApplyBatch -> Some App.ApplyBatch
 
     let executeCommand cmd =
         match cmd with
@@ -200,7 +198,8 @@ module Main =
         | SetSizeFactor _
         | SetNextCostume _
         | ControllerEvent _
-        | Batch _ as x ->
+        | StartBatch
+        | ApplyBatch as x ->
             controllerToUIMsgToUIMessage x
             |> Option.iter App.dispatchMessage
             Some ControllerMsgProcessed

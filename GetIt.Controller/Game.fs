@@ -52,9 +52,6 @@ module internal Game =
     let mutable defaultTurtle = None
 
     let showScene windowSize =
-        if UICommunication.isInsideBatch () then
-            raise (GetItException "Can't show scene while batching commands.")
-
         UICommunication.setupLocalConnectionToUIProcess()
 
         do
@@ -176,9 +173,6 @@ type Game() =
         Game.addTurtle ()
 
     static member SetWindowTitle (text) =
-        if UICommunication.isInsideBatch () then
-            raise (GetItException "Can't set window title while batching commands.")
-
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
         UICommunication.sendCommand (SetWindowTitle textOpt)
 
@@ -197,9 +191,6 @@ type Game() =
     /// </summary>
     /// <param name="printConfig">The configuration used for printing.</param>
     static member Print printConfig =
-        if UICommunication.isInsideBatch () then
-            raise (GetItException "Can't print scene while batching commands.")
-
         if obj.ReferenceEquals(printConfig, null) then raise (ArgumentNullException "printConfig")
 
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
@@ -270,8 +261,11 @@ type Game() =
         let htmlDocument = instantiatePrintTemplate htmlTemplate base64ImageData
         printHtmlDocument htmlDocument
 
+    /// Start batching multiple commands to skip drawing intermediate state.
+    /// Note that commands from all threads are batched.
     static member BatchCommands () =
-        UICommunication.batchMessages ()
+        UICommunication.sendCommand StartBatch
+        Disposable.create (fun () -> UICommunication.sendCommand ApplyBatch)
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.

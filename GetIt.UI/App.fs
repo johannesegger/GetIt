@@ -16,20 +16,6 @@ module App =
           Weight: float
           Color: RGBAColor }
 
-    type Model =
-        { SceneBounds: GetIt.Rectangle
-          Players: Map<PlayerId, PlayerData>
-          PlayerOrder: PlayerId list
-          PenLines: PenLine list
-          Background: SvgImage }
-
-    let initModel =
-        { SceneBounds = GetIt.Rectangle.zero
-          Players = Map.empty
-          PlayerOrder = []
-          PenLines = []
-          Background = Background.none }
-
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
         | SetMousePosition of positionRelativeToSceneControl: Position
@@ -46,7 +32,24 @@ module App =
         | RemovePlayer of PlayerId
         | ClearScene
         | SetBackground of SvgImage
-        | Batch of Msg list
+        | StartBatch
+        | ApplyBatch
+
+    type Model =
+        { SceneBounds: GetIt.Rectangle
+          Players: Map<PlayerId, PlayerData>
+          PlayerOrder: PlayerId list
+          PenLines: PenLine list
+          Background: SvgImage
+          BatchMessages: (Msg list * int) option }
+
+    let initModel =
+        { SceneBounds = GetIt.Rectangle.zero
+          Players = Map.empty
+          PlayerOrder = []
+          PenLines = []
+          Background = Background.none
+          BatchMessages = None }
 
     let init () = (initModel, Cmd.none)
 
@@ -58,24 +61,24 @@ module App =
         let triggerEventCmd event =
             Cmd.ofAsyncMsgOption (async { triggerEvent event; return None })
 
-        match msg with
-        | SetSceneBounds bounds ->
+        match model.BatchMessages, msg with
+        | None, SetSceneBounds bounds ->
             let model' = { model with SceneBounds = bounds }
             let cmd = triggerEventCmd (UIEvent.SetSceneBounds bounds)
             (model', cmd)
-        | SetMousePosition positionRelativeToSceneControl ->
+        | None, SetMousePosition positionRelativeToSceneControl ->
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
             let cmd = triggerEventCmd (UIEvent.SetMousePosition position)
             (model, cmd)
-        | ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
+        | None, ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
             let position =
                 { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
                   Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
             let cmd = triggerEventCmd (UIEvent.ApplyMouseClick (mouseButton, position))
             (model, cmd)
-        | SetPlayerPosition (playerId, position) ->
+        | None, SetPlayerPosition (playerId, position) ->
             let model' =
                 let player = Map.find playerId model.Players
                 let player' = { player with Position = position }
@@ -92,13 +95,13 @@ module App =
                             model.PenLines @ [ line ]
                         else model.PenLines }
             (model', Cmd.none)
-        | SetPlayerDirection (playerId, angle) ->
+        | None, SetPlayerDirection (playerId, angle) ->
             let model' = updatePlayer playerId (fun p -> { p with Direction = angle })
             (model', Cmd.none)
-        | SetSpeechBubble (playerId, speechBubble) ->
+        | None, SetSpeechBubble (playerId, speechBubble) ->
             let model' = updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
             (model', Cmd.none)
-        | UpdateAnswer (playerId, answer) ->
+        | None, UpdateAnswer (playerId, answer) ->
             let model' = updatePlayer playerId (fun p ->
                 match p.SpeechBubble with
                 | Some (Ask askData) -> { p with SpeechBubble = Some (Ask { askData with Answer = Some answer }) }
@@ -106,7 +109,7 @@ module App =
                 | None -> p
             )
             (model', Cmd.none)
-        | ApplyAnswer playerId ->
+        | None, ApplyAnswer playerId ->
             let model' = updatePlayer playerId (fun p ->
                 match p.SpeechBubble with
                 | Some (Ask askData) -> { p with SpeechBubble = None }
@@ -126,43 +129,55 @@ module App =
                 |> Option.map (fun answer -> triggerEventCmd (UIEvent.AnswerQuestion (playerId, answer)))
                 |> Option.defaultValue Cmd.none
             (model', cmd)
-        | SetPen (playerId, pen) ->
+        | None, SetPen (playerId, pen) ->
             let model' = updatePlayer playerId (fun p -> { p with Pen = pen })
             (model', Cmd.none)
-        | SetSizeFactor (playerId, sizeFactor) ->
+        | None, SetSizeFactor (playerId, sizeFactor) ->
             let model' = updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
             (model', Cmd.none)
-        | NextCostume playerId ->
+        | None, NextCostume playerId ->
             let model' = updatePlayer playerId Player.nextCostume
             (model', Cmd.none)
-        | AddPlayer (playerId, player) ->
+        | None, AddPlayer (playerId, player) ->
             let model' =
                 { model with
                     Players = Map.add playerId player model.Players
                     PlayerOrder = model.PlayerOrder @ [ playerId ]
                 }
             (model', Cmd.none)
-        | RemovePlayer playerId ->
+        | None, RemovePlayer playerId ->
             let model' =
                 { model with
                     Players = Map.remove playerId model.Players
                     PlayerOrder = model.PlayerOrder |> List.filter ((<>) playerId)
                 }
             (model', Cmd.none)
-        | ClearScene ->
+        | None, ClearScene ->
             let model' = { model with PenLines = [] }
             (model', Cmd.none)
-        | SetBackground background ->
+        | None, SetBackground background ->
             let model' = { model with Background = background }
             (model', Cmd.none)
-        | Batch messages ->
-            let updateAndMerge (model, cmd) msg =
+        | None, StartBatch ->
+            let model' = { model with BatchMessages = Some ([], 1) }
+            (model', Cmd.none)
+        | Some (messages, level), StartBatch ->
+            let model' = { model with BatchMessages = Some (messages, level + 1) }
+            (model', Cmd.none)
+        | None, ApplyBatch ->
+            (model, Cmd.none) // TODO send error to controller?
+        | Some (messages, level), ApplyBatch when level > 1 ->
+            let model' = { model with BatchMessages = Some (messages, level - 1) }
+            (model', Cmd.none)
+        | Some (messages, level), ApplyBatch ->
+            let updateAndMerge msg (model, cmd) =
                 let (model', cmd') = update triggerEvent msg model
                 model', Cmd.batch [ cmd; cmd' ]
-            let (model', cmd) =
-                ((model, Cmd.none), messages)
-                ||> List.fold updateAndMerge
-            (model', cmd)
+            (messages, ({ model with BatchMessages = None }, Cmd.none))
+            ||> List.foldBack updateAndMerge
+        | Some (messages, level), x ->
+            let model' = { model with BatchMessages = Some (x :: messages, level) }
+            model', Cmd.none
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
     let view (model: Model) dispatch =

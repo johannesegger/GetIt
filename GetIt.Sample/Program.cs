@@ -622,7 +622,6 @@ namespace GetIt.Sample
             Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
             Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
         }
-
         private static void Program31()
         {
             Game.ShowSceneAndAddTurtle();

@@ -30,7 +30,8 @@ type ControllerToUIMsg =
     | SetSizeFactor of PlayerId * float
     | SetNextCostume of PlayerId
     | ControllerEvent of ControllerEvent
-    | Batch of ControllerToUIMsg list
+    | StartBatch
+    | ApplyBatch
 
 type UIToControllerMsg =
     | ControllerMsgProcessed
@@ -324,18 +325,18 @@ module ControllerToUIMsg =
                 ("keyUp", decodeKeyboardKey |> Decode.map (KeyUp >> ControllerEvent))
                 ("mouseMove", decodePosition |> Decode.map (MouseMove >> ControllerEvent))
                 ("mouseClick", Decode.tuple2 decodeMouseButton decodePosition |> Decode.map (MouseClick >> ControllerEvent))
+                ("startBatch", Decode.nil StartBatch)
+                ("applyBatch", Decode.nil ApplyBatch)
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
             )
-        let batchDecoder =
-            Decode.field "batch" (Decode.list (Decode.oneOf decoders) |> Decode.map Batch)
 
-        Decode.tuple2 Decode.guid (Decode.oneOf (batchDecoder :: decoders))
+        Decode.tuple2 Decode.guid (Decode.oneOf decoders)
         |> Decode.map IdentifiableMsg
 
     let encode (IdentifiableMsg (msgId, msg)) =
-        let rec encodeMsg msg =
+        let encodeMsg msg =
             match msg with
             | UIMsgProcessed ->
                 Encode.object [ ("messageProcessed", Encode.nil) ]
@@ -373,12 +374,10 @@ module ControllerToUIMsg =
                 Encode.object [ ("mouseMove", encodePosition position) ]
             | ControllerEvent (MouseClick (mouseButton, position)) ->
                 Encode.object [ ("mouseClick", Encode.tuple2 encodeMouseButton encodePosition (mouseButton, position)) ]
-            | Batch messages ->
-                let encodedMessages =
-                    messages
-                    |> List.map encodeMsg
-                    |> Encode.list
-                Encode.object [ ("batch", encodedMessages) ]
+            | StartBatch ->
+                Encode.object [ ("startBatch", Encode.nil) ]
+            | ApplyBatch ->
+                Encode.object [ ("applyBatch", Encode.nil) ]
 
         Encode.tuple2 Encode.guid encodeMsg (msgId, msg)
 

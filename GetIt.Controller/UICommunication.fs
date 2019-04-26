@@ -5,8 +5,6 @@ open System.Diagnostics
 open System.IO
 open System.IO.Pipes
 open System.Runtime.InteropServices
-open System.Threading
-open FSharp.Control.Reactive
 
 module internal UICommunication =
     let private invokeEventHandlers model fn =
@@ -83,7 +81,7 @@ module internal UICommunication =
         | UIEvent (Screenshot (PngImage data)) ->
             model
 
-    let rec private applyControllerToUIMessage message model =
+    let private applyControllerToUIMessage message model =
         let updatePlayer = updatePlayer model
         let invokeEventHandlers = invokeEventHandlers model
 
@@ -139,9 +137,8 @@ module internal UICommunication =
         | ControllerEvent (MouseClick (mouseButton, position)) ->
             // Position on scene will come from UI
             model
-        | Batch messages ->
-            (model, messages)
-            ||> List.fold (flip applyControllerToUIMessage)
+        | StartBatch
+        | ApplyBatch -> model
 
     let mutable private connection = None
 
@@ -192,47 +189,18 @@ module internal UICommunication =
 
         connection <- Some localConnection
 
-    let mutable private batchingState = AsyncLocal<(ControllerToUIMsg list * int) option>()
-
     let sendCommand command =
-        match batchingState.Value with
-        | Some (messages, level) ->
-            batchingState.Value <- Some (command :: messages, level)
+        match connection with
+        | Some connection ->
+            match MessageProcessing.sendCommand connection command with
+            | Ok msg ->
+                Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg >> (fun model -> UIToControllerMsg msg, model))
+            | Error (MessageProcessing.ResponseError e) ->
+                raise (GetItException ("Error while waiting for response.", e))
+            | Error MessageProcessing.NoResponse
+            | Error (MessageProcessing.ConnectionClosed _) ->
+                // Close the application if the UI has been closed (throwing an exception might be confusing)
+                // TODO dispose subscriptions etc. ?
+                Environment.Exit 1
         | None ->
-            match connection with
-            | Some connection ->
-                match MessageProcessing.sendCommand connection command with
-                | Ok msg ->
-                    Model.updateCurrent (applyControllerToUIMessage command >> applyUIToControllerMessage msg >> (fun model -> UIToControllerMsg msg, model))
-                | Error (MessageProcessing.ResponseError e) ->
-                    raise (GetItException ("Error while waiting for response.", e))
-                | Error MessageProcessing.NoResponse
-                | Error (MessageProcessing.ConnectionClosed _) ->
-                    // Close the application if the UI has been closed (throwing an exception might be confusing)
-                    // TODO dispose subscriptions etc. ?
-                    Environment.Exit 1
-            | None ->
-                raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
-
-    let batchMessages () =
-        let newState =
-            match batchingState.Value with
-            | None -> Some ([], 1)
-            | Some (messages, level) -> Some (messages, level + 1)
-        batchingState.Value <- newState
-
-        Disposable.create (fun () ->
-            match batchingState.Value with
-            | None ->
-                raise (GetItException "Can't finish batching: No batching in progress.")
-            | Some (messages, level) when level > 1 ->
-                batchingState.Value <- Some (messages, level - 1)
-            | Some (messages, level) ->
-                batchingState.Value <- None
-                sendCommand (Batch (List.rev messages))
-        )
-
-    let isInsideBatch () =
-        match batchingState.Value with
-        | Some _ -> true
-        | None -> false
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
