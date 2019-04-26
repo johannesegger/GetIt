@@ -197,7 +197,7 @@ let main argv =
         )
     )
     |> Seq.iteri (fun index population ->
-        // use x = Game.BatchCommands()
+        use x = Game.BatchCommands()
         Game.ClearScene()
         let fittest =
             population
