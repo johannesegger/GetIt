@@ -245,51 +245,38 @@ module App =
 
                             canvas.Clear()
 
-                            let markerDrawHeight = 15.f
-                            let markerRealHeight = 20.f
+                            let markerRealSize = 15.
+                            let borderRadius = 15.
+                            let borderWidth = 2.
 
-                            let borderRadius = 15.f
-                            use outerBubble = new SKRoundRect(SKRect(0.f, 0.f, float32 info.Width, float32 info.Height - markerRealHeight), borderRadius, borderRadius)
-                            use bubbleBorderPaint =
-                                new SKPaint(
-                                    Style = SKPaintStyle.Fill,
-                                    Color = SKColors.Black,
-                                    IsAntialias = true
-                                )
-                            canvas.DrawRoundRect(outerBubble, bubbleBorderPaint)
-
-                            let borderWidth = 5.f
-                            use innerBubble = new SKRoundRect(SKRect(borderWidth, borderWidth, float32 info.Width - borderWidth, float32 info.Height - borderWidth - markerRealHeight), borderRadius - borderWidth, borderRadius - borderWidth)
-                            use bubbleFillPaint =
-                                new SKPaint(
-                                    Style = SKPaintStyle.Fill,
-                                    Color = SKColors.WhiteSmoke,
-                                    IsAntialias = true
-                                )
-                            canvas.DrawRoundRect(innerBubble, bubbleFillPaint)
-
-                            canvas.Translate(SKPoint((float32 info.Width - markerRealHeight) / 2.f, float32 info.Height - markerRealHeight))
+                            canvas.Translate(SKPoint(float32 borderWidth, float32 borderWidth))
 
                             use markerBorderPaint =
                                 new SKPaint(
                                     Style = SKPaintStyle.Stroke,
                                     StrokeCap = SKStrokeCap.Square,
-                                    StrokeWidth = 5.f,
+                                    StrokeWidth = float32 borderWidth,
                                     Color = SKColors.Black,
                                     IsAntialias = true
                                 )
-                            let path = SKPath.ParseSvgPathData(sprintf "M0,0 L0,%f %f,0" markerDrawHeight markerDrawHeight)
+                            let path =
+                                [
+                                    sprintf "M%f,0" borderRadius
+                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius -borderRadius borderRadius
+                                    sprintf "V%f" (float info.Height - markerRealSize - borderRadius - 2. * borderWidth)
+                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius borderRadius borderRadius
+                                    sprintf "H%f" ((float info.Width - markerRealSize) / 2.)
+                                    sprintf "v%f" markerRealSize
+                                    sprintf "l%f,%f" markerRealSize -markerRealSize
+                                    sprintf "H%f" (float info.Width - borderRadius - 2. * borderWidth)
+                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius borderRadius -borderRadius
+                                    sprintf "V%f" borderRadius
+                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius -borderRadius -borderRadius
+                                    sprintf "H%f" borderRadius
+                                ]
+                                |> String.concat " "
+                                |> SKPath.ParseSvgPathData
                             canvas.DrawPath(path, markerBorderPaint)
-
-                            canvas.Translate(SKPoint(2.f, -borderWidth))
-
-                            use markerFillPaint =
-                                new SKPaint(
-                                    Style = SKPaintStyle.Fill,
-                                    Color = SKColors.WhiteSmoke,
-                                    IsAntialias = true
-                                )
-                            canvas.DrawPath(path, markerFillPaint)
                         )
                     )
                     |> layoutFlags AbsoluteLayoutFlags.All
