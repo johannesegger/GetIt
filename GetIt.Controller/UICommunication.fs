@@ -146,6 +146,12 @@ module internal UICommunication =
         if Option.isSome connection then raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
         let localConnection =
             if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                Process.GetProcessesByName("GetIt.WPF")
+                |> Seq.iter (fun p ->
+                    if not <| p.CloseMainWindow() then p.Kill()
+                    p.WaitForExit()
+                )
+
                 let startInfo =
 #if DEBUG
                     let path =
