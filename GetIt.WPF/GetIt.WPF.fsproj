@@ -28,7 +28,7 @@
     <PackageReference Include="Fabulous.Core" Version="0.33.0" />
     <PackageReference Include="Fabulous.LiveUpdate" Version="0.33.0" />
     <PackageReference Include="FSharp.Core" Version="4.5.2" />
-    <PackageReference Include="FSharp.Control.Reactive" Version="4.1.0" />
+    <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
     <PackageReference Include="Fabulous.CustomControls" Version="0.33.0" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" /> <!-- workaround for VSMac bug https://github.com/mono/monodevelop/pull/5137 --> 
     <PackageReference Include="Fabulous.SkiaSharp" Version="0.33.0" />

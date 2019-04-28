@@ -463,6 +463,7 @@ module MessageProcessing =
                     writer.Flush()
                 )
             ),
+            Action<_>(fun e -> try writer.Dispose() with _ -> ()),
             fun () -> try writer.Dispose() with _ -> ()
         )
 

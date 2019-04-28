@@ -3,6 +3,7 @@
 open System
 open System.IO
 open System.IO.Pipes
+open System.Reactive
 open System.Reactive.Concurrency
 open System.Windows
 open System.Windows.Media
@@ -206,6 +207,7 @@ module Main =
 
         while true do
             try
+                printfn "Starting pipe server."
                 use pipeServer =
                     new NamedPipeServerStream(
                         "GetIt",
@@ -221,7 +223,11 @@ module Main =
                     eventSubject
                     |> Observable.map (fun evt -> IdentifiableMsg (Guid.NewGuid(), UIEvent evt))
                     |> Observable.observeOn ThreadPoolScheduler.Instance
-                    |> Observable.subscribe subject.OnNext
+                    |> Observable.perform subject.OnNext // to catch exceptions in subscribe
+                    |> Observable.subscribeWithCallbacks
+                        ignore
+                        (fun e -> subject.OnError(e))
+                        (fun () -> subject.OnCompleted())
 
                 subject
                 |> Observable.toEnumerable
@@ -230,6 +236,7 @@ module Main =
                     |> Option.map (fun response -> IdentifiableMsg (mId, response))
                     |> Option.iter subject.OnNext
                 )
+                printfn "Client disconnected."
             with
             | e -> eprintfn "=== Unexpected exception: %O" e
 
