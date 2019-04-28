@@ -23,39 +23,6 @@ type MainWindow() =
 module Main =
     let private eventSubject = new System.Reactive.Subjects.Subject<UIEvent>()
 
-    let private tryGetPositionOnSceneControl positionOnScreen =
-        System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-            if isNull System.Windows.Application.Current.MainWindow then None
-            else
-                let window = System.Windows.Application.Current.MainWindow :?> MainWindow
-
-                // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
-                TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
-                |> Seq.tryHead
-                |> Option.bind (fun navigationPage ->
-                    TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
-                    |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-                    |> Seq.tryHead
-                )
-                |> Option.bind (fun scene ->
-                    try
-                        let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
-                        let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
-                        let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
-                        let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
-
-                        let screenPoint =
-                            System.Windows.Point(
-                                float virtualDesktopWidth * positionOnScreen.X + float virtualDesktopLeft,
-                                float virtualDesktopHeight * positionOnScreen.Y + float virtualDesktopTop
-                            )
-                    
-                        let scenePoint = scene.PointFromScreen(screenPoint)
-                        Some { X = scenePoint.X; Y = scenePoint.Y }
-                    with _ -> None
-            )
-        )
-
     let private windowIcon =
         use stream = typeof<GetIt.App>.Assembly.GetManifestResourceStream("GetIt.UI.icon.png")
         let bitmap = BitmapImage()
@@ -70,15 +37,20 @@ module Main =
         let rec execute retries =
             if retries = 0 then failwith "Can't execute function with window: No more retries left."
 
-            try
+            let result =
                 System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-                    if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
-
-                    let window = System.Windows.Application.Current.MainWindow :?> MainWindow
-                    fn window
+                    System.Windows.Application.Current.MainWindow
+                    |> Option.ofObj
+                    |> Result.ofOption "No main window"
+                    |> Result.bind (fun window ->
+                        let mainWindow = window :?> MainWindow
+                        fn mainWindow |> Result.Ok
+                    )
                 )
-            with e ->
-                printfn "Executing function with window failed: %s (Retries: %d)" e.Message retries
+            match result with
+            | Result.Ok p -> p
+            | Result.Error e ->
+                printfn "Executing function with window failed: %s (Retries: %d)" e retries
                 System.Threading.Thread.Sleep(100)
                 execute (retries - 1)
         execute 50
@@ -87,29 +59,53 @@ module Main =
         let rec execute retries =
             if retries = 0 then failwith "Can't execute function with scene control: No more retries left."
 
-            try
+            let result =
                 System.Windows.Application.Current.Dispatcher.Invoke(fun () ->
-                    if isNull System.Windows.Application.Current.MainWindow then failwith "No main window"
+                    System.Windows.Application.Current.MainWindow
+                    |> Option.ofObj
+                    |> Result.ofOption "No main window"
+                    |> Result.bind (fun window ->
+                        let mainWindow = window :?> MainWindow
 
-                    let window = System.Windows.Application.Current.MainWindow :?> MainWindow
-
-                    // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
-                    TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
-                    |> Seq.tryHead
-                    |> Option.bind (fun navigationPage ->
-                        TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
-                        |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                        // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
+                        TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(mainWindow, forceUsingTheVisualTreeHelper = true)
                         |> Seq.tryHead
+                        |> Option.bind (fun navigationPage ->
+                            TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
+                            |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
+                            |> Seq.tryHead
+                        )
+                        |> function
+                        | Some sceneControl -> fn (sceneControl :> FrameworkElement) |> Result.Ok
+                        | None -> Result.Error "Scene control not found"
                     )
-                    |> function
-                    | Some sceneControl -> fn (sceneControl :> FrameworkElement)
-                    | None -> failwith "Scene control not found"
                 )
-            with e ->
-                printfn "Executing function with scene control failed: %s (Retries: %d)" e.Message retries
+            match result with
+            | Result.Ok p -> p
+            | Result.Error e ->
+                printfn "Executing function with scene control failed: %s (Retries: %d)" e retries
                 System.Threading.Thread.Sleep(100)
                 execute (retries - 1)
         execute 50
+
+    let private tryGetPositionOnSceneControl positionOnScreen =
+        doWithSceneControl (fun scene ->
+            try
+                let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
+                let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
+                let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
+                let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
+
+                let screenPoint =
+                    System.Windows.Point(
+                        float virtualDesktopWidth * positionOnScreen.X + float virtualDesktopLeft,
+                        float virtualDesktopHeight * positionOnScreen.Y + float virtualDesktopTop
+                    )
+            
+                let scenePoint = scene.PointFromScreen(screenPoint)
+                Some { X = scenePoint.X; Y = scenePoint.Y }
+            with _ -> None
+        )
 
     let controlToImage (control: FrameworkElement) =
         let renderTargetBitmap = RenderTargetBitmap(int control.ActualWidth, int control.ActualHeight, 96., 96., PixelFormats.Pbgra32)

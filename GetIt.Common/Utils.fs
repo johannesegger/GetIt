@@ -64,3 +64,8 @@ module Svg =
 module RandomNumberGenerator =
     [<CompiledName("Default")>]
     let ``default`` = Random()
+
+module Result =
+    let ofOption error = function
+        | Some o -> Result.Ok o
+        | None -> Result.Error error
