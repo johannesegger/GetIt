@@ -537,7 +537,7 @@ let commands =
                 Type = typeof<Action<GetIt.Player>>
                 Description = "The event handler that should be called." } ]
           Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.addEventHandler (OnKeyDown (key, (fun () -> action.Invoke player)))" ] }
+          Body = [ "Model.onKeyDown key (fun () -> action.Invoke player)" ] }
 
         { Name = "onAnyKeyDown"
           CompiledName = "OnAnyKeyDown"
@@ -550,7 +550,7 @@ let commands =
                 Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey>>
                 Description = "The event handler that should be called." } ]
           Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.addEventHandler (OnAnyKeyDown (fun key -> action.Invoke(player, key)))" ] }
+          Body = [ "Model.onAnyKeyDown (fun key -> action.Invoke(player, key))" ] }
 
         { Name = "onMouseEnter"
           CompiledName = "OnMouseEnter"
@@ -563,7 +563,7 @@ let commands =
                 Type = typeof<Action<GetIt.Player>>
                 Description = "The event handler that should be called." } ]
           Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.addEventHandler (OnMouseEnterPlayer (player.PlayerId, (fun () -> action.Invoke(player))))" ] }
+          Body = [ "Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))" ] }
 
         { Name = "onClick"
           CompiledName = "OnClick"
@@ -576,7 +576,7 @@ let commands =
                 Type = typeof<Action<GetIt.Player, GetIt.MouseButton>>
                 Description = "The event handler that should be called." } ]
           Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.addEventHandler (OnClickPlayer (player.PlayerId, (fun mouseButton -> action.Invoke(player, mouseButton))))" ] }
+          Body = [ "Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))" ] }
     ]
 
 let rec getFullName (t: Type) =

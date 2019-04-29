@@ -56,8 +56,10 @@ type MouseButton =
     | Secondary
 
 type MouseClickEvent =
-    { Position: Position
-      MouseButton: MouseButton }
+    {
+        MouseButton: MouseButton
+        Position: Position
+    }
 
 type MouseState =
     { Position: Position }

@@ -281,13 +281,13 @@ type Game() =
     static member WaitForMouseClick () =
         use signal = new ManualResetEventSlim()
         let mutable mouseClickEvent = Unchecked.defaultof<_>
-        let fn position mouseButton =
+        let fn mouseButton position =
             mouseClickEvent <- {
-                Position = position
                 MouseButton = mouseButton
+                Position = position
             }
             signal.Set()
-        use d = Model.addEventHandler (OnClickScene fn)
+        use d = Model.onClickScene fn
         signal.Wait()
         mouseClickEvent
 
@@ -301,7 +301,7 @@ type Game() =
         use signal = new ManualResetEventSlim()
         let fn () =
             signal.Set()
-        use d = Model.addEventHandler (OnKeyDown (key, fn))
+        use d = Model.onKeyDown key fn
         signal.Wait()
 
     /// <summary>
@@ -314,7 +314,7 @@ type Game() =
         let fn key =
             keyboardKey <- key
             signal.Set()
-        use d = Model.addEventHandler (OnAnyKeyDown fn)
+        use d = Model.onAnyKeyDown fn
         signal.Wait()
         keyboardKey
 
@@ -347,7 +347,7 @@ type Game() =
     static member OnAnyKeyDown (action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.addEventHandler (OnAnyKeyDown action.Invoke)
+        Model.onAnyKeyDown action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called when a specific keyboard key is pressed.
@@ -359,7 +359,7 @@ type Game() =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.addEventHandler (OnKeyDown (key, action.Invoke))
+        Model.onKeyDown key action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called when the mouse is clicked anywhere on the scene.
@@ -369,7 +369,7 @@ type Game() =
     static member OnClickScene (action: Action<_, _>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.addEventHandler (OnClickScene (curry action.Invoke))
+        Model.onClickScene (curry action.Invoke)
 
     /// The bounds of the scene.
     static member SceneBounds

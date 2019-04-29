@@ -159,16 +159,16 @@ module private Raw =
         player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)
 
     let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
-        Model.addEventHandler (OnKeyDown (key, (fun () -> action.Invoke player)))
+        Model.onKeyDown key (fun () -> action.Invoke player)
 
     let onAnyKeyDown (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
-        Model.addEventHandler (OnAnyKeyDown (fun key -> action.Invoke(player, key)))
+        Model.onAnyKeyDown (fun key -> action.Invoke(player, key))
 
     let onMouseEnter (player: GetIt.Player) (action: System.Action<GetIt.Player>) =
-        Model.addEventHandler (OnMouseEnterPlayer (player.PlayerId, (fun () -> action.Invoke(player))))
+        Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))
 
     let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
-        Model.addEventHandler (OnClickPlayer (player.PlayerId, (fun mouseButton -> action.Invoke(player, mouseButton))))
+        Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))
 
 module Turtle =
     let private getTurtleOrFail () =
