@@ -251,14 +251,6 @@ module App =
 
                             canvas.Translate(SKPoint(float32 borderWidth, float32 borderWidth))
 
-                            use markerBorderPaint =
-                                new SKPaint(
-                                    Style = SKPaintStyle.Stroke,
-                                    StrokeCap = SKStrokeCap.Square,
-                                    StrokeWidth = float32 borderWidth,
-                                    Color = SKColors.Black,
-                                    IsAntialias = true
-                                )
                             let path =
                                 [
                                     sprintf "M%f,0" borderRadius
@@ -276,7 +268,24 @@ module App =
                                 ]
                                 |> String.concat " "
                                 |> SKPath.ParseSvgPathData
-                            canvas.DrawPath(path, markerBorderPaint)
+                            do
+                                use paint =
+                                    new SKPaint(
+                                        Style = SKPaintStyle.Stroke,
+                                        StrokeCap = SKStrokeCap.Square,
+                                        StrokeWidth = float32 borderWidth,
+                                        Color = SKColors.Black,
+                                        IsAntialias = true
+                                    )
+                                canvas.DrawPath(path, paint)
+                            do
+                                use paint =
+                                    new SKPaint(
+                                        Style = SKPaintStyle.Fill,
+                                        Color = SKColors.WhiteSmoke,
+                                        IsAntialias = true
+                                    )
+                                canvas.DrawPath(path, paint)
                         )
                     )
                     |> layoutFlags AbsoluteLayoutFlags.All
