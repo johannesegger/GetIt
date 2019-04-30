@@ -55,7 +55,7 @@ let commands =
                 Type = typeof<float>
                 Description = "The absolute y coordinate of the destination position." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveTo player { X = x; Y = y; }" ] }
+          Body = [ "moveTo player { X = x; Y = y }" ] }
 
         { Name = "moveToCenter"
           CompiledName = "MoveToCenter"
@@ -292,11 +292,24 @@ let commands =
             [ { Name = "player"
                 Type = typeof<GetIt.Player>
                 Description = "The player that pauses execution." }
+              { Name = "duration"
+                Type = typeof<TimeSpan>
+                Description = "The length of the pause." } ]
+          Result = { Type = typeof<unit>; Description = "" }
+          Body = [ "Thread.Sleep duration" ] }
+
+        { Name = "sleepMilliseconds"
+          CompiledName = "Sleep"
+          Summary = "Pauses execution of the player for a given time."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that pauses execution." }
               { Name = "durationInMilliseconds"
                 Type = typeof<float>
                 Description = "The length of the pause in milliseconds." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds))" ] }
+          Body = [ "sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)" ] }
 
         { Name = "say"
           CompiledName = "Say"
@@ -331,14 +344,30 @@ let commands =
               { Name = "text"
                 Type = typeof<string>
                 Description = "The content of the speech bubble." }
+              { Name = "duration"
+                Type = typeof<TimeSpan>
+                Description = "The time span how long the speech bubble should be visible." } ]
+          Result = { Type = typeof<unit>; Description = "" }
+          Body =
+            [ "say player text"
+              "sleep player duration"
+              "shutUp player" ] }
+
+        { Name = "sayWithDurationInSeconds"
+          CompiledName = "Say"
+          Summary = "Shows a speech bubble next to the player for a specific time."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that the speech bubble belongs to." }
+              { Name = "text"
+                Type = typeof<string>
+                Description = "The content of the speech bubble." }
               { Name = "durationInSeconds"
                 Type = typeof<float>
                 Description = "The number of seconds how long the speech bubble should be visible." } ]
           Result = { Type = typeof<unit>; Description = "" }
-          Body =
-            [ "say player text"
-              "sleep player (TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds)"
-              "shutUp player" ] }
+          Body = [ "sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)" ] }
 
         { Name = "ask"
           CompiledName = "Ask"

@@ -17,7 +17,7 @@ module private Raw =
         UICommunication.sendCommand (SetPosition (player.PlayerId, position))
 
     let moveToXY (player: GetIt.Player) (x: System.Double) (y: System.Double) =
-        moveTo player { X = x; Y = y; }
+        moveTo player { X = x; Y = y }
 
     let moveToCenter (player: GetIt.Player) =
         moveTo player Position.zero
@@ -84,8 +84,11 @@ module private Raw =
         if touchesTopOrBottomEdge player then setDirection player (Degrees.zero - player.Direction)
         elif touchesLeftOrRightEdge player then setDirection player (Degrees.op_Implicit 180. - player.Direction)
 
-    let sleep (player: GetIt.Player) (durationInMilliseconds: System.Double) =
-        Thread.Sleep(TimeSpan.FromMilliseconds(durationInMilliseconds))
+    let sleep (player: GetIt.Player) (duration: System.TimeSpan) =
+        Thread.Sleep duration
+
+    let sleepMilliseconds (player: GetIt.Player) (durationInMilliseconds: System.Double) =
+        sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     let say (player: GetIt.Player) (text: System.String) =
         UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))
@@ -93,10 +96,13 @@ module private Raw =
     let shutUp (player: GetIt.Player) =
         UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))
 
-    let sayWithDuration (player: GetIt.Player) (text: System.String) (durationInSeconds: System.Double) =
+    let sayWithDuration (player: GetIt.Player) (text: System.String) (duration: System.TimeSpan) =
         say player text
-        sleep player (TimeSpan.FromSeconds(durationInSeconds).TotalMilliseconds)
+        sleep player duration
         shutUp player
+
+    let sayWithDurationInSeconds (player: GetIt.Player) (text: System.String) (durationInSeconds: System.Double) =
+        sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)
 
     let ask (player: GetIt.Player) (question: System.String) =
         use enumerator =
@@ -316,11 +322,18 @@ module Turtle =
         Raw.bounceOffWall (getTurtleOrFail ())
 
     /// <summary>Pauses execution of the player for a given time.</summary>
+    /// <param name="duration">The length of the pause.</param>
+    /// <returns></returns>
+    [<CompiledName("Sleep")>]
+    let sleep (duration: System.TimeSpan) =
+        Raw.sleep (getTurtleOrFail ()) duration
+
+    /// <summary>Pauses execution of the player for a given time.</summary>
     /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
     /// <returns></returns>
     [<CompiledName("Sleep")>]
-    let sleep (durationInMilliseconds: System.Double) =
-        Raw.sleep (getTurtleOrFail ()) durationInMilliseconds
+    let sleepMilliseconds (durationInMilliseconds: System.Double) =
+        Raw.sleepMilliseconds (getTurtleOrFail ()) durationInMilliseconds
 
     /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
     /// <param name="text">The content of the speech bubble.</param>
@@ -338,12 +351,21 @@ module Turtle =
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="text">The content of the speech bubble.</param>
+    /// <param name="duration">The time span how long the speech bubble should be visible.</param>
+    /// <returns></returns>
+    [<CompiledName("Say")>]
+    let sayWithDuration (text: System.String) (duration: System.TimeSpan) =
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
+        Raw.sayWithDuration (getTurtleOrFail ()) text duration
+
+    /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
     /// <returns></returns>
     [<CompiledName("Say")>]
-    let sayWithDuration (text: System.String) (durationInSeconds: System.Double) =
+    let sayWithDurationInSeconds (text: System.String) (durationInSeconds: System.Double) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDuration (getTurtleOrFail ()) text durationInSeconds
+        Raw.sayWithDurationInSeconds (getTurtleOrFail ()) text durationInSeconds
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
     /// <param name="question">The content of the speech bubble.</param>
@@ -660,12 +682,21 @@ type PlayerExtensions() =
 
     /// <summary>Pauses execution of the player for a given time.</summary>
     /// <param name="player">The player that pauses execution.</param>
+    /// <param name="duration">The length of the pause.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Sleep(player: GetIt.Player, duration: System.TimeSpan) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.sleep player duration
+
+    /// <summary>Pauses execution of the player for a given time.</summary>
+    /// <param name="player">The player that pauses execution.</param>
     /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
     /// <returns></returns>
     [<Extension>]
     static member Sleep(player: GetIt.Player, durationInMilliseconds: System.Double) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
-        Raw.sleep player durationInMilliseconds
+        Raw.sleepMilliseconds player durationInMilliseconds
 
     /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>
@@ -688,13 +719,24 @@ type PlayerExtensions() =
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>
     /// <param name="text">The content of the speech bubble.</param>
+    /// <param name="duration">The time span how long the speech bubble should be visible.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Say(player: GetIt.Player, text: System.String, duration: System.TimeSpan) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
+        Raw.sayWithDuration player text duration
+
+    /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
     /// <returns></returns>
     [<Extension>]
     static member Say(player: GetIt.Player, text: System.String, durationInSeconds: System.Double) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDuration player text durationInSeconds
+        Raw.sayWithDurationInSeconds player text durationInSeconds
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>

@@ -172,12 +172,12 @@ type Game() =
         Game.showScene Maximized
         Game.addTurtle ()
 
-    static member SetWindowTitle (text) =
+    static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
         UICommunication.sendCommand (SetWindowTitle textOpt)
 
     /// Sets the scene background.
-    static member SetBackground (background) =
+    static member SetBackground background =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
 
         UICommunication.sendCommand (SetBackground background)
@@ -270,9 +270,16 @@ type Game() =
     /// <summary>
     /// Pauses execution of the current thread for a given time.
     /// </summary>
+    /// <param name="duration">The length of the pause.</param>
+    static member Sleep (duration: TimeSpan) =
+        Thread.Sleep duration
+
+    /// <summary>
+    /// Pauses execution of the current thread for a given time.
+    /// </summary>
     /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
-    static member Sleep (durationInMilliseconds) =
-        Thread.Sleep (TimeSpan.FromMilliseconds (durationInMilliseconds))
+    static member Sleep durationInMilliseconds =
+        Game.Sleep (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     /// <summary>
     /// Pauses execution until the mouse clicks at the scene.

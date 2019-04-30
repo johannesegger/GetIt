@@ -19,7 +19,7 @@ type Individual =
 let main argv =
     Game.ShowSceneAndAddTurtle()
 
-    Turtle.sayWithDuration "TSP solver" 1.
+    Turtle.sayWithDurationInSeconds "TSP solver" 1.
 
     let problem = GetIt.Sample.TSP.Samples.ulysses16
 
@@ -63,9 +63,9 @@ let main argv =
         |> Seq.map (fun city -> city.Id, city)
         |> Map.ofSeq
 
-    let mutable iterationDelayMs = 500.
-    use d1 = Turtle.onKeyDown KeyboardKey.Down (Action<_>(fun _ -> iterationDelayMs <- iterationDelayMs * 2.))
-    use d2 = Turtle.onKeyDown KeyboardKey.Up (Action<_>(fun _ -> iterationDelayMs <- iterationDelayMs / 2.))
+    let mutable iterationDelay = TimeSpan.FromMilliseconds 500.
+    use d1 = Turtle.onKeyDown KeyboardKey.Down (Action<_>(fun _ -> iterationDelay <- iterationDelay * 2.))
+    use d2 = Turtle.onKeyDown KeyboardKey.Up (Action<_>(fun _ -> iterationDelay <- iterationDelay / 2.))
     
     let mutable drawGlobalOptimum = false
     use d3 = Turtle.onKeyDown KeyboardKey.G (Action<_>(fun _ -> drawGlobalOptimum <- not drawGlobalOptimum))
@@ -217,7 +217,7 @@ let main argv =
             Turtle.setPenColor RGBAColors.green
             drawTour optimalTour
         
-        Turtle.sleep iterationDelayMs
+        Turtle.sleep iterationDelay
     )
 
     0
