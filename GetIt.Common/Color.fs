@@ -22,9 +22,8 @@ type RGBAColor =
             sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
 
         /// Randomly selects a color from a list of colors
-        static member SelectRandom([<ParamArray>] colors) =
-            let index = RandomNumberGenerator.``default``.Next(Array.length colors)
-            Array.item index colors
+        static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
+            RandomNumberGenerator.selectOneOf colors
 
 module internal RGBAColor =
     let rgbHexNotation v =

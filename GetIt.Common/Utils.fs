@@ -63,8 +63,13 @@ module Svg =
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 
 module RandomNumberGenerator =
-    [<CompiledName("Default")>]
-    let ``default`` = Random()
+    let private generator = Random()
+
+    /// Randomly selects an item from a list
+    [<CompiledName("SelectOneOf")>]
+    let selectOneOf([<ParamArray>] items) =
+        let index = generator.Next(Array.length items)
+        Array.item index items
 
 module Result =
     let ofOption error = function
