@@ -38,7 +38,7 @@ module internal Model =
     let updateCurrent fn =
         lock gate (fun () -> subject.OnNext(fn (snd subject.Value)))
 
-    let private onKeyDownFilter filter handler =
+    let private keyDownFilter filter =
         observable
         |> Observable.map (snd >> fun model ->
             let hasActiveTextInput =
@@ -57,14 +57,43 @@ module internal Model =
             | true, _ -> None
             | false, result -> result
         )
+
+    let private onKeyDownFilter filter handler =
+        keyDownFilter filter
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe handler
 
-    let onKeyDown key fn =
-        onKeyDownFilter (Set.contains key >> function true -> Some () | false -> None) fn
+    let onKeyDown key =
+        onKeyDownFilter (Set.contains key >> function true -> Some () | false -> None)
 
-    let onAnyKeyDown fn =
-        onKeyDownFilter (Set.toSeq >> Seq.tryHead) fn
+    let onAnyKeyDown =
+        onKeyDownFilter (Set.toSeq >> Seq.tryHead)
+
+    let private whileKeyDownFilter filter interval handler =
+        keyDownFilter filter
+        |> Observable.switchMap (fun key ->
+            let keyUpObservable =
+                observable
+                |> Observable.choose (snd >> fun model ->
+                    if Set.contains key model.KeyboardState.KeysPressed then None
+                    else Some ()
+                )
+                |> Observable.take 1
+            Observable.interval interval
+            |> Observable.map (int >> (+) 2)
+            |> Observable.startWith [ 1 ]
+            |> Observable.map (fun i -> key, i)
+            |> Observable.takeUntilOther keyUpObservable
+        )
+        |> Observable.repeat
+        |> Observable.observeOn ThreadPoolScheduler.Instance
+        |> Observable.subscribe handler
+
+    let whileKeyDown key interval handler =
+        whileKeyDownFilter (Set.contains key >> function true -> Some key | false -> None) interval (snd >> handler)
+
+    let whileAnyKeyDown interval handler =
+        whileKeyDownFilter (Set.toSeq >> Seq.tryHead) interval (uncurry handler)
 
     let onClickScene fn =
         observable

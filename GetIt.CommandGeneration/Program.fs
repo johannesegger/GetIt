@@ -554,7 +554,7 @@ let commands =
 
         { Name = "onKeyDown"
           CompiledName = "OnKeyDown"
-          Summary = "Registers an event handler that is called when a specific keyboard key is pressed."
+          Summary = "Registers an event handler that is called once when a specific keyboard key is pressed."
           Parameters =
             [ { Name = "player"
                 Type = typeof<GetIt.Player>
@@ -570,7 +570,7 @@ let commands =
 
         { Name = "onAnyKeyDown"
           CompiledName = "OnAnyKeyDown"
-          Summary = "Registers an event handler that is called when any keyboard key is pressed."
+          Summary = "Registers an event handler that is called once when any keyboard key is pressed."
           Parameters =
             [ { Name = "player"
                 Type = typeof<GetIt.Player>
@@ -580,6 +580,41 @@ let commands =
                 Description = "The event handler that should be called." } ]
           Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
           Body = [ "Model.onAnyKeyDown (fun key -> action.Invoke(player, key))" ] }
+
+        { Name = "whileKeyDown"
+          CompiledName = "OnKeyDown"
+          Summary = "Registers an event handler that is called contiuously when a specific keyboard key is pressed."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that gets passed to the event handler." }
+              { Name = "key"
+                Type = typeof<GetIt.KeyboardKey>
+                Description = "The keyboard key that should be listened to." }
+              { Name = "interval"
+                Type = typeof<TimeSpan>
+                Description = "How often the event handler should be called." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player, int>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))" ] }
+
+        { Name = "whileAnyKeyDown"
+          CompiledName = "OnAnyKeyDown"
+          Summary = "Registers an event handler that is called contiuously when any keyboard key is pressed."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that gets passed to the event handler." }
+              { Name = "interval"
+                Type = typeof<TimeSpan>
+                Description = "How often the event handler should be called." }
+              { Name = "action"
+                Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey, int>>
+                Description = "The event handler that should be called." } ]
+          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+          Body = [ "Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))" ] }
 
         { Name = "onMouseEnter"
           CompiledName = "OnMouseEnter"

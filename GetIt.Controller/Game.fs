@@ -347,7 +347,7 @@ type Game() =
             |> not
 
     /// <summary>
-    /// Registers an event handler that is called when any keyboard key is pressed.
+    /// Registers an event handler that is called once when any keyboard key is pressed.
     /// </summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
@@ -357,7 +357,7 @@ type Game() =
         Model.onAnyKeyDown action.Invoke
 
     /// <summary>
-    /// Registers an event handler that is called when a specific keyboard key is pressed.
+    /// Registers an event handler that is called once when a specific keyboard key is pressed.
     /// </summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
     /// <param name="action">The event handler that should be called.</param>
@@ -367,6 +367,29 @@ type Game() =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
         Model.onKeyDown key action.Invoke
+
+    /// <summary>
+    /// Registers an event handler that is called continuously when any keyboard key is pressed.
+    /// </summary>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    static member OnAnyKeyDown (interval, action: Action<_, _>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+
+        Model.whileAnyKeyDown interval (curry action.Invoke)
+
+    /// <summary>
+    /// Registers an event handler that is called continuously when a specific keyboard key is pressed.
+    /// </summary>
+    /// <param name="key">The keyboard key that should be listened to.</param>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    static member OnKeyDown (key, interval, action: Action<_>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+
+        Model.whileKeyDown key interval action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called when the mouse is clicked anywhere on the scene.

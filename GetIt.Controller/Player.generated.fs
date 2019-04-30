@@ -170,6 +170,12 @@ module private Raw =
     let onAnyKeyDown (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
         Model.onAnyKeyDown (fun key -> action.Invoke(player, key))
 
+    let whileKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, System.Int32>) =
+        Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))
+
+    let whileAnyKeyDown (player: GetIt.Player) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
+        Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))
+
     let onMouseEnter (player: GetIt.Player) (action: System.Action<GetIt.Player>) =
         Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))
 
@@ -463,7 +469,7 @@ module Turtle =
     let getDistanceToMouse () =
         Raw.getDistanceToMouse (getTurtleOrFail ())
 
-    /// <summary>Registers an event handler that is called when a specific keyboard key is pressed.</summary>
+    /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
@@ -473,13 +479,33 @@ module Turtle =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onKeyDown (getTurtleOrFail ()) key action
 
-    /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
+    /// <summary>Registers an event handler that is called once when any keyboard key is pressed.</summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
     [<CompiledName("OnAnyKeyDown")>]
     let onAnyKeyDown (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onAnyKeyDown (getTurtleOrFail ()) action
+
+    /// <summary>Registers an event handler that is called contiuously when a specific keyboard key is pressed.</summary>
+    /// <param name="key">The keyboard key that should be listened to.</param>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnKeyDown")>]
+    let whileKeyDown (key: GetIt.KeyboardKey) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, System.Int32>) =
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+        Raw.whileKeyDown (getTurtleOrFail ()) key interval action
+
+    /// <summary>Registers an event handler that is called contiuously when any keyboard key is pressed.</summary>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<CompiledName("OnAnyKeyDown")>]
+    let whileAnyKeyDown (interval: System.TimeSpan) (action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+        Raw.whileAnyKeyDown (getTurtleOrFail ()) interval action
 
     /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
     /// <param name="action">The event handler that should be called.</param>
@@ -862,7 +888,7 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.getDistanceToMouse player
 
-    /// <summary>Registers an event handler that is called when a specific keyboard key is pressed.</summary>
+    /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="player">The player that gets passed to the event handler.</param>
     /// <param name="key">The keyboard key that should be listened to.</param>
     /// <param name="action">The event handler that should be called.</param>
@@ -874,7 +900,7 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onKeyDown player key action
 
-    /// <summary>Registers an event handler that is called when any keyboard key is pressed.</summary>
+    /// <summary>Registers an event handler that is called once when any keyboard key is pressed.</summary>
     /// <param name="player">The player that gets passed to the event handler.</param>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
@@ -883,6 +909,30 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onAnyKeyDown player action
+
+    /// <summary>Registers an event handler that is called contiuously when a specific keyboard key is pressed.</summary>
+    /// <param name="player">The player that gets passed to the event handler.</param>
+    /// <param name="key">The keyboard key that should be listened to.</param>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnKeyDown(player: GetIt.Player, key: GetIt.KeyboardKey, interval: System.TimeSpan, action: System.Action<GetIt.Player, System.Int32>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+        Raw.whileKeyDown player key interval action
+
+    /// <summary>Registers an event handler that is called contiuously when any keyboard key is pressed.</summary>
+    /// <param name="player">The player that gets passed to the event handler.</param>
+    /// <param name="interval">How often the event handler should be called.</param>
+    /// <param name="action">The event handler that should be called.</param>
+    /// <returns>The disposable subscription.</returns>
+    [<Extension>]
+    static member OnAnyKeyDown(player: GetIt.Player, interval: System.TimeSpan, action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
+        Raw.whileAnyKeyDown player interval action
 
     /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
     /// <param name="player">The player.</param>

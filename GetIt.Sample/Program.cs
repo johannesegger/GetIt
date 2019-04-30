@@ -43,7 +43,8 @@ namespace GetIt.Sample
             // Program26();
             // Program27();
             // Program28();
-            Program29();
+            // Program29();
+            Program30();
         }
 
         private static void Program1()
@@ -667,6 +668,20 @@ namespace GetIt.Sample
             Game.SetWindowTitle("3");
             Turtle.Sleep(1000);
             Game.SetWindowTitle(null);
+        }
+
+        private static void Program30()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.MoveRight(100);
+            Turtle.Say("Press and hold <Space>.");
+            Turtle.OnKeyDown(KeyboardKey.Space, TimeSpan.FromSeconds(1), (p, i) => p.Say($"Event handler called {i} time(s)."));
+
+            var player = Game.AddPlayer(PlayerData.Turtle);
+            player.MoveLeft(100);
+            player.Say("Press and hold any key.");
+            player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
         }
     }
 }
