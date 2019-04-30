@@ -69,7 +69,7 @@ let commands =
 
         { Name = "moveBy"
           CompiledName = "MoveBy"
-          Summary = "Moves the player to the center of the scene."
+          Summary = "Moves the player relatively."
           Parameters =
             [ { Name = "player"
                 Type = typeof<GetIt.Player>

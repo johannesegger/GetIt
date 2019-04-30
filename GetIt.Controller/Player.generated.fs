@@ -210,7 +210,7 @@ module Turtle =
     let moveToCenter () =
         Raw.moveToCenter (getTurtleOrFail ())
 
-    /// <summary>Moves the player to the center of the scene.</summary>
+    /// <summary>Moves the player relatively.</summary>
     /// <param name="deltaX">The change of the x coordinate.</param>
     /// <param name="deltaY">The change of the y coordinate.</param>
     /// <returns></returns>
@@ -555,7 +555,7 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.moveToCenter player
 
-    /// <summary>Moves the player to the center of the scene.</summary>
+    /// <summary>Moves the player relatively.</summary>
     /// <param name="player">The player that should be moved.</param>
     /// <param name="deltaX">The change of the x coordinate.</param>
     /// <param name="deltaY">The change of the y coordinate.</param>
