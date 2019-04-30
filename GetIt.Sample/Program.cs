@@ -43,10 +43,7 @@ namespace GetIt.Sample
             // Program26();
             // Program27();
             // Program28();
-            // Program29();
-            // Program30();
-            // Program31();
-            Program32();
+            Program29();
         }
 
         private static void Program1()
@@ -577,25 +574,13 @@ namespace GetIt.Sample
 
         private static void Program25()
         {
-            Game.ShowScene(1000, 350);
-        }
-
-        private static void Program26()
-        {
-            Game.ShowMaximizedScene();
-        }
-
-        private static void Program27()
-        {
-            Game.ShowSceneAndAddTurtle(1000, 350);
-        }
-
-        private static void Program28()
-        {
+            // Game.ShowScene(1000, 350);
+            // Game.ShowMaximizedScene();
+            // Game.ShowSceneAndAddTurtle(1000, 350);
             Game.ShowMaximizedSceneAndAddTurtle();
         }
 
-        private static void Program29()
+        private static void Program26()
         {
             Game.ShowSceneAndAddTurtle(Background.Baseball1.Size.Width * 2, Background.Baseball1.Size.Height * 2);
             Game.SetBackground(Background.Baseball1);
@@ -607,7 +592,7 @@ namespace GetIt.Sample
             Game.SetBackground(Background.None);
         }
 
-        private static void Program30()
+        private static void Program27()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -622,7 +607,7 @@ namespace GetIt.Sample
             Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
             Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
         }
-        private static void Program31()
+        private static void Program28()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -666,7 +651,7 @@ namespace GetIt.Sample
             Turtle.Say("Awesome");
         }
 
-        private static void Program32()
+        private static void Program29()
         {
             Game.ShowSceneAndAddTurtle();
 
