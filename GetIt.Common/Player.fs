@@ -59,10 +59,11 @@ type PlayerData =
     /// The current costume of the player.
     member this.Costume with get() = this.Costumes |> List.item this.CostumeIndex
 
-    /// The current size of the player.
+    /// The actual size of the player.
     member this.Size with get() = this.Costume.Size * this.SizeFactor
 
     /// The rectangular bounds of the player.
+    /// Note that this doesn't take into account the current rotation of the player.
     member this.Bounds
         with get() =
             { Position =

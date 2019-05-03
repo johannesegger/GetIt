@@ -19,7 +19,7 @@ type Individual =
 let main argv =
     Game.ShowSceneAndAddTurtle()
 
-    Turtle.sayWithDurationInSeconds "TSP solver" 1.
+    Turtle.Say ("TSP solver", 1.)
 
     let problem = GetIt.Sample.TSP.Samples.ulysses16
 
@@ -64,11 +64,11 @@ let main argv =
         |> Map.ofSeq
 
     let mutable iterationDelay = TimeSpan.FromMilliseconds 500.
-    use d1 = Turtle.onKeyDown KeyboardKey.Down (Action<_>(fun _ -> iterationDelay <- iterationDelay * 2.))
-    use d2 = Turtle.onKeyDown KeyboardKey.Up (Action<_>(fun _ -> iterationDelay <- iterationDelay / 2.))
+    use d1 = Turtle.OnKeyDown (KeyboardKey.Down, fun _ -> iterationDelay <- iterationDelay * 2.)
+    use d2 = Turtle.OnKeyDown (KeyboardKey.Up, fun _ -> iterationDelay <- iterationDelay / 2.)
     
     let mutable drawGlobalOptimum = false
-    use d3 = Turtle.onKeyDown KeyboardKey.G (Action<_>(fun _ -> drawGlobalOptimum <- not drawGlobalOptimum))
+    use d3 = Turtle.OnKeyDown (KeyboardKey.G, fun _ -> drawGlobalOptimum <- not drawGlobalOptimum)
 
     let getDistance cityA cityB =
         let dx = cityA.Position.X - cityB.Position.X
@@ -93,14 +93,14 @@ let main argv =
         ]
 
     let drawTour tour =
-        Turtle.turnOffPen ()
+        Turtle.TurnOffPen ()
         tour
         |> normalizeTour
         |> List.map (fun city -> Map.find city.Id sceneCityLookup)
         |> closeTour
         |> List.iter (fun city ->
-            Turtle.moveTo city.Position
-            Turtle.turnOnPen ()
+            Turtle.MoveTo city.Position
+            Turtle.TurnOnPen ()
         )
 
     // http://fssnip.net/L
@@ -209,15 +209,15 @@ let main argv =
                 sprintf "Global optimum: %f" (Math.Abs globalOptimum)
             ]
             |> String.concat Environment.NewLine
-        Turtle.say text
+        Turtle.Say text
 
-        Turtle.setPenColor RGBAColors.orange
+        Turtle.SetPenColor RGBAColors.orange
         drawTour fittest.Tour
         if drawGlobalOptimum then
-            Turtle.setPenColor RGBAColors.green
+            Turtle.SetPenColor RGBAColors.green
             drawTour optimalTour
         
-        Turtle.sleep iterationDelay
+        Turtle.Sleep iterationDelay
     )
 
     0

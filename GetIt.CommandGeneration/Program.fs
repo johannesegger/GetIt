@@ -704,18 +704,15 @@ let main _argv =
                 yield sprintf "/// <returns>%s</returns>" command.Result.Description
                 let parameterListWithTypes =
                     parameters
-                    |> List.map (fun p -> sprintf "(%s: %s)" p.Name (getFullName p.Type))
-                    |> function
-                    | [] -> [ "()" ]
-                    | x -> x
-                    |> String.concat " "
+                    |> List.map (fun p -> sprintf "%s: %s" p.Name (getFullName p.Type))
+                    |> String.concat ", "
+                    |> sprintf "(%s)"
                 let parameterNames =
                     parameters
                     |> List.map (fun p -> p.Name)
-                    |> List.append [ "(getTurtleOrFail ())" ]
+                    |> List.append [ "Turtle.Player" ]
                     |> String.concat " "
-                yield sprintf "[<CompiledName(\"%s\")>]" command.CompiledName
-                yield sprintf "let %s %s =" command.Name parameterListWithTypes
+                yield sprintf "static member %s %s =" command.CompiledName parameterListWithTypes
                 yield!
                     nullGuards parameters
                     |> List.map (sprintf "    %s")
@@ -726,14 +723,39 @@ let main _argv =
         |> List.intersperse [ "" ]
         |> List.collect id
         |> List.append
-            [ yield "module Turtle ="
-              yield!
-                [ "let private getTurtleOrFail () ="
-                  "    match Game.defaultTurtle with"
-                  "    | Some player -> player"
-                  "    | None -> raise (GetItException \"Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.\")" ]
-                |> List.map (sprintf "    %s")
-              yield "" ]
+            [
+                yield "[<AbstractClass; Sealed>]"
+                yield "type Turtle() ="
+                yield!
+                    [
+                        "static member private Player"
+                        "    with get () ="
+                        "        match Game.defaultTurtle with"
+                        "        | Some player -> player"
+                        "        | None -> raise (GetItException \"Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.\")"
+                        ""
+                        "/// The actual size of the player."
+                        "static member Size with get () = Turtle.Player.Size"
+                        ""
+                        "/// The factor that is used to change the size of the player."
+                        "static member SizeFactor with get () = Turtle.Player.SizeFactor"
+                        ""
+                        "/// The position of the player's center point."
+                        "static member Position with get () = Turtle.Player.Position"
+                        ""
+                        "/// The rectangular bounds of the player."
+                        "/// Note that this doesn't take into account the current rotation of the player."
+                        "static member Bounds with get () = Turtle.Player.Bounds"
+                        ""
+                        "/// The rotation of the player."
+                        "static member Direction with get () = Turtle.Player.Direction"
+                        ""
+                        "/// The pen that belongs to the player."
+                        "static member Pen with get () = Turtle.Player.Pen"
+                    ]
+                    |> List.map (sprintf "    %s")
+                yield ""
+              ]
 
     let extensionMethods =
         commands

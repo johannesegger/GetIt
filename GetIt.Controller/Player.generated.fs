@@ -182,346 +182,321 @@ module private Raw =
     let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
         Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))
 
-module Turtle =
-    let private getTurtleOrFail () =
-        match Game.defaultTurtle with
-        | Some player -> player
-        | None -> raise (GetItException "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
+[<AbstractClass; Sealed>]
+type Turtle() =
+    static member private Player
+        with get () =
+            match Game.defaultTurtle with
+            | Some player -> player
+            | None -> raise (GetItException "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
+    
+    /// The actual size of the player.
+    static member Size with get () = Turtle.Player.Size
+    
+    /// The factor that is used to change the size of the player.
+    static member SizeFactor with get () = Turtle.Player.SizeFactor
+    
+    /// The position of the player's center point.
+    static member Position with get () = Turtle.Player.Position
+    
+    /// The rectangular bounds of the player.
+    /// Note that this doesn't take into account the current rotation of the player.
+    static member Bounds with get () = Turtle.Player.Bounds
+    
+    /// The rotation of the player.
+    static member Direction with get () = Turtle.Player.Direction
+    
+    /// The pen that belongs to the player.
+    static member Pen with get () = Turtle.Player.Pen
 
     /// <summary>Moves the player to a position.</summary>
     /// <param name="position">The absolute destination position.</param>
     /// <returns></returns>
-    [<CompiledName("MoveTo")>]
-    let moveTo (position: GetIt.Position) =
+    static member MoveTo (position: GetIt.Position) =
         if obj.ReferenceEquals(position, null) then raise (ArgumentNullException "position")
-        Raw.moveTo (getTurtleOrFail ()) position
+        Raw.moveTo Turtle.Player position
 
     /// <summary>Moves the player to a position.</summary>
     /// <param name="x">The absolute x coordinate of the destination position.</param>
     /// <param name="y">The absolute y coordinate of the destination position.</param>
     /// <returns></returns>
-    [<CompiledName("MoveTo")>]
-    let moveToXY (x: System.Double) (y: System.Double) =
-        Raw.moveToXY (getTurtleOrFail ()) x y
+    static member MoveTo (x: System.Double, y: System.Double) =
+        Raw.moveToXY Turtle.Player x y
 
     /// <summary>Moves the player to the center of the scene.</summary>
     /// <returns></returns>
-    [<CompiledName("MoveToCenter")>]
-    let moveToCenter () =
-        Raw.moveToCenter (getTurtleOrFail ())
+    static member MoveToCenter () =
+        Raw.moveToCenter Turtle.Player
 
     /// <summary>Moves the player relatively.</summary>
     /// <param name="deltaX">The change of the x coordinate.</param>
     /// <param name="deltaY">The change of the y coordinate.</param>
     /// <returns></returns>
-    [<CompiledName("MoveBy")>]
-    let moveBy (deltaX: System.Double) (deltaY: System.Double) =
-        Raw.moveBy (getTurtleOrFail ()) deltaX deltaY
+    static member MoveBy (deltaX: System.Double, deltaY: System.Double) =
+        Raw.moveBy Turtle.Player deltaX deltaY
 
     /// <summary>Moves the player horizontally.</summary>
     /// <param name="steps">The number of steps.</param>
     /// <returns></returns>
-    [<CompiledName("MoveRight")>]
-    let moveRight (steps: System.Double) =
-        Raw.moveRight (getTurtleOrFail ()) steps
+    static member MoveRight (steps: System.Double) =
+        Raw.moveRight Turtle.Player steps
 
     /// <summary>Moves the player horizontally.</summary>
     /// <param name="steps">The number of steps.</param>
     /// <returns></returns>
-    [<CompiledName("MoveLeft")>]
-    let moveLeft (steps: System.Double) =
-        Raw.moveLeft (getTurtleOrFail ()) steps
+    static member MoveLeft (steps: System.Double) =
+        Raw.moveLeft Turtle.Player steps
 
     /// <summary>Moves the player vertically.</summary>
     /// <param name="steps">The number of steps.</param>
     /// <returns></returns>
-    [<CompiledName("MoveUp")>]
-    let moveUp (steps: System.Double) =
-        Raw.moveUp (getTurtleOrFail ()) steps
+    static member MoveUp (steps: System.Double) =
+        Raw.moveUp Turtle.Player steps
 
     /// <summary>Moves the player vertically.</summary>
     /// <param name="steps">The number of steps.</param>
     /// <returns></returns>
-    [<CompiledName("MoveDown")>]
-    let moveDown (steps: System.Double) =
-        Raw.moveDown (getTurtleOrFail ()) steps
+    static member MoveDown (steps: System.Double) =
+        Raw.moveDown Turtle.Player steps
 
     /// <summary>Moves the player forward.</summary>
     /// <param name="steps">The number of steps.</param>
     /// <returns></returns>
-    [<CompiledName("MoveInDirection")>]
-    let moveInDirection (steps: System.Double) =
-        Raw.moveInDirection (getTurtleOrFail ()) steps
+    static member MoveInDirection (steps: System.Double) =
+        Raw.moveInDirection Turtle.Player steps
 
     /// <summary>Moves the player to a random position on the scene.</summary>
     /// <returns></returns>
-    [<CompiledName("MoveToRandomPosition")>]
-    let moveToRandomPosition () =
-        Raw.moveToRandomPosition (getTurtleOrFail ())
+    static member MoveToRandomPosition () =
+        Raw.moveToRandomPosition Turtle.Player
 
     /// <summary>Sets the rotation of the player to a specific angle.</summary>
     /// <param name="angle">The absolute angle.</param>
     /// <returns></returns>
-    [<CompiledName("SetDirection")>]
-    let setDirection (angle: GetIt.Degrees) =
+    static member SetDirection (angle: GetIt.Degrees) =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.setDirection (getTurtleOrFail ()) angle
+        Raw.setDirection Turtle.Player angle
 
     /// <summary>Rotates the player clockwise by a specific angle.</summary>
     /// <param name="angle">The relative angle.</param>
     /// <returns></returns>
-    [<CompiledName("RotateClockwise")>]
-    let rotateClockwise (angle: GetIt.Degrees) =
+    static member RotateClockwise (angle: GetIt.Degrees) =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateClockwise (getTurtleOrFail ()) angle
+        Raw.rotateClockwise Turtle.Player angle
 
     /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
     /// <param name="angle">The relative angle.</param>
     /// <returns></returns>
-    [<CompiledName("RotateCounterClockwise")>]
-    let rotateCounterClockwise (angle: GetIt.Degrees) =
+    static member RotateCounterClockwise (angle: GetIt.Degrees) =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateCounterClockwise (getTurtleOrFail ()) angle
+        Raw.rotateCounterClockwise Turtle.Player angle
 
     /// <summary>Rotates the player so that it looks up.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnUp")>]
-    let turnUp () =
-        Raw.turnUp (getTurtleOrFail ())
+    static member TurnUp () =
+        Raw.turnUp Turtle.Player
 
     /// <summary>Rotates the player so that it looks to the right.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnRight")>]
-    let turnRight () =
-        Raw.turnRight (getTurtleOrFail ())
+    static member TurnRight () =
+        Raw.turnRight Turtle.Player
 
     /// <summary>Rotates the player so that it looks down.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnDown")>]
-    let turnDown () =
-        Raw.turnDown (getTurtleOrFail ())
+    static member TurnDown () =
+        Raw.turnDown Turtle.Player
 
     /// <summary>Rotates the player so that it looks to the left.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnLeft")>]
-    let turnLeft () =
-        Raw.turnLeft (getTurtleOrFail ())
+    static member TurnLeft () =
+        Raw.turnLeft Turtle.Player
 
     /// <summary>Checks whether a given player touches an edge of the scene.</summary>
     /// <returns>True, if the player touches an edge, otherwise false.</returns>
-    [<CompiledName("TouchesEdge")>]
-    let touchesEdge () =
-        Raw.touchesEdge (getTurtleOrFail ())
+    static member TouchesEdge () =
+        Raw.touchesEdge Turtle.Player
 
     /// <summary>Checks whether a given player touches another player.</summary>
     /// <param name="other">The second player that might be touched.</param>
     /// <returns>True, if the two players touch each other, otherwise false.</returns>
-    [<CompiledName("TouchesPlayer")>]
-    let touchesPlayer (other: GetIt.Player) =
+    static member TouchesPlayer (other: GetIt.Player) =
         if obj.ReferenceEquals(other, null) then raise (ArgumentNullException "other")
-        Raw.touchesPlayer (getTurtleOrFail ()) other
+        Raw.touchesPlayer Turtle.Player other
 
     /// <summary>Bounces the player off the wall if it currently touches it.</summary>
     /// <returns></returns>
-    [<CompiledName("BounceOffWall")>]
-    let bounceOffWall () =
-        Raw.bounceOffWall (getTurtleOrFail ())
+    static member BounceOffWall () =
+        Raw.bounceOffWall Turtle.Player
 
     /// <summary>Pauses execution of the player for a given time.</summary>
     /// <param name="duration">The length of the pause.</param>
     /// <returns></returns>
-    [<CompiledName("Sleep")>]
-    let sleep (duration: System.TimeSpan) =
-        Raw.sleep (getTurtleOrFail ()) duration
+    static member Sleep (duration: System.TimeSpan) =
+        Raw.sleep Turtle.Player duration
 
     /// <summary>Pauses execution of the player for a given time.</summary>
     /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
     /// <returns></returns>
-    [<CompiledName("Sleep")>]
-    let sleepMilliseconds (durationInMilliseconds: System.Double) =
-        Raw.sleepMilliseconds (getTurtleOrFail ()) durationInMilliseconds
+    static member Sleep (durationInMilliseconds: System.Double) =
+        Raw.sleepMilliseconds Turtle.Player durationInMilliseconds
 
     /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
     /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
-    [<CompiledName("Say")>]
-    let say (text: System.String) =
+    static member Say (text: System.String) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.say (getTurtleOrFail ()) text
+        Raw.say Turtle.Player text
 
     /// <summary>Removes the speech bubble of the player.</summary>
     /// <returns></returns>
-    [<CompiledName("ShutUp")>]
-    let shutUp () =
-        Raw.shutUp (getTurtleOrFail ())
+    static member ShutUp () =
+        Raw.shutUp Turtle.Player
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="text">The content of the speech bubble.</param>
     /// <param name="duration">The time span how long the speech bubble should be visible.</param>
     /// <returns></returns>
-    [<CompiledName("Say")>]
-    let sayWithDuration (text: System.String) (duration: System.TimeSpan) =
+    static member Say (text: System.String, duration: System.TimeSpan) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDuration (getTurtleOrFail ()) text duration
+        Raw.sayWithDuration Turtle.Player text duration
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="text">The content of the speech bubble.</param>
     /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
     /// <returns></returns>
-    [<CompiledName("Say")>]
-    let sayWithDurationInSeconds (text: System.String) (durationInSeconds: System.Double) =
+    static member Say (text: System.String, durationInSeconds: System.Double) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDurationInSeconds (getTurtleOrFail ()) text durationInSeconds
+        Raw.sayWithDurationInSeconds Turtle.Player text durationInSeconds
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
     /// <param name="question">The content of the speech bubble.</param>
     /// <returns>The text the user typed in.</returns>
-    [<CompiledName("Ask")>]
-    let ask (question: System.String) =
+    static member Ask (question: System.String) =
         if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
-        Raw.ask (getTurtleOrFail ()) question
+        Raw.ask Turtle.Player question
 
     /// <summary>Sets the pen of the player.</summary>
     /// <param name="pen">The pen that should be assigned to the player.</param>
     /// <returns></returns>
-    [<CompiledName("SetPen")>]
-    let setPen (pen: GetIt.Pen) =
+    static member SetPen (pen: GetIt.Pen) =
         if obj.ReferenceEquals(pen, null) then raise (ArgumentNullException "pen")
-        Raw.setPen (getTurtleOrFail ()) pen
+        Raw.setPen Turtle.Player pen
 
     /// <summary>Turns on the pen of the player.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnOnPen")>]
-    let turnOnPen () =
-        Raw.turnOnPen (getTurtleOrFail ())
+    static member TurnOnPen () =
+        Raw.turnOnPen Turtle.Player
 
     /// <summary>Turns off the pen of the player.</summary>
     /// <returns></returns>
-    [<CompiledName("TurnOffPen")>]
-    let turnOffPen () =
-        Raw.turnOffPen (getTurtleOrFail ())
+    static member TurnOffPen () =
+        Raw.turnOffPen Turtle.Player
 
     /// <summary>Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.</summary>
     /// <returns></returns>
-    [<CompiledName("TogglePenOnOff")>]
-    let togglePenOnOff () =
-        Raw.togglePenOnOff (getTurtleOrFail ())
+    static member TogglePenOnOff () =
+        Raw.togglePenOnOff Turtle.Player
 
     /// <summary>Sets the pen color of the player.</summary>
     /// <param name="color">The new color of the pen.</param>
     /// <returns></returns>
-    [<CompiledName("SetPenColor")>]
-    let setPenColor (color: GetIt.RGBAColor) =
+    static member SetPenColor (color: GetIt.RGBAColor) =
         if obj.ReferenceEquals(color, null) then raise (ArgumentNullException "color")
-        Raw.setPenColor (getTurtleOrFail ()) color
+        Raw.setPenColor Turtle.Player color
 
     /// <summary>Shifts the HUE value of the pen color.</summary>
     /// <param name="angle">The angle that the HUE value should be shifted by.</param>
     /// <returns></returns>
-    [<CompiledName("ShiftPenColor")>]
-    let shiftPenColor (angle: GetIt.Degrees) =
+    static member ShiftPenColor (angle: GetIt.Degrees) =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.shiftPenColor (getTurtleOrFail ()) angle
+        Raw.shiftPenColor Turtle.Player angle
 
     /// <summary>Sets the weight of the pen.</summary>
     /// <param name="weight">The new weight of the pen.</param>
     /// <returns></returns>
-    [<CompiledName("SetPenWeight")>]
-    let setPenWeight (weight: System.Double) =
-        Raw.setPenWeight (getTurtleOrFail ()) weight
+    static member SetPenWeight (weight: System.Double) =
+        Raw.setPenWeight Turtle.Player weight
 
     /// <summary>Changes the weight of the pen.</summary>
     /// <param name="weight">The change of the pen weight.</param>
     /// <returns></returns>
-    [<CompiledName("ChangePenWeight")>]
-    let changePenWeight (weight: System.Double) =
-        Raw.changePenWeight (getTurtleOrFail ()) weight
+    static member ChangePenWeight (weight: System.Double) =
+        Raw.changePenWeight Turtle.Player weight
 
     /// <summary>Sets the size of the player by multiplying the original size with a factor.</summary>
     /// <param name="sizeFactor">The factor the original size should be multiplied by.</param>
     /// <returns></returns>
-    [<CompiledName("SetSizeFactor")>]
-    let setSizeFactor (sizeFactor: System.Double) =
-        Raw.setSizeFactor (getTurtleOrFail ()) sizeFactor
+    static member SetSizeFactor (sizeFactor: System.Double) =
+        Raw.setSizeFactor Turtle.Player sizeFactor
 
     /// <summary>Changes the size factor of the player that the original size is multiplied by.</summary>
     /// <param name="change">The change of the size factor.</param>
     /// <returns></returns>
-    [<CompiledName("ChangeSizeFactor")>]
-    let changeSizeFactor (change: System.Double) =
-        Raw.changeSizeFactor (getTurtleOrFail ()) change
+    static member ChangeSizeFactor (change: System.Double) =
+        Raw.changeSizeFactor Turtle.Player change
 
     /// <summary>Changes the costume of the player.</summary>
     /// <returns></returns>
-    [<CompiledName("NextCostume")>]
-    let nextCostume () =
-        Raw.nextCostume (getTurtleOrFail ())
+    static member NextCostume () =
+        Raw.nextCostume Turtle.Player
 
     /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
     /// <returns>The direction from the player to the mouse pointer.</returns>
-    [<CompiledName("GetDirectionToMouse")>]
-    let getDirectionToMouse () =
-        Raw.getDirectionToMouse (getTurtleOrFail ())
+    static member GetDirectionToMouse () =
+        Raw.getDirectionToMouse Turtle.Player
 
     /// <summary>Calculates the distance from the player to the mouse pointer.</summary>
     /// <returns>The distance from the player to the mouse pointer.</returns>
-    [<CompiledName("GetDistanceToMouse")>]
-    let getDistanceToMouse () =
-        Raw.getDistanceToMouse (getTurtleOrFail ())
+    static member GetDistanceToMouse () =
+        Raw.getDistanceToMouse Turtle.Player
 
     /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnKeyDown")>]
-    let onKeyDown (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
+    static member OnKeyDown (key: GetIt.KeyboardKey, action: System.Action<GetIt.Player>) =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.onKeyDown (getTurtleOrFail ()) key action
+        Raw.onKeyDown Turtle.Player key action
 
     /// <summary>Registers an event handler that is called once when any keyboard key is pressed.</summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnAnyKeyDown")>]
-    let onAnyKeyDown (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
+    static member OnAnyKeyDown (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.onAnyKeyDown (getTurtleOrFail ()) action
+        Raw.onAnyKeyDown Turtle.Player action
 
     /// <summary>Registers an event handler that is called contiuously when a specific keyboard key is pressed.</summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
     /// <param name="interval">How often the event handler should be called.</param>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnKeyDown")>]
-    let whileKeyDown (key: GetIt.KeyboardKey) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, System.Int32>) =
+    static member OnKeyDown (key: GetIt.KeyboardKey, interval: System.TimeSpan, action: System.Action<GetIt.Player, System.Int32>) =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.whileKeyDown (getTurtleOrFail ()) key interval action
+        Raw.whileKeyDown Turtle.Player key interval action
 
     /// <summary>Registers an event handler that is called contiuously when any keyboard key is pressed.</summary>
     /// <param name="interval">How often the event handler should be called.</param>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnAnyKeyDown")>]
-    let whileAnyKeyDown (interval: System.TimeSpan) (action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
+    static member OnAnyKeyDown (interval: System.TimeSpan, action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.whileAnyKeyDown (getTurtleOrFail ()) interval action
+        Raw.whileAnyKeyDown Turtle.Player interval action
 
     /// <summary>Registers an event handler that is called when the mouse enters the player area.</summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnMouseEnter")>]
-    let onMouseEnter (action: System.Action<GetIt.Player>) =
+    static member OnMouseEnter (action: System.Action<GetIt.Player>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.onMouseEnter (getTurtleOrFail ()) action
+        Raw.onMouseEnter Turtle.Player action
 
     /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    [<CompiledName("OnClick")>]
-    let onClick (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+    static member OnClick (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
-        Raw.onClick (getTurtleOrFail ()) action
+        Raw.onClick Turtle.Player action
 
 open System.Runtime.CompilerServices
 
