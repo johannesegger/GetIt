@@ -45,7 +45,8 @@ namespace GetIt.Sample
             // Program28();
             // Program29();
             // Program30();
-            Program31();
+            // Program31();
+            Program32();
         }
 
         private static void Program1()
@@ -694,6 +695,39 @@ namespace GetIt.Sample
             var turtle = Game.AddPlayer(turtleData);
             turtle.MoveInDirection(-200);
             turtle.MoveInDirection(200);
+        }
+
+        private static void Program32()
+        {
+            Game.ShowScene();
+
+            var turtle1 = Game.AddPlayer(PlayerData.Turtle.WithPosition(-10, 0));
+            var turtle2 = Game.AddPlayer(PlayerData.Turtle.WithPosition(10, 0));
+            
+            turtle2.Say("Press <Space> to send me to back.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            turtle2.ShutUp();
+            turtle2.SendToBack();
+
+            turtle2.Say("Press <Space> to send me to back.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            turtle2.ShutUp();
+            turtle2.SendToBack();
+
+            turtle2.Say("Press <Space> to send me to front.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            turtle2.ShutUp();
+            turtle2.BringToFront();
+
+            turtle1.Say("Press <Space> to send me to back.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            turtle1.ShutUp();
+            turtle1.SendToBack();
+
+            turtle1.Say("Press <Space> to send me to front.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            turtle1.ShutUp();
+            turtle1.BringToFront();
         }
     }
 }

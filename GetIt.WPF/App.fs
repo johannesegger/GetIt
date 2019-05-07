@@ -139,6 +139,8 @@ module Main =
         | SetPen (playerId, pen) -> App.SetPen (playerId, pen) |> Some
         | SetSizeFactor (playerId, sizeFactor) -> App.SetSizeFactor (playerId, sizeFactor) |> Some
         | SetNextCostume playerId -> App.NextCostume playerId |> Some
+        | SendToBack playerId -> App.SendToBack playerId |> Some
+        | BringToFront playerId -> App.BringToFront playerId |> Some
         | ControllerEvent (KeyDown key) -> None
         | ControllerEvent (KeyUp key) -> None
         | ControllerEvent (MouseMove position) ->
@@ -194,6 +196,8 @@ module Main =
         | SetPen _
         | SetSizeFactor _
         | SetNextCostume _
+        | SendToBack _
+        | BringToFront _
         | ControllerEvent _
         | StartBatch
         | ApplyBatch as x ->

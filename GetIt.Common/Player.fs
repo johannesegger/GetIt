@@ -55,6 +55,8 @@ type PlayerData =
         Costumes: SvgImage list
         /// The index of the current costume.
         CostumeIndex: int
+        /// The layer on which the player is drawn.
+        Layer: int
     }
     /// The current costume of the player.
     member this.Costume with get() = this.Costumes |> List.item this.CostumeIndex
@@ -132,7 +134,8 @@ type PlayerData =
           Pen = Pen.``default``
           SpeechBubble = None
           Costumes = Seq.toList costumes
-          CostumeIndex = 0 }
+          CostumeIndex = 0
+          Layer = 0 }
 
     /// <summary>
     /// Creates a player with a single costume.
@@ -151,4 +154,30 @@ type PlayerData =
 module Player =
     let nextCostume player =
         { player with CostumeIndex = (player.CostumeIndex + 1) % player.Costumes.Length }
+
+    let private normalizeLayers players =
+        players
+        |> Map.toSeq
+        |> Seq.sortBy (snd >> fun p -> p.Layer)
+        |> Seq.mapi (fun i (playerId, playerData) -> (playerId, { playerData with Layer = i }))
+        |> Map.ofSeq
+
+    let private setLayer getLayer playerId players =
+        match Map.tryFind playerId players with
+        | Some player ->
+            let layer =
+                players
+                |> Map.toSeq
+                |> Seq.map (snd >> fun p -> p.Layer)
+                |> getLayer
+            Map.add playerId { player with Layer = layer } players
+            |> normalizeLayers
+        | None -> players
+
+    let sendToBack playerId players =
+        setLayer (Seq.max >> fun l -> l + 1) playerId players
+
+    let bringToFront playerId players =
+        setLayer (Seq.min >> fun l -> l - 1) playerId players
+
 

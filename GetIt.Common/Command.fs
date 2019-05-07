@@ -29,6 +29,8 @@ type ControllerToUIMsg =
     | SetPen of PlayerId * Pen
     | SetSizeFactor of PlayerId * float
     | SetNextCostume of PlayerId
+    | SendToBack of PlayerId
+    | BringToFront of PlayerId
     | ControllerEvent of ControllerEvent
     | StartBatch
     | ApplyBatch
@@ -103,7 +105,8 @@ module private Serialization =
               Pen = get.Required.Field "pen" decodePen
               SpeechBubble = get.Required.Field "speechBubble" decodeOptionalSpeechBubble
               Costumes = get.Required.Field "costumes" (Decode.list decodeSvgImage)
-              CostumeIndex = get.Required.Field "costumeIndex" Decode.int }
+              CostumeIndex = get.Required.Field "costumeIndex" Decode.int
+              Layer = get.Required.Field "layer" Decode.int }
         )
 
     let decodePlayerId = Decode.guid |> Decode.map PlayerId
@@ -240,6 +243,7 @@ module private Serialization =
             ("speechBubble", encodeOptionalSpeechBubble playerData.SpeechBubble)
             ("costumes", Encode.list (List.map encodeSvgImage playerData.Costumes))
             ("costumeIndex", Encode.int playerData.CostumeIndex)
+            ("layer", Encode.int playerData.Layer)
         ]
 
     let encodeRectangle (rectangle: Rectangle) =
@@ -321,6 +325,8 @@ module ControllerToUIMsg =
                 ("setPen", Decode.tuple2 decodePlayerId decodePen |> Decode.map SetPen)
                 ("setSizeFactor", Decode.tuple2 decodePlayerId Decode.float |> Decode.map SetSizeFactor)
                 ("setNextCostume", decodePlayerId |> Decode.map SetNextCostume)
+                ("sendToBack", decodePlayerId |> Decode.map SendToBack)
+                ("bringToFront", decodePlayerId |> Decode.map BringToFront)
                 ("keyDown", decodeKeyboardKey |> Decode.map (KeyDown >> ControllerEvent))
                 ("keyUp", decodeKeyboardKey |> Decode.map (KeyUp >> ControllerEvent))
                 ("mouseMove", decodePosition |> Decode.map (MouseMove >> ControllerEvent))
@@ -366,6 +372,10 @@ module ControllerToUIMsg =
                 Encode.object [ ("setSizeFactor", Encode.tuple2 encodePlayerId Encode.float (playerId, sizeFactor)) ]
             | SetNextCostume playerId ->
                 Encode.object [ ("setNextCostume", encodePlayerId playerId) ]
+            | SendToBack playerId ->
+                Encode.object [ ("sendToBack", encodePlayerId playerId) ]
+            | BringToFront playerId ->
+                Encode.object [ ("bringToFront", encodePlayerId playerId) ]
             | ControllerEvent (KeyDown keyboardKey) ->
                 Encode.object [ ("keyDown", encodeKeyboardKey keyboardKey) ]
             | ControllerEvent (KeyUp keyboardKey) ->

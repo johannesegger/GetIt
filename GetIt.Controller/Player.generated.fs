@@ -158,6 +158,12 @@ module private Raw =
     let nextCostume (player: GetIt.Player) =
         UICommunication.sendCommand (SetNextCostume (player.PlayerId))
 
+    let sendToBack (player: GetIt.Player) =
+        UICommunication.sendCommand (SendToBack (player.PlayerId))
+
+    let bringToFront (player: GetIt.Player) =
+        UICommunication.sendCommand (BringToFront (player.PlayerId))
+
     let getDirectionToMouse (player: GetIt.Player) =
         player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
 
@@ -439,6 +445,16 @@ type Turtle() =
     /// <returns></returns>
     static member NextCostume () =
         Raw.nextCostume Turtle.Player
+
+    /// <summary>Sends the player to the back of the scene so that other players will overlap the current player.</summary>
+    /// <returns></returns>
+    static member SendToBack () =
+        Raw.sendToBack Turtle.Player
+
+    /// <summary>Sends the player to the front of the scene so that the current player will overlap other players.</summary>
+    /// <returns></returns>
+    static member BringToFront () =
+        Raw.bringToFront Turtle.Player
 
     /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
     /// <returns>The direction from the player to the mouse pointer.</returns>
@@ -846,6 +862,22 @@ type PlayerExtensions() =
     static member NextCostume(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.nextCostume player
+
+    /// <summary>Sends the player to the back of the scene so that other players will overlap the current player.</summary>
+    /// <param name="player">The player that is sent to the back.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member SendToBack(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.sendToBack player
+
+    /// <summary>Sends the player to the front of the scene so that the current player will overlap other players.</summary>
+    /// <param name="player">The player that is sent to the front.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member BringToFront(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.bringToFront player
 
     /// <summary>Calculates the direction from the player to the mouse pointer.</summary>
     /// <param name="player">The player.</param>

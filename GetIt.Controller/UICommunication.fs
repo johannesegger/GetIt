@@ -44,7 +44,10 @@ module internal UICommunication =
         | ClearScene -> model
         | MakeScreenshot -> model
         | AddPlayer (playerId, player) ->
-            { model with Players = Map.add playerId player model.Players }
+            let players =
+                Map.add playerId player model.Players
+                |> Player.sendToBack playerId
+            { model with Players = players }
         | RemovePlayer playerId ->
             { model with Players = Map.remove playerId model.Players }
         | SetPosition (playerId, position) ->
@@ -59,6 +62,10 @@ module internal UICommunication =
             updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
         | SetNextCostume playerId ->
             updatePlayer playerId Player.nextCostume
+        | SendToBack playerId ->
+            { model with Players = Player.sendToBack playerId model.Players }
+        | BringToFront playerId ->
+            { model with Players = Player.bringToFront playerId model.Players }
         | ControllerEvent (KeyDown key) ->
             { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }
         | ControllerEvent (KeyUp key) ->

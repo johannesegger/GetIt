@@ -28,6 +28,8 @@ module App =
         | SetPen of PlayerId * Pen
         | SetSizeFactor of PlayerId * sizeFactor: float
         | NextCostume of PlayerId
+        | SendToBack of PlayerId
+        | BringToFront of PlayerId
         | AddPlayer of PlayerId * PlayerData
         | RemovePlayer of PlayerId
         | ClearScene
@@ -38,7 +40,6 @@ module App =
     type Model =
         { SceneBounds: GetIt.Rectangle
           Players: Map<PlayerId, PlayerData>
-          PlayerOrder: PlayerId list
           PenLines: PenLine list
           Background: SvgImage
           BatchMessages: (Msg list * int) option }
@@ -46,7 +47,6 @@ module App =
     let initModel =
         { SceneBounds = GetIt.Rectangle.zero
           Players = Map.empty
-          PlayerOrder = []
           PenLines = []
           Background = Background.none
           BatchMessages = None }
@@ -138,19 +138,22 @@ module App =
         | None, NextCostume playerId ->
             let model' = updatePlayer playerId Player.nextCostume
             (model', Cmd.none)
+        | None, SendToBack playerId ->
+            let model' = { model with Players = Player.sendToBack playerId model.Players }
+            (model', Cmd.none)
+        | None, BringToFront playerId ->
+            let model' = { model with Players = Player.bringToFront playerId model.Players }
+            (model', Cmd.none)
         | None, AddPlayer (playerId, player) ->
             let model' =
                 { model with
-                    Players = Map.add playerId player model.Players
-                    PlayerOrder = model.PlayerOrder @ [ playerId ]
+                    Players =
+                        Map.add playerId player model.Players
+                        |> Player.sendToBack playerId
                 }
             (model', Cmd.none)
         | None, RemovePlayer playerId ->
-            let model' =
-                { model with
-                    Players = Map.remove playerId model.Players
-                    PlayerOrder = model.PlayerOrder |> List.filter ((<>) playerId)
-                }
+            let model' = { model with Players = Map.remove playerId model.Players }
             (model', Cmd.none)
         | None, ClearScene ->
             let model' = { model with PenLines = [] }
@@ -387,8 +390,9 @@ module App =
             )
 
         let players =
-            model.PlayerOrder
-            |> List.map (fun playerId -> playerId, Map.find playerId model.Players)
+            model.Players
+            |> Map.toList
+            |> List.sortByDescending (snd >> fun p -> p.Layer)
         View.NavigationPage(
             pages = [
                 View.ContentPage(

@@ -532,6 +532,26 @@ let commands =
           Result = { Type = typeof<unit>; Description = "" }
           Body = [ "UICommunication.sendCommand (SetNextCostume (player.PlayerId))" ] }
 
+        { Name = "sendToBack"
+          CompiledName = "SendToBack"
+          Summary = "Sends the player to the back of the scene so that other players will overlap the current player."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that is sent to the back." } ]
+          Result = { Type = typeof<unit>; Description = "" }
+          Body = [ "UICommunication.sendCommand (SendToBack (player.PlayerId))" ] }
+
+        { Name = "bringToFront"
+          CompiledName = "BringToFront"
+          Summary = "Sends the player to the front of the scene so that the current player will overlap other players."
+          Parameters =
+            [ { Name = "player"
+                Type = typeof<GetIt.Player>
+                Description = "The player that is sent to the front." } ]
+          Result = { Type = typeof<unit>; Description = "" }
+          Body = [ "UICommunication.sendCommand (BringToFront (player.PlayerId))" ] }
+
         { Name = "getDirectionToMouse"
           CompiledName = "GetDirectionToMouse"
           Summary = "Calculates the direction from the player to the mouse pointer."
