@@ -72,6 +72,55 @@ type PlayerData =
               Size = this.Size }
 
     /// <summary>
+    /// Copies the current player data and changes only the size factor.
+    /// </summary>
+    /// <param name="sizeFactor">The size factor to use for the player data copy.</param>
+    member this.WithSizeFactor sizeFactor = { this with SizeFactor = sizeFactor }
+
+    /// <summary>
+    /// Copies the current player data and changes only the position.
+    /// </summary>
+    /// <param name="position">The position to use for the player data copy.</param>
+    member this.WithPosition position = { this with Position = position }
+
+    /// <summary>
+    /// Copies the current player data and changes only the position.
+    /// </summary>
+    /// <param name="x">The X-position to use for the player data copy.</param>
+    /// <param name="y">The Y-position to use for the player data copy.</param>
+    member this.WithPosition (x, y) = { this with Position = { X = x; Y = y } }
+
+    /// <summary>
+    /// Copies the current player data and changes only the direction.
+    /// </summary>
+    /// <param name="direction">The direction to use for the player data copy.</param>
+    member this.WithDirection direction = { this with Direction = direction }
+
+    /// <summary>
+    /// Copies the current player data and changes only the pen.
+    /// </summary>
+    /// <param name="pen">The pen to use for the player data copy.</param>
+    member this.WithPen pen = { this with Pen = pen }
+
+    /// Copies the current player data and turns on the pen.
+    member this.WithPenOn () = { this with Pen = { this.Pen with IsOn = true } }
+
+    /// Copies the current player data and turns off the pen.
+    member this.WithPenOff () = { this with Pen = { this.Pen with IsOn = false } }
+
+    /// <summary>
+    /// Copies the current player data and changes only the pen weight.
+    /// </summary>
+    /// <param name="penWeight">The pen weight to use for the player data copy.</param>
+    member this.WithPenWeight penWeight = { this with Pen = { this.Pen with Weight = penWeight } }
+
+    /// <summary>
+    /// Copies the current player data and changes only the pen color.
+    /// </summary>
+    /// <param name="penColor">The pen color to use for the player data copy.</param>
+    member this.WithPenColor penColor = { this with Pen = { this.Pen with Color = penColor } }
+
+    /// <summary>
     /// Creates a player with a list of costumes.
     /// The player is placed at (0,0), has 0 degrees rotation and the default pen.
     /// </summary>

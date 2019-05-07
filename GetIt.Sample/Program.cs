@@ -44,7 +44,8 @@ namespace GetIt.Sample
             // Program27();
             // Program28();
             // Program29();
-            Program30();
+            // Program30();
+            Program31();
         }
 
         private static void Program1()
@@ -270,7 +271,6 @@ namespace GetIt.Sample
 
             void controlLeftPlayer(Player player)
             {
-                player.MoveTo(Game.SceneBounds.Left + 20, 0);
                 using (player.OnKeyDown(KeyboardKey.W, p => p.MoveUp(10)))
                 using (player.OnKeyDown(KeyboardKey.S, p => p.MoveDown(10)))
                 {
@@ -282,15 +282,16 @@ namespace GetIt.Sample
             }
 
             var leftPlayer = Game.AddPlayer(
-                PlayerData.Create(
-                    SvgImage.CreateRectangle(
-                        RGBAColors.DarkMagenta,
-                        new Size(20, 150))),
+                PlayerData
+                    .Create(
+                        SvgImage.CreateRectangle(
+                            RGBAColors.DarkMagenta,
+                            new Size(20, 150)))
+                    .WithPosition(Game.SceneBounds.Left + 20, 0),
                 controlLeftPlayer);
 
             void controlRightPlayer(Player player)
             {
-                player.MoveTo(Game.SceneBounds.Right - 20, 0);
                 using (player.OnKeyDown(KeyboardKey.Up, p => p.MoveUp(10)))
                 using (player.OnKeyDown(KeyboardKey.Down, p => p.MoveDown(10)))
                 {
@@ -302,10 +303,12 @@ namespace GetIt.Sample
             }
 
             var rightPlayer = Game.AddPlayer(
-                PlayerData.Create(
-                    SvgImage.CreateRectangle(
-                        RGBAColors.Magenta,
-                        new Size(20, 150))),
+                PlayerData
+                    .Create(
+                        SvgImage.CreateRectangle(
+                            RGBAColors.Magenta,
+                            new Size(20, 150)))
+                    .WithPosition(Game.SceneBounds.Right - 20, 0),
                 controlRightPlayer);
 
             var rand = new Random();
@@ -454,15 +457,9 @@ namespace GetIt.Sample
             Game.ShowScene();
 
             var turtle = Game.AddPlayer(PlayerData.Turtle);
-
-            var ant = Game.AddPlayer(PlayerData.Ant);
-            ant.MoveRight(100);
-
-            var bug = Game.AddPlayer(PlayerData.Bug);
-            bug.MoveRight(200);
-
-            var spider = Game.AddPlayer(PlayerData.Spider);
-            spider.MoveRight(300);
+            var ant = Game.AddPlayer(PlayerData.Ant.WithPosition(100, 0));
+            var bug = Game.AddPlayer(PlayerData.Bug.WithPosition(200, 0));
+            var spider = Game.AddPlayer(PlayerData.Spider.WithPosition(300, 0));
 
             foreach (var player in new[] { turtle, ant, bug, spider })
             {
@@ -678,10 +675,25 @@ namespace GetIt.Sample
             Turtle.Say("Press and hold <Space>.");
             Turtle.OnKeyDown(KeyboardKey.Space, TimeSpan.FromSeconds(1), (p, i) => p.Say($"Event handler called {i} time(s)."));
 
-            var player = Game.AddPlayer(PlayerData.Turtle);
-            player.MoveLeft(100);
+            var player = Game.AddPlayer(PlayerData.Turtle.WithPosition(-100, 0));
             player.Say("Press and hold any key.");
             player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
+        }
+
+        private static void Program31()
+        {
+            Game.ShowScene();
+
+            var turtleData = PlayerData.Turtle
+                .WithSizeFactor(2)
+                .WithPosition(-50, 100)
+                .WithDirection(135)
+                .WithPenOn()
+                .WithPenWeight(5)
+                .WithPenColor(RGBAColors.SteelBlue);
+            var turtle = Game.AddPlayer(turtleData);
+            turtle.MoveInDirection(-200);
+            turtle.MoveInDirection(200);
         }
     }
 }
