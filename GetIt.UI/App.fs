@@ -404,7 +404,7 @@ module App =
         let players =
             model.Players
             |> Map.toList
-            |> List.sortByDescending (snd >> fun p -> p.Layer)
+            |> List.sortBy (snd >> fun p -> p.Layer)
         View.NavigationPage(
             pages = [
                 View.ContentPage(
@@ -424,7 +424,7 @@ module App =
                                         |> layoutFlags AbsoluteLayoutFlags.All
                                         |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
-                                        View.AbsoluteLayout(children = List.map getFullPlayerView players)
+                                        View.AbsoluteLayout(children = List.map getFullPlayerView (List.rev players))
                                         |> layoutFlags AbsoluteLayoutFlags.All
                                         |> layoutBounds (Rectangle(0., 0., 1., 1.))
                                     ]
