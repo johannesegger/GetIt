@@ -10,657 +10,1041 @@ module List =
             | xs -> x::sep::xs)
 
 type Parameter =
-    { Name: string
-      Type: Type
-      Description: string }
+    {
+        Name: string
+        Type: Type
+        Description: string
+    }
 
 type Result =
-    { Type: Type
-      Description: string }
+    {
+        Type: Type
+        Description: string
+    }
 
 type Command =
-    { Name: string
-      CompiledName: string
-      Summary: string
-      Parameters: Parameter list
-      Result: Result
-      Body: string list }
+    {
+        Name: string
+        CompiledName: string
+        Summary: string
+        Parameters: Parameter list
+        Result: Result
+        Body: string list
+    }
 
 let commands =
     [
-        { Name = "moveTo"
-          CompiledName = "MoveTo"
-          Summary = "Moves the player to a position."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "position"
-                Type = typeof<GetIt.Position>
-                Description = "The absolute destination position." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetPosition (player.PlayerId, position))" ] }
+        {
+            Name = "moveTo"
+            CompiledName = "MoveTo"
+            Summary = "Moves the player to a position."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "position"
+                        Type = typeof<GetIt.Position>
+                        Description = "The absolute destination position."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetPosition (player.PlayerId, position))" ]
+        }
 
-        { Name = "moveToXY"
-          CompiledName = "MoveTo"
-          Summary = "Moves the player to a position."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "x"
-                Type = typeof<float>
-                Description = "The absolute x coordinate of the destination position." }
-              { Name = "y"
-                Type = typeof<float>
-                Description = "The absolute y coordinate of the destination position." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveTo player { X = x; Y = y }" ] }
+        {
+            Name = "moveToXY"
+            CompiledName = "MoveTo"
+            Summary = "Moves the player to a position."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "x"
+                        Type = typeof<float>
+                        Description = "The absolute x coordinate of the destination position."
+                    }
+                    {
+                        Name = "y"
+                        Type = typeof<float>
+                        Description = "The absolute y coordinate of the destination position."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveTo player { X = x; Y = y }" ]
+        }
 
-        { Name = "moveToCenter"
-          CompiledName = "MoveToCenter"
-          Summary = "Moves the player to the center of the scene."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveTo player Position.zero" ] }
+        {
+            Name = "moveToCenter"
+            CompiledName = "MoveToCenter"
+            Summary = "Moves the player to the center of the scene."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveTo player Position.zero" ]
+        }
 
-        { Name = "moveBy"
-          CompiledName = "MoveBy"
-          Summary = "Moves the player relatively."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "deltaX"
-                Type = typeof<float>
-                Description = "The change of the x coordinate." }
-              { Name = "deltaY"
-                Type = typeof<float>
-                Description = "The change of the y coordinate." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveToXY player (player.Position.X + deltaX) (player.Position.Y + deltaY)" ] }
+        {
+            Name = "moveBy"
+            CompiledName = "MoveBy"
+            Summary = "Moves the player relatively."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "deltaX"
+                        Type = typeof<float>
+                        Description = "The change of the x coordinate."
+                    }
+                    {
+                        Name = "deltaY"
+                        Type = typeof<float>
+                        Description = "The change of the y coordinate."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveToXY player (player.Position.X + deltaX) (player.Position.Y + deltaY)" ]
+        }
 
-        { Name = "moveRight"
-          CompiledName = "MoveRight"
-          Summary = "Moves the player horizontally."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "steps"
-                Type = typeof<float>
-                Description = "The number of steps." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveBy player steps 0." ] }
+        {
+            Name = "moveRight"
+            CompiledName = "MoveRight"
+            Summary = "Moves the player horizontally."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "steps"
+                        Type = typeof<float>
+                        Description = "The number of steps."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveBy player steps 0." ]
+        }
 
-        { Name = "moveLeft"
-          CompiledName = "MoveLeft"
-          Summary = "Moves the player horizontally."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "steps"
-                Type = typeof<float>
-                Description = "The number of steps." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveBy player -steps 0." ] }
+        {
+            Name = "moveLeft"
+            CompiledName = "MoveLeft"
+            Summary = "Moves the player horizontally."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "steps"
+                        Type = typeof<float>
+                        Description = "The number of steps."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveBy player -steps 0." ]
+        }
 
-        { Name = "moveUp"
-          CompiledName = "MoveUp"
-          Summary = "Moves the player vertically."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "steps"
-                Type = typeof<float>
-                Description = "The number of steps." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveBy player 0. steps" ] }
+        {
+            Name = "moveUp"
+            CompiledName = "MoveUp"
+            Summary = "Moves the player vertically."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "steps"
+                        Type = typeof<float>
+                        Description = "The number of steps."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveBy player 0. steps" ]
+        }
 
-        { Name = "moveDown"
-          CompiledName = "MoveDown"
-          Summary = "Moves the player vertically."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "steps"
-                Type = typeof<float>
-                Description = "The number of steps." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "moveBy player 0. -steps" ] }
+        {
+            Name = "moveDown"
+            CompiledName = "MoveDown"
+            Summary = "Moves the player vertically."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "steps"
+                        Type = typeof<float>
+                        Description = "The number of steps."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "moveBy player 0. -steps" ]
+        }
 
-        { Name = "moveInDirection"
-          CompiledName = "MoveInDirection"
-          Summary = "Moves the player forward."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." }
-              { Name = "steps"
-                Type = typeof<float>
-                Description = "The number of steps." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body =
-            [ "let directionRadians = Degrees.toRadians player.Direction"
-              "moveBy"
-              "    player"
-              "    (Math.Cos(directionRadians) * steps)"
-              "    (Math.Sin(directionRadians) * steps)" ] }
+        {
+            Name = "moveInDirection"
+            CompiledName = "MoveInDirection"
+            Summary = "Moves the player forward."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                    {
+                        Name = "steps"
+                        Type = typeof<float>
+                        Description = "The number of steps."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body =
+                [
+                    "let directionRadians = Degrees.toRadians player.Direction"
+                    "moveBy"
+                    "    player"
+                    "    (Math.Cos(directionRadians) * steps)"
+                    "    (Math.Sin(directionRadians) * steps)"
+                ]
+            }
 
-        { Name = "moveToRandomPosition"
-          CompiledName = "MoveToRandomPosition"
-          Summary = "Moves the player to a random position on the scene."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be moved." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body =
-            [ "let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)"
-              "let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)"
-              "moveToXY player (float x) (float y)" ] }
+        {
+            Name = "moveToRandomPosition"
+            CompiledName = "MoveToRandomPosition"
+            Summary = "Moves the player to a random position on the scene."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be moved."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body =
+                [
+                    "let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)"
+                    "let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)"
+                    "moveToXY player (float x) (float y)"
+                ]
+            }
 
-        { Name = "setDirection"
-          CompiledName = "SetDirection"
-          Summary = "Sets the rotation of the player to a specific angle."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." }
-              { Name = "angle"
-                Type = typeof<GetIt.Degrees>
-                Description = "The absolute angle." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetDirection (player.PlayerId, angle))" ] }
+        {
+            Name = "setDirection"
+            CompiledName = "SetDirection"
+            Summary = "Sets the rotation of the player to a specific angle."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The absolute angle."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetDirection (player.PlayerId, angle))" ]
+        }
 
-        { Name = "rotateClockwise"
-          CompiledName = "RotateClockwise"
-          Summary = "Rotates the player clockwise by a specific angle."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." }
-              { Name = "angle"
-                Type = typeof<GetIt.Degrees>
-                Description = "The relative angle." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (player.Direction - angle)" ] }
+        {
+            Name = "rotateClockwise"
+            CompiledName = "RotateClockwise"
+            Summary = "Rotates the player clockwise by a specific angle."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The relative angle."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (player.Direction - angle)" ]
+        }
 
-        { Name = "rotateCounterClockwise"
-          CompiledName = "RotateCounterClockwise"
-          Summary = "Rotates the player counter-clockwise by a specific angle."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." }
-              { Name = "angle"
-                Type = typeof<GetIt.Degrees>
-                Description = "The relative angle." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (player.Direction + angle)" ] }
+        {
+            Name = "rotateCounterClockwise"
+            CompiledName = "RotateCounterClockwise"
+            Summary = "Rotates the player counter-clockwise by a specific angle."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The relative angle."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (player.Direction + angle)" ]
+        }
 
-        { Name = "turnUp"
-          CompiledName = "TurnUp"
-          Summary = "Rotates the player so that it looks up."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (Degrees.op_Implicit 90.)" ] }
+        {
+            Name = "turnUp"
+            CompiledName = "TurnUp"
+            Summary = "Rotates the player so that it looks up."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (Degrees.op_Implicit 90.)" ]
+        }
 
-        { Name = "turnRight"
-          CompiledName = "TurnRight"
-          Summary = "Rotates the player so that it looks to the right."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (Degrees.op_Implicit 0.)" ] }
+        {
+            Name = "turnRight"
+            CompiledName = "TurnRight"
+            Summary = "Rotates the player so that it looks to the right."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (Degrees.op_Implicit 0.)" ]
+        }
 
-        { Name = "turnDown"
-          CompiledName = "TurnDown"
-          Summary = "Rotates the player so that it looks down."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (Degrees.op_Implicit 270.)" ] }
+        {
+            Name = "turnDown"
+            CompiledName = "TurnDown"
+            Summary = "Rotates the player so that it looks down."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (Degrees.op_Implicit 270.)" ]
+        }
 
-        { Name = "turnLeft"
-          CompiledName = "TurnLeft"
-          Summary = "Rotates the player so that it looks to the left."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should be rotated." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setDirection player (Degrees.op_Implicit 180.)" ] }
+        {
+            Name = "turnLeft"
+            CompiledName = "TurnLeft"
+            Summary = "Rotates the player so that it looks to the left."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setDirection player (Degrees.op_Implicit 180.)" ]
+        }
 
-        { Name = "touchesEdge"
-          CompiledName = "TouchesEdge"
-          Summary = "Checks whether a given player touches an edge of the scene."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that might touch an edge of the scene." } ]
-          Result = { Type = typeof<bool>; Description = "True, if the player touches an edge, otherwise false." }
-          Body = [ "touchesLeftOrRightEdge player || touchesTopOrBottomEdge player" ] }
+        {
+            Name = "touchesEdge"
+            CompiledName = "TouchesEdge"
+            Summary = "Checks whether a given player touches an edge of the scene."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that might touch an edge of the scene."
+                    }
+                ]
+            Result = { Type = typeof<bool>; Description = "True, if the player touches an edge, otherwise false." }
+            Body = [ "touchesLeftOrRightEdge player || touchesTopOrBottomEdge player" ]
+        }
 
-        { Name = "touchesPlayer"
-          CompiledName = "TouchesPlayer"
-          Summary = "Checks whether a given player touches another player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The first player that might be touched." }
-              { Name = "other"
-                Type = typeof<GetIt.Player>
-                Description = "The second player that might be touched." } ]
-          Result = { Type = typeof<bool>; Description = "True, if the two players touch each other, otherwise false." }
-          Body =
-            [ "let maxLeftX = Math.Max(player.Bounds.Left, other.Bounds.Left)"
-              "let minRightX = Math.Min(player.Bounds.Right, other.Bounds.Right)"
-              "let maxBottomY = Math.Max(player.Bounds.Bottom, other.Bounds.Bottom)"
-              "let minTopY = Math.Min(player.Bounds.Top, other.Bounds.Top)"
-              "maxLeftX < minRightX && maxBottomY < minTopY" ] }
+        {
+            Name = "touchesPlayer"
+            CompiledName = "TouchesPlayer"
+            Summary = "Checks whether a given player touches another player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The first player that might be touched."
+                    }
+                    {
+                        Name = "other"
+                        Type = typeof<GetIt.Player>
+                        Description = "The second player that might be touched."
+                    }
+                ]
+            Result = { Type = typeof<bool>; Description = "True, if the two players touch each other, otherwise false." }
+            Body =
+                [
+                    "let maxLeftX = Math.Max(player.Bounds.Left, other.Bounds.Left)"
+                    "let minRightX = Math.Min(player.Bounds.Right, other.Bounds.Right)"
+                    "let maxBottomY = Math.Max(player.Bounds.Bottom, other.Bounds.Bottom)"
+                    "let minTopY = Math.Min(player.Bounds.Top, other.Bounds.Top)"
+                    "maxLeftX < minRightX && maxBottomY < minTopY"
+                ]
+            }
 
-        { Name = "bounceOffWall"
-          CompiledName = "BounceOffWall"
-          Summary = "Bounces the player off the wall if it currently touches it."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should bounce off the wall." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body =
-            [ "if touchesTopOrBottomEdge player then setDirection player (Degrees.zero - player.Direction)"
-              "elif touchesLeftOrRightEdge player then setDirection player (Degrees.op_Implicit 180. - player.Direction)" ] }
+        {
+            Name = "bounceOffWall"
+            CompiledName = "BounceOffWall"
+            Summary = "Bounces the player off the wall if it currently touches it."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should bounce off the wall."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body =
+                [
+                    "if touchesTopOrBottomEdge player then setDirection player (Degrees.zero - player.Direction)"
+                    "elif touchesLeftOrRightEdge player then setDirection player (Degrees.op_Implicit 180. - player.Direction)"
+                ]
+            }
 
-        { Name = "sleep"
-          CompiledName = "Sleep"
-          Summary = "Pauses execution of the player for a given time."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that pauses execution." }
-              { Name = "duration"
-                Type = typeof<TimeSpan>
-                Description = "The length of the pause." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "Thread.Sleep duration" ] }
+        {
+            Name = "sleep"
+            CompiledName = "Sleep"
+            Summary = "Pauses execution of the player for a given time."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that pauses execution."
+                    }
+                    {
+                        Name = "duration"
+                        Type = typeof<TimeSpan>
+                        Description = "The length of the pause."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "Thread.Sleep duration" ]
+        }
 
-        { Name = "sleepMilliseconds"
-          CompiledName = "Sleep"
-          Summary = "Pauses execution of the player for a given time."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that pauses execution." }
-              { Name = "durationInMilliseconds"
-                Type = typeof<float>
-                Description = "The length of the pause in milliseconds." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)" ] }
+        {
+            Name = "sleepMilliseconds"
+            CompiledName = "Sleep"
+            Summary = "Pauses execution of the player for a given time."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that pauses execution."
+                    }
+                    {
+                        Name = "durationInMilliseconds"
+                        Type = typeof<float>
+                        Description = "The length of the pause in milliseconds."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)" ]
+        }
 
-        { Name = "say"
-          CompiledName = "Say"
-          Summary = "Shows a speech bubble next to the player. You can remove the speech bubble with <see cref=\"ShutUp\"/>."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that the speech bubble belongs to." }
-              { Name = "text"
-                Type = typeof<string>
-                Description = "The content of the speech bubble." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))" ] }
+        {
+            Name = "say"
+            CompiledName = "Say"
+            Summary = "Shows a speech bubble next to the player. You can remove the speech bubble with <see cref=\"ShutUp\"/>."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                    {
+                        Name = "text"
+                        Type = typeof<string>
+                        Description = "The content of the speech bubble."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))" ]
+        }
 
-        { Name = "shutUp"
-          CompiledName = "ShutUp"
-          Summary = "Removes the speech bubble of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that the speech bubble belongs to." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))" ] }
+        {
+            Name = "shutUp"
+            CompiledName = "ShutUp"
+            Summary = "Removes the speech bubble of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))" ]
+        }
 
-        { Name = "sayWithDuration"
-          CompiledName = "Say"
-          Summary = "Shows a speech bubble next to the player for a specific time."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that the speech bubble belongs to." }
-              { Name = "text"
-                Type = typeof<string>
-                Description = "The content of the speech bubble." }
-              { Name = "duration"
-                Type = typeof<TimeSpan>
-                Description = "The time span how long the speech bubble should be visible." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body =
-            [ "say player text"
-              "sleep player duration"
-              "shutUp player" ] }
+        {
+            Name = "sayWithDuration"
+            CompiledName = "Say"
+            Summary = "Shows a speech bubble next to the player for a specific time."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                    {
+                        Name = "text"
+                        Type = typeof<string>
+                        Description = "The content of the speech bubble."
+                    }
+                    {
+                        Name = "duration"
+                        Type = typeof<TimeSpan>
+                        Description = "The time span how long the speech bubble should be visible."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body =
+                [
+                    "say player text"
+                    "sleep player duration"
+                    "shutUp player"
+                ]
+            }
 
-        { Name = "sayWithDurationInSeconds"
-          CompiledName = "Say"
-          Summary = "Shows a speech bubble next to the player for a specific time."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that the speech bubble belongs to." }
-              { Name = "text"
-                Type = typeof<string>
-                Description = "The content of the speech bubble." }
-              { Name = "durationInSeconds"
-                Type = typeof<float>
-                Description = "The number of seconds how long the speech bubble should be visible." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)" ] }
+        {
+            Name = "sayWithDurationInSeconds"
+            CompiledName = "Say"
+            Summary = "Shows a speech bubble next to the player for a specific time."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                    {
+                        Name = "text"
+                        Type = typeof<string>
+                        Description = "The content of the speech bubble."
+                    }
+                    {
+                        Name = "durationInSeconds"
+                        Type = typeof<float>
+                        Description = "The number of seconds how long the speech bubble should be visible."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)" ]
+        }
 
-        { Name = "ask"
-          CompiledName = "Ask"
-          Summary = "Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that the speech bubble belongs to." }
-              { Name = "question"
-                Type = typeof<string>
-                Description = "The content of the speech bubble." } ]
-          Result = { Type = typeof<string>; Description = "The text the user typed in." }
-          Body =
-            [ "use enumerator ="
-              "    Model.observable"
-              "    |> Observable.skip 1 // Skip initial value"
-              "    |> Observable.choose (fun (modelChangeEvent, model) ->"
-              "        match modelChangeEvent with"
-              "        | UIToControllerMsg (UIEvent (AnswerQuestion (playerId, answer))) when playerId = player.PlayerId -> Some answer"
-              "        | _ -> None"
-              "    )"
-              "    |> Observable.take 1"
-              "    |> Observable.getEnumerator"
-              ""
-              "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))"
-              ""
-              "if not <| enumerator.MoveNext() then"
-              "    raise (GetItException \"Didn't get an answer.\")"
-              ""
-              "shutUp player"
-              ""
-              "enumerator.Current" ] }
+        {
+            Name = "ask"
+            CompiledName = "Ask"
+            Summary = "Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                    {
+                        Name = "question"
+                        Type = typeof<string>
+                        Description = "The content of the speech bubble."
+                    }
+                ]
+            Result = { Type = typeof<string>; Description = "The text the user typed in." }
+            Body =
+                [
+                    "use enumerator ="
+                    "    Model.observable"
+                    "    |> Observable.skip 1 // Skip initial value"
+                    "    |> Observable.choose (fun (modelChangeEvent, model) ->"
+                    "        match modelChangeEvent with"
+                    "        | UIToControllerMsg (UIEvent (AnswerQuestion (playerId, answer))) when playerId = player.PlayerId -> Some answer"
+                    "        | _ -> None"
+                    "    )"
+                    "    |> Observable.take 1"
+                    "    |> Observable.getEnumerator"
+                    ""
+                    "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))"
+                    ""
+                    "if not <| enumerator.MoveNext() then"
+                    "    raise (GetItException \"Didn't get an answer.\")"
+                    ""
+                    "shutUp player"
+                    ""
+                    "enumerator.Current"
+                ]
+        }
 
-        { Name = "setPen"
-          CompiledName = "SetPen"
-          Summary = "Sets the pen of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get the pen." }
-              { Name = "pen"
-                Type = typeof<GetIt.Pen>
-                Description = "The pen that should be assigned to the player." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetPen (player.PlayerId, pen))" ] }
+        {
+            Name = "setPen"
+            CompiledName = "SetPen"
+            Summary = "Sets the pen of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get the pen."
+                    }
+                    {
+                        Name = "pen"
+                        Type = typeof<GetIt.Pen>
+                        Description = "The pen that should be assigned to the player."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetPen (player.PlayerId, pen))" ]
+        }
 
-        { Name = "turnOnPen"
-          CompiledName = "TurnOnPen"
-          Summary = "Turns on the pen of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get its pen turned on." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with IsOn = true }" ] }
+        {
+            Name = "turnOnPen"
+            CompiledName = "TurnOnPen"
+            Summary = "Turns on the pen of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its pen turned on."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with IsOn = true }" ]
+        }
 
-        { Name = "turnOffPen"
-          CompiledName = "TurnOffPen"
-          Summary = "Turns off the pen of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get its pen turned off." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with IsOn = false }" ] }
+        {
+            Name = "turnOffPen"
+            CompiledName = "TurnOffPen"
+            Summary = "Turns off the pen of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its pen turned off."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with IsOn = false }" ]
+        }
 
-        { Name = "togglePenOnOff"
-          CompiledName = "TogglePenOnOff"
-          Summary = "Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get its pen toggled." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with IsOn = not player.Pen.IsOn }" ] }
+        {
+            Name = "togglePenOnOff"
+            CompiledName = "TogglePenOnOff"
+            Summary = "Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its pen toggled."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with IsOn = not player.Pen.IsOn }" ]
+        }
 
-        { Name = "setPenColor"
-          CompiledName = "SetPenColor"
-          Summary = "Sets the pen color of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get its pen color set." }
-              { Name = "color"
-                Type = typeof<GetIt.RGBAColor>
-                Description = "The new color of the pen." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with Color = color }" ] }
+        {
+            Name = "setPenColor"
+            CompiledName = "SetPenColor"
+            Summary = "Sets the pen color of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its pen color set."
+                    }
+                    {
+                        Name = "color"
+                        Type = typeof<GetIt.RGBAColor>
+                        Description = "The new color of the pen."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with Color = color }" ]
+        }
 
-        { Name = "shiftPenColor"
-          CompiledName = "ShiftPenColor"
-          Summary = "Shifts the HUE value of the pen color."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that should get its pen color shifted." }
-              { Name = "angle"
-                Type = typeof<GetIt.Degrees>
-                Description = "The angle that the HUE value should be shifted by." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with Color = Color.hueShift angle player.Pen.Color }" ] }
+        {
+            Name = "shiftPenColor"
+            CompiledName = "ShiftPenColor"
+            Summary = "Shifts the HUE value of the pen color."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its pen color shifted."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The angle that the HUE value should be shifted by."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with Color = Color.hueShift angle player.Pen.Color }" ]
+        }
 
-        { Name = "setPenWeight"
-          CompiledName = "SetPenWeight"
-          Summary = "Sets the weight of the pen."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets its pen weight set." }
-              { Name = "weight"
-                Type = typeof<float>
-                Description = "The new weight of the pen." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPen player { player.Pen with Weight = weight }" ] }
+        {
+            Name = "setPenWeight"
+            CompiledName = "SetPenWeight"
+            Summary = "Sets the weight of the pen."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets its pen weight set."
+                    }
+                    {
+                        Name = "weight"
+                        Type = typeof<float>
+                        Description = "The new weight of the pen."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPen player { player.Pen with Weight = weight }" ]
+        }
 
-        { Name = "changePenWeight"
-          CompiledName = "ChangePenWeight"
-          Summary = "Changes the weight of the pen."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets its pen weight changed." }
-              { Name = "weight"
-                Type = typeof<float>
-                Description = "The change of the pen weight." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setPenWeight player (player.Pen.Weight + weight)" ] }
+        {
+            Name = "changePenWeight"
+            CompiledName = "ChangePenWeight"
+            Summary = "Changes the weight of the pen."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets its pen weight changed."
+                    }
+                    {
+                        Name = "weight"
+                        Type = typeof<float>
+                        Description = "The change of the pen weight."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setPenWeight player (player.Pen.Weight + weight)" ]
+        }
 
-        { Name = "setSizeFactor"
-          CompiledName = "SetSizeFactor"
-          Summary = "Sets the size of the player by multiplying the original size with a factor."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets its size changed." }
-              { Name = "sizeFactor"
-                Type = typeof<float>
-                Description = "The factor the original size should be multiplied by." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))" ] }
+        {
+            Name = "setSizeFactor"
+            CompiledName = "SetSizeFactor"
+            Summary = "Sets the size of the player by multiplying the original size with a factor."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets its size changed."
+                    }
+                    {
+                        Name = "sizeFactor"
+                        Type = typeof<float>
+                        Description = "The factor the original size should be multiplied by."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))" ]
+        }
 
-        { Name = "changeSizeFactor"
-          CompiledName = "ChangeSizeFactor"
-          Summary = "Changes the size factor of the player that the original size is multiplied by."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets its size changed." }
-              { Name = "change"
-                Type = typeof<float>
-                Description = "The change of the size factor." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "setSizeFactor player (player.SizeFactor + change)" ] }
+        {
+            Name = "changeSizeFactor"
+            CompiledName = "ChangeSizeFactor"
+            Summary = "Changes the size factor of the player that the original size is multiplied by."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets its size changed."
+                    }
+                    {
+                        Name = "change"
+                        Type = typeof<float>
+                        Description = "The change of the size factor."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "setSizeFactor player (player.SizeFactor + change)" ]
+        }
 
-        { Name = "nextCostume"
-          CompiledName = "NextCostume"
-          Summary = "Changes the costume of the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets its costume changed." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SetNextCostume (player.PlayerId))" ] }
+        {
+            Name = "nextCostume"
+            CompiledName = "NextCostume"
+            Summary = "Changes the costume of the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets its costume changed."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SetNextCostume (player.PlayerId))" ]
+        }
 
-        { Name = "sendToBack"
-          CompiledName = "SendToBack"
-          Summary = "Sends the player to the back of the scene so that other players will overlap the current player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that is sent to the back." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (SendToBack (player.PlayerId))" ] }
+        {
+            Name = "sendToBack"
+            CompiledName = "SendToBack"
+            Summary = "Sends the player to the back of the scene so that other players will overlap the current player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that is sent to the back."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (SendToBack (player.PlayerId))" ]
+        }
 
-        { Name = "bringToFront"
-          CompiledName = "BringToFront"
-          Summary = "Sends the player to the front of the scene so that the current player will overlap other players."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that is sent to the front." } ]
-          Result = { Type = typeof<unit>; Description = "" }
-          Body = [ "UICommunication.sendCommand (BringToFront (player.PlayerId))" ] }
+        {
+            Name = "bringToFront"
+            CompiledName = "BringToFront"
+            Summary = "Sends the player to the front of the scene so that the current player will overlap other players."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that is sent to the front."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.sendCommand (BringToFront (player.PlayerId))" ]
+        }
 
-        { Name = "getDirectionToMouse"
-          CompiledName = "GetDirectionToMouse"
-          Summary = "Calculates the direction from the player to the mouse pointer."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player." } ]
-          Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to the mouse pointer." }
-          Body = [ "player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)" ] }
+        {
+            Name = "getDirectionToMouse"
+            CompiledName = "GetDirectionToMouse"
+            Summary = "Calculates the direction from the player to the mouse pointer."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+                ]
+            Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to the mouse pointer." }
+            Body = [ "player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)" ]
+        }
 
-        { Name = "getDistanceToMouse"
-          CompiledName = "GetDistanceToMouse"
-          Summary = "Calculates the distance from the player to the mouse pointer."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player." } ]
-          Result = { Type = typeof<float>; Description = "The distance from the player to the mouse pointer." }
-          Body = [ "player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)" ] }
+        {
+            Name = "getDistanceToMouse"
+            CompiledName = "GetDistanceToMouse"
+            Summary = "Calculates the distance from the player to the mouse pointer."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+                ]
+            Result = { Type = typeof<float>; Description = "The distance from the player to the mouse pointer." }
+            Body = [ "player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)" ]
+        }
 
-        { Name = "onKeyDown"
-          CompiledName = "OnKeyDown"
-          Summary = "Registers an event handler that is called once when a specific keyboard key is pressed."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets passed to the event handler." }
-              { Name = "key"
-                Type = typeof<GetIt.KeyboardKey>
-                Description = "The keyboard key that should be listened to." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.onKeyDown key (fun () -> action.Invoke player)" ] }
+        {
+            Name = "onKeyDown"
+            CompiledName = "OnKeyDown"
+            Summary = "Registers an event handler that is called once when a specific keyboard key is pressed."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets passed to the event handler."
+                    }
+                    {
+                        Name = "key"
+                        Type = typeof<GetIt.KeyboardKey>
+                        Description = "The keyboard key that should be listened to."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.onKeyDown key (fun () -> action.Invoke player)" ]
+        }
 
-        { Name = "onAnyKeyDown"
-          CompiledName = "OnAnyKeyDown"
-          Summary = "Registers an event handler that is called once when any keyboard key is pressed."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets passed to the event handler." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.onAnyKeyDown (fun key -> action.Invoke(player, key))" ] }
+        {
+            Name = "onAnyKeyDown"
+            CompiledName = "OnAnyKeyDown"
+            Summary = "Registers an event handler that is called once when any keyboard key is pressed."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets passed to the event handler."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.onAnyKeyDown (fun key -> action.Invoke(player, key))" ]
+        }
 
-        { Name = "whileKeyDown"
-          CompiledName = "OnKeyDown"
-          Summary = "Registers an event handler that is called contiuously when a specific keyboard key is pressed."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets passed to the event handler." }
-              { Name = "key"
-                Type = typeof<GetIt.KeyboardKey>
-                Description = "The keyboard key that should be listened to." }
-              { Name = "interval"
-                Type = typeof<TimeSpan>
-                Description = "How often the event handler should be called." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player, int>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))" ] }
+        {
+            Name = "whileKeyDown"
+            CompiledName = "OnKeyDown"
+            Summary = "Registers an event handler that is called contiuously when a specific keyboard key is pressed."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets passed to the event handler."
+                    }
+                    {
+                        Name = "key"
+                        Type = typeof<GetIt.KeyboardKey>
+                        Description = "The keyboard key that should be listened to."
+                    }
+                    {
+                        Name = "interval"
+                        Type = typeof<TimeSpan>
+                        Description = "How often the event handler should be called."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player, int>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))" ]
+        }
 
-        { Name = "whileAnyKeyDown"
-          CompiledName = "OnAnyKeyDown"
-          Summary = "Registers an event handler that is called contiuously when any keyboard key is pressed."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player that gets passed to the event handler." }
-              { Name = "interval"
-                Type = typeof<TimeSpan>
-                Description = "How often the event handler should be called." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey, int>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))" ] }
+        {
+            Name = "whileAnyKeyDown"
+            CompiledName = "OnAnyKeyDown"
+            Summary = "Registers an event handler that is called contiuously when any keyboard key is pressed."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that gets passed to the event handler."
+                    }
+                    {
+                        Name = "interval"
+                        Type = typeof<TimeSpan>
+                        Description = "How often the event handler should be called."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey, int>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))" ]
+        }
 
-        { Name = "onMouseEnter"
-          CompiledName = "OnMouseEnter"
-          Summary = "Registers an event handler that is called when the mouse enters the player area."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))" ] }
+        {
+            Name = "onMouseEnter"
+            CompiledName = "OnMouseEnter"
+            Summary = "Registers an event handler that is called when the mouse enters the player area."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))" ]
+        }
 
-        { Name = "onClick"
-          CompiledName = "OnClick"
-          Summary = "Registers an event handler that is called when the mouse is clicked on the player."
-          Parameters =
-            [ { Name = "player"
-                Type = typeof<GetIt.Player>
-                Description = "The player." }
-              { Name = "action"
-                Type = typeof<Action<GetIt.Player, GetIt.MouseButton>>
-                Description = "The event handler that should be called." } ]
-          Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-          Body = [ "Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))" ] }
+        {
+            Name = "onClick"
+            CompiledName = "OnClick"
+            Summary = "Registers an event handler that is called when the mouse is clicked on the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+                    {
+                        Name = "action"
+                        Type = typeof<Action<GetIt.Player, GetIt.MouseButton>>
+                        Description = "The event handler that should be called."
+                    }
+                ]
+            Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
+            Body = [ "Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))" ]
+        }
     ]
 
 let rec getFullName (t: Type) =

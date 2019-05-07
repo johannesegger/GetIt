@@ -11,10 +11,12 @@ open Xamarin.Forms
 
 module App =
     type PenLine =
-        { Start: Position
-          End: Position
-          Weight: float
-          Color: RGBAColor }
+        {
+            Start: Position
+            End: Position
+            Weight: float
+            Color: RGBAColor
+        }
 
     type Msg =
         | SetSceneBounds of GetIt.Rectangle
@@ -38,18 +40,22 @@ module App =
         | ApplyBatch
 
     type Model =
-        { SceneBounds: GetIt.Rectangle
-          Players: Map<PlayerId, PlayerData>
-          PenLines: PenLine list
-          Background: SvgImage
-          BatchMessages: (Msg list * int) option }
+        {
+            SceneBounds: GetIt.Rectangle
+            Players: Map<PlayerId, PlayerData>
+            PenLines: PenLine list
+            Background: SvgImage
+            BatchMessages: (Msg list * int) option
+        }
 
     let initModel =
-        { SceneBounds = GetIt.Rectangle.zero
-          Players = Map.empty
-          PenLines = []
-          Background = Background.none
-          BatchMessages = None }
+        {
+            SceneBounds = GetIt.Rectangle.zero
+            Players = Map.empty
+            PenLines = []
+            Background = Background.none
+            BatchMessages = None
+        }
 
     let init () = (initModel, Cmd.none)
 
@@ -68,14 +74,18 @@ module App =
             (model', cmd)
         | None, SetMousePosition positionRelativeToSceneControl ->
             let position =
-                { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
-                  Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
+                {
+                    X = model.SceneBounds.Left + positionRelativeToSceneControl.X
+                    Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y
+                }
             let cmd = triggerEventCmd (UIEvent.SetMousePosition position)
             (model, cmd)
         | None, ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
             let position =
-                { X = model.SceneBounds.Left + positionRelativeToSceneControl.X
-                  Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y }
+                {
+                    X = model.SceneBounds.Left + positionRelativeToSceneControl.X
+                    Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y
+                }
             let cmd = triggerEventCmd (UIEvent.ApplyMouseClick (mouseButton, position))
             (model, cmd)
         | None, SetPlayerPosition (playerId, position) ->
@@ -88,10 +98,12 @@ module App =
                         if player.Pen.IsOn
                         then
                             let line =
-                                { Start = player.Position
-                                  End = player'.Position
-                                  Weight = player.Pen.Weight
-                                  Color = player.Pen.Color }
+                                {
+                                    Start = player.Position
+                                    End = player'.Position
+                                    Weight = player.Pen.Weight
+                                    Color = player.Pen.Color
+                                }
                             model.PenLines @ [ line ]
                         else model.PenLines }
             (model', Cmd.none)

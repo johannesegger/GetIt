@@ -76,8 +76,10 @@ type Size =
         Height: float
     }
     static member (*) (size, factor) =
-        { Width = size.Width * factor
-          Height = size.Height * factor }
+        {
+            Width = size.Width * factor
+            Height = size.Height * factor
+        }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Size =

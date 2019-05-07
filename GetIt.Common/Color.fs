@@ -76,17 +76,19 @@ module private HSLA =
                     elif hue > 1. then hue - 1.
                     else hue
                 (hue, saturation)
-        { Hue = hue; Saturation = saturation; Lightness = lightness; Alpha = float rgba.Alpha / float System.Byte.MaxValue }
+        {
+            Hue = hue
+            Saturation = saturation
+            Lightness = lightness
+            Alpha = float rgba.Alpha / float System.Byte.MaxValue
+        }
 
     let toRGBA hsla =
         let alpha = Math.Round(hsla.Alpha * 255.) |> byte
         if hsla.Saturation = 0.
         then
             let value = Math.Round(hsla.Lightness * 255.) |> byte
-            { Red = value
-              Green = value
-              Blue = value
-              Alpha = alpha }
+            { Red = value; Green = value; Blue = value; Alpha = alpha }
         else
             let var2 =
                 if hsla.Lightness < 0.5 then hsla.Lightness * (1. + hsla.Saturation)
@@ -103,10 +105,12 @@ module private HSLA =
                 elif ( 2. * vH ) < 1. then v2
                 elif ( 3. * vH ) < 2. then v1 + ( v2 - v1 ) * ( ( 2.0 / 3.0 ) - vH ) * 6.
                 else v1
-            { Red = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue + ( 1.0 / 3.0 ) )) |> byte
-              Green = Math.Round(255. * hueToRgb var1 var2 hsla.Hue) |> byte
-              Blue = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue - ( 1.0 / 3.0 ) )) |> byte
-              Alpha = alpha }
+            {
+                Red = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue + ( 1.0 / 3.0 ) )) |> byte
+                Green = Math.Round(255. * hueToRgb var1 var2 hsla.Hue) |> byte
+                Blue = Math.Round(255. * hueToRgb var1 var2 (hsla.Hue - ( 1.0 / 3.0 ) )) |> byte
+                Alpha = alpha
+            }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Color =

@@ -44,31 +44,39 @@ type IdentifiableMsg<'a> = IdentifiableMsg of Guid * 'a
 module private Serialization =
     let decodePosition =
         Decode.object (fun get ->
-            { X = get.Required.Field "x" Decode.float
-              Y = get.Required.Field "y" Decode.float }
+            {
+                X = get.Required.Field "x" Decode.float
+                Y = get.Required.Field "y" Decode.float
+            }
         )
 
     let decodeDegrees = Decode.float |> Decode.map Degrees.op_Implicit
 
     let decodeRgba =
         Decode.object (fun get ->
-            { Red = get.Required.Field "red" Decode.int |> byte
-              Green = get.Required.Field "green" Decode.int |> byte
-              Blue = get.Required.Field "blue" Decode.int |> byte
-              Alpha = get.Required.Field "alpha" Decode.int |> byte }
+            {
+                Red = get.Required.Field "red" Decode.int |> byte
+                Green = get.Required.Field "green" Decode.int |> byte
+                Blue = get.Required.Field "blue" Decode.int |> byte
+                Alpha = get.Required.Field "alpha" Decode.int |> byte
+            }
         )
 
     let decodePen =
         Decode.object (fun get ->
-            { IsOn = get.Required.Field "isOn" Decode.bool
-              Weight = get.Required.Field "weight" Decode.float
-              Color = get.Required.Field "color" decodeRgba }
+            {
+                IsOn = get.Required.Field "isOn" Decode.bool
+                Weight = get.Required.Field "weight" Decode.float
+                Color = get.Required.Field "color" decodeRgba
+            }
         )
 
     let decodeAskData =
         Decode.object (fun get ->
-            { Question = get.Required.Field "question" Decode.string
-              Answer = get.Required.Field "answer" (Decode.option Decode.string) }
+            {
+                Question = get.Required.Field "question" Decode.string
+                Answer = get.Required.Field "answer" (Decode.option Decode.string)
+            }
         )
 
     let decodeSpeechBubble =
@@ -81,8 +89,10 @@ module private Serialization =
 
     let decodeSize =
         Decode.object (fun get ->
-            { Width = get.Required.Field "width" Decode.float
-              Height = get.Required.Field "height" Decode.float }
+            {
+                Width = get.Required.Field "width" Decode.float
+                Height = get.Required.Field "height" Decode.float
+            }
         )
 
     let decodeWindowSize =
@@ -93,28 +103,34 @@ module private Serialization =
 
     let decodeSvgImage =
         Decode.object (fun get ->
-            { Size = get.Required.Field "size" decodeSize
-              SvgData = get.Required.Field "svgData" Decode.string }
+            {
+                Size = get.Required.Field "size" decodeSize
+                SvgData = get.Required.Field "svgData" Decode.string
+            }
         )
 
     let decodePlayerData =
         Decode.object (fun get ->
-            { SizeFactor = get.Required.Field "sizeFactor" Decode.float
-              Position = get.Required.Field "position" decodePosition
-              Direction = get.Required.Field "direction" decodeDegrees
-              Pen = get.Required.Field "pen" decodePen
-              SpeechBubble = get.Required.Field "speechBubble" decodeOptionalSpeechBubble
-              Costumes = get.Required.Field "costumes" (Decode.list decodeSvgImage)
-              CostumeIndex = get.Required.Field "costumeIndex" Decode.int
-              Layer = get.Required.Field "layer" Decode.int }
+            {
+                SizeFactor = get.Required.Field "sizeFactor" Decode.float
+                Position = get.Required.Field "position" decodePosition
+                Direction = get.Required.Field "direction" decodeDegrees
+                Pen = get.Required.Field "pen" decodePen
+                SpeechBubble = get.Required.Field "speechBubble" decodeOptionalSpeechBubble
+                Costumes = get.Required.Field "costumes" (Decode.list decodeSvgImage)
+                CostumeIndex = get.Required.Field "costumeIndex" Decode.int
+                Layer = get.Required.Field "layer" Decode.int
+            }
         )
 
     let decodePlayerId = Decode.guid |> Decode.map PlayerId
 
     let decodeRectangle =
         Decode.object (fun get ->
-            { Position = get.Required.Field "position" decodePosition
-              Size = get.Required.Field "size" decodeSize }
+            {
+                Position = get.Required.Field "position" decodePosition
+                Size = get.Required.Field "size" decodeSize
+            }
         )
 
     let decodeKeyboardKey =

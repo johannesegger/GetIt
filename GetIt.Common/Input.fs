@@ -46,7 +46,9 @@ type KeyboardKey =
     | Digit9
 
 type KeyboardState =
-    { KeysPressed: Set<KeyboardKey> }
+    {
+        KeysPressed: Set<KeyboardKey>
+    }
 
 module KeyboardState =
     let empty = { KeysPressed = Set.empty }
@@ -62,7 +64,9 @@ type MouseClickEvent =
     }
 
 type MouseState =
-    { Position: Position }
+    {
+        Position: Position
+    }
 
 module MouseState =
     let empty = { Position = Position.zero }

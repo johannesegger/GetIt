@@ -68,10 +68,14 @@ type PlayerData =
     /// Note that this doesn't take into account the current rotation of the player.
     member this.Bounds
         with get() =
-            { Position =
-                { X = this.Position.X - this.Size.Width / 2.
-                  Y = this.Position.Y - this.Size.Height / 2. }
-              Size = this.Size }
+            {
+                Position =
+                    {
+                        X = this.Position.X - this.Size.Width / 2.
+                        Y = this.Position.Y - this.Size.Height / 2.
+                    }
+                Size = this.Size
+            }
 
     /// <summary>
     /// Copies the current player data and changes only the size factor.
@@ -128,14 +132,16 @@ type PlayerData =
     /// </summary>
     /// <param name="costumes">The costumes of the player.</param>
     static member Create costumes =
-        { SizeFactor = 1.
-          Position = Position.zero
-          Direction = Degrees.zero
-          Pen = Pen.``default``
-          SpeechBubble = None
-          Costumes = Seq.toList costumes
-          CostumeIndex = 0
-          Layer = 0 }
+        {
+            SizeFactor = 1.
+            Position = Position.zero
+            Direction = Degrees.zero
+            Pen = Pen.``default``
+            SpeechBubble = None
+            Costumes = Seq.toList costumes
+            CostumeIndex = 0
+            Layer = 0
+        }
 
     /// <summary>
     /// Creates a player with a single costume.

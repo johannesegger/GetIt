@@ -43,10 +43,11 @@ type SvgImage =
                 |> String.concat " "
 
             let size = { Width = maxX - minX; Height = maxY - minY }
-            { Size = size
-              SvgData =
-                sprintf """<svg width="%f" height="%f"><polygon points="%s" style="fill:%s;fill-opacity:%f;" /></svg>"""
-                    size.Width size.Height pointString (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
+            {
+                Size = size
+                SvgData =
+                    sprintf """<svg width="%f" height="%f"><polygon points="%s" style="fill:%s;fill-opacity:%f;" /></svg>"""
+                        size.Width size.Height pointString (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
             }
 
         ///<summary>Creates a rectangle image.</summary>
