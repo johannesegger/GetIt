@@ -46,7 +46,8 @@ namespace GetIt.Sample
             // Program29();
             // Program30();
             // Program31();
-            Program32();
+            // Program32();
+            Program33();
         }
 
         private static void Program1()
@@ -728,6 +729,108 @@ namespace GetIt.Sample
             Game.WaitForKeyDown(KeyboardKey.Space);
             turtle1.ShutUp();
             turtle1.BringToFront();
+        }
+
+        private static void Program33()
+        {
+            Game.ShowScene();
+
+            var direction = Directions.Right;
+
+            void UpdateDirection()
+            {
+                if (Game.IsKeyDown(KeyboardKey.Up) && direction != Directions.Down)
+                {
+                    direction = Directions.Up;
+                }
+                if (Game.IsKeyDown(KeyboardKey.Down) && direction != Directions.Up)
+                {
+                    direction = Directions.Down;
+                }
+                if (Game.IsKeyDown(KeyboardKey.Left) && direction != Directions.Right)
+                {
+                    direction = Directions.Left;
+                }
+                if (Game.IsKeyDown(KeyboardKey.Right) && direction != Directions.Left)
+                {
+                    direction = Directions.Right;
+                }
+            }
+
+            var snakeHead = Game.AddPlayer(PlayerData.Turtle);
+            var tailPart = PlayerData
+                .Create(SvgImage.CreateCircle(RGBAColors.Black.WithAlpha(0x80), 10));
+            var snakeTail = Enumerable.Range(1, 3)
+                .Select(i => Game.AddPlayer(tailPart.WithPosition(snakeHead.Position.X - i * 10, snakeHead.Position.Y))
+                )
+                .ToList();
+
+            var food = Game.AddPlayer(PlayerData.Ant);
+            food.MoveToRandomPosition();
+
+            void MoveSnakeHead(double distance)
+            {
+                snakeHead.SetDirection(direction);
+                if (direction == Directions.Up)
+                {
+                    snakeHead.MoveTo(snakeHead.Position.X, snakeHead.Position.Y + distance);
+                }
+                else if (direction == Directions.Down)
+                {
+                    snakeHead.MoveTo(snakeHead.Position.X, snakeHead.Position.Y - distance);
+                }
+                else if (direction == Directions.Left)
+                {
+                    snakeHead.MoveTo(snakeHead.Position.X - distance, snakeHead.Position.Y);
+                }
+                else if (direction == Directions.Right)
+                {
+                    snakeHead.MoveTo(snakeHead.Position.X + distance, snakeHead.Position.Y);
+                }
+            }
+
+            void MoveSnake(double distance)
+            {
+                var position = snakeHead.Position;
+                foreach (var part in snakeTail)
+                {
+                    var nextPosition = part.Position;
+                    part.MoveTo(position);
+                    position = nextPosition;
+                }
+                MoveSnakeHead(distance);
+            }
+
+            void CheckIfSnakeEatsFood()
+            {
+                if (snakeHead.TouchesPlayer(food))
+                {
+                    food.MoveToRandomPosition();
+                    var tailPosition = snakeTail.Last().Position;
+                    var tail = Game.AddPlayer(tailPart.WithPosition(tailPosition));
+                    snakeTail.Add(tail);
+                }
+            }
+
+            bool CheckIfSnakeHitsWall()
+            {
+                return snakeHead.TouchesEdge();
+            }
+
+            while (true)
+            {
+                UpdateDirection();
+                MoveSnake(10);
+                CheckIfSnakeEatsFood();
+                if (CheckIfSnakeHitsWall())
+                {
+                    break;
+                }
+
+                Game.Sleep(50);
+            }
+
+            snakeHead.Say("Game over.");
         }
     }
 }
