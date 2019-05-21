@@ -23,7 +23,7 @@ type RGBAColor =
 
         /// Randomly selects a color from a list of colors
         static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
-            RandomNumberGenerator.selectOneOf colors
+            ByChance.selectOneOf colors
 
 module internal RGBAColor =
     let rgbHexNotation v =

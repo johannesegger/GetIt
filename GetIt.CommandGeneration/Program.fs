@@ -52,7 +52,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetPosition (player.PlayerId, position))" ]
+            Body = [ "UICommunication.setPosition player.PlayerId position" ]
         }
 
         {
@@ -120,7 +120,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "moveToXY player (player.Position.X + deltaX) (player.Position.Y + deltaY)" ]
+            Body = [ "UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }" ]
         }
 
         {
@@ -274,49 +274,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetDirection (player.PlayerId, angle))" ]
-        }
-
-        {
-            Name = "rotateClockwise"
-            CompiledName = "RotateClockwise"
-            Summary = "Rotates the player clockwise by a specific angle."
-            Parameters =
-                [
-                    {
-                        Name = "player"
-                        Type = typeof<GetIt.Player>
-                        Description = "The player that should be rotated."
-                    }
-                    {
-                        Name = "angle"
-                        Type = typeof<GetIt.Degrees>
-                        Description = "The relative angle."
-                    }
-                ]
-            Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setDirection player (player.Direction - angle)" ]
-        }
-
-        {
-            Name = "rotateCounterClockwise"
-            CompiledName = "RotateCounterClockwise"
-            Summary = "Rotates the player counter-clockwise by a specific angle."
-            Parameters =
-                [
-                    {
-                        Name = "player"
-                        Type = typeof<GetIt.Player>
-                        Description = "The player that should be rotated."
-                    }
-                    {
-                        Name = "angle"
-                        Type = typeof<GetIt.Degrees>
-                        Description = "The relative angle."
-                    }
-                ]
-            Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setDirection player (player.Direction + angle)" ]
+            Body = [ "UICommunication.setDirection player.PlayerId angle" ]
         }
 
         {
@@ -381,6 +339,48 @@ let commands =
                 ]
             Result = { Type = typeof<unit>; Description = "" }
             Body = [ "setDirection player (Degrees.op_Implicit 180.)" ]
+        }
+
+        {
+            Name = "rotateClockwise"
+            CompiledName = "RotateClockwise"
+            Summary = "Rotates the player clockwise by a specific angle."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The relative angle."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.changeDirection player.PlayerId -angle" ]
+        }
+
+        {
+            Name = "rotateCounterClockwise"
+            CompiledName = "RotateCounterClockwise"
+            Summary = "Rotates the player counter-clockwise by a specific angle."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should be rotated."
+                    }
+                    {
+                        Name = "angle"
+                        Type = typeof<GetIt.Degrees>
+                        Description = "The relative angle."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "rotateClockwise player -angle" ]
         }
 
         {
@@ -507,7 +507,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))" ]
+            Body = [ "UICommunication.say player.PlayerId text" ]
         }
 
         {
@@ -523,7 +523,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))" ]
+            Body = [ "UICommunication.shutUp player.PlayerId" ]
         }
 
         {
@@ -601,49 +601,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<string>; Description = "The text the user typed in." }
-            Body =
-                [
-                    "use enumerator ="
-                    "    Model.observable"
-                    "    |> Observable.skip 1 // Skip initial value"
-                    "    |> Observable.choose (fun (modelChangeEvent, model) ->"
-                    "        match modelChangeEvent with"
-                    "        | UIToControllerMsg (UIEvent (AnswerQuestion (playerId, answer))) when playerId = player.PlayerId -> Some answer"
-                    "        | _ -> None"
-                    "    )"
-                    "    |> Observable.take 1"
-                    "    |> Observable.getEnumerator"
-                    ""
-                    "UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))"
-                    ""
-                    "if not <| enumerator.MoveNext() then"
-                    "    raise (GetItException \"Didn't get an answer.\")"
-                    ""
-                    "shutUp player"
-                    ""
-                    "enumerator.Current"
-                ]
-        }
-
-        {
-            Name = "setPen"
-            CompiledName = "SetPen"
-            Summary = "Sets the pen of the player."
-            Parameters =
-                [
-                    {
-                        Name = "player"
-                        Type = typeof<GetIt.Player>
-                        Description = "The player that should get the pen."
-                    }
-                    {
-                        Name = "pen"
-                        Type = typeof<GetIt.Pen>
-                        Description = "The pen that should be assigned to the player."
-                    }
-                ]
-            Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetPen (player.PlayerId, pen))" ]
+            Body = [ "UICommunication.ask player.PlayerId question" ]
         }
 
         {
@@ -659,7 +617,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with IsOn = true }" ]
+            Body = [ "UICommunication.setPenState player.PlayerId true" ]
         }
 
         {
@@ -675,12 +633,12 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with IsOn = false }" ]
+            Body = [ "UICommunication.setPenState player.PlayerId false" ]
         }
 
         {
-            Name = "togglePenOnOff"
-            CompiledName = "TogglePenOnOff"
+            Name = "togglePenState"
+            CompiledName = "TogglePenState"
             Summary = "Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on."
             Parameters =
                 [
@@ -691,7 +649,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with IsOn = not player.Pen.IsOn }" ]
+            Body = [ "UICommunication.togglePenState player.PlayerId" ]
         }
 
         {
@@ -712,7 +670,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with Color = color }" ]
+            Body = [ "UICommunication.setPenColor player.PlayerId color" ]
         }
 
         {
@@ -733,7 +691,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with Color = Color.hueShift angle player.Pen.Color }" ]
+            Body = [ "UICommunication.shiftPenColor player.PlayerId angle" ]
         }
 
         {
@@ -754,7 +712,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPen player { player.Pen with Weight = weight }" ]
+            Body = [ "UICommunication.setPenWeight player.PlayerId weight" ]
         }
 
         {
@@ -775,7 +733,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setPenWeight player (player.Pen.Weight + weight)" ]
+            Body = [ "UICommunication.changePenWeight player.PlayerId weight" ]
         }
 
         {
@@ -796,7 +754,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))" ]
+            Body = [ "UICommunication.setSizeFactor player.PlayerId sizeFactor" ]
         }
 
         {
@@ -817,7 +775,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "setSizeFactor player (player.SizeFactor + change)" ]
+            Body = [ "UICommunication.changeSizeFactor player.PlayerId change" ]
         }
 
         {
@@ -833,7 +791,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SetNextCostume (player.PlayerId))" ]
+            Body = [ "UICommunication.setNextCostume player.PlayerId" ]
         }
 
         {
@@ -849,7 +807,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (SendToBack (player.PlayerId))" ]
+            Body = [ "UICommunication.sendToBack player.PlayerId" ]
         }
 
         {
@@ -865,7 +823,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendCommand (BringToFront (player.PlayerId))" ]
+            Body = [ "UICommunication.bringToFront player.PlayerId" ]
         }
 
         {
@@ -1038,12 +996,12 @@ let commands =
                     }
                     {
                         Name = "action"
-                        Type = typeof<Action<GetIt.Player, GetIt.MouseButton>>
+                        Type = typeof<Action<GetIt.Player, GetIt.MouseClick>>
                         Description = "The event handler that should be called."
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))" ]
+            Body = [ "Model.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))" ]
         }
     ]
 
@@ -1202,7 +1160,6 @@ let main _argv =
           ""
           "open System"
           "open System.Threading"
-          "open FSharp.Control.Reactive"
         ]
     let lines =
         [

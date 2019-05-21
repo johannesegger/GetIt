@@ -1,5 +1,7 @@
 namespace GetIt
 
+open System
+
 type KeyboardKey =
     | Space
     | Escape
@@ -57,31 +59,40 @@ type MouseButton =
     | Primary
     | Secondary
 
-type MouseClickEvent =
+type MouseClick =
     {
-        MouseButton: MouseButton
+        Button: MouseButton
         Position: Position
+    }
+
+type VirtualScreenMouseClick =
+    {
+        Button: MouseButton
+        VirtualScreenPosition: Position
     }
 
 type MouseState =
     {
         Position: Position
+        LastClick: (Guid * MouseClick) option
     }
 
 module MouseState =
-    let empty = { Position = Position.zero }
+    let empty =
+        {
+            Position = Position.zero
+            LastClick = None
+        }
 
 type ControllerEvent =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
-    | MouseMove of Position
-    | MouseClick of MouseButton * Position
+    | MouseMove of virtualScreenPosition: Position
+    | MouseClick of VirtualScreenMouseClick
 
 type PngImage = PngImage of byte[]
 
-type UIEvent =
-    | SetMousePosition of Position
-    | ApplyMouseClick of MouseButton * Position
-    | SetSceneBounds of Rectangle
-    | AnswerQuestion of PlayerId * string
-    | Screenshot of PngImage
+module PngImage =
+    let toBase64String (PngImage data) =
+        Convert.ToBase64String data
+        |> sprintf "data:image/png;base64, %s"

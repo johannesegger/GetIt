@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Reactive.Subjects
 open System.Text
 open System.Threading
 open Fabulous.Core
@@ -22,14 +23,22 @@ module App =
         | SetSceneBounds of GetIt.Rectangle
         | SetMousePosition of positionRelativeToSceneControl: Position
         | ApplyMouseClick of MouseButton * positionRelativeToSceneControl: Position
-        | SetPlayerPosition of PlayerId * Position
-        | SetPlayerDirection of PlayerId * Degrees
+        | SetPosition of PlayerId * Position
+        | ChangePosition of PlayerId * Position
+        | SetDirection of PlayerId * Degrees
+        | ChangeDirection of PlayerId * Degrees
         | SetSpeechBubble of PlayerId * SpeechBubble option
-        | UpdateAnswer of PlayerId * answer: string
-        | ApplyAnswer of PlayerId
-        | SetPen of PlayerId * Pen
-        | SetSizeFactor of PlayerId * sizeFactor: float
-        | NextCostume of PlayerId
+        | UpdateAnswer of PlayerId * string
+        | ApplyAnswer of PlayerId * string
+        | SetPenState of PlayerId * isOn: bool
+        | TogglePenState of PlayerId
+        | SetPenColor of PlayerId * RGBAColor
+        | ShiftPenColor of PlayerId * Degrees
+        | SetPenWeight of PlayerId * float
+        | ChangePenWeight of PlayerId * float
+        | SetSizeFactor of PlayerId * float
+        | ChangeSizeFactor of PlayerId * float
+        | SetNextCostume of PlayerId
         | SendToBack of PlayerId
         | BringToFront of PlayerId
         | AddPlayer of PlayerId * PlayerData
@@ -43,6 +52,7 @@ module App =
         {
             SceneBounds: GetIt.Rectangle
             Players: Map<PlayerId, PlayerData>
+            PlayerAnswers: Map<PlayerId, string>
             PenLines: PenLine list
             Background: SvgImage
             BatchMessages: (Msg list * int) option
@@ -52,6 +62,7 @@ module App =
         {
             SceneBounds = GetIt.Rectangle.zero
             Players = Map.empty
+            PlayerAnswers = Map.empty
             PenLines = []
             Background = Background.none
             BatchMessages = None
@@ -59,36 +70,24 @@ module App =
 
     let init () = (initModel, Cmd.none)
 
-    let rec update triggerEvent msg model =
+    let private dispatchSubject = new System.Reactive.Subjects.Subject<Msg>()
+    let private updateSubject = new System.Reactive.Subjects.Subject<Msg * Model>()
+    let uiMessages = Subject.Create(dispatchSubject, updateSubject)
+
+    let rec update msg model =
         let updatePlayer playerId fn =
             let player = Map.find playerId model.Players |> fn
             { model with Players = Map.add playerId player model.Players }
 
-        let triggerEventCmd event =
-            Cmd.ofAsyncMsgOption (async { triggerEvent event; return None })
-
         match model.BatchMessages, msg with
         | None, SetSceneBounds bounds ->
             let model' = { model with SceneBounds = bounds }
-            let cmd = triggerEventCmd (UIEvent.SetSceneBounds bounds)
-            (model', cmd)
+            (model', Cmd.none)
         | None, SetMousePosition positionRelativeToSceneControl ->
-            let position =
-                {
-                    X = model.SceneBounds.Left + positionRelativeToSceneControl.X
-                    Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y
-                }
-            let cmd = triggerEventCmd (UIEvent.SetMousePosition position)
-            (model, cmd)
+            (model, Cmd.none)
         | None, ApplyMouseClick (mouseButton, positionRelativeToSceneControl) ->
-            let position =
-                {
-                    X = model.SceneBounds.Left + positionRelativeToSceneControl.X
-                    Y = model.SceneBounds.Top - positionRelativeToSceneControl.Y
-                }
-            let cmd = triggerEventCmd (UIEvent.ApplyMouseClick (mouseButton, position))
-            (model, cmd)
-        | None, SetPlayerPosition (playerId, position) ->
+            (model, Cmd.none)
+        | None, SetPosition (playerId, position) ->
             let model' =
                 let player = Map.find playerId model.Players
                 let player' = { player with Position = position }
@@ -105,49 +104,60 @@ module App =
                                     Color = player.Pen.Color
                                 }
                             model.PenLines @ [ line ]
-                        else model.PenLines }
+                        else model.PenLines
+                }
             (model', Cmd.none)
-        | None, SetPlayerDirection (playerId, angle) ->
+        | None, ChangePosition (playerId, relativePosition) ->
+            let player = Map.find playerId model.Players
+            update (SetPosition (playerId, player.Position + relativePosition)) model
+        | None, SetDirection (playerId, angle) ->
             let model' = updatePlayer playerId (fun p -> { p with Direction = angle })
             (model', Cmd.none)
+        | None, ChangeDirection (playerId, relativeDirection) ->
+            let player = Map.find playerId model.Players
+            update (SetDirection (playerId, player.Direction + relativeDirection)) model
         | None, SetSpeechBubble (playerId, speechBubble) ->
             let model' = updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
             (model', Cmd.none)
         | None, UpdateAnswer (playerId, answer) ->
-            let model' = updatePlayer playerId (fun p ->
-                match p.SpeechBubble with
-                | Some (Ask askData) -> { p with SpeechBubble = Some (Ask { askData with Answer = Some answer }) }
-                | Some (Say _)
-                | None -> p
-            )
+            let model' =
+                { model with PlayerAnswers = Map.add playerId answer model.PlayerAnswers }
             (model', Cmd.none)
-        | None, ApplyAnswer playerId ->
-            let model' = updatePlayer playerId (fun p ->
-                match p.SpeechBubble with
-                | Some (Ask askData) -> { p with SpeechBubble = None }
-                | Some (Say _)
-                | None -> p
-            )
-
-            let cmd =
-                model.Players
-                |> Map.tryFind playerId
-                |> Option.bind (fun p ->
+        | None, ApplyAnswer (playerId, answer) ->
+            let model' =
+                updatePlayer playerId (fun p ->
                     match p.SpeechBubble with
-                    | Some (Ask askData) -> Option.defaultValue "" askData.Answer |> Some
+                    | Some (Ask _) -> { p with SpeechBubble = None }
                     | Some (Say _)
-                    | None -> None
+                    | None -> p
                 )
-                |> Option.map (fun answer -> triggerEventCmd (UIEvent.AnswerQuestion (playerId, answer)))
-                |> Option.defaultValue Cmd.none
-            (model', cmd)
-        | None, SetPen (playerId, pen) ->
-            let model' = updatePlayer playerId (fun p -> { p with Pen = pen })
+                |> fun m -> { m with PlayerAnswers = Map.remove playerId model.PlayerAnswers }
+            (model', Cmd.none)
+        | None, SetPenState (playerId, isOn) ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
+            (model', Cmd.none)
+        | None, TogglePenState playerId ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
+            (model', Cmd.none)
+        | None, SetPenColor (playerId, color) ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
+            (model', Cmd.none)
+        | None, ShiftPenColor (playerId, angle) ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
+            (model', Cmd.none)
+        | None, SetPenWeight (playerId, weight) ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
+            (model', Cmd.none)
+        | None, ChangePenWeight (playerId, weight) ->
+            let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
             (model', Cmd.none)
         | None, SetSizeFactor (playerId, sizeFactor) ->
             let model' = updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
             (model', Cmd.none)
-        | None, NextCostume playerId ->
+        | None, ChangeSizeFactor (playerId, sizeFactor) ->
+            let model' = updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
+            (model', Cmd.none)
+        | None, SetNextCostume playerId ->
             let model' = updatePlayer playerId Player.nextCostume
             (model', Cmd.none)
         | None, SendToBack playerId ->
@@ -165,7 +175,11 @@ module App =
                 }
             (model', Cmd.none)
         | None, RemovePlayer playerId ->
-            let model' = { model with Players = Map.remove playerId model.Players }
+            let model' =
+                { model with
+                    Players = Map.remove playerId model.Players
+                    PlayerAnswers = Map.remove playerId model.PlayerAnswers
+                }
             (model', Cmd.none)
         | None, ClearScene ->
             let model' = { model with PenLines = [] }
@@ -186,13 +200,16 @@ module App =
             (model', Cmd.none)
         | Some (messages, level), ApplyBatch ->
             let updateAndMerge msg (model, cmd) =
-                let (model', cmd') = update triggerEvent msg model
+                let (model', cmd') = update msg model
                 model', Cmd.batch [ cmd; cmd' ]
             (messages, ({ model with BatchMessages = None }, Cmd.none))
             ||> List.foldBack updateAndMerge
         | Some (messages, level), x ->
             let model' = { model with BatchMessages = Some (x :: messages, level) }
             model', Cmd.none
+        |> fun (model, cmd) ->
+            updateSubject.OnNext (msg, model)
+            (model, cmd)
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
     let view (model: Model) dispatch =
@@ -337,19 +354,22 @@ module App =
                                 horizontalTextAlignment = TextAlignment.Center
                             )
                             |> speechBubble player
-                    | Some (Ask data) ->
+                    | Some (Ask question) ->
+                        let answer =
+                            Map.tryFind playerId model.PlayerAnswers
+                            |> Option.defaultValue ""
                         yield
                             View.StackLayout(
                                 children = [
                                     View.Label(
-                                        text = data.Question,
+                                        text = question,
                                         horizontalTextAlignment = TextAlignment.Center
                                     )
                                     View.Entry(
-                                        text = Option.defaultValue "" data.Answer,
+                                        text = answer,
                                         placeholder = "Answer",
                                         textChanged = (fun ev -> dispatch (UpdateAnswer (playerId, ev.NewTextValue))),
-                                        completed = (fun text -> dispatch (ApplyAnswer playerId))
+                                        completed = (fun text -> dispatch (ApplyAnswer (playerId, answer)))
                                     )
                                 ]
                             )
@@ -451,9 +471,6 @@ module App =
                 |> hasNavigationBar false
             ])
 
-    let dispatchSubject = new System.Reactive.Subjects.Subject<Msg>()
-    let dispatchMessage = dispatchSubject.OnNext
-
     let subscription =
         Cmd.ofSub (fun dispatch ->
             let d = dispatchSubject.Subscribe(dispatch)
@@ -461,8 +478,8 @@ module App =
         )
 
     // Note, this declaration is needed if you enable LiveUpdate
-    let program triggerEvent =
-        Program.mkProgram init (update triggerEvent) view
+    let program =
+        Program.mkProgram init update view
         |> Program.withSubscription (fun _ -> subscription)
 
     let showScene start =
@@ -480,11 +497,11 @@ module App =
         signal.Wait()
 
 
-type App (triggerEvent) as app = 
+type App () as app = 
     inherit Application ()
 
     let runner = 
-        App.program triggerEvent
+        App.program
         // |> Program.withConsoleTrace // this slows down execution by a lot, so uncomment with caution
         |> Program.runWithDynamicView app
 

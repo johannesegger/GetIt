@@ -14,10 +14,6 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
-type internal ModelChangeEvent =
-    | Initial
-    | UIToControllerMsg of UIToControllerMsg
-
 module internal Model =
     let private gate = Object()
 
@@ -29,23 +25,29 @@ module internal Model =
                 MouseState = MouseState.empty
                 KeyboardState = KeyboardState.empty
             }
-        new BehaviorSubject<_>(Initial, initial)
+        new BehaviorSubject<_>(initial)
 
     let observable = subject.AsObservable()
 
-    let getCurrent () = snd subject.Value
+    let getCurrent () = subject.Value
 
     let updateCurrent fn =
-        lock gate (fun () -> subject.OnNext(fn (snd subject.Value)))
+        lock gate (fun () -> subject.OnNext(fn subject.Value))
+
+    let updatePlayer playerId fn =
+        updateCurrent (fun m ->
+            let player = Map.find playerId m.Players |> fn
+            { m with Players = Map.add playerId player m.Players }
+        )
 
     let private keyDownFilter filter =
         observable
-        |> Observable.map (snd >> fun model ->
+        |> Observable.map (fun model ->
             let hasActiveTextInput =
                 model.Players
                 |> Map.exists (fun playerId player ->
                     match player.SpeechBubble with
-                    | Some (Ask askData) -> true
+                    | Some (Ask _) -> true
                     | Some (Say _)
                     | None -> false
                 )
@@ -74,7 +76,7 @@ module internal Model =
         |> Observable.switchMap (fun key ->
             let keyUpObservable =
                 observable
-                |> Observable.choose (snd >> fun model ->
+                |> Observable.choose (fun model ->
                     if Set.contains key model.KeyboardState.KeysPressed then None
                     else Some ()
                 )
@@ -97,29 +99,33 @@ module internal Model =
 
     let onClickScene fn =
         observable
-        |> Observable.choose (fun (ev, model) ->
-            match ev with
-            | UIToControllerMsg (UIEvent (ApplyMouseClick (mouseButton, position))) when Rectangle.contains position model.SceneBounds ->
-                Some (mouseButton, position)
+        |> Observable.choose (fun model ->
+            match model.MouseState.LastClick with
+            | Some (eventId, mouseClickEvent) when Rectangle.contains mouseClickEvent.Position model.SceneBounds ->
+                Some (eventId, mouseClickEvent)
             | _ -> None
         )
+        |> Observable.distinctUntilChangedKey fst
+        |> Observable.map snd
         |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.subscribe (uncurry fn)
+        |> Observable.subscribe fn
 
     let onClickPlayer playerId fn =
         observable
-        |> Observable.choose (fun (ev, model) ->
-            match ev, Map.tryFind playerId model.Players with
-            | UIToControllerMsg (UIEvent (ApplyMouseClick (mouseButton, position))), Some player when Rectangle.contains position player.Bounds ->
-                Some mouseButton
+        |> Observable.choose (fun model ->
+            match model.MouseState.LastClick, Map.tryFind playerId model.Players with
+            | Some (eventId, mouseClickEvent), Some player when Rectangle.contains mouseClickEvent.Position player.Bounds ->
+                Some (eventId, mouseClickEvent)
             | _ -> None
         )
+        |> Observable.distinctUntilChanged
+        |> Observable.map snd
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe fn
 
     let onEnterPlayer playerId fn =
         observable
-        |> Observable.map (snd >> fun model -> Map.tryFind playerId model.Players, model.MouseState.Position)
+        |> Observable.map (fun model -> Map.tryFind playerId model.Players, model.MouseState.Position)
         |> Observable.pairwise
         |> Observable.choose (function
             | (Some p1, mousePosition1), (Some p2, mousePosition2) ->

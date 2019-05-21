@@ -62,7 +62,7 @@ module Svg =
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 
-module RandomNumberGenerator =
+module ByChance =
     let private generator = Random()
 
     /// Randomly selects an item from a list
@@ -75,3 +75,10 @@ module Result =
     let ofOption error = function
         | Some o -> Result.Ok o
         | None -> Result.Error error
+
+module Async =
+    let map fn a = async {
+        let! p = a
+        return fn p
+    }
+

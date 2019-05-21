@@ -47,7 +47,8 @@ namespace GetIt.Sample
             // Program30();
             // Program31();
             // Program32();
-            Program33();
+            // Program33();
+            Program34();
         }
 
         private static void Program1()
@@ -368,7 +369,7 @@ namespace GetIt.Sample
 
             Turtle.Say("Click somewhere");
             var clickEvent = Game.WaitForMouseClick();
-            Turtle.Say($"You clicked with mouse button {clickEvent.MouseButton} at {clickEvent.Position}");
+            Turtle.Say($"You clicked with mouse button {clickEvent.Button} at {clickEvent.Position}");
         }
 
         private static void Program16()
@@ -547,12 +548,11 @@ namespace GetIt.Sample
         private static void Program22()
         {
             Game.ShowSceneAndAddTurtle();
+            Turtle.MoveUp(100);
 
             using (var food = Game.AddPlayer(PlayerData.Bug))
             {
-                food.Say("I'm just here for 2 more seconds", 1);
-                food.MoveToRandomPosition();
-                food.Sleep(2000);
+                food.Say("I'm just here for 5 seconds", 5);
             }
         }
 
@@ -602,12 +602,18 @@ namespace GetIt.Sample
             Turtle.SetPenColor(color);
             Turtle.SetPenWeight(5);
             Turtle.MoveRight(100);
+        }
+
+        private static void Program28()
+        {
+            Game.ShowSceneAndAddTurtle();
 
             // Game.Print(PrintConfig.Create("print-template.html", "Brother HL-5140 series").Set("name", "Johannes Egger"));
             Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
             Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
         }
-        private static void Program28()
+
+        private static void Program29()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -615,34 +621,34 @@ namespace GetIt.Sample
 
             Turtle.TurnOnPen();
             Turtle.MoveTo(33, 33);
-            Turtle.Sleep(100);
+            Turtle.Sleep(1000);
             Turtle.TurnOffPen();
             Turtle.MoveTo(66, 66);
-            Turtle.Sleep(100);
+            Turtle.Sleep(1000);
             Turtle.TurnOnPen();
             Turtle.MoveTo(100, 100);
-            Turtle.Sleep(100);
+            Turtle.Sleep(1000);
 
             using (Game.BatchCommands())
             {
                 Turtle.MoveTo(100, 33);
-                Turtle.Sleep(100);
+                Turtle.Sleep(1000);
                 Turtle.TurnOffPen();
                 using (Game.BatchCommands())
                 {
                     Turtle.MoveTo(100, -33);
                 }
-                Turtle.Sleep(100);
+                Turtle.Sleep(1000);
                 Turtle.TurnOnPen();
                 Turtle.MoveTo(100, -100);
-                Turtle.Sleep(100);
+                Turtle.Sleep(1000);
             }
 
             Turtle.MoveTo(66, -66);
-            Turtle.Sleep(100);
+            Turtle.Sleep(1000);
             Turtle.TurnOffPen();
             Turtle.MoveTo(33, -33);
-            Turtle.Sleep(100);
+            Turtle.Sleep(1000);
             Turtle.TurnOnPen();
             Turtle.MoveToCenter();
 
@@ -651,7 +657,7 @@ namespace GetIt.Sample
             Turtle.Say("Awesome");
         }
 
-        private static void Program29()
+        private static void Program30()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -669,7 +675,7 @@ namespace GetIt.Sample
             Game.SetWindowTitle(null);
         }
 
-        private static void Program30()
+        private static void Program31()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -682,7 +688,7 @@ namespace GetIt.Sample
             player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
         }
 
-        private static void Program31()
+        private static void Program32()
         {
             Game.ShowScene();
 
@@ -698,7 +704,7 @@ namespace GetIt.Sample
             turtle.MoveInDirection(200);
         }
 
-        private static void Program32()
+        private static void Program33()
         {
             Game.ShowScene();
 
@@ -710,7 +716,7 @@ namespace GetIt.Sample
             turtle2.ShutUp();
             turtle2.SendToBack();
 
-            turtle2.Say("Press <Space> to send me to back.");
+            turtle2.Say("Press <Space> to send me to back again.");
             Game.WaitForKeyDown(KeyboardKey.Space);
             turtle2.ShutUp();
             turtle2.SendToBack();
@@ -731,7 +737,7 @@ namespace GetIt.Sample
             turtle1.BringToFront();
         }
 
-        private static void Program33()
+        private static void Program34()
         {
             Game.ShowScene();
 

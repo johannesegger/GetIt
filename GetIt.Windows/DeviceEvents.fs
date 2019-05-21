@@ -130,9 +130,9 @@ module DeviceEvents =
                 if rawInput.data.mouse.lLastX <> 0 || rawInput.data.mouse.lLastY <> 0 then
                     yield MouseMove position
                 if hasbuttonFlag SharpLib.Win32.RawInputMouseButtonFlags.RI_MOUSE_LEFT_BUTTON_UP then
-                    yield MouseClick (Primary, position)
+                    yield MouseClick { Button = Primary; VirtualScreenPosition = position }
                 if hasbuttonFlag SharpLib.Win32.RawInputMouseButtonFlags.RI_MOUSE_RIGHT_BUTTON_UP then
-                    yield MouseClick (Secondary, position)
+                    yield MouseClick {Button = Secondary; VirtualScreenPosition = position }
             ]
         else
             []

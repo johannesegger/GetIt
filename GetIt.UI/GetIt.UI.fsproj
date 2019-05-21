@@ -7,10 +7,12 @@
 
   <ItemGroup>
     <Compile Include="App.fs" />
+    <Compile Include="UiServer.fs" />
     <EmbeddedResource Include="icon.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fabulous.SkiaSharp" Version="0.33.0" />
+    <PackageReference Include="Grpc" Version="1.18.0" />
     <PackageReference Include="SkiaSharp.Svg" Version="1.60.0" />
     <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.0" />
     <PackageReference Include="System.Reactive" Version="4.1.2" />
@@ -19,10 +21,9 @@
     <PackageReference Include="Fabulous.Core" Version="0.33.0" />
     <PackageReference Include="Fabulous.CustomControls" Version="0.33.0" />
     <PackageReference Include="Fabulous.LiveUpdate" Version="0.33.0" />
-    <PackageReference Include="FSharp.Core" Version="4.5.2" />
-    <PackageReference Update="FSharp.Core" Version="4.5.2" /> <!-- workaround for VSMac bug https://github.com/mono/monodevelop/pull/5137 --> 
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
+    <ProjectReference Include="..\GetIt.InterProcessCommunication\GetIt.InterProcessCommunication.csproj" />
   </ItemGroup>
 </Project>

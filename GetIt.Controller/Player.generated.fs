@@ -2,7 +2,6 @@ namespace GetIt
 
 open System
 open System.Threading
-open FSharp.Control.Reactive
 
 module private Raw =
     let private rand = Random()
@@ -14,7 +13,7 @@ module private Raw =
         player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
-        UICommunication.sendCommand (SetPosition (player.PlayerId, position))
+        UICommunication.setPosition player.PlayerId position
 
     let moveToXY (player: GetIt.Player) (x: System.Double) (y: System.Double) =
         moveTo player { X = x; Y = y }
@@ -23,7 +22,7 @@ module private Raw =
         moveTo player Position.zero
 
     let moveBy (player: GetIt.Player) (deltaX: System.Double) (deltaY: System.Double) =
-        moveToXY player (player.Position.X + deltaX) (player.Position.Y + deltaY)
+        UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }
 
     let moveRight (player: GetIt.Player) (steps: System.Double) =
         moveBy player steps 0.
@@ -50,13 +49,7 @@ module private Raw =
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
-        UICommunication.sendCommand (SetDirection (player.PlayerId, angle))
-
-    let rotateClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
-        setDirection player (player.Direction - angle)
-
-    let rotateCounterClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
-        setDirection player (player.Direction + angle)
+        UICommunication.setDirection player.PlayerId angle
 
     let turnUp (player: GetIt.Player) =
         setDirection player (Degrees.op_Implicit 90.)
@@ -69,6 +62,12 @@ module private Raw =
 
     let turnLeft (player: GetIt.Player) =
         setDirection player (Degrees.op_Implicit 180.)
+
+    let rotateClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
+        UICommunication.changeDirection player.PlayerId -angle
+
+    let rotateCounterClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
+        rotateClockwise player -angle
 
     let touchesEdge (player: GetIt.Player) =
         touchesLeftOrRightEdge player || touchesTopOrBottomEdge player
@@ -91,10 +90,10 @@ module private Raw =
         sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     let say (player: GetIt.Player) (text: System.String) =
-        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Say text)))
+        UICommunication.say player.PlayerId text
 
     let shutUp (player: GetIt.Player) =
-        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, None))
+        UICommunication.shutUp player.PlayerId
 
     let sayWithDuration (player: GetIt.Player) (text: System.String) (duration: System.TimeSpan) =
         say player text
@@ -105,64 +104,43 @@ module private Raw =
         sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)
 
     let ask (player: GetIt.Player) (question: System.String) =
-        use enumerator =
-            Model.observable
-            |> Observable.skip 1 // Skip initial value
-            |> Observable.choose (fun (modelChangeEvent, model) ->
-                match modelChangeEvent with
-                | UIToControllerMsg (UIEvent (AnswerQuestion (playerId, answer))) when playerId = player.PlayerId -> Some answer
-                | _ -> None
-            )
-            |> Observable.take 1
-            |> Observable.getEnumerator
-
-        UICommunication.sendCommand (SetSpeechBubble (player.PlayerId, Some (Ask { Question = question; Answer = None })))
-
-        if not <| enumerator.MoveNext() then
-            raise (GetItException "Didn't get an answer.")
-
-        shutUp player
-
-        enumerator.Current
-
-    let setPen (player: GetIt.Player) (pen: GetIt.Pen) =
-        UICommunication.sendCommand (SetPen (player.PlayerId, pen))
+        UICommunication.ask player.PlayerId question
 
     let turnOnPen (player: GetIt.Player) =
-        setPen player { player.Pen with IsOn = true }
+        UICommunication.setPenState player.PlayerId true
 
     let turnOffPen (player: GetIt.Player) =
-        setPen player { player.Pen with IsOn = false }
+        UICommunication.setPenState player.PlayerId false
 
-    let togglePenOnOff (player: GetIt.Player) =
-        setPen player { player.Pen with IsOn = not player.Pen.IsOn }
+    let togglePenState (player: GetIt.Player) =
+        UICommunication.togglePenState player.PlayerId
 
     let setPenColor (player: GetIt.Player) (color: GetIt.RGBAColor) =
-        setPen player { player.Pen with Color = color }
+        UICommunication.setPenColor player.PlayerId color
 
     let shiftPenColor (player: GetIt.Player) (angle: GetIt.Degrees) =
-        setPen player { player.Pen with Color = Color.hueShift angle player.Pen.Color }
+        UICommunication.shiftPenColor player.PlayerId angle
 
     let setPenWeight (player: GetIt.Player) (weight: System.Double) =
-        setPen player { player.Pen with Weight = weight }
+        UICommunication.setPenWeight player.PlayerId weight
 
     let changePenWeight (player: GetIt.Player) (weight: System.Double) =
-        setPenWeight player (player.Pen.Weight + weight)
+        UICommunication.changePenWeight player.PlayerId weight
 
     let setSizeFactor (player: GetIt.Player) (sizeFactor: System.Double) =
-        UICommunication.sendCommand (SetSizeFactor (player.PlayerId, sizeFactor))
+        UICommunication.setSizeFactor player.PlayerId sizeFactor
 
     let changeSizeFactor (player: GetIt.Player) (change: System.Double) =
-        setSizeFactor player (player.SizeFactor + change)
+        UICommunication.changeSizeFactor player.PlayerId change
 
     let nextCostume (player: GetIt.Player) =
-        UICommunication.sendCommand (SetNextCostume (player.PlayerId))
+        UICommunication.setNextCostume player.PlayerId
 
     let sendToBack (player: GetIt.Player) =
-        UICommunication.sendCommand (SendToBack (player.PlayerId))
+        UICommunication.sendToBack player.PlayerId
 
     let bringToFront (player: GetIt.Player) =
-        UICommunication.sendCommand (BringToFront (player.PlayerId))
+        UICommunication.bringToFront player.PlayerId
 
     let getDirectionToMouse (player: GetIt.Player) =
         player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
@@ -185,8 +163,8 @@ module private Raw =
     let onMouseEnter (player: GetIt.Player) (action: System.Action<GetIt.Player>) =
         Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))
 
-    let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
-        Model.onClickPlayer player.PlayerId (fun mouseButton -> action.Invoke(player, mouseButton))
+    let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseClick>) =
+        Model.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))
 
 [<AbstractClass; Sealed>]
 type Turtle() =
@@ -283,20 +261,6 @@ type Turtle() =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.setDirection Turtle.Player angle
 
-    /// <summary>Rotates the player clockwise by a specific angle.</summary>
-    /// <param name="angle">The relative angle.</param>
-    /// <returns></returns>
-    static member RotateClockwise (angle: GetIt.Degrees) =
-        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateClockwise Turtle.Player angle
-
-    /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
-    /// <param name="angle">The relative angle.</param>
-    /// <returns></returns>
-    static member RotateCounterClockwise (angle: GetIt.Degrees) =
-        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateCounterClockwise Turtle.Player angle
-
     /// <summary>Rotates the player so that it looks up.</summary>
     /// <returns></returns>
     static member TurnUp () =
@@ -316,6 +280,20 @@ type Turtle() =
     /// <returns></returns>
     static member TurnLeft () =
         Raw.turnLeft Turtle.Player
+
+    /// <summary>Rotates the player clockwise by a specific angle.</summary>
+    /// <param name="angle">The relative angle.</param>
+    /// <returns></returns>
+    static member RotateClockwise (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
+        Raw.rotateClockwise Turtle.Player angle
+
+    /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
+    /// <param name="angle">The relative angle.</param>
+    /// <returns></returns>
+    static member RotateCounterClockwise (angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
+        Raw.rotateCounterClockwise Turtle.Player angle
 
     /// <summary>Checks whether a given player touches an edge of the scene.</summary>
     /// <returns>True, if the player touches an edge, otherwise false.</returns>
@@ -381,13 +359,6 @@ type Turtle() =
         if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask Turtle.Player question
 
-    /// <summary>Sets the pen of the player.</summary>
-    /// <param name="pen">The pen that should be assigned to the player.</param>
-    /// <returns></returns>
-    static member SetPen (pen: GetIt.Pen) =
-        if obj.ReferenceEquals(pen, null) then raise (ArgumentNullException "pen")
-        Raw.setPen Turtle.Player pen
-
     /// <summary>Turns on the pen of the player.</summary>
     /// <returns></returns>
     static member TurnOnPen () =
@@ -400,8 +371,8 @@ type Turtle() =
 
     /// <summary>Turns on the pen of the player if it is turned off. Turns off the pen of the player if it is turned on.</summary>
     /// <returns></returns>
-    static member TogglePenOnOff () =
-        Raw.togglePenOnOff Turtle.Player
+    static member TogglePenState () =
+        Raw.togglePenState Turtle.Player
 
     /// <summary>Sets the pen color of the player.</summary>
     /// <param name="color">The new color of the pen.</param>
@@ -510,7 +481,7 @@ type Turtle() =
     /// <summary>Registers an event handler that is called when the mouse is clicked on the player.</summary>
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
-    static member OnClick (action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+    static member OnClick (action: System.Action<GetIt.Player, GetIt.MouseClick>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onClick Turtle.Player action
 
@@ -619,26 +590,6 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
         Raw.setDirection player angle
 
-    /// <summary>Rotates the player clockwise by a specific angle.</summary>
-    /// <param name="player">The player that should be rotated.</param>
-    /// <param name="angle">The relative angle.</param>
-    /// <returns></returns>
-    [<Extension>]
-    static member RotateClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
-        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
-        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateClockwise player angle
-
-    /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
-    /// <param name="player">The player that should be rotated.</param>
-    /// <param name="angle">The relative angle.</param>
-    /// <returns></returns>
-    [<Extension>]
-    static member RotateCounterClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
-        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
-        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
-        Raw.rotateCounterClockwise player angle
-
     /// <summary>Rotates the player so that it looks up.</summary>
     /// <param name="player">The player that should be rotated.</param>
     /// <returns></returns>
@@ -670,6 +621,26 @@ type PlayerExtensions() =
     static member TurnLeft(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.turnLeft player
+
+    /// <summary>Rotates the player clockwise by a specific angle.</summary>
+    /// <param name="player">The player that should be rotated.</param>
+    /// <param name="angle">The relative angle.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member RotateClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
+        Raw.rotateClockwise player angle
+
+    /// <summary>Rotates the player counter-clockwise by a specific angle.</summary>
+    /// <param name="player">The player that should be rotated.</param>
+    /// <param name="angle">The relative angle.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member RotateCounterClockwise(player: GetIt.Player, angle: GetIt.Degrees) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
+        Raw.rotateCounterClockwise player angle
 
     /// <summary>Checks whether a given player touches an edge of the scene.</summary>
     /// <param name="player">The player that might touch an edge of the scene.</param>
@@ -765,16 +736,6 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask player question
 
-    /// <summary>Sets the pen of the player.</summary>
-    /// <param name="player">The player that should get the pen.</param>
-    /// <param name="pen">The pen that should be assigned to the player.</param>
-    /// <returns></returns>
-    [<Extension>]
-    static member SetPen(player: GetIt.Player, pen: GetIt.Pen) =
-        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
-        if obj.ReferenceEquals(pen, null) then raise (ArgumentNullException "pen")
-        Raw.setPen player pen
-
     /// <summary>Turns on the pen of the player.</summary>
     /// <param name="player">The player that should get its pen turned on.</param>
     /// <returns></returns>
@@ -795,9 +756,9 @@ type PlayerExtensions() =
     /// <param name="player">The player that should get its pen toggled.</param>
     /// <returns></returns>
     [<Extension>]
-    static member TogglePenOnOff(player: GetIt.Player) =
+    static member TogglePenState(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
-        Raw.togglePenOnOff player
+        Raw.togglePenState player
 
     /// <summary>Sets the pen color of the player.</summary>
     /// <param name="player">The player that should get its pen color set.</param>
@@ -956,7 +917,7 @@ type PlayerExtensions() =
     /// <param name="action">The event handler that should be called.</param>
     /// <returns>The disposable subscription.</returns>
     [<Extension>]
-    static member OnClick(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.MouseButton>) =
+    static member OnClick(player: GetIt.Player, action: System.Action<GetIt.Player, GetIt.MouseClick>) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
         Raw.onClick player action

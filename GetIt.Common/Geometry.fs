@@ -19,6 +19,9 @@ type Degrees = private Degrees of float
         static member (-) (Degrees v1, Degrees v2) =
             Degrees.Create (v1 - v2)
 
+        static member (~-) (Degrees v) =
+            Degrees.Create -v
+
         static member op_Implicit value =
             Degrees.Create value
 
@@ -51,6 +54,11 @@ type Position =
         Y: float
     }
     override this.ToString() = sprintf "(%.2f, %.2f)" this.X this.Y
+    static member (+) (p1, p2) =
+        {
+            X = p1.X + p2.X
+            Y = p1.Y + p2.Y
+        }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Position =
@@ -119,3 +127,7 @@ module Rectangle =
         rectangle.Right >= position.X &&
         rectangle.Top >= position.Y &&
         rectangle.Bottom <= position.Y
+
+type SceneSize =
+    | SpecificSize of Size
+    | Maximized
