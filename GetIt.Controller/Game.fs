@@ -137,7 +137,7 @@ type Game() =
         if obj.ReferenceEquals(printConfig, null) then raise (ArgumentNullException "printConfig")
 
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            raise (GetItException (sprintf "Printing is not supported for operating system \"%s\"." RuntimeInformation.OSDescription))
+            raise (GetItException (sprintf "Printing is not supported on operating system \"%s\"." RuntimeInformation.OSDescription))
 
         let base64ImageData =
             UICommunication.makeScreenshot ()
