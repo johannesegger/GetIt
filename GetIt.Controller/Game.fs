@@ -3,10 +3,14 @@ namespace GetIt
 open System
 open System.Diagnostics
 open System.IO
+open System.Reflection
 open System.Runtime.InteropServices
 open System.Text
 open System.Threading
+open ColorCode
 open FSharp.Control.Reactive
+open Fue.Data
+open Fue.Compiler
 open Thoth.Json.Net
 
 type PrintConfig =
@@ -139,53 +143,68 @@ type Game() =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Printing is not supported on operating system \"%s\"." RuntimeInformation.OSDescription))
 
+        let assemblyDir =
+            Assembly.GetCallingAssembly().Location
+            |> Path.GetDirectoryName
+
         let base64ImageData =
             UICommunication.makeScreenshot ()
             |> PngImage.toBase64String
 
-        let instantiatePrintTemplate (templateContent: string) screenshotSrc =
-            let templateParams =
-                printConfig.TemplateParams
-                |> Map.add "screenshot" screenshotSrc
-            (templateContent, templateParams)
-            ||> Map.fold (fun content key value -> content.Replace(sprintf "%%%s%%" key, value))
-
-        let printHtmlDocument documentContent =
-            let pdfPath = Path.Combine(Path.GetTempPath(), sprintf "%O.pdf" (Guid.NewGuid()))
-            do
-                let htmlPath = Path.Combine(Path.GetTempPath(), sprintf "%O.html" (Guid.NewGuid()))
-                File.WriteAllText(htmlPath, documentContent, Encoding.UTF8)
-                use d = Disposable.create (fun () -> try File.Delete(htmlPath) with _ -> ())
-
-                let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
-                let exitCode =
-                    try
-                        use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
-                        wkHtmlToPdfProcess.WaitForExit()
-                        wkHtmlToPdfProcess.ExitCode
-                    with e -> raise (GetItException ("Error while printing scene: Ensure `wkhtmltopdf` is installed", e))
-                if exitCode <> 0 then
-                    raise (GetItException (sprintf "wkhtmltopdf exited with non-zero exit code (%d)." exitCode))
-            do
-                use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
-
-                let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
-                let exitCode =
-                    try
-                        use sumatraProcess = Process.Start(sumatraStartInfo)
-                        sumatraProcess.WaitForExit()
-                        sumatraProcess.ExitCode
-                    with e -> raise (GetItException ("Error while printing scene: Ensure `sumatrapdf` is installed.", e))
-                if exitCode <> 0 then
-                    raise (GetItException (sprintf "SumatraPDF exited with non-zero exit code (%d). Ensure that printer \"%s\" is connected." exitCode printConfig.PrinterName))
-
-        let htmlTemplate =
+        let documentTemplate =
             try
                 File.ReadAllText printConfig.TemplatePath
             with e -> raise (GetItException ("Error while printing scene: Can't read print template.", e))
 
-        let htmlDocument = instantiatePrintTemplate htmlTemplate base64ImageData
-        printHtmlDocument htmlDocument
+        let documentContent =
+            let configParams =
+                printConfig.TemplateParams
+                |> Map.map (fun key value -> value :> obj)
+                |> Map.toList
+            let sourceFiles =
+                let sourceFilesDir = Path.Combine(assemblyDir, "source-files")
+                Directory.GetFiles(sourceFilesDir, "*", SearchOption.AllDirectories)
+                |> Seq.map (fun f ->
+                    let relativePath = f.Substring(sourceFilesDir.Length).TrimStart('/', '\\')
+                    let content = File.ReadAllText f
+                    let formattedContent = HtmlFormatter().GetHtmlString(content, Languages.CSharp)
+                    relativePath, formattedContent
+                )
+                |> Seq.toList
+            init
+            |> addMany configParams
+            |> add "sourceFiles" sourceFiles
+            |> add "hasSourceFiles" (not <| List.isEmpty sourceFiles)
+            |> add "screenshot" base64ImageData
+            |> fromText documentTemplate
+
+        let pdfPath = Path.Combine(Path.GetTempPath(), sprintf "%O.pdf" (Guid.NewGuid()))
+        do
+            let htmlPath = Path.Combine(Path.GetTempPath(), sprintf "%O.html" (Guid.NewGuid()))
+            File.WriteAllText(htmlPath, documentContent, Encoding.UTF8)
+            use d = Disposable.create (fun () -> try File.Delete(htmlPath) with _ -> ())
+
+            let wkHtmlToPdfStartInfo = ProcessStartInfo("wkhtmltopdf", sprintf "\"%s\" \"%s\"" htmlPath pdfPath)
+            let exitCode =
+                try
+                    use wkHtmlToPdfProcess = Process.Start(wkHtmlToPdfStartInfo)
+                    wkHtmlToPdfProcess.WaitForExit()
+                    wkHtmlToPdfProcess.ExitCode
+                with e -> raise (GetItException ("Error while printing scene: Ensure `wkhtmltopdf` is installed", e))
+            if exitCode <> 0 then
+                raise (GetItException (sprintf "wkhtmltopdf exited with non-zero exit code (%d)." exitCode))
+        do
+            use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
+
+            let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
+            let exitCode =
+                try
+                    use sumatraProcess = Process.Start(sumatraStartInfo)
+                    sumatraProcess.WaitForExit()
+                    sumatraProcess.ExitCode
+                with e -> raise (GetItException ("Error while printing scene: Ensure `sumatrapdf` is installed.", e))
+            if exitCode <> 0 then
+                raise (GetItException (sprintf "SumatraPDF exited with non-zero exit code (%d). Ensure that printer \"%s\" is connected." exitCode printConfig.PrinterName))
 
     /// Start batching multiple commands to skip drawing intermediate state.
     /// Note that commands from all threads are batched.

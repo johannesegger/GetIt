@@ -7,16 +7,26 @@
                 font-size: 25px;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: break-word;
+            }
         </style>
     </head>
     <body>
         <h1>Wow, that was fun</h1>
 
         <p style="text-align: center">
-            <img src="%screenshot%" style="width: 100%" />
+            <img src="{{{screenshot}}}" style="width: 100%" />
         </p>
         <p style="text-align: right">
-            With ♥ made by %name%
+            With ♥ made by {{{name}}}
+        </p>
+        <p fs-if="hasSourceFiles">
+            <p fs-for="fileName,content in sourceFiles">
+                <div class="file-name">{{{fileName}}}</div>
+                <div class="file-content">{{{content}}}</div>
+            </p>
         </p>
     </body>
 </html>

@@ -14,4 +14,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
+  <!-- Remove this when NuGet package is referenced -->
+  <Import Project="..\GetIt.Controller\GetIt.Controller.targets" />
+
 </Project>
