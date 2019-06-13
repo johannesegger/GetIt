@@ -282,29 +282,26 @@ module App =
 
                             canvas.Clear()
 
-                            let markerRealSize = 15.
-                            let borderRadius = 15.
-                            let borderWidth = 2.
+                            let markerRealSize = 15.f
+                            let borderRadius = 15.f
+                            let borderWidth = 2.f
 
-                            canvas.Translate(SKPoint(float32 borderWidth, float32 borderWidth))
+                            use path = new SKPath()
+                            path.MoveTo(borderRadius, 0.f)
+                            path.RArcTo(borderRadius, borderRadius, 0.f, SKPathArcSize.Small, SKPathDirection.CounterClockwise, -borderRadius, borderRadius)
+                            path.LineTo(path.LastPoint.X, float32 info.Height - markerRealSize - borderRadius - 2.f * borderWidth)
+                            path.RArcTo(borderRadius, borderRadius, 0.f, SKPathArcSize.Small, SKPathDirection.CounterClockwise, borderRadius, borderRadius)
+                            path.LineTo((float32 info.Width - markerRealSize) / 2.f - borderWidth, path.LastPoint.Y)
+                            path.RLineTo(0.f, markerRealSize)
+                            path.RLineTo(markerRealSize, -markerRealSize)
+                            path.LineTo(float32 info.Width - borderRadius - 2.f * borderWidth, path.LastPoint.Y)
+                            path.RArcTo(borderRadius, borderRadius, 0.f, SKPathArcSize.Small, SKPathDirection.CounterClockwise, borderRadius, -borderRadius)
+                            path.LineTo(path.LastPoint.X, borderRadius)
+                            path.RArcTo(borderRadius, borderRadius, 0.f, SKPathArcSize.Small, SKPathDirection.CounterClockwise, -borderRadius, -borderRadius)
+                            // path.LineTo(borderRadius, path.LastPoint.Y)
+                            path.Close()
+                            path.Offset(float32 borderWidth, float32 borderWidth)
 
-                            let path =
-                                [
-                                    sprintf "M%f,0" borderRadius
-                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius -borderRadius borderRadius
-                                    sprintf "V%f" (float info.Height - markerRealSize - borderRadius - 2. * borderWidth)
-                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius borderRadius borderRadius
-                                    sprintf "H%f" ((float info.Width - markerRealSize) / 2.)
-                                    sprintf "v%f" markerRealSize
-                                    sprintf "l%f,%f" markerRealSize -markerRealSize
-                                    sprintf "H%f" (float info.Width - borderRadius - 2. * borderWidth)
-                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius borderRadius -borderRadius
-                                    sprintf "V%f" borderRadius
-                                    sprintf "a%f,%f 0 0,0 %f,%f" borderRadius borderRadius -borderRadius -borderRadius
-                                    sprintf "H%f" borderRadius
-                                ]
-                                |> String.concat " "
-                                |> SKPath.ParseSvgPathData
                             do
                                 use paint =
                                     new SKPaint(
