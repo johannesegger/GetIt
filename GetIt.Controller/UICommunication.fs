@@ -90,6 +90,13 @@ module internal UICommunication =
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
 
     let showScene sceneSize =
+        let sceneBounds =
+            sceneSize
+            |> Message.SceneSize.FromDomain
+            |> runWithConnection (fun c -> c.ShowScene)
+            |> Message.Rectangle.ToDomain
+        Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })
+
         async {
             use sceneBoundsSubscription = runWithConnection (fun c -> c.SceneBoundsChanged) (Empty())
             use enumerator = sceneBoundsSubscription.ResponseStream
@@ -176,11 +183,6 @@ module internal UICommunication =
                 GetIt.Windows.DeviceEvents.register subject
             else
                 raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
-
-        sceneSize
-        |> Message.SceneSize.FromDomain
-        |> runWithConnection (fun c -> c.ShowScene)
-        |> ignore
 
         waitHandle.Wait()
 
