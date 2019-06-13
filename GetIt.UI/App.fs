@@ -433,51 +433,48 @@ module App =
             |> List.filter (snd >> fun p -> p.IsVisible)
             |> List.rev
 
-        View.NavigationPage(
-            pages = [
-                View.ContentPage(
-                    content = View.StackLayout(
-                        spacing = 0.,
-                        children = [
-                            View.AbsoluteLayout(
-                                automationId = "scene",
-                                verticalOptions = LayoutOptions.FillAndExpand,
-                                children =
-                                    [
-                                        backgroundView
-                                        |> layoutFlags AbsoluteLayoutFlags.All
-                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
+        View.ContentPage(
+            content = View.StackLayout(
+                spacing = 0.,
+                children = [
+                    View.AbsoluteLayout(
+                        automationId = "scene",
+                        verticalOptions = LayoutOptions.FillAndExpand,
+                        children =
+                            [
+                                backgroundView
+                                |> layoutFlags AbsoluteLayoutFlags.All
+                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
-                                        View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
-                                        |> layoutFlags AbsoluteLayoutFlags.All
-                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                                View.AbsoluteLayout(children = List.map getPenLineView model.PenLines)
+                                |> layoutFlags AbsoluteLayoutFlags.All
+                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
-                                        View.AbsoluteLayout(children = List.map getFullPlayerView playersOnScene)
-                                        |> layoutFlags AbsoluteLayoutFlags.All
-                                        |> layoutBounds (Rectangle(0., 0., 1., 1.))
-                                    ]
-                            )
-                            |> sizeChanged (fun e ->
-                                let size = { Width = e.Width; Height = e.Height }
-                                let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
-                                dispatch (SetSceneBounds bounds)
-                            )
-                            View.ScrollView(
-                                verticalOptions = LayoutOptions.End,
-                                orientation = ScrollOrientation.Horizontal,
-                                padding = Thickness(20., 10.),
-                                backgroundColor = Color.LightGray,
-                                content = View.StackLayout(
-                                    spacing = 0.,
-                                    orientation = StackOrientation.Horizontal,
-                                    children = List.map getPlayerInfoView players
-                                )
-                            )
-                        ]
+                                View.AbsoluteLayout(children = List.map getFullPlayerView playersOnScene)
+                                |> layoutFlags AbsoluteLayoutFlags.All
+                                |> layoutBounds (Rectangle(0., 0., 1., 1.))
+                            ]
                     )
-                )
-                |> hasNavigationBar false
-            ])
+                    |> sizeChanged (fun e ->
+                        let size = { Width = e.Width; Height = e.Height }
+                        let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
+                        dispatch (SetSceneBounds bounds)
+                    )
+                    View.ScrollView(
+                        verticalOptions = LayoutOptions.End,
+                        orientation = ScrollOrientation.Horizontal,
+                        padding = Thickness(20., 10.),
+                        backgroundColor = Color.LightGray,
+                        content = View.StackLayout(
+                            spacing = 0.,
+                            orientation = StackOrientation.Horizontal,
+                            children = List.map getPlayerInfoView players
+                        )
+                    )
+                ]
+            ),
+            created = (fun e -> NavigationPage.SetHasNavigationBar(e, false))
+        )
 
     let subscription =
         Cmd.ofSub (fun dispatch ->

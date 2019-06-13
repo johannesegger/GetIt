@@ -59,14 +59,9 @@ module Main =
 
     let private doWithSceneControl fn =
         doWithWindow (fun window ->
-            // TODO simplify if https://github.com/xamarin/Xamarin.Forms/issues/5921 is resolved
-            TreeHelper.FindChildren<Xamarin.Forms.Platform.WPF.Controls.FormsNavigationPage>(window, forceUsingTheVisualTreeHelper = true)
+            TreeHelper.FindChildren<FormsPanel>(window, forceUsingTheVisualTreeHelper = true)
+            |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
             |> Seq.tryHead
-            |> Option.bind (fun navigationPage ->
-                TreeHelper.FindChildren<FormsPanel>(navigationPage, forceUsingTheVisualTreeHelper = true)
-                |> Seq.filter (fun p -> p.Element.AutomationId = "scene")
-                |> Seq.tryHead
-            )
             |> function
             | Some sceneControl -> fn (sceneControl :> FrameworkElement) |> Result.Ok
             | None -> Result.Error "Scene control not found"
