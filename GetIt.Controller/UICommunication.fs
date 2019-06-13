@@ -50,7 +50,11 @@ module internal UICommunication =
                 let proc = Process.Start(startInfo)
 
                 let channel = Channel("127.0.0.1:1503", ChannelCredentials.Insecure)
+#if DEBUG
+                channel.ConnectAsync()
+#else
                 channel.ConnectAsync(Nullable<_>(DateTime.UtcNow.Add(TimeSpan.FromSeconds 30.)))
+#endif
                 |> Async.AwaitTask
                 |> Async.Catch
                 |> Async.RunSynchronously
