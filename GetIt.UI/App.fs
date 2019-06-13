@@ -458,7 +458,8 @@ module App =
                     |> sizeChanged (fun e ->
                         let size = { Width = e.Width; Height = e.Height }
                         let bounds = { Position = { X = -size.Width / 2.; Y = -size.Height / 2. }; Size = size }
-                        dispatch (SetSceneBounds bounds)
+                        if bounds <> Rectangle.zero then
+                            dispatch (SetSceneBounds bounds)
                     )
                     View.ScrollView(
                         verticalOptions = LayoutOptions.End,
