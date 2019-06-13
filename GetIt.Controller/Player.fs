@@ -29,6 +29,9 @@ type Player(playerId) =
     /// The pen that belongs to the player.
     member x.Pen with get () = x.Player.Pen
 
+    /// True, if the player should be drawn, otherwise false.
+    member x.IsVisible with get () = x.Player.IsVisible
+
     /// Removes the player from the scene.
     abstract member Dispose: unit -> unit
     default x.Dispose () =

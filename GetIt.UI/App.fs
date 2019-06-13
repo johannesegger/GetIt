@@ -38,6 +38,7 @@ module App =
         | ChangePenWeight of PlayerId * float
         | SetSizeFactor of PlayerId * float
         | ChangeSizeFactor of PlayerId * float
+        | SetVisibility of PlayerId * isVisible: bool
         | SetNextCostume of PlayerId
         | SendToBack of PlayerId
         | BringToFront of PlayerId
@@ -157,6 +158,9 @@ module App =
         | None, ChangeSizeFactor (playerId, sizeFactor) ->
             let model' = updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
             (model', Cmd.none)
+        | None, SetVisibility (playerId, isVisible) ->
+            let model' = updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
+            (model', Cmd.none)
         | None, SetNextCostume playerId ->
             let model' = updatePlayer playerId Player.nextCostume
             (model', Cmd.none)
@@ -255,6 +259,7 @@ module App =
                     View.ContentView(
                         widthRequest = boxSize.Width,
                         heightRequest = boxSize.Height,
+                        opacity = (if player.IsVisible then 1. else 0.5),
                         content = getPlayerView player
                     )
                     View.Label(
@@ -425,6 +430,12 @@ module App =
             model.Players
             |> Map.toList
             |> List.sortBy (snd >> fun p -> p.Layer)
+
+        let playersOnScene =
+            players
+            |> List.filter (snd >> fun p -> p.IsVisible)
+            |> List.rev
+
         View.NavigationPage(
             pages = [
                 View.ContentPage(
@@ -444,7 +455,7 @@ module App =
                                         |> layoutFlags AbsoluteLayoutFlags.All
                                         |> layoutBounds (Rectangle(0., 0., 1., 1.))
 
-                                        View.AbsoluteLayout(children = List.map getFullPlayerView (List.rev players))
+                                        View.AbsoluteLayout(children = List.map getFullPlayerView playersOnScene)
                                         |> layoutFlags AbsoluteLayoutFlags.All
                                         |> layoutBounds (Rectangle(0., 0., 1., 1.))
                                     ]

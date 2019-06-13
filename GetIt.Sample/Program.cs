@@ -47,7 +47,8 @@ namespace GetIt.Sample
             // Program30();
             // Program31();
             // Program32();
-            Program33();
+            // Program33();
+            Program34();
         }
 
         private static void Program1()
@@ -827,6 +828,24 @@ namespace GetIt.Sample
             }
 
             snakeHead.Say("Game over.");
+        }
+
+        private static void Program34()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            var player = Game.AddPlayer(PlayerData.Ant.WithPosition(100, 0));
+            Turtle.Say("Press <Space> to hide player");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            Turtle.ShutUp();
+            Turtle.Hide();
+            player.Hide();
+            Turtle.Say("You won't see that message.", 2);
+            Turtle.Show();
+            Turtle.Say("Press <Space> to show player.");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            player.Show();
+            Turtle.Say("Done.");
         }
     }
 }

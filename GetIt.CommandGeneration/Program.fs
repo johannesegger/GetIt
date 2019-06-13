@@ -859,6 +859,38 @@ let commands =
         }
 
         {
+            Name = "show"
+            CompiledName = "Show"
+            Summary = "Shows the player that has been hidden using <see cref=\"Hide\"/>."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player to show."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.setVisibility player.PlayerId true" ]
+        }
+
+        {
+            Name = "hide"
+            CompiledName = "Hide"
+            Summary = "Hides the player. Use <see cref=\"Show\"/> to unhide the player."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player to hide."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.setVisibility player.PlayerId false" ]
+        }
+
+        {
             Name = "onKeyDown"
             CompiledName = "OnKeyDown"
             Summary = "Registers an event handler that is called once when a specific keyboard key is pressed."

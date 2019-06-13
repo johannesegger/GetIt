@@ -30,6 +30,7 @@ service UI {
     rpc SetNextCostume (PlayerId) returns (google.protobuf.Empty);
     rpc SendToBack (PlayerId) returns (google.protobuf.Empty);
     rpc BringToFront (PlayerId) returns (google.protobuf.Empty);
+    rpc SetVisibility (PlayerVisibility) returns (google.protobuf.Empty);
     rpc MouseMoved (stream Position) returns (stream Position);
     rpc MouseClicked (VirtualScreenMouseClick) returns (MouseClick);
     rpc StartBatch (google.protobuf.Empty) returns (google.protobuf.Empty);
@@ -114,6 +115,7 @@ message PlayerData {
     repeated SvgImage costumes = 6;
     int32 costumeIndex = 7;
     int32 layer = 8;
+    bool isVisible = 9;
 }
 
 message Player {
@@ -163,6 +165,11 @@ message PlayerPenWeight {
 message PlayerSizeFactor {
     PlayerId playerId = 1;
     double sizeFactor = 2;
+}
+
+message PlayerVisibility {
+    PlayerId playerId = 1;
+    bool isVisible = 2;
 }
 
 enum MouseButton {

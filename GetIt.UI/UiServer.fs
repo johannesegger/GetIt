@@ -233,6 +233,15 @@ type UIServer(executeCommand: UIRequest -> unit, uiMessages: IObservable<UIRespo
 
         Task.FromResult empty
 
+    override this.SetVisibility (request: Ui.PlayerVisibility, context: ServerCallContext) : Task<Empty> =
+        Message.PlayerVisibility.ToDomain request
+        |> App.SetVisibility
+        |> UIRequestMsg
+        |> executeCommand
+        |> ignore
+
+        Task.FromResult empty
+
     override this.SetNextCostume (request: Ui.PlayerId, context: ServerCallContext) : Task<Empty> =
         Message.PlayerId.ToDomain request
         |> App.SetNextCostume

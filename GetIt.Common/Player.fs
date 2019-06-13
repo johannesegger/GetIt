@@ -48,6 +48,8 @@ type PlayerData =
         CostumeIndex: int
         /// The layer on which the player is drawn.
         Layer: int
+        /// True, if the player should be drawn, otherwise false.
+        IsVisible: bool
     }
     /// The current costume of the player.
     member this.Costume with get() = this.Costumes |> List.item this.CostumeIndex
@@ -105,6 +107,9 @@ type PlayerData =
     /// Copies the current player data and turns off the pen.
     member this.WithPenOff () = { this with Pen = { this.Pen with IsOn = false } }
 
+    /// Copies the current player data and sets the visibility.
+    member this.WithVisibility (isVisible: bool) = { this with IsVisible = isVisible }
+
     /// <summary>
     /// Copies the current player data and changes only the pen weight.
     /// </summary>
@@ -132,6 +137,7 @@ type PlayerData =
             Costumes = Seq.toList costumes
             CostumeIndex = 0
             Layer = 0
+            IsVisible = true
         }
 
     /// <summary>

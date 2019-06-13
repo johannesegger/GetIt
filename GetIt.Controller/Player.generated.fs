@@ -148,6 +148,12 @@ module private Raw =
     let getDistanceToMouse (player: GetIt.Player) =
         player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)
 
+    let show (player: GetIt.Player) =
+        UICommunication.setVisibility player.PlayerId true
+
+    let hide (player: GetIt.Player) =
+        UICommunication.setVisibility player.PlayerId false
+
     let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
         Model.onKeyDown key (fun () -> action.Invoke player)
 
@@ -436,6 +442,16 @@ type Turtle() =
     /// <returns>The distance from the player to the mouse pointer.</returns>
     static member GetDistanceToMouse () =
         Raw.getDistanceToMouse Turtle.Player
+
+    /// <summary>Shows the player that has been hidden using <see cref="Hide"/>.</summary>
+    /// <returns></returns>
+    static member Show () =
+        Raw.show Turtle.Player
+
+    /// <summary>Hides the player. Use <see cref="Show"/> to unhide the player.</summary>
+    /// <returns></returns>
+    static member Hide () =
+        Raw.hide Turtle.Player
 
     /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
@@ -855,6 +871,22 @@ type PlayerExtensions() =
     static member GetDistanceToMouse(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.getDistanceToMouse player
+
+    /// <summary>Shows the player that has been hidden using <see cref="Hide"/>.</summary>
+    /// <param name="player">The player to show.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Show(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.show player
+
+    /// <summary>Hides the player. Use <see cref="Show"/> to unhide the player.</summary>
+    /// <param name="player">The player to hide.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member Hide(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.hide player
 
     /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="player">The player that gets passed to the event handler.</param>

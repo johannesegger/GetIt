@@ -313,6 +313,12 @@ module internal UICommunication =
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Player.bringToFront playerId m.Players })
 
+    let setVisibility playerId isVisible =
+        Message.PlayerVisibility.FromDomain (playerId, isVisible)
+        |> runWithConnection (fun c -> c.SetVisibility)
+        |> ignore
+        Model.updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
+
     let setWindowTitle text =
         text
         |> Message.WindowTitle.FromDomain

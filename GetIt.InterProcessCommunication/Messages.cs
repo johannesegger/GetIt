@@ -238,7 +238,8 @@ namespace GetIt.Message
                 SpeechBubble = OptionalSpeechBubble.FromDomain(p.SpeechBubble),
                 Costumes = { p.Costumes.Select(SvgImage.FromDomain) },
                 CostumeIndex = p.CostumeIndex,
-                Layer = p.Layer
+                Layer = p.Layer,
+                IsVisible = p.IsVisible
             };
         }
 
@@ -252,7 +253,8 @@ namespace GetIt.Message
                 OptionalSpeechBubble.ToDomain(p.SpeechBubble),
                 SeqModule.ToList(p.Costumes.Select(SvgImage.ToDomain)),
                 p.CostumeIndex,
-                p.Layer
+                p.Layer,
+                p.IsVisible
             );
         }
     }
@@ -437,6 +439,25 @@ namespace GetIt.Message
             return Tuple.Create(
                 PlayerId.ToDomain(p.PlayerId),
                 p.SizeFactor
+            );
+        }
+    }
+
+    public static class PlayerVisibility
+    {
+        public static Ui.PlayerVisibility FromDomain(Tuple<GetIt.PlayerId, bool> p)
+        {
+            return new Ui.PlayerVisibility {
+                PlayerId = PlayerId.FromDomain(p.Item1),
+                IsVisible = p.Item2
+            };
+        }
+
+        public static Tuple<GetIt.PlayerId, bool> ToDomain(Ui.PlayerVisibility p)
+        {
+            return Tuple.Create(
+                PlayerId.ToDomain(p.PlayerId),
+                p.IsVisible
             );
         }
     }
