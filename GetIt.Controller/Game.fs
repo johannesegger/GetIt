@@ -174,7 +174,6 @@ type Game() =
             init
             |> addMany configParams
             |> add "sourceFiles" sourceFiles
-            |> add "hasSourceFiles" (not <| List.isEmpty sourceFiles)
             |> add "screenshot" base64ImageData
             |> fromText documentTemplate
 
@@ -196,7 +195,7 @@ type Game() =
         do
             use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
 
-            let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
+            let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -print-settings \"duplex\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
             let exitCode =
                 try
                     use sumatraProcess = Process.Start(sumatraStartInfo)

@@ -47,8 +47,7 @@ namespace GetIt.Sample
             // Program30();
             // Program31();
             // Program32();
-            // Program33();
-            Program34();
+            Program33();
         }
 
         private static void Program1()
@@ -608,16 +607,6 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            // Game.Print(PrintConfig.Create("print-template.html", "Brother HL-5140 series").Set("name", "Johannes Egger"));
-            Environment.SetEnvironmentVariable("GET_IT_PRINT_CONFIG", "{ \"templatePath\": \"GetIt.Sample\\\\sample-print-template.html\", \"printerName\": \"Microsoft Print to PDF\" }");
-            Game.Print(PrintConfig.CreateFromEnvironment().Set("name", "Johannes Egger"));
-            Turtle.Say("Done.");
-        }
-
-        private static void Program29()
-        {
-            Game.ShowSceneAndAddTurtle();
-
             Turtle.SetPenWeight(5);
 
             Turtle.TurnOnPen();
@@ -658,7 +647,7 @@ namespace GetIt.Sample
             Turtle.Say("Awesome");
         }
 
-        private static void Program30()
+        private static void Program29()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -676,7 +665,7 @@ namespace GetIt.Sample
             Game.SetWindowTitle(null);
         }
 
-        private static void Program31()
+        private static void Program30()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -689,7 +678,7 @@ namespace GetIt.Sample
             player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
         }
 
-        private static void Program32()
+        private static void Program31()
         {
             Game.ShowScene();
 
@@ -705,7 +694,7 @@ namespace GetIt.Sample
             turtle.MoveInDirection(200);
         }
 
-        private static void Program33()
+        private static void Program32()
         {
             Game.ShowScene();
 
@@ -738,7 +727,7 @@ namespace GetIt.Sample
             turtle1.BringToFront();
         }
 
-        private static void Program34()
+        private static void Program33()
         {
             Game.ShowScene();
 
