@@ -12,6 +12,7 @@
     <Compile Include="SvgImage.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Input.fs" />
+    <Compile Include="Misc.fs" />
   </ItemGroup>
 
   <ItemGroup>

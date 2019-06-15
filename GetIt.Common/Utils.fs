@@ -5,17 +5,20 @@ open System.IO
 open System.Text.RegularExpressions
 open System.Xml
 
+/// Thrown when an exception is encountered.
 type GetItException =
     inherit Exception
     new (message: string) = { inherit Exception(message) }
     new (message: string, innerException: exn) = { inherit Exception (message, innerException) }
 
+/// For internal use only.
 [<AutoOpen>]
 module Utils =
     let curry fn a b = fn (a, b)
     let uncurry fn (a, b) = fn a b
     let flip fn a b = fn b a
 
+/// For internal use only.
 module Svg =
     let parseViewBox (text: string) =
         let parts =
@@ -62,7 +65,8 @@ module Svg =
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 
-module ByChance =
+/// Provides some easy to use functions for randomness.
+module Randomly =
     let private generator = Random()
 
     /// Randomly selects an item from a list
@@ -71,11 +75,13 @@ module ByChance =
         let index = generator.Next(Array.length items)
         Array.item index items
 
+/// For internal use only.
 module Result =
     let ofOption error = function
         | Some o -> Result.Ok o
         | None -> Result.Error error
 
+/// For internal use only.
 module Async =
     let map fn a = async {
         let! p = a

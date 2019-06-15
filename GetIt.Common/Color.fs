@@ -2,6 +2,7 @@ namespace GetIt
 
 open System
 
+/// Defines a color.
 type RGBAColor =
     {
         /// The red part of the color.
@@ -23,7 +24,7 @@ type RGBAColor =
 
         /// Randomly selects a color from a list of colors
         static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
-            ByChance.selectOneOf colors
+            Randomly.selectOneOf colors
 
 module internal RGBAColor =
     let rgbHexNotation v =
@@ -112,6 +113,7 @@ module private HSLA =
                 Alpha = alpha
             }
 
+/// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Color =
     let hueShift angle color =
@@ -120,6 +122,7 @@ module Color =
         { hslaColor with Hue = shiftedValue }
         |> HSLA.toRGBA
 
+/// Defines some common colors.
 module RGBAColors =
     [<CompiledName("AliceBlue")>]
     let aliceBlue = { Red = 0xf0uy; Green = 0xf8uy; Blue = 0xffuy; Alpha = 0xffuy }

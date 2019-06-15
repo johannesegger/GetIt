@@ -119,6 +119,7 @@ type Game() =
         Game.showScene Maximized
         Game.addTurtle ()
 
+    /// Sets the title of the window.
     static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
         UICommunication.setWindowTitle textOpt

@@ -2,6 +2,7 @@ namespace GetIt
 
 open System
 
+/// Defines some common keys on a keyboard.
 type KeyboardKey =
     | Space
     | Escape
@@ -47,36 +48,43 @@ type KeyboardKey =
     | Digit8
     | Digit9
 
+/// For internal use only.
 type KeyboardState =
     {
         KeysPressed: Set<KeyboardKey>
     }
 
+/// For internal use only.
 module KeyboardState =
     let empty = { KeysPressed = Set.empty }
 
+/// Defines some common mouse button.
 type MouseButton =
     | Primary
     | Secondary
 
+/// Defines data of a mouse click event.
 type MouseClick =
     {
         Button: MouseButton
         Position: Position
     }
 
+/// For internal use only.
 type VirtualScreenMouseClick =
     {
         Button: MouseButton
         VirtualScreenPosition: Position
     }
 
+/// For internal use only.
 type MouseState =
     {
         Position: Position
         LastClick: (Guid * MouseClick) option
     }
 
+/// For internal use only.
 module MouseState =
     let empty =
         {
@@ -84,15 +92,9 @@ module MouseState =
             LastClick = None
         }
 
-type ControllerEvent =
+/// For internal use only.
+type InputEvent =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
     | MouseMove of virtualScreenPosition: Position
     | MouseClick of VirtualScreenMouseClick
-
-type PngImage = PngImage of byte[]
-
-module PngImage =
-    let toBase64String (PngImage data) =
-        Convert.ToBase64String data
-        |> sprintf "data:image/png;base64, %s"

@@ -2,6 +2,7 @@ namespace GetIt
 
 open System
 
+/// Defines an angle in degrees where 0 <= angle < 360.
 type Degrees = private Degrees of float
     with
         static member op_Equality (x: Degrees, y: Degrees) = x = y
@@ -25,6 +26,7 @@ type Degrees = private Degrees of float
         static member op_Implicit value =
             Degrees.Create value
 
+/// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Degrees =
     let zero = Degrees 0.
@@ -60,6 +62,7 @@ type Position =
             Y = p1.Y + p2.Y
         }
 
+/// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Position =
     let zero = { X = 0.; Y = 0. }
@@ -89,6 +92,7 @@ type Size =
             Height = size.Height * factor
         }
 
+/// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Size =
     let zero =
@@ -117,6 +121,7 @@ type Rectangle =
     /// The y-coordinate of the bottom edge.
     member this.Bottom with get() = this.Position.Y
 
+/// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Rectangle =
     let zero =
@@ -127,7 +132,3 @@ module Rectangle =
         rectangle.Right >= position.X &&
         rectangle.Top >= position.Y &&
         rectangle.Bottom <= position.Y
-
-type SceneSize =
-    | SpecificSize of Size
-    | Maximized
