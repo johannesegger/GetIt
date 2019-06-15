@@ -5,26 +5,35 @@ open System
 /// Defines an angle in degrees where 0 <= angle < 360.
 type Degrees = private Degrees of float
     with
-        static member op_Equality (x: Degrees, y: Degrees) = x = y
-        static member op_Inequality (x: Degrees, y: Degrees) = x <> y
-        static member op_GreaterThan (x: Degrees, y: Degrees) = x > y
-        static member op_GreaterThanOrEqual (x: Degrees, y: Degrees) = x >= y
-        static member op_LessThan (x: Degrees, y: Degrees) = x < y
-        static member op_LessThanOrEqual (x: Degrees, y: Degrees) = x <= y
-        static member private Create(value) =
-            Degrees ((value % 360. + 360.) % 360.)
+    static member op_Equality (x: Degrees, y: Degrees) = x = y
+    static member op_Inequality (x: Degrees, y: Degrees) = x <> y
+    static member op_GreaterThan (x: Degrees, y: Degrees) = x > y
+    static member op_GreaterThanOrEqual (x: Degrees, y: Degrees) = x >= y
+    static member op_LessThan (x: Degrees, y: Degrees) = x < y
+    static member op_LessThanOrEqual (x: Degrees, y: Degrees) = x <= y
+    static member private Create(value) =
+        Degrees ((value % 360. + 360.) % 360.)
 
-        static member (+) (Degrees v1, Degrees v2) =
-            Degrees.Create (v1 + v2)
+    static member (+) (Degrees v1, Degrees v2) =
+        Degrees.Create (v1 + v2)
 
-        static member (-) (Degrees v1, Degrees v2) =
-            Degrees.Create (v1 - v2)
+    static member (-) (Degrees v1, Degrees v2) =
+        Degrees.Create (v1 - v2)
 
-        static member (~-) (Degrees v) =
-            Degrees.Create -v
+    static member (~-) (Degrees v) =
+        Degrees.Create -v
 
-        static member op_Implicit value =
-            Degrees.Create value
+    static member op_Implicit value =
+        Degrees.Create value
+
+    override this.ToString () =
+        let (Degrees value) = this
+        value.ToString()
+
+    interface IFormattable with
+        member this.ToString (format: string, formatProvider: IFormatProvider) =
+            let (Degrees value) = this
+            value.ToString(format, formatProvider)
 
 /// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
