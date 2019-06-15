@@ -48,7 +48,8 @@ namespace GetIt.Sample
             // Program31();
             // Program32();
             // Program33();
-            Program34();
+            // Program34();
+            Program35();
         }
 
         private static void Program1()
@@ -846,6 +847,22 @@ namespace GetIt.Sample
             Game.WaitForKeyDown(KeyboardKey.Space);
             player.Show();
             Turtle.Say("Done.");
+        }
+
+        private static void Program35()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            var player = Game.AddPlayer(PlayerData.Ant.WithPosition(400, 200));
+            for (int i = 0; i < 7; i++)
+            {
+                player.MoveLeft(100);
+                Turtle.Say($"Distance: {Turtle.GetDistanceTo(player):F2}\r\nAngle: {Turtle.GetDirectionTo(player):F2}");
+                player.Say("Press <Space> to continue.");
+                Game.WaitForKeyDown(KeyboardKey.Space);
+            }
+            Turtle.Say("Done.");
+            player.ShutUp();
         }
     }
 }

@@ -859,6 +859,50 @@ let commands =
         }
 
         {
+            Name = "getDirectionTo"
+            CompiledName = "GetDirectionTo"
+            Summary = "Calculates the direction from the player to another player."
+            Parameters =
+                [
+                    {
+                        Name = "player1"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+
+                    {
+                        Name = "player2"
+                        Type = typeof<GetIt.Player>
+                        Description = "The other player."
+                    }
+                ]
+            Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to another player." }
+            Body = [ "player1.Position |> Position.angleTo player2.Position" ]
+        }
+
+        {
+            Name = "getDistanceTo"
+            CompiledName = "GetDistanceTo"
+            Summary = "Calculates the distance from the player to another player."
+            Parameters =
+                [
+                    {
+                        Name = "player1"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player."
+                    }
+
+                    {
+                        Name = "player2"
+                        Type = typeof<GetIt.Player>
+                        Description = "The other player."
+                    }
+                ]
+            Result = { Type = typeof<float>; Description = "The distance from the player to another player." }
+            Body = [ "player1.Position |> Position.distanceTo player2.Position" ]
+        }
+
+        {
             Name = "show"
             CompiledName = "Show"
             Summary = "Shows the player that has been hidden using <see cref=\"Hide\"/>."

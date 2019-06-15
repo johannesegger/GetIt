@@ -148,6 +148,12 @@ module private Raw =
     let getDistanceToMouse (player: GetIt.Player) =
         player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)
 
+    let getDirectionTo (player1: GetIt.Player) (player2: GetIt.Player) =
+        player1.Position |> Position.angleTo player2.Position
+
+    let getDistanceTo (player1: GetIt.Player) (player2: GetIt.Player) =
+        player1.Position |> Position.distanceTo player2.Position
+
     let show (player: GetIt.Player) =
         UICommunication.setVisibility player.PlayerId true
 
@@ -442,6 +448,20 @@ type Turtle() =
     /// <returns>The distance from the player to the mouse pointer.</returns>
     static member GetDistanceToMouse () =
         Raw.getDistanceToMouse Turtle.Player
+
+    /// <summary>Calculates the direction from the player to another player.</summary>
+    /// <param name="player2">The other player.</param>
+    /// <returns>The direction from the player to another player.</returns>
+    static member GetDirectionTo (player2: GetIt.Player) =
+        if obj.ReferenceEquals(player2, null) then raise (ArgumentNullException "player2")
+        Raw.getDirectionTo Turtle.Player player2
+
+    /// <summary>Calculates the distance from the player to another player.</summary>
+    /// <param name="player2">The other player.</param>
+    /// <returns>The distance from the player to another player.</returns>
+    static member GetDistanceTo (player2: GetIt.Player) =
+        if obj.ReferenceEquals(player2, null) then raise (ArgumentNullException "player2")
+        Raw.getDistanceTo Turtle.Player player2
 
     /// <summary>Shows the player that has been hidden using <see cref="Hide"/>.</summary>
     /// <returns></returns>
@@ -871,6 +891,26 @@ type PlayerExtensions() =
     static member GetDistanceToMouse(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.getDistanceToMouse player
+
+    /// <summary>Calculates the direction from the player to another player.</summary>
+    /// <param name="player1">The player.</param>
+    /// <param name="player2">The other player.</param>
+    /// <returns>The direction from the player to another player.</returns>
+    [<Extension>]
+    static member GetDirectionTo(player1: GetIt.Player, player2: GetIt.Player) =
+        if obj.ReferenceEquals(player1, null) then raise (ArgumentNullException "player1")
+        if obj.ReferenceEquals(player2, null) then raise (ArgumentNullException "player2")
+        Raw.getDirectionTo player1 player2
+
+    /// <summary>Calculates the distance from the player to another player.</summary>
+    /// <param name="player1">The player.</param>
+    /// <param name="player2">The other player.</param>
+    /// <returns>The distance from the player to another player.</returns>
+    [<Extension>]
+    static member GetDistanceTo(player1: GetIt.Player, player2: GetIt.Player) =
+        if obj.ReferenceEquals(player1, null) then raise (ArgumentNullException "player1")
+        if obj.ReferenceEquals(player2, null) then raise (ArgumentNullException "player2")
+        Raw.getDistanceTo player1 player2
 
     /// <summary>Shows the player that has been hidden using <see cref="Hide"/>.</summary>
     /// <param name="player">The player to show.</param>
