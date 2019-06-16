@@ -46,7 +46,7 @@ steps:
     versionEnvVar: Build.BuildNumber
 - task: PublishPipelineArtifact@0
   inputs:
-    artifactName: 'GetIt NuGet package'
+    artifactName: 'GetIt.nupkg'
     targetPath: ''
 # - task: PublishBuildArtifacts@1
 #   inputs:
