@@ -15,6 +15,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: GitVersion@4
+  inputs:
+    preferBundledVersion: false
 # - task: DotNetCoreCLI@2
 #   inputs:
 #     command: 'run'
