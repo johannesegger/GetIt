@@ -53,7 +53,7 @@ steps:
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
     artifactName: 'GetIt.nupkg'
-    targetPath: ''
+    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
 # - task: PublishBuildArtifacts@1
 #   inputs:
 #     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
