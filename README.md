@@ -28,7 +28,7 @@
     scoop install sumatrapdf
     ```
 
-    1. Install the fabulous package manager [scoop](https://scoop.sh/). Note that scoop currently needs Windows PowerShell 3 or later and .NET Framework 4.5 or later.
+    1. Install the fabulous package manager [scoop](https://scoop.sh/). Note that scoop currently needs Windows PowerShell 5 or later and .NET Framework 4.5 or later.
     1. Install [VSCode](https://code.visualstudio.com/), a universal development environment that is just awesome.
     1. Install an extension for VSCode that helps with writing C# programs.
     1. Install the [.NET Core SDK](https://www.microsoft.com/net/) which basically contains all you need to run C# programs.
@@ -52,7 +52,7 @@
 ## Features
 
 * For simplicity, the only namespace you need to open is `GetIt`.
-* Game-related functionality is contained in the static class `Game`.
+* Functionality that is related to the whole game is contained in the static class `Game`.
 * Functionality for the default player added by `Game.ShowSceneAndAddTurtle` can be accessed via the static class `Turtle`. All other players have extension methods with the same set of methods.
 * Drawing
   * Every player has a pen that can be turned on or off, has a color and a weight. Type `Turtle.Pen` and VSCode shows a list of commands that do something with the pen.
@@ -72,7 +72,7 @@
 
 ![Sample](docs/sample.gif)
 
-> Note that this uses an old version of `GetIt` where some commands have a different name.
+> Note that this uses an older version of `GetIt` where some commands have a different name.
 
 ## Credits
 
