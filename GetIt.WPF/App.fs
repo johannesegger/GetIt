@@ -167,7 +167,7 @@ module Main =
         // System.Diagnostics.Debugger.Launch() |> ignore
 
         printfn "Starting message server."
-        let server = Server.start "localhost" 1503 executeCommand updateSubject
+        let server = Server.startWithSpecificPort "localhost" 1503 executeCommand updateSubject
 
         use mre = new ManualResetEventSlim()
         mre.Wait()
