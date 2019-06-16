@@ -100,27 +100,42 @@ module Main =
             | None -> "Get It"
         window.Title <- title
 
+    let private dispatchSubject = new System.Reactive.Subjects.Subject<App.Msg>()
+    let private updateSubject = new System.Reactive.Subjects.Subject<App.Msg * App.Model>()
+
     let executeCommand cmd =
         match cmd with
         | ShowScene windowSize ->
-            let start onStarted onClosed =
-                let app = System.Windows.Application()
-                app.Exit.Subscribe(fun args -> onClosed()) |> ignore
-                Forms.Init()
-                let window = MainWindow()
-                match windowSize with
-                | SpecificSize size ->
-                    window.Width <- size.Width
-                    window.Height <- size.Height
-                | Maximized ->
-                    window.WindowState <- WindowState.Maximized
-                setWindowTitle window None
-                window.Icon <- windowIcon
-                window.LoadApplication(GetIt.App ())
-                onStarted()
-                app.Run(window)
-            GetIt.App.showScene start
+            use signal = new ManualResetEventSlim()
+            let uiThread =
+                Thread(
+                    (fun () ->
+                        let app = System.Windows.Application()
+                        Forms.Init()
+                        let window = MainWindow()
+                        match windowSize with
+                        | SpecificSize size ->
+                            window.Width <- size.Width
+                            window.Height <- size.Height
+                        | Maximized ->
+                            window.WindowState <- WindowState.Maximized
+                        setWindowTitle window None
+                        window.Icon <- windowIcon
+                        window.LoadApplication(GetIt.App(Subject.Create(updateSubject, dispatchSubject)))
+                        signal.Set()
+
+                        app.Run(window)
+                        |> Environment.Exit // shut everything down when the UI thread exits
+                    ),
+                    Name = "Fabulous UI",
+                    ApartmentState = ApartmentState.STA,
+                    IsBackground = false
+                )
+            uiThread.Start()
+            signal.Wait()
+
             // TODO remove if https://github.com/xamarin/Xamarin.Forms/issues/5910 is resolved
+            // TODO check if we could do this in `window.Loaded`
             doWithSceneControl (fun sceneControl -> sceneControl.ClipToBounds <- true)
             None
         | SetWindowTitle text ->
@@ -136,15 +151,15 @@ module Main =
         | MouseMoved virtualScreenPosition ->
             getPositionOnSceneControl virtualScreenPosition
             |> App.SetMousePosition
-            |> App.uiMessages.OnNext
+            |> dispatchSubject.OnNext
             None
         | MouseClicked virtualMouseClick ->
             let position = getPositionOnSceneControl virtualMouseClick.VirtualScreenPosition
             App.ApplyMouseClick (virtualMouseClick.Button, position)
-            |> App.uiMessages.OnNext
+            |> dispatchSubject.OnNext
             None
         | UIRequestMsg message ->
-            App.uiMessages.OnNext message
+            dispatchSubject.OnNext message
             None
 
     [<EntryPoint>]
@@ -152,20 +167,11 @@ module Main =
         // System.Diagnostics.Debugger.Launch() |> ignore
 
         printfn "Starting message server."
-        let server = Server()
-        server.Ports.Add("localhost", 1503, ServerCredentials.Insecure) |> ignore
-        let directResponseSubject = new System.Reactive.Subjects.Subject<_>()
-        let executeCommand' cmd =
-            executeCommand cmd
-            |> Option.iter directResponseSubject.OnNext
-        let uiMessages =
-            App.uiMessages
-            |> Observable.map UIResponseMsg
-            |> Observable.merge directResponseSubject
-        server.Services.Add(Ui.UI.BindService(UIServer(executeCommand', uiMessages)))
-        server.Start()
+        let server = Server.start "localhost" 1503 executeCommand updateSubject
 
         use mre = new ManualResetEventSlim()
         mre.Wait()
+
+        server.ShutdownAsync() |> Async.AwaitTask |> Async.RunSynchronously
 
         0

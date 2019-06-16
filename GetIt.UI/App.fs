@@ -71,11 +71,7 @@ module App =
 
     let init () = (initModel, Cmd.none)
 
-    let private dispatchSubject = new System.Reactive.Subjects.Subject<Msg>()
-    let private updateSubject = new System.Reactive.Subjects.Subject<Msg * Model>()
-    let uiMessages = Subject.Create(dispatchSubject, updateSubject)
-
-    let rec update msg model =
+    let rec update (msgs: IObserver<_>) msg model =
         let updatePlayer playerId fn =
             let player = Map.find playerId model.Players |> fn
             { model with Players = Map.add playerId player model.Players }
@@ -110,13 +106,13 @@ module App =
             (model', Cmd.none)
         | None, ChangePosition (playerId, relativePosition) ->
             let player = Map.find playerId model.Players
-            update (SetPosition (playerId, player.Position + relativePosition)) model
+            update msgs (SetPosition (playerId, player.Position + relativePosition)) model
         | None, SetDirection (playerId, angle) ->
             let model' = updatePlayer playerId (fun p -> { p with Direction = angle })
             (model', Cmd.none)
         | None, ChangeDirection (playerId, relativeDirection) ->
             let player = Map.find playerId model.Players
-            update (SetDirection (playerId, player.Direction + relativeDirection)) model
+            update msgs (SetDirection (playerId, player.Direction + relativeDirection)) model
         | None, SetSpeechBubble (playerId, speechBubble) ->
             let model' = updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
             (model', Cmd.none)
@@ -204,7 +200,7 @@ module App =
             (model', Cmd.none)
         | Some (messages, level), ApplyBatch ->
             let updateAndMerge msg (model, cmd) =
-                let (model', cmd') = update msg model
+                let (model', cmd') = update msgs msg model
                 model', Cmd.batch [ cmd; cmd' ]
             (messages, ({ model with BatchMessages = None }, Cmd.none))
             ||> List.foldBack updateAndMerge
@@ -212,7 +208,7 @@ module App =
             let model' = { model with BatchMessages = Some (x :: messages, level) }
             model', Cmd.none
         |> fun (model, cmd) ->
-            updateSubject.OnNext (msg, model)
+            msgs.OnNext (msg, model)
             (model, cmd)
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("Formatting", "TupleCommaSpacing") >]
@@ -477,37 +473,22 @@ module App =
             created = (fun e -> NavigationPage.SetHasNavigationBar(e, false))
         )
 
-    let subscription =
+    let subscription msgs =
         Cmd.ofSub (fun dispatch ->
-            let d = dispatchSubject.Subscribe(dispatch)
+            let d = msgs |> Observable.subscribe dispatch
             ()
         )
 
     // Note, this declaration is needed if you enable LiveUpdate
-    let program =
-        Program.mkProgram init update view
-        |> Program.withSubscription (fun _ -> subscription)
+    let program msgs =
+        Program.mkProgram init (update msgs) view
+        |> Program.withSubscription (fun _ -> subscription msgs)
 
-    let showScene start =
-        use signal = new ManualResetEventSlim()
-        let uiThread = Thread(fun () ->
-            let cts = new CancellationTokenSource()
-            let exitCode = start signal.Set (fun () -> cts.Cancel())
-            Environment.Exit exitCode // shut everything down when the UI thread exits
-        )
-
-        uiThread.Name <- "Fabulous UI"
-        uiThread.SetApartmentState ApartmentState.STA
-        uiThread.IsBackground <- false
-        uiThread.Start()
-        signal.Wait()
-
-
-type App () as app = 
+type App (msgs: ISubject<_, _>) as app = 
     inherit Application ()
 
     let runner = 
-        App.program
+        App.program msgs
         // |> Program.withConsoleTrace // this slows down execution by a lot, so uncomment with caution
         |> Program.runWithDynamicView app
 

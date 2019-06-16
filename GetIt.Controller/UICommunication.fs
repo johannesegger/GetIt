@@ -9,100 +9,48 @@ open FSharp.Control.Reactive
 open Google.Protobuf.WellKnownTypes
 open Grpc.Core
 
+
 module internal UICommunication =
-    let mutable private connection = None
-
-    let setupLocalConnectionToUIProcess() =
-        if Option.isSome connection then raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
-        let localConnection =
-            if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-                Process.GetProcessesByName("GetIt.WPF")
-                |> Seq.iter (fun p ->
-                    if not <| p.CloseMainWindow() then p.Kill()
-                    p.WaitForExit()
-                )
-
-                let startInfo =
+    let setupConnectionToUI host port = async {
+        let channel = Channel(sprintf "%s:%d" host port, ChannelCredentials.Insecure)
+        let! connectionResult =
 #if DEBUG
-                    let path =
-                        let rec parentPaths path acc =
-                            if isNull path then List.rev acc
-                            else parentPaths (Path.GetDirectoryName path) (path :: acc)
-                        parentPaths (Path.GetFullPath ".") []
-                        |> Seq.choose (fun p ->
-                            let projectDir = Path.Combine(p, "GetIt.WPF")
-                            if Directory.Exists projectDir
-                            then Some projectDir
-                            else None
-                        )
-                        |> Seq.head
-                    ProcessStartInfo("dotnet", sprintf "run --project %s" path)
+            channel.ConnectAsync()
 #else
-                    let baseDir =
-                        System.Reflection.Assembly.GetExecutingAssembly().Location
-                        |> Path.GetDirectoryName
-                        |> Path.GetDirectoryName
-                        |> Path.GetDirectoryName
-                    let path = Path.Combine(baseDir, "runtimes", "win-x64", "native", "GetIt.UI", "GetIt.WPF.exe")
-                    ProcessStartInfo(path)
+            channel.ConnectAsync(Nullable<_>(DateTime.UtcNow.Add(TimeSpan.FromSeconds 30.)))
 #endif
+            |> Async.AwaitTask
+            |> Async.Catch
 
-                let proc = Process.Start(startInfo)
+        match connectionResult with
+        | Choice1Of2 () -> ()
+        | Choice2Of2 e -> raise (GetItException ("Can't connect to UI.", e))
 
-                let channel = Channel("127.0.0.1:1503", ChannelCredentials.Insecure)
-#if DEBUG
-                channel.ConnectAsync()
-#else
-                channel.ConnectAsync(Nullable<_>(DateTime.UtcNow.Add(TimeSpan.FromSeconds 30.)))
-#endif
-                |> Async.AwaitTask
-                |> Async.Catch
-                |> Async.RunSynchronously
-                |> function
-                | Choice1Of2 () -> ()
-                | Choice2Of2 e -> raise (GetItException ("Can't connect to UI.", e))
-                async {
-                    while true do
-                        let before = channel.State
-                        do! channel.WaitForStateChangedAsync(before, Nullable<_>()) |> Async.AwaitTask
-                        let after = channel.State
-                        if before = ChannelState.Ready && after = ChannelState.Idle then // TODO not sure if this is the preferred way to detect server shutdown
-                            // Close the application if the UI has been closed (throwing an exception might be confusing)
-                            // TODO dispose subscriptions etc. ?
-                            Environment.Exit 0
-                }
-                |> Async.Start
-                Ui.UI.UIClient(channel)
-            else
-                raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+        async {
+            while true do
+                let before = channel.State
+                do! channel.WaitForStateChangedAsync(before, Nullable<_>()) |> Async.AwaitTask
+                let after = channel.State
+                if before = ChannelState.Ready && after = ChannelState.Idle then // TODO not sure if this is the preferred way to detect server shutdown
+                    // Close the application if the UI has been closed (throwing an exception might be confusing)
+                    // TODO dispose subscriptions etc. ?
+                    Environment.Exit 0
+        }
+        |> Async.Start
 
-        connection <- Some localConnection
+        return channel
+    }
 
-    let private runWithConnection fn arg =
-        match connection with
-        | Some connection ->
-            try
-                fn connection arg
-            with e ->
-                // TODO verify it's the connection that failed 
-                // TODO dispose subscriptions etc. ?
-#if !DEBUG
-                Environment.Exit 0
-#endif
-                raise (GetItException ("Error while executing command", e))
-        | None ->
-            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
-
-    let showScene sceneSize =
+    let showScene (connection: Ui.UI.UIClient) sceneSize =
         let sceneBounds =
             sceneSize
             |> Message.SceneSize.FromDomain
-            |> runWithConnection (fun c -> c.ShowScene)
+            |> connection.ShowScene
             |> Message.Rectangle.ToDomain
         Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })
 
         async {
-            use sceneBoundsSubscription = runWithConnection (fun c -> c.SceneBoundsChanged) (Empty())
+            use sceneBoundsSubscription = connection.SceneBoundsChanged (Empty())
             use enumerator = sceneBoundsSubscription.ResponseStream
             let rec iterate () = async {
                 let! hasMore = enumerator.MoveNext(CancellationToken.None) |> Async.AwaitTask
@@ -120,7 +68,7 @@ module internal UICommunication =
 
         let waitHandle = new ManualResetEventSlim()
         async {
-            use mouseMovedSubscription = runWithConnection (fun c () -> c.MouseMoved ()) ()
+            use mouseMovedSubscription = connection.MouseMoved ()
             use enumerator = mouseMovedSubscription.ResponseStream
             let rec iterate () = async {
                 let! hasMore = enumerator.MoveNext(CancellationToken.None) |> Async.AwaitTask
@@ -161,7 +109,7 @@ module internal UICommunication =
                     let! ct = Async.CancellationToken
                     let! mouseClick =
                         Message.VirtualScreenMouseClick.FromDomain mouseClick
-                        |> runWithConnection (fun c request -> c.MouseClickedAsync(request, cancellationToken = ct))
+                        |> fun request -> connection.MouseClickedAsync(request, cancellationToken = ct)
                         |> fun p -> p.ResponseAsync
                         |> Async.AwaitTask
                         |> Async.map Message.MouseClick.ToDomain
@@ -190,167 +138,167 @@ module internal UICommunication =
 
         waitHandle.Wait()
 
-    let addPlayer playerData =
+    let addPlayer (connection: Ui.UI.UIClient) playerData =
         let playerId = PlayerId.create ()
         Message.Player.FromDomain (playerId, playerData)
-        |> runWithConnection (fun c -> c.AddPlayer)
+        |> connection.AddPlayer
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
 
-    let removePlayer playerId =
+    let removePlayer (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> runWithConnection (fun c -> c.RemovePlayer)
+        |> connection.RemovePlayer
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Map.remove playerId m.Players })
 
-    let setPosition playerId position =
+    let setPosition (connection: Ui.UI.UIClient) playerId position =
         Message.PlayerPosition.FromDomain (playerId, position)
-        |> runWithConnection (fun c -> c.SetPosition)
+        |> connection.SetPosition
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Position = position })
 
-    let changePosition playerId relativePosition =
+    let changePosition (connection: Ui.UI.UIClient) playerId relativePosition =
         Message.PlayerPosition.FromDomain (playerId, relativePosition)
-        |> runWithConnection (fun c -> c.ChangePosition)
+        |> connection.ChangePosition
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Position = p.Position + relativePosition })
 
-    let setDirection playerId direction =
+    let setDirection (connection: Ui.UI.UIClient) playerId direction =
         Message.PlayerDirection.FromDomain (playerId, direction)
-        |> runWithConnection (fun c -> c.SetDirection)
+        |> connection.SetDirection
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Direction = direction })
 
-    let changeDirection playerId relativeDirection =
+    let changeDirection (connection: Ui.UI.UIClient) playerId relativeDirection =
         Message.PlayerDirection.FromDomain (playerId, relativeDirection)
-        |> runWithConnection (fun c -> c.ChangeDirection)
+        |> connection.ChangeDirection
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Direction = p.Direction + relativeDirection })
 
-    let say playerId text =
+    let say (connection: Ui.UI.UIClient) playerId text =
         Message.PlayerText.FromDomain (playerId, text)
-        |> runWithConnection (fun c -> c.Say)
+        |> connection.Say
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Say text) })
 
-    let ask playerId text =
+    let ask (connection: Ui.UI.UIClient) playerId text =
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Ask text) })
         try
             Message.PlayerText.FromDomain (playerId, text)
-            |> runWithConnection (fun c -> c.Ask)
+            |> connection.Ask
             |> Message.Answer.ToDomain
         finally
             Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
 
-    let shutUp playerId =
+    let shutUp (connection: Ui.UI.UIClient) playerId =
         let answer =
             Message.PlayerId.FromDomain playerId
-            |> runWithConnection (fun c -> c.ShutUp)
+            |> connection.ShutUp
             |> ignore
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
         answer
 
-    let setPenState playerId isOn =
+    let setPenState (connection: Ui.UI.UIClient) playerId isOn =
         Message.PlayerPenState.FromDomain (playerId, isOn)
-        |> runWithConnection (fun c -> c.SetPenState)
+        |> connection.SetPenState
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
 
-    let togglePenState playerId =
+    let togglePenState (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> runWithConnection (fun c -> c.TogglePenState)
+        |> connection.TogglePenState
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
 
-    let setPenColor playerId color =
+    let setPenColor (connection: Ui.UI.UIClient) playerId color =
         Message.PlayerPenColor.FromDomain (playerId, color)
-        |> runWithConnection (fun c -> c.SetPenColor)
+        |> connection.SetPenColor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
 
-    let shiftPenColor playerId angle =
+    let shiftPenColor (connection: Ui.UI.UIClient) playerId angle =
         Message.PlayerPenColorShift.FromDomain (playerId, angle)
-        |> runWithConnection (fun c -> c.ShiftPenColor)
+        |> connection.ShiftPenColor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
 
-    let setPenWeight playerId weight =
+    let setPenWeight (connection: Ui.UI.UIClient) playerId weight =
         Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> runWithConnection (fun c -> c.SetPenWeight)
+        |> connection.SetPenWeight
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
 
-    let changePenWeight playerId weight =
+    let changePenWeight (connection: Ui.UI.UIClient) playerId weight =
         Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> runWithConnection (fun c -> c.ChangePenWeight)
+        |> connection.ChangePenWeight
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
 
-    let setSizeFactor playerId sizeFactor =
+    let setSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
         Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> runWithConnection (fun c -> c.SetSizeFactor)
+        |> connection.SetSizeFactor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
 
-    let changeSizeFactor playerId sizeFactor =
+    let changeSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
         Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> runWithConnection (fun c -> c.ChangeSizeFactor)
+        |> connection.ChangeSizeFactor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
 
-    let setNextCostume playerId =
+    let setNextCostume (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> runWithConnection (fun c -> c.SetNextCostume)
+        |> connection.SetNextCostume
         |> ignore
         Model.updatePlayer playerId Player.nextCostume
 
-    let sendToBack playerId =
+    let sendToBack (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> runWithConnection (fun c -> c.SendToBack)
+        |> connection.SendToBack
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Player.sendToBack playerId m.Players })
 
-    let bringToFront playerId =
+    let bringToFront (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> runWithConnection (fun c -> c.BringToFront)
+        |> connection.BringToFront
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Player.bringToFront playerId m.Players })
 
-    let setVisibility playerId isVisible =
+    let setVisibility (connection: Ui.UI.UIClient) playerId isVisible =
         Message.PlayerVisibility.FromDomain (playerId, isVisible)
-        |> runWithConnection (fun c -> c.SetVisibility)
+        |> connection.SetVisibility
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
 
-    let setWindowTitle text =
+    let setWindowTitle (connection: Ui.UI.UIClient) text =
         text
         |> Message.WindowTitle.FromDomain
-        |> runWithConnection (fun c -> c.SetWindowTitle)
+        |> connection.SetWindowTitle
         |> ignore
 
-    let setBackground image =
+    let setBackground (connection: Ui.UI.UIClient) image =
         image
         |> Message.SvgImage.FromDomain
-        |> runWithConnection (fun c -> c.SetBackground)
+        |> connection.SetBackground
         |> ignore
 
-    let clearScene () =
+    let clearScene (connection: Ui.UI.UIClient) () =
         Empty()
-        |> runWithConnection (fun c -> c.ClearScene)
+        |> connection.ClearScene
         |> ignore
 
-    let makeScreenshot () =
+    let makeScreenshot (connection: Ui.UI.UIClient) () =
         Empty()
-        |> runWithConnection (fun c -> c.MakeScreenshot)
+        |> connection.MakeScreenshot
         |> Message.PngImage.ToDomain
 
-    let startBatch () =
+    let startBatch (connection: Ui.UI.UIClient) () =
         Empty()
-        |> runWithConnection (fun c -> c.StartBatch)
+        |> connection.StartBatch
         |> ignore
 
-    let applyBatch () =
+    let applyBatch (connection: Ui.UI.UIClient) () =
         Empty()
-        |> runWithConnection (fun c -> c.ApplyBatch)
+        |> connection.ApplyBatch
         |> ignore

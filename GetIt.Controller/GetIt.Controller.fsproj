@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
+    <Compile Include="Connection.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Game.fs" />
     <Compile Include="Player.generated.fs" />

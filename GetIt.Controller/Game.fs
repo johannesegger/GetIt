@@ -55,12 +55,54 @@ type PrintConfig =
 module internal Game =
     let mutable defaultTurtle = None
 
+    let private startUIProcess () =
+        if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+            Process.GetProcessesByName("GetIt.WPF")
+            |> Seq.iter (fun p ->
+                if not <| p.CloseMainWindow() then p.Kill()
+                p.WaitForExit()
+            )
+
+            let startInfo =
+#if DEBUG
+                let path =
+                    let rec parentPaths path acc =
+                        if isNull path then List.rev acc
+                        else parentPaths (Path.GetDirectoryName path) (path :: acc)
+                    parentPaths (Path.GetFullPath ".") []
+                    |> Seq.choose (fun p ->
+                        let projectDir = Path.Combine(p, "GetIt.WPF")
+                        if Directory.Exists projectDir
+                        then Some projectDir
+                        else None
+                    )
+                    |> Seq.head
+                ProcessStartInfo("dotnet", sprintf "run --project %s" path)
+#else
+                let baseDir =
+                    System.Reflection.Assembly.GetExecutingAssembly().Location
+                    |> Path.GetDirectoryName
+                    |> Path.GetDirectoryName
+                    |> Path.GetDirectoryName
+                let path = Path.Combine(baseDir, "runtimes", "win-x64", "native", "GetIt.UI", "GetIt.WPF.exe")
+                ProcessStartInfo(path)
+#endif
+
+            Process.Start(startInfo)
+        else
+            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+
     let showScene windowSize =
-        UICommunication.setupLocalConnectionToUIProcess()
-        UICommunication.showScene windowSize
+        if Connection.hasCurrent () then
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
+
+        let proc = startUIProcess ()
+        Connection.setup "127.0.0.1" 1503 |> Async.RunSynchronously
+
+        Connection.run UICommunication.showScene windowSize
 
     let addTurtle () =
-        let turtleId = UICommunication.addPlayer PlayerData.Turtle
+        let turtleId = Connection.run UICommunication.addPlayer PlayerData.Turtle
         defaultTurtle <- Some (new Player (turtleId))
 
 /// Defines methods to setup a game, add players, register global events and more.
@@ -86,7 +128,7 @@ type Game() =
     static member AddPlayer (playerData: PlayerData) =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
 
-        let playerId = UICommunication.addPlayer playerData
+        let playerId = Connection.run UICommunication.addPlayer playerData
         new Player(playerId)
 
     /// <summary>
@@ -122,17 +164,17 @@ type Game() =
     /// Sets the title of the window.
     static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
-        UICommunication.setWindowTitle textOpt
+        Connection.run UICommunication.setWindowTitle textOpt
 
     /// Sets the scene background.
     static member SetBackground background =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
 
-        UICommunication.setBackground background
+        Connection.run UICommunication.setBackground background
 
     /// Clears all drawings from the scene.
     static member ClearScene () =
-        UICommunication.clearScene ()
+        Connection.run UICommunication.clearScene ()
 
     /// <summary>
     /// Prints the scene. Note that `wkhtmltopdf` and `SumatraPDF` must be installed.
@@ -149,7 +191,7 @@ type Game() =
             |> Path.GetDirectoryName
 
         let base64ImageData =
-            UICommunication.makeScreenshot ()
+            Connection.run UICommunication.makeScreenshot ()
             |> PngImage.toBase64String
 
         let documentTemplate =
@@ -209,8 +251,8 @@ type Game() =
     /// Start batching multiple commands to skip drawing intermediate state.
     /// Note that commands from all threads are batched.
     static member BatchCommands () =
-        UICommunication.startBatch ()
-        Disposable.create (fun () -> UICommunication.applyBatch ())
+        Connection.run UICommunication.startBatch ()
+        Disposable.create (fun () -> Connection.run UICommunication.applyBatch ())
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.

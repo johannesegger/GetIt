@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="App.fs" />
     <Compile Include="UiServer.fs" />
+    <Compile Include="Server.fs" />
     <EmbeddedResource Include="icon.png" />
   </ItemGroup>
   <ItemGroup>
