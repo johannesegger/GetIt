@@ -24,6 +24,14 @@ steps:
     filename: 'C:\\Program Files\\dotnet\\dotnet.exe'
     arguments: 'run --project GetIt.Test'
     failOnStandardError: true
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'NUnit'
+    testResultsFiles: '**/TestResults.xml'
+    mergeTestResults: true
+    failTaskOnFailedTests: true
+    buildPlatform: '$(BuildPlatform)'
+    buildConfiguration: '$(BuildConfiguration)'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
