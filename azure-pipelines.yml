@@ -47,4 +47,5 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: 'GetIt.Controller'
-    versioningScheme: 'byBuildNumber'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: Build.BuildNumber
