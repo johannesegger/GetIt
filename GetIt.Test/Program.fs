@@ -21,11 +21,12 @@ let tests =
             let! connection = UICommunication.setupConnectionToUI "localhost" port
             let client = Ui.UI.UIClient connection
             try
-                let bounds =
+                let! bounds =
                     SpecificSize { Width = 300.; Height = 200. }
                     |> Message.WindowSize.FromDomain
-                    |> client.ShowScene
-                    |> Message.Rectangle.ToDomain
+                    |> client.ShowSceneAsync
+                    |> fun r -> Async.AwaitTask r.ResponseAsync
+                    |> Async.map Message.Rectangle.ToDomain
                 let expected = { Position = { X = 1.; Y = 2. }; Size = { Width = 299.; Height = 198. } }
                 Expect.equal bounds expected "Scene bounds should come from UI"
             finally
