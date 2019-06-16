@@ -47,9 +47,15 @@ steps:
 - task: PublishPipelineArtifact@0
   inputs:
     artifactName: 'GetIt NuGet package'
-    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    targetPath: ''
 # - task: PublishBuildArtifacts@1
 #   inputs:
 #     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
 #     ArtifactName: 'GetIt NuGet package 2'
 #     publishLocation: 'Container'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: '/acf39fa7-c718-49bc-8528-91303394a407' # 'GetIt'
