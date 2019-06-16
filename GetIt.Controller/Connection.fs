@@ -26,12 +26,5 @@ module Connection =
     let setup host port = async {
         let! connection = UICommunication.setupConnectionToUI host port
         current <- Some connection
-    }
 
-    let closeCurrent () = async {
-        match current with
-        | Some (c: Channel) ->
-            do! c.ShutdownAsync() |> Async.AwaitTask
-            current <- None
-        | None -> ()
     }
