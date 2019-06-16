@@ -19,11 +19,11 @@ steps:
 #   inputs:
 #     command: 'run'
 #     projects: '--project GetIt.Test'
-- task: DotNetCoreCLI@2
+- task: BatchScript@1
   inputs:
-    command: 'custom'
-    projects: 'GetIt.Test'
-    custom: 'run --project'
+    filename: 'dotnet'
+    arguments: 'run --project GetIt.Test'
+    failOnStandardError: true
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
