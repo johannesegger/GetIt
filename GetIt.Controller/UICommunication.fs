@@ -2,6 +2,7 @@ namespace GetIt
 
 open System
 open System.Reactive.Linq
+open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open System.Threading
 open System.Threading.Tasks
@@ -9,6 +10,8 @@ open FSharp.Control.Reactive
 open Google.Protobuf.WellKnownTypes
 open Grpc.Core
 
+[<assembly: InternalsVisibleTo("GetIt.Test")>]
+do ()
 
 module internal UICommunication =
     let setupConnectionToUI host port = async {
