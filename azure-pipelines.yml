@@ -74,12 +74,12 @@ steps:
     target: '$(Build.SourceVersion)'
     tagSource: 'manual'
     tag: '$(Build.BuildNumber)'
-    #title: # Optional
-    #releaseNotesSource: 'file' # Optional. Options: file, input
-    #releaseNotesFile: # Optional
-    #releaseNotes: # Optional
-    #assets: '$(Build.ArtifactStagingDirectory)/*' # Optional
-    #assetUploadMode: 'delete' # Optional. Options: delete, replace
-    #isDraft: false # Optional
-    #isPreRelease: false # Optional
-    #addChangeLog: true # Optional
+    title: ''
+    releaseNotesSource: 'input'
+    releaseNotesFile: ''
+    releaseNotes: ''
+    assets: ''
+    assetUploadMode: 'delete'
+    isDraft: false
+    isPreRelease: false
+    addChangeLog: true
