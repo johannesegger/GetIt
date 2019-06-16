@@ -29,10 +29,10 @@ module internal UICommunication =
         return channel
     }
 
-    let showScene (connection: Ui.UI.UIClient) sceneSize =
+    let showScene (connection: Ui.UI.UIClient) windowSize =
         let sceneBounds =
-            sceneSize
-            |> Message.SceneSize.FromDomain
+            windowSize
+            |> Message.WindowSize.FromDomain
             |> connection.ShowScene
             |> Message.Rectangle.ToDomain
         Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })

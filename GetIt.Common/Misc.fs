@@ -3,7 +3,7 @@ namespace GetIt
 open System
 
 /// For internal use only.
-type SceneSize =
+type WindowSize =
     | SpecificSize of Size
     | Maximized
 

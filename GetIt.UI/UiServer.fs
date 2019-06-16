@@ -9,7 +9,7 @@ open Grpc.Core
 
 type UIRequest =
     | UIRequestMsg of App.Msg
-    | ShowScene of SceneSize
+    | ShowScene of WindowSize
     | SetWindowTitle of string option
     | MakeScreenshot
     | MouseMoved of virtualScreenPosition: Position
@@ -45,9 +45,9 @@ type UIServer(executeCommand: UIRequest -> unit, uiMessages: IObservable<UIRespo
         }
         |> Async.StartAsTask
 
-    override this.ShowScene(request: Ui.SceneSize, context: ServerCallContext) : Task<Ui.Rectangle> =
+    override this.ShowScene(request: Ui.WindowSize, context: ServerCallContext) : Task<Ui.Rectangle> =
         sendAndWait
-            (ShowScene (Message.SceneSize.ToDomain request))
+            (ShowScene (Message.WindowSize.ToDomain request))
             (function | UIResponseMsg (App.SetSceneBounds p, model) -> Some (Message.Rectangle.FromDomain p) | _ -> None)
 
     override this.SetWindowTitle(request: Ui.WindowTitle, context: ServerCallContext) : Task<Empty> =

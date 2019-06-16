@@ -5,7 +5,7 @@ package ui;
 import "google/protobuf/empty.proto";
 
 service UI {
-    rpc ShowScene (SceneSize) returns (Rectangle);
+    rpc ShowScene (WindowSize) returns (Rectangle);
     rpc SetWindowTitle (WindowTitle) returns (google.protobuf.Empty);
     rpc SetBackground (SvgImage) returns (google.protobuf.Empty);
     rpc ClearScene (google.protobuf.Empty) returns (google.protobuf.Empty);
@@ -43,8 +43,8 @@ message Size {
     double height = 2;
 }
 
-message SceneSize {
-    oneof sceneSize {
+message WindowSize {
+    oneof windowSize {
         bool isNone = 1;
         Size size = 2;
     }

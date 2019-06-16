@@ -21,31 +21,31 @@ namespace GetIt.Message
         }
     }
 
-    public static class SceneSize
+    public static class WindowSize
     {
-        public static Ui.SceneSize FromDomain(GetIt.SceneSize p)
+        public static Ui.WindowSize FromDomain(GetIt.WindowSize p)
         {
             if (p.IsSpecificSize)
             {
-                var size = ((GetIt.SceneSize.SpecificSize)p).Item;
-                return new Ui.SceneSize { Size = Size.FromDomain(size) };
+                var size = ((GetIt.WindowSize.SpecificSize)p).Item;
+                return new Ui.WindowSize { Size = Size.FromDomain(size) };
             }
             else if (p.IsMaximized)
             {
-                return new Ui.SceneSize { IsNone = true };
+                return new Ui.WindowSize { IsNone = true };
             }
             throw new ArgumentException("Unknown scene size type", nameof(p));
         }
 
-        public static GetIt.SceneSize ToDomain(Ui.SceneSize p)
+        public static GetIt.WindowSize ToDomain(Ui.WindowSize p)
         {
-            if (p.SceneSizeCase == Ui.SceneSize.SceneSizeOneofCase.Size)
+            if (p.WindowSizeCase == Ui.WindowSize.WindowSizeOneofCase.Size)
             {
-                return GetIt.SceneSize.NewSpecificSize(Size.ToDomain(p.Size));
+                return GetIt.WindowSize.NewSpecificSize(Size.ToDomain(p.Size));
             }
-            else if (p.SceneSizeCase == Ui.SceneSize.SceneSizeOneofCase.IsNone)
+            else if (p.WindowSizeCase == Ui.WindowSize.WindowSizeOneofCase.IsNone)
             {
-                return GetIt.SceneSize.Maximized;
+                return GetIt.WindowSize.Maximized;
             }
             throw new ArgumentException("Unknown scene size type", nameof(p));
         }
