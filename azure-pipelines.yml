@@ -49,3 +49,12 @@ steps:
     packagesToPack: 'GetIt.Controller'
     versioningScheme: 'byEnvVar'
     versionEnvVar: Build.BuildNumber
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'GetIt NuGet package'
+    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    ArtifactName: 'GetIt NuGet package 2'
+    publishLocation: 'Container'
