@@ -1,0 +1,85 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+- task: GitVersion@4
+  displayName: 'Run GitVersion'
+  inputs:
+    preferBundledVersion: false
+# - task: DotNetCoreCLI@2
+#   inputs:
+#     command: 'run'
+#     projects: '--project GetIt.Test'
+- task: BatchScript@1
+  displayName: 'Run tests'
+  inputs:
+    filename: 'C:\\Program Files\\dotnet\\dotnet.exe'
+    arguments: 'run --project GetIt.Test'
+    failOnStandardError: true
+- task: PublishTestResults@2
+  displayName: 'Publish test results'
+  inputs:
+    testResultsFormat: 'NUnit'
+    testResultsFiles: '**/TestResults.xml'
+    mergeTestResults: true
+    failTaskOnFailedTests: true
+    buildPlatform: '$(BuildPlatform)'
+    buildConfiguration: '$(BuildConfiguration)'
+- task: DotNetCoreCLI@2
+  displayName: 'Build GetIt.WPF'
+  inputs:
+    command: 'publish'
+    projects: 'GetIt.Wpf'
+    arguments: '-c Release'
+    publishWebProjects: false
+    zipAfterPublish: false
+    modifyOutputPath: false
+- task: DotNetCoreCLI@2
+  displayName: 'Build NuGet package'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'GetIt.Controller'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: Build.BuildNumber
+- task: PublishPipelineArtifact@0
+  displayName: 'Publish NuGet package as pipeline artifact'
+  inputs:
+    artifactName: 'GetIt.nupkg'
+    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+#     ArtifactName: 'GetIt NuGet package 2'
+#     publishLocation: 'Container'
+- task: DotNetCoreCLI@2
+  displayName: 'Push NuGet package to internal feed'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'GetIt'
+- task: GitHubRelease@0
+  inputs:
+    gitHubConnection: johannesegger
+    repositoryName: '$(Build.Repository.Name)' 
+    action: 'create'
+    target: '$(Build.SourceVersion)'
+    tagSource: 'manual'
+    tag: '$(Build.BuildNumber)'
+    title: ''
+    releaseNotesSource: 'input'
+    releaseNotesFile: ''
+    releaseNotes: ''
+    assets: ''
+    assetUploadMode: 'delete'
+    isDraft: false
+    isPreRelease: false
+    addChangeLog: true

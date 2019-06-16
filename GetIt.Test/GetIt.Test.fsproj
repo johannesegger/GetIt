@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Expecto" Version="8.10.1" />
+    <PackageReference Include="Expecto.TestResults" Version="8.10.1" />
   </ItemGroup>
 
   <ItemGroup>

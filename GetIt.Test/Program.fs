@@ -37,4 +37,6 @@ let tests =
 
 [<EntryPoint>]
 let main argv =
-    runTests defaultConfig tests
+    let writeResults = TestResults.writeNUnitSummary ("TestResults.xml", "GetIt.Tests")
+    let config = defaultConfig.appendSummaryHandler writeResults
+    runTests config tests
