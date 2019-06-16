@@ -21,7 +21,7 @@ steps:
 #     projects: '--project GetIt.Test'
 - task: BatchScript@1
   inputs:
-    filename: 'dotnet'
+    filename: 'dotnet.exe'
     arguments: 'run --project GetIt.Test'
     failOnStandardError: true
 - task: DotNetCoreCLI@2
