@@ -26,18 +26,6 @@ module internal UICommunication =
         | Choice1Of2 () -> ()
         | Choice2Of2 e -> raise (GetItException ("Can't connect to UI.", e))
 
-        async {
-            while true do
-                let before = channel.State
-                do! channel.WaitForStateChangedAsync(before, Nullable<_>()) |> Async.AwaitTask
-                let after = channel.State
-                if before = ChannelState.Ready && after = ChannelState.Idle then // TODO not sure if this is the preferred way to detect server shutdown
-                    // Close the application if the UI has been closed (throwing an exception might be confusing)
-                    // TODO dispose subscriptions etc. ?
-                    Environment.Exit 0
-        }
-        |> Async.Start
-
         return channel
     }
 

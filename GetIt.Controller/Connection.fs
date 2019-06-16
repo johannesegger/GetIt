@@ -1,6 +1,7 @@
 namespace GetIt
 
 open System
+open FSharp.Control.Reactive
 open Grpc.Core
 
 module Connection =
@@ -25,6 +26,23 @@ module Connection =
 
     let setup host port = async {
         let! connection = UICommunication.setupConnectionToUI host port
-        current <- Some connection
 
+        let d0 =
+            Observable.ofAsync (async {
+                do! connection.WaitForStateChangedAsync(connection.State, Nullable<_>()) |> Async.AwaitTask
+                return connection.State
+            })
+            |> Observable.repeat
+            |> Observable.startWith [ connection.State ]
+            |> Observable.pairwise
+            // TODO not sure if this is the preferred way to detect server shutdown
+            |> Observable.filter (function | (ChannelState.Ready, ChannelState.Idle) -> true | _ -> false)
+            |> Observable.take 1
+            |> Observable.subscribe (fun _ ->
+                // Close the application if the UI has been closed (throwing an exception might be confusing)
+                // TODO dispose subscriptions etc. ?
+                Environment.Exit 0
+            )
+
+        current <- Some connection
     }
