@@ -15,10 +15,15 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+# - task: DotNetCoreCLI@2
+#   inputs:
+#     command: 'run'
+#     projects: '--project GetIt.Test'
 - task: DotNetCoreCLI@2
   inputs:
-    command: 'run'
-    projects: '--project GetIt.Test'
+    command: 'custom'
+    projects: 'GetIt.Test'
+    custom: 'run --project'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
