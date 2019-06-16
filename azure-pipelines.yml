@@ -18,7 +18,7 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'run'
-    projects: 'GetIt.Test'
+    projects: '--project GetIt.Test'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
