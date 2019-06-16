@@ -1,10 +1,10 @@
 namespace GetIt
 
 open System
-open System.Diagnostics
-open System.IO
+open System.Reactive.Linq
 open System.Runtime.InteropServices
 open System.Threading
+open System.Threading.Tasks
 open FSharp.Control.Reactive
 open Google.Protobuf.WellKnownTypes
 open Grpc.Core
@@ -37,76 +37,93 @@ module internal UICommunication =
             |> Message.Rectangle.ToDomain
         Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })
 
-        async {
-            use sceneBoundsSubscription = connection.SceneBoundsChanged (Empty())
-            use enumerator = sceneBoundsSubscription.ResponseStream
-            let rec iterate () = async {
-                let! hasMore = enumerator.MoveNext(CancellationToken.None) |> Async.AwaitTask
-                if hasMore then
-                    let sceneBounds = Message.Rectangle.ToDomain enumerator.Current
-                    Model.updateCurrent (fun model -> { model with SceneBounds = sceneBounds })
-                    do! iterate ()
-                else ()
-            }
-            do! iterate ()
-        }
-        |> Async.Start
+        let d0 =
+            Observable.Create(fun (obs: IObserver<Rectangle>) ct ->
+                async {
+                    use sceneBoundsSubscription = connection.SceneBoundsChanged(Empty())
+                    use enumerator = sceneBoundsSubscription.ResponseStream
+                    let rec iterate () = async {
+                        let! ct = Async.CancellationToken
+                        let! hasMore = enumerator.MoveNext(ct) |> Async.AwaitTask
+                        if hasMore then
+                            Message.Rectangle.ToDomain enumerator.Current
+                            |> obs.OnNext
+                            do! iterate()
+                        else
+                            obs.OnCompleted()
+                    }
+                    do! iterate()
+                }
+                |> fun a -> Async.StartAsTask(a, cancellationToken = ct)
+                :> Task
+            )
+            |> Observable.subscribe (fun sceneBounds ->
+                Model.updateCurrent (fun model -> { model with SceneBounds = sceneBounds })
+            )
 
         let subject = new System.Reactive.Subjects.Subject<_>()
 
         let waitHandle = new ManualResetEventSlim()
-        async {
-            use mouseMovedSubscription = connection.MouseMoved ()
-            use enumerator = mouseMovedSubscription.ResponseStream
-            let rec iterate () = async {
-                let! hasMore = enumerator.MoveNext(CancellationToken.None) |> Async.AwaitTask
-                if hasMore then
-                    let position = Message.Position.ToDomain enumerator.Current
-                    Model.updateCurrent (fun model -> { model with MouseState = { model.MouseState with Position = position } })
-                    waitHandle.Set()
+
+        let d1 =
+            Observable.Create (fun (obs: IObserver<Position>) ct ->
+                async {
+                    use mouseMovedSubscription = connection.MouseMoved()
+                    use enumerator = mouseMovedSubscription.ResponseStream
+                    let rec iterate () = async {
+                        let! ct = Async.CancellationToken
+                        let! hasMore = enumerator.MoveNext(ct) |> Async.AwaitTask
+                        if hasMore then
+                            Message.Position.ToDomain enumerator.Current
+                            |> obs.OnNext
+                            do! iterate()
+                        else
+                            obs.OnCompleted()
+                    }
+
+                    use d =
+                        subject
+                        |> Observable.choose (function | MouseMove position -> Some position | _ -> None)
+                        |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                        |> Observable.map (fun position ->
+                            Observable.ofAsync (async {
+                                return!
+                                    position
+                                    |> Message.Position.FromDomain
+                                    |> mouseMovedSubscription.RequestStream.WriteAsync
+                                    |> Async.AwaitTask
+                            })
+                        )
+                        |> Observable.concatInner
+                        |> Observable.subscribe ignore
+
                     do! iterate ()
-                else
-                    printfn "MouseMoved responses ended"
-            }
-
-            let d1 =
-                subject
-                |> Observable.choose (function | MouseMove position -> Some position | _ -> None)
-                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
-                |> Observable.map (fun position ->
-                    Observable.defer (fun () ->
-                        position
-                        |> Message.Position.FromDomain
-                        |> mouseMovedSubscription.RequestStream.WriteAsync
-                        |> Async.AwaitTask
-                        |> Observable.ofAsync
-                    )
-                )
-                |> Observable.concatInner
-                |> Observable.subscribe ignore
-
-            do! iterate ()
-        }
-        |> Async.Start
+                }
+                |> fun a -> Async.StartAsTask(a, cancellationToken = ct)
+                :> Task
+            )
+            |> Observable.subscribe (fun position ->
+                Model.updateCurrent (fun model -> { model with MouseState = { model.MouseState with Position = position } })
+                waitHandle.Set()
+            )
 
         let d2 =
             subject
             |> Observable.choose (function | MouseClick data -> Some data | _ -> None)
             |> Observable.map (fun mouseClick ->
                 async {
+                    let request = Message.VirtualScreenMouseClick.FromDomain mouseClick
                     let! ct = Async.CancellationToken
-                    let! mouseClick =
-                        Message.VirtualScreenMouseClick.FromDomain mouseClick
-                        |> fun request -> connection.MouseClickedAsync(request, cancellationToken = ct)
-                        |> fun p -> p.ResponseAsync
-                        |> Async.AwaitTask
-                        |> Async.map Message.MouseClick.ToDomain
-                    Model.updateCurrent (fun m -> { m with MouseState = { m.MouseState with LastClick = Some (Guid.NewGuid(), mouseClick) } })
+                    use response = connection.MouseClickedAsync(request, cancellationToken = ct)
+                    let! responseData = response.ResponseAsync |> Async.AwaitTask
+                    return Message.MouseClick.ToDomain responseData
                 }
                 |> Observable.ofAsync
             )
             |> Observable.switch
-            |> Observable.subscribe ignore
+            |> Observable.subscribe (fun mouseClick ->
+                Model.updateCurrent (fun m -> { m with MouseState = { m.MouseState with LastClick = Some (Guid.NewGuid(), mouseClick) } })
+            )
 
         let d3 =
             subject
