@@ -63,7 +63,7 @@
 * Speaking
   * Every player has a `Say` method as well as a `ShutUp` method. Note that there is no audio output but only a speech bubble next to the player.
 * Asking
-  * Every player can ask the user to answer questions. Currently the user can only answer using a text box, but in the future it might be possible to ask yes/no questions.
+  * Every player can ask the user to answer questions. The player can ask for string or bool answers.
 * Adding/removing players
   * Players can be added by calling `Game.AddPlayer`. `AddPlayer` takes a definition of a player of type `PlayerData` and adds it to the scene. You can add the same `PlayerData` multiple times (think of a template). The most important part of `PlayerData` is one or more costumes, which are vector graphics in [SVG](https://www.w3.org/Graphics/SVG/) format. While there are predefined players, you can also create players with simple shapes by using helper methods or create players with any complex costume by loading SVG files.
 * Events
