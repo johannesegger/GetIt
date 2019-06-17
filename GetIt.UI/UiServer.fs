@@ -155,11 +155,17 @@ type UIServer(executeCommand: UIRequest -> unit, uiMessages: IObservable<UIRespo
 
         Task.FromResult empty
 
-    override this.Ask (request: Ui.PlayerText, context: ServerCallContext) : Task<Ui.Answer> =
+    override this.AskString (request: Ui.PlayerText, context: ServerCallContext) : Task<Ui.StringAnswer> =
         let (playerId, text) = Message.PlayerText.ToDomain request
         sendAndWait
-            (UIRequestMsg (App.SetSpeechBubble (playerId, Some (Ask text))))
-            (function | UIResponseMsg (App.ApplyAnswer (pId, answer), model) when pId = playerId -> Some (Message.Answer.FromDomain answer) | _ -> None)
+            (UIRequestMsg (App.SetSpeechBubble (playerId, Some (AskString text))))
+            (function | UIResponseMsg (App.ApplyStringAnswer (pId, answer), model) when pId = playerId -> Some (Message.StringAnswer.FromDomain answer) | _ -> None)
+
+    override this.AskBool (request: Ui.PlayerText, context: ServerCallContext) : Task<Ui.BoolAnswer> =
+        let (playerId, text) = Message.PlayerText.ToDomain request
+        sendAndWait
+            (UIRequestMsg (App.SetSpeechBubble (playerId, Some (AskBool text))))
+            (function | UIResponseMsg (App.ApplyBoolAnswer (pId, answer), model) when pId = playerId -> Some (Message.BoolAnswer.FromDomain answer) | _ -> None)
 
     override this.SetPenState (request: Ui.PlayerPenState, context: ServerCallContext) : Task<Empty> =
         Message.PlayerPenState.ToDomain request

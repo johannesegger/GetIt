@@ -29,7 +29,8 @@ module App =
         | ChangeDirection of PlayerId * Degrees
         | SetSpeechBubble of PlayerId * SpeechBubble option
         | UpdateAnswer of PlayerId * string
-        | ApplyAnswer of PlayerId * string
+        | ApplyStringAnswer of PlayerId * string
+        | ApplyBoolAnswer of PlayerId * bool
         | SetPenState of PlayerId * isOn: bool
         | TogglePenState of PlayerId
         | SetPenColor of PlayerId * RGBAColor
@@ -53,7 +54,7 @@ module App =
         {
             SceneBounds: GetIt.Rectangle
             Players: Map<PlayerId, PlayerData>
-            PlayerAnswers: Map<PlayerId, string>
+            PlayerStringAnswers: Map<PlayerId, string>
             PenLines: PenLine list
             Background: SvgImage
             BatchMessages: (Msg list * int) option
@@ -63,7 +64,7 @@ module App =
         {
             SceneBounds = GetIt.Rectangle.zero
             Players = Map.empty
-            PlayerAnswers = Map.empty
+            PlayerStringAnswers = Map.empty
             PenLines = []
             Background = Background.none
             BatchMessages = None
@@ -118,17 +119,28 @@ module App =
             (model', Cmd.none)
         | None, UpdateAnswer (playerId, answer) ->
             let model' =
-                { model with PlayerAnswers = Map.add playerId answer model.PlayerAnswers }
+                { model with PlayerStringAnswers = Map.add playerId answer model.PlayerStringAnswers }
             (model', Cmd.none)
-        | None, ApplyAnswer (playerId, answer) ->
+        | None, ApplyStringAnswer (playerId, answer) ->
             let model' =
                 updatePlayer playerId (fun p ->
                     match p.SpeechBubble with
-                    | Some (Ask _) -> { p with SpeechBubble = None }
+                    | Some (AskString _) -> { p with SpeechBubble = None }
+                    | Some (AskBool _)
                     | Some (Say _)
                     | None -> p
                 )
-                |> fun m -> { m with PlayerAnswers = Map.remove playerId model.PlayerAnswers }
+                |> fun m -> { m with PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers }
+            (model', Cmd.none)
+        | None, ApplyBoolAnswer (playerId, answer) ->
+            let model' =
+                updatePlayer playerId (fun p ->
+                    match p.SpeechBubble with
+                    | Some (AskBool _) -> { p with SpeechBubble = None }
+                    | Some (AskString _)
+                    | Some (Say _)
+                    | None -> p
+                )
             (model', Cmd.none)
         | None, SetPenState (playerId, isOn) ->
             let model' = updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
@@ -178,7 +190,7 @@ module App =
             let model' =
                 { model with
                     Players = Map.remove playerId model.Players
-                    PlayerAnswers = Map.remove playerId model.PlayerAnswers
+                    PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers
                 }
             (model', Cmd.none)
         | None, ClearScene ->
@@ -352,9 +364,9 @@ module App =
                                 horizontalTextAlignment = TextAlignment.Center
                             )
                             |> speechBubble player
-                    | Some (Ask question) ->
+                    | Some (AskString question) ->
                         let answer =
-                            Map.tryFind playerId model.PlayerAnswers
+                            Map.tryFind playerId model.PlayerStringAnswers
                             |> Option.defaultValue ""
                         yield
                             View.StackLayout(
@@ -367,7 +379,46 @@ module App =
                                         text = answer,
                                         placeholder = "Answer",
                                         textChanged = (fun ev -> dispatch (UpdateAnswer (playerId, ev.NewTextValue))),
-                                        completed = (fun text -> dispatch (ApplyAnswer (playerId, answer)))
+                                        completed = (fun text -> dispatch (ApplyStringAnswer (playerId, answer)))
+                                    )
+                                ]
+                            )
+                            |> speechBubble player
+                    | Some (AskBool question) ->
+                        yield
+                            View.StackLayout(
+                                children = [
+                                    View.Label(
+                                        text = question,
+                                        horizontalTextAlignment = TextAlignment.Center
+                                    )
+                                    View.FlexLayout(
+                                        direction = FlexDirection.Row,
+                                        // alignContent = FlexAlignContent.SpaceBetween,
+                                        // alignItems = FlexAlignItems.Stretch,
+                                        children =
+                                            [
+                                                View.Button(
+                                                    text = "✓",
+                                                    command = (fun () -> dispatch (ApplyBoolAnswer (playerId, true))),
+                                                    borderWidth = 1.,
+                                                    borderColor = Color.ForestGreen,
+                                                    textColor = Color.ForestGreen,
+                                                    backgroundColor = Color.WhiteSmoke
+                                                )
+                                                |> flexGrow 1.
+
+                                                View.Button(
+                                                    text = "❌",
+                                                    command = (fun () -> dispatch (ApplyBoolAnswer (playerId, false))),
+                                                    borderWidth = 1.,
+                                                    borderColor = Color.IndianRed,
+                                                    textColor = Color.IndianRed,
+                                                    backgroundColor = Color.WhiteSmoke,
+                                                    margin = Thickness(5., 0., 0., 0.)
+                                                )
+                                                |> flexGrow 1.
+                                            ]
                                     )
                                 ]
                             )
