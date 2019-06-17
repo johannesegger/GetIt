@@ -49,7 +49,8 @@ namespace GetIt.Sample
             // Program32();
             // Program33();
             // Program34();
-            Program35();
+            // Program35();
+            Program36();
         }
 
         private static void Program1()
@@ -863,6 +864,23 @@ namespace GetIt.Sample
             }
             Turtle.Say("Done.");
             player.ShutUp();
+        }
+
+        private static void Program36()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            if (Turtle.AskBool("Continue?"))
+            {
+                if (Turtle.AskBool("Ok, let's do it. Move right?"))
+                {
+                    Turtle.MoveRight(100);
+                }
+            }
+            else
+            {
+                Turtle.Say("Ok. Bye bye.");
+            }
         }
     }
 }
