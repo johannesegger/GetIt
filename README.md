@@ -2,6 +2,10 @@
 
 .NET library to help introduce programming in a funnier way. Inspired by [Scratch](https://scratch.mit.edu/) and [Turtle graphics](https://en.wikipedia.org/wiki/Turtle_graphics).
 
+[![Build Status](https://dev.azure.com/eggerhansi/GetIt/_apis/build/status/johannesegger.GetIt?branchName=develop)](https://dev.azure.com/eggerhansi/GetIt/_build/latest?definitionId=1&branchName=develop)
+![Nuget](https://img.shields.io/nuget/v/GetIt.svg)
+![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/GetIt.svg)
+
 ## Prerequisites
 
 > Warning: The current version of `GetIt` only supports Windows >= 7.
