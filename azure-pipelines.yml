@@ -45,22 +45,22 @@ steps:
     command: 'pack'
     packagesToPack: 'GetIt.Controller'
     versioningScheme: 'byEnvVar'
-    versionEnvVar: Build.BuildNumber
+    versionEnvVar: GitVersion.NuGetVersion
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
     artifactName: 'GetIt.nupkg'
-    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
 # - task: PublishBuildArtifacts@1
 #   inputs:
-#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
 #     ArtifactName: 'GetIt NuGet package 2'
 #     publishLocation: 'Container'
 - task: DotNetCoreCLI@2
   displayName: 'Push NuGet package to internal feed'
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
 - task: GitHubRelease@0
