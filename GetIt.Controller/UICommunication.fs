@@ -32,18 +32,29 @@ module internal UICommunication =
         return channel
     }
 
+    let private run fn arg =
+        try
+            fn arg
+        with e ->
+            // TODO verify it's the connection that failed 
+            // TODO dispose subscriptions etc. ?
+#if !DEBUG
+            Environment.Exit 0
+#endif
+            raise (GetItException ("Error while executing command", e))
+
     let showScene (connection: Ui.UI.UIClient) windowSize =
         let sceneBounds =
             windowSize
             |> Message.WindowSize.FromDomain
-            |> connection.ShowScene
+            |> run connection.ShowScene
             |> Message.Rectangle.ToDomain
         Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })
 
         let d0 =
             Observable.Create(fun (obs: IObserver<Rectangle>) ct ->
                 async {
-                    use sceneBoundsSubscription = connection.SceneBoundsChanged(Empty())
+                    use sceneBoundsSubscription = run connection.SceneBoundsChanged (Empty())
                     use enumerator = sceneBoundsSubscription.ResponseStream
                     let rec iterate () = async {
                         let! ct = Async.CancellationToken
@@ -71,7 +82,7 @@ module internal UICommunication =
         let d1 =
             Observable.Create (fun (obs: IObserver<Position>) ct ->
                 async {
-                    use mouseMovedSubscription = connection.MouseMoved()
+                    use mouseMovedSubscription = run (fun () -> connection.MouseMoved()) ()
                     use enumerator = mouseMovedSubscription.ResponseStream
                     let rec iterate () = async {
                         let! ct = Async.CancellationToken
@@ -117,7 +128,7 @@ module internal UICommunication =
                 async {
                     let request = Message.VirtualScreenMouseClick.FromDomain mouseClick
                     let! ct = Async.CancellationToken
-                    use response = connection.MouseClickedAsync(request, cancellationToken = ct)
+                    use response = run (fun (r, ct) -> connection.MouseClickedAsync(r, cancellationToken = ct)) (request, ct)
                     let! responseData = response.ResponseAsync |> Async.AwaitTask
                     return Message.MouseClick.ToDomain responseData
                 }
@@ -149,44 +160,44 @@ module internal UICommunication =
     let addPlayer (connection: Ui.UI.UIClient) playerData =
         let playerId = PlayerId.create ()
         Message.Player.FromDomain (playerId, playerData)
-        |> connection.AddPlayer
+        |> run connection.AddPlayer
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
 
     let removePlayer (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> connection.RemovePlayer
+        |> run connection.RemovePlayer
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Map.remove playerId m.Players })
 
     let setPosition (connection: Ui.UI.UIClient) playerId position =
         Message.PlayerPosition.FromDomain (playerId, position)
-        |> connection.SetPosition
+        |> run connection.SetPosition
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Position = position })
 
     let changePosition (connection: Ui.UI.UIClient) playerId relativePosition =
         Message.PlayerPosition.FromDomain (playerId, relativePosition)
-        |> connection.ChangePosition
+        |> run connection.ChangePosition
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Position = p.Position + relativePosition })
 
     let setDirection (connection: Ui.UI.UIClient) playerId direction =
         Message.PlayerDirection.FromDomain (playerId, direction)
-        |> connection.SetDirection
+        |> run connection.SetDirection
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Direction = direction })
 
     let changeDirection (connection: Ui.UI.UIClient) playerId relativeDirection =
         Message.PlayerDirection.FromDomain (playerId, relativeDirection)
-        |> connection.ChangeDirection
+        |> run connection.ChangeDirection
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Direction = p.Direction + relativeDirection })
 
     let say (connection: Ui.UI.UIClient) playerId text =
         Message.PlayerText.FromDomain (playerId, text)
-        |> connection.Say
+        |> run connection.Say
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Say text) })
 
@@ -194,7 +205,7 @@ module internal UICommunication =
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskString text) })
         try
             Message.PlayerText.FromDomain (playerId, text)
-            |> connection.AskString
+            |> run connection.AskString
             |> Message.StringAnswer.ToDomain
         finally
             Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
@@ -203,7 +214,7 @@ module internal UICommunication =
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskBool text) })
         try
             Message.PlayerText.FromDomain (playerId, text)
-            |> connection.AskBool
+            |> run connection.AskBool
             |> Message.BoolAnswer.ToDomain
         finally
             Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
@@ -211,111 +222,111 @@ module internal UICommunication =
     let shutUp (connection: Ui.UI.UIClient) playerId =
         let answer =
             Message.PlayerId.FromDomain playerId
-            |> connection.ShutUp
+            |> run connection.ShutUp
             |> ignore
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
         answer
 
     let setPenState (connection: Ui.UI.UIClient) playerId isOn =
         Message.PlayerPenState.FromDomain (playerId, isOn)
-        |> connection.SetPenState
+        |> run connection.SetPenState
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
 
     let togglePenState (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> connection.TogglePenState
+        |> run connection.TogglePenState
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
 
     let setPenColor (connection: Ui.UI.UIClient) playerId color =
         Message.PlayerPenColor.FromDomain (playerId, color)
-        |> connection.SetPenColor
+        |> run connection.SetPenColor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
 
     let shiftPenColor (connection: Ui.UI.UIClient) playerId angle =
         Message.PlayerPenColorShift.FromDomain (playerId, angle)
-        |> connection.ShiftPenColor
+        |> run connection.ShiftPenColor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
 
     let setPenWeight (connection: Ui.UI.UIClient) playerId weight =
         Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> connection.SetPenWeight
+        |> run connection.SetPenWeight
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
 
     let changePenWeight (connection: Ui.UI.UIClient) playerId weight =
         Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> connection.ChangePenWeight
+        |> run connection.ChangePenWeight
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
 
     let setSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
         Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> connection.SetSizeFactor
+        |> run connection.SetSizeFactor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
 
     let changeSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
         Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> connection.ChangeSizeFactor
+        |> run connection.ChangeSizeFactor
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
 
     let setNextCostume (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> connection.SetNextCostume
+        |> run connection.SetNextCostume
         |> ignore
         Model.updatePlayer playerId Player.nextCostume
 
     let sendToBack (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> connection.SendToBack
+        |> run connection.SendToBack
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Player.sendToBack playerId m.Players })
 
     let bringToFront (connection: Ui.UI.UIClient) playerId =
         Message.PlayerId.FromDomain playerId
-        |> connection.BringToFront
+        |> run connection.BringToFront
         |> ignore
         Model.updateCurrent (fun m -> { m with Players = Player.bringToFront playerId m.Players })
 
     let setVisibility (connection: Ui.UI.UIClient) playerId isVisible =
         Message.PlayerVisibility.FromDomain (playerId, isVisible)
-        |> connection.SetVisibility
+        |> run connection.SetVisibility
         |> ignore
         Model.updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
 
     let setWindowTitle (connection: Ui.UI.UIClient) text =
         text
         |> Message.WindowTitle.FromDomain
-        |> connection.SetWindowTitle
+        |> run connection.SetWindowTitle
         |> ignore
 
     let setBackground (connection: Ui.UI.UIClient) image =
         image
         |> Message.SvgImage.FromDomain
-        |> connection.SetBackground
+        |> run connection.SetBackground
         |> ignore
 
     let clearScene (connection: Ui.UI.UIClient) () =
         Empty()
-        |> connection.ClearScene
+        |> run connection.ClearScene
         |> ignore
 
     let makeScreenshot (connection: Ui.UI.UIClient) () =
         Empty()
-        |> connection.MakeScreenshot
+        |> run connection.MakeScreenshot
         |> Message.PngImage.ToDomain
 
     let startBatch (connection: Ui.UI.UIClient) () =
         Empty()
-        |> connection.StartBatch
+        |> run connection.StartBatch
         |> ignore
 
     let applyBatch (connection: Ui.UI.UIClient) () =
         Empty()
-        |> connection.ApplyBatch
+        |> run connection.ApplyBatch
         |> ignore

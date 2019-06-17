@@ -12,15 +12,7 @@ module Connection =
     let run fn arg =
         match current with
         | Some (connection: Channel) ->
-            try
-                fn (Ui.UI.UIClient connection) arg
-            with e ->
-                // TODO verify it's the connection that failed 
-                // TODO dispose subscriptions etc. ?
-#if !DEBUG
-                Environment.Exit 0
-#endif
-                raise (GetItException ("Error while executing command", e))
+            fn (Ui.UI.UIClient connection) arg
         | None ->
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
 
