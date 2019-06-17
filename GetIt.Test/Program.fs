@@ -33,6 +33,29 @@ let tests =
                 connection.ShutdownAsync() |> Async.AwaitTask |> Async.RunSynchronously
                 server.ShutdownAsync() |> Async.AwaitTask |> Async.RunSynchronously
         })
+
+        yield testCaseAsync "AskBool with confirm" (async {
+            let executeCommand cmd =
+                match cmd with
+                | UIRequestMsg (App.SetSpeechBubble (playerId, Some (AskBool question))) ->
+                    Some (UIResponseMsg (App.ApplyBoolAnswer (playerId, true), App.initModel))
+                | cmd -> failwithf "Unexpected command %A" cmd
+
+            let (server, port) = Server.startWithAutoPort "localhost" executeCommand Observable.empty
+            let! connection = UICommunication.setupConnectionToUI "localhost" port
+            let client = Ui.UI.UIClient connection
+            try
+                let! isConfirm =
+                    (PlayerId.create(), "Confirm?")
+                    |> Message.PlayerText.FromDomain
+                    |> client.AskBoolAsync
+                    |> fun r -> Async.AwaitTask r.ResponseAsync
+                    |> Async.map Message.BoolAnswer.ToDomain
+                Expect.equal isConfirm true "Bool answer should come from UI"
+            finally
+                connection.ShutdownAsync() |> Async.AwaitTask |> Async.RunSynchronously
+                server.ShutdownAsync() |> Async.AwaitTask |> Async.RunSynchronously
+        })
     ]
 
 [<EntryPoint>]

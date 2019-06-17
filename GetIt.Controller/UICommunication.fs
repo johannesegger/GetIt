@@ -191,11 +191,20 @@ module internal UICommunication =
         Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Say text) })
 
     let ask (connection: Ui.UI.UIClient) playerId text =
-        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Ask text) })
+        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskString text) })
         try
             Message.PlayerText.FromDomain (playerId, text)
-            |> connection.Ask
-            |> Message.Answer.ToDomain
+            |> connection.AskString
+            |> Message.StringAnswer.ToDomain
+        finally
+            Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
+
+    let askBool (connection: Ui.UI.UIClient) playerId text =
+        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskBool text) })
+        try
+            Message.PlayerText.FromDomain (playerId, text)
+            |> connection.AskBool
+            |> Message.BoolAnswer.ToDomain
         finally
             Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
 

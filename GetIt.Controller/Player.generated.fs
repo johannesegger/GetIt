@@ -106,6 +106,9 @@ module private Raw =
     let ask (player: GetIt.Player) (question: System.String) =
         Connection.run UICommunication.ask player.PlayerId question
 
+    let askBool (player: GetIt.Player) (question: System.String) =
+        Connection.run UICommunication.askBool player.PlayerId question
+
     let turnOnPen (player: GetIt.Player) =
         Connection.run UICommunication.setPenState player.PlayerId true
 
@@ -370,6 +373,13 @@ type Turtle() =
     static member Ask (question: System.String) =
         if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask Turtle.Player question
+
+    /// <summary>Shows a speech bubble with two buttons "confirm" and "decline" next to the player and waits for the user to press one of the buttons.</summary>
+    /// <param name="question">The content of the speech bubble.</param>
+    /// <returns>True, if the user pressed the "confirm" button, false otherwise.</returns>
+    static member AskBool (question: System.String) =
+        if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
+        Raw.askBool Turtle.Player question
 
     /// <summary>Turns on the pen of the player.</summary>
     /// <returns></returns>
@@ -771,6 +781,16 @@ type PlayerExtensions() =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
         Raw.ask player question
+
+    /// <summary>Shows a speech bubble with two buttons "confirm" and "decline" next to the player and waits for the user to press one of the buttons.</summary>
+    /// <param name="player">The player that the speech bubble belongs to.</param>
+    /// <param name="question">The content of the speech bubble.</param>
+    /// <returns>True, if the user pressed the "confirm" button, false otherwise.</returns>
+    [<Extension>]
+    static member AskBool(player: GetIt.Player, question: System.String) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        if obj.ReferenceEquals(question, null) then raise (ArgumentNullException "question")
+        Raw.askBool player question
 
     /// <summary>Turns on the pen of the player.</summary>
     /// <param name="player">The player that should get its pen turned on.</param>

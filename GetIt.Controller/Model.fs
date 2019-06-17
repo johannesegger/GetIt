@@ -47,7 +47,8 @@ module internal Model =
                 model.Players
                 |> Map.exists (fun playerId player ->
                     match player.SpeechBubble with
-                    | Some (Ask _) -> true
+                    | Some (AskString _) -> true
+                    | Some (AskBool _)
                     | Some (Say _)
                     | None -> false
                 )

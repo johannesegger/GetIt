@@ -17,7 +17,8 @@ service UI {
     rpc SetDirection (PlayerDirection) returns (google.protobuf.Empty);
     rpc ChangeDirection (PlayerDirection) returns (google.protobuf.Empty);
     rpc Say (PlayerText) returns (google.protobuf.Empty);
-    rpc Ask (PlayerText) returns (Answer);
+    rpc AskString (PlayerText) returns (StringAnswer);
+    rpc AskBool (PlayerText) returns (BoolAnswer);
     rpc ShutUp (PlayerId) returns (google.protobuf.Empty);
     rpc SetPenState (PlayerPenState) returns (google.protobuf.Empty);
     rpc TogglePenState (PlayerId) returns (google.protobuf.Empty);
@@ -95,7 +96,8 @@ message Pen {
 message SpeechBubble {
     oneof speechBubbleType {
         string sayText = 1;
-        string askText = 2;
+        string askStringText = 2;
+        string askBoolText = 3;
     }
 }
 
@@ -138,8 +140,12 @@ message PlayerText {
     string text = 2;
 }
 
-message Answer {
+message StringAnswer {
     string text = 1;
+}
+
+message BoolAnswer {
+    bool value = 1;
 }
 
 message PlayerPenState {

@@ -29,7 +29,8 @@ module PlayerId =
 /// For internal use only.
 type SpeechBubble =
     | Say of string
-    | Ask of string
+    | AskString of string
+    | AskBool of string
 
 /// Defines a player.
 /// The player doesn't necessarily have been added to the scene.

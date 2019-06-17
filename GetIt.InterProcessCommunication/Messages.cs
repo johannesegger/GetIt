@@ -167,9 +167,13 @@ namespace GetIt.Message
             {
                 return new Ui.SpeechBubble { SayText = ((GetIt.SpeechBubble.Say)p).Item };
             }
-            else if (p.IsAsk)
+            else if (p.IsAskString)
             {
-                return new Ui.SpeechBubble { AskText = ((GetIt.SpeechBubble.Ask)p).Item };
+                return new Ui.SpeechBubble { AskStringText = ((GetIt.SpeechBubble.AskString)p).Item };
+            }
+            else if (p.IsAskBool)
+            {
+                return new Ui.SpeechBubble { AskBoolText = ((GetIt.SpeechBubble.AskBool)p).Item };
             }
             throw new ArgumentException("Unknown speech bubble type", nameof(p));
         }
@@ -180,9 +184,13 @@ namespace GetIt.Message
             {
                 return GetIt.SpeechBubble.NewSay(p.SayText);
             }
-            else if (p.SpeechBubbleTypeCase == Ui.SpeechBubble.SpeechBubbleTypeOneofCase.AskText)
+            else if (p.SpeechBubbleTypeCase == Ui.SpeechBubble.SpeechBubbleTypeOneofCase.AskStringText)
             {
-                return GetIt.SpeechBubble.NewAsk(p.AskText);
+                return GetIt.SpeechBubble.NewAskString(p.AskStringText);
+            }
+            else if (p.SpeechBubbleTypeCase == Ui.SpeechBubble.SpeechBubbleTypeOneofCase.AskBoolText)
+            {
+                return GetIt.SpeechBubble.NewAskBool(p.AskBoolText);
             }
             throw new ArgumentException("Unknown speech bubble type", nameof(p));
         }
@@ -335,16 +343,29 @@ namespace GetIt.Message
         }
     }
 
-    public static class Answer
+    public static class StringAnswer
     {
-        public static Ui.Answer FromDomain(string p)
+        public static Ui.StringAnswer FromDomain(string p)
         {
-            return new Ui.Answer { Text = p };
+            return new Ui.StringAnswer { Text = p };
         }
 
-        public static string ToDomain(Ui.Answer p)
+        public static string ToDomain(Ui.StringAnswer p)
         {
             return p.Text;
+        }
+    }
+
+    public static class BoolAnswer
+    {
+        public static Ui.BoolAnswer FromDomain(bool p)
+        {
+            return new Ui.BoolAnswer { Value = p };
+        }
+
+        public static bool ToDomain(Ui.BoolAnswer p)
+        {
+            return p.Value;
         }
     }
 

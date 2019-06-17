@@ -605,6 +605,27 @@ let commands =
         }
 
         {
+            Name = "askBool"
+            CompiledName = "AskBool"
+            Summary = "Shows a speech bubble with two buttons \"confirm\" and \"decline\" next to the player and waits for the user to press one of the buttons."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that the speech bubble belongs to."
+                    }
+                    {
+                        Name = "question"
+                        Type = typeof<string>
+                        Description = "The content of the speech bubble."
+                    }
+                ]
+            Result = { Type = typeof<bool>; Description = "True, if the user pressed the \"confirm\" button, false otherwise." }
+            Body = [ "Connection.run UICommunication.askBool player.PlayerId question" ]
+        }
+
+        {
             Name = "turnOnPen"
             CompiledName = "TurnOnPen"
             Summary = "Turns on the pen of the player."
