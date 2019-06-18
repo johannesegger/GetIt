@@ -1,6 +1,6 @@
-FSharp.Core
+Elmish.Bridge.Client
 Fable.Core
 Fable.Elmish.React
-Fable.Elmish.Browser
 Fable.Elmish.Debugger
 Fable.Elmish.HMR
+FSharp.Core

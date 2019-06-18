@@ -6,5 +6,4 @@ nuget Fable.Elmish.HMR
 nuget FSharp.Core
 nuget Fable.Core
 nuget Fable.Elmish.React
-nuget Fable.Elmish.Browser
 nuget Fable.Elmish.Debugger
