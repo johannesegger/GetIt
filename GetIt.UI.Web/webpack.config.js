@@ -43,6 +43,7 @@ var CONFIG = {
                 // This adds polyfills when needed. Requires core-js dependency.
                 // See https://babeljs.io/docs/en/babel-preset-env#usebuiltins
                 "useBuiltIns": "usage",
+                "corejs": "3.1.4",
             }]
         ],
     }
