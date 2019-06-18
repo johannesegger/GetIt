@@ -77,7 +77,11 @@ module UICommunication =
         let args =
             [
                 yield "--user-data-dir", Path.Combine(Path.GetTempPath(), "chrome-workspace-for-getit") |> Some
+#if DEBUG
+                yield "--app", "http://localhost:8080" |> Some
+#else
                 yield "--app", url |> Some
+#endif
                 match windowSize with
                 | SpecificSize windowSize ->
                     yield "--window-size", sprintf "%d,%d" (int windowSize.Width) (int windowSize.Height) |> Some
