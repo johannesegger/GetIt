@@ -1,6 +1,8 @@
-Elmish.Bridge.Client
 Fable.Core
 Fable.Elmish.React
 Fable.Elmish.Debugger
 Fable.Elmish.HMR
+Fable.Elmish.Nile
+Fable.Elmish.Streams
 FSharp.Core
+Thoth.Json

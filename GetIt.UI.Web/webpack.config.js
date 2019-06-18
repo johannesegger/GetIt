@@ -28,7 +28,7 @@ var CONFIG = {
             target: "http://localhost:1503",
             changeOrigin: true
         },
-        "/bridge": {
+        "/msgs": {
             target: "http://localhost:1503",
             ws: true
         }

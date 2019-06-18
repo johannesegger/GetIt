@@ -2,29 +2,24 @@ module GetIt.UI
 
 open Browser.Types
 open Elmish
-open Elmish.Bridge
 open Elmish.Debug
 open Elmish.React
+open Elmish.Streams
 open Elmish.HMR // Must be last Elmish.* open declaration (see https://elmish.github.io/hmr/#Usage)
 open Fable.Core.JsInterop
 open Fable.Elmish.Nile
 open Fable.React
 open Fable.React.Props
 open FSharp.Control
+open Thoth.Json
 
 importAll "../sass/main.sass"
-
-type ClientMsg = class end
-
-type Msg =
-    | ServerMsg of ControllerMsg
-    | ClientMsg of ClientMsg
 
 type Model = unit
 
 let init () =
     printfn "Initializing model"
-    (), Cmd.none
+    ()
 
 let update msg model =
     printfn "Received msg %A" msg
@@ -37,7 +32,9 @@ let view model dispatch =
     ]
 
 let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
+    Browser.Dom.console.log("Setting up sub tree additions", parent)
     AsyncRx.create (fun obs -> async {
+        printfn "Subscribing to subtree additions"
         let onMutate mutations =
             mutations
             |> Seq.collect (fun m -> m?addedNodes)
@@ -53,7 +50,7 @@ let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
         })
     })
 
-let observeResize (element: Element) : IAsyncObservable<float * float> =
+let observeResize (element: HTMLElement) : IAsyncObservable<float * float> =
     AsyncRx.create (fun obs -> async {
         let resizeObserver = createNew Browser.Dom.window?ResizeObserver (fun entries ->
             entries
@@ -77,6 +74,7 @@ let stream states msgs =
         |> AsyncRx.choose (fun (n: Node) ->
             if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
         )
+        |> AsyncRx.startWith [ Browser.Dom.document.body ]
         |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
         // |> AsyncRx.take 1
         |> AsyncRx.flatMapLatest observeResize
@@ -86,14 +84,14 @@ let stream states msgs =
                 Size = { Width = width; Height = height }
             }
             |> SetSceneBounds
+            |> UIMsg
         )
-        |> AsyncRx.tapOnNext Bridge.Send
-        |> AsyncRx.filter (fun _ -> false)
+        |> AsyncRx.tapOnNext (printfn "Sending %A")
+        |> AsyncRx.msgChannel (sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint) (Encode.channelMsg >> Encode.toString 0) (Decode.fromString Decode.channelMsg >> Result.toOption)
     ]
     |> AsyncRx.mergeSeq
 
 Program.mkSimple init update view
-|> Program.withBridge CommunicationBridge.endpoint
 |> Program.withStream stream
 #if DEBUG
 |> Program.withDebugger

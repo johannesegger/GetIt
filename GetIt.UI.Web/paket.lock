@@ -1,12 +1,6 @@
 STORAGE: NONE
 NUGET
   remote: https://www.nuget.org/api/v2
-    Elmish.Bridge.Client (3.1.1)
-      Fable.Browser.Dom (>= 1.0) - restriction: >= netstandard2.0
-      Fable.Browser.Url (>= 1.0) - restriction: >= netstandard2.0
-      Fable.Browser.WebSocket (>= 1.0) - restriction: >= netstandard2.0
-      Fable.Elmish (>= 3.0) - restriction: >= netstandard2.0
-      Fable.SimpleJson (>= 3.0) - restriction: >= netstandard2.0
     Fable.Browser.Blob (1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
@@ -17,9 +11,6 @@ NUGET
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
     Fable.Browser.Event (1.0) - restriction: >= netstandard2.0
-      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
-      FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
-    Fable.Browser.Url (1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.5.2) - restriction: >= netstandard2.0
     Fable.Browser.WebSocket (1.0) - restriction: >= netstandard2.0
@@ -35,7 +26,7 @@ NUGET
     Fable.Elmish (3.0.3) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
-    Fable.Elmish.Browser (3.0)
+    Fable.Elmish.Browser (3.0.1) - restriction: >= netstandard2.0
       Fable.Browser.Dom (>= 1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       Fable.Elmish (>= 3.0) - restriction: >= netstandard2.0
@@ -50,22 +41,34 @@ NUGET
       Fable.Elmish.Browser (>= 3.0) - restriction: >= netstandard2.0
       Fable.Elmish.React (>= 3.0.1) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
+    Fable.Elmish.Nile (0.0.2)
+      Fable.Browser.Dom (>= 1.0) - restriction: >= netstandard2.0
+      Fable.Elmish (>= 3.0.3) - restriction: >= netstandard2.0
+      FSharp.Control.AsyncRx (>= 1.0) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
     Fable.Elmish.React (3.0.1)
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       Fable.Elmish (>= 3.0) - restriction: >= netstandard2.0
       Fable.React (>= 5.1) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
-    Fable.Parsimmon (4.0) - restriction: >= netstandard2.0
+    Fable.Elmish.Streams (3.0.3)
+      Fable.Browser.Event (>= 1.0) - restriction: >= netstandard2.0
+      Fable.Browser.WebSocket (>= 1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
+      Fable.Elmish (>= 3.0) - restriction: >= netstandard2.0
+      Fable.React (>= 5.1) - restriction: >= netstandard2.0
+      FSharp.Control.AsyncRx (>= 1.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
     Fable.React (5.2.6) - restriction: >= netstandard2.0
       Fable.Browser.Dom (>= 1.0) - restriction: >= netstandard2.0
       Fable.Core (>= 3.0) - restriction: >= netstandard2.0
       FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
-    Fable.SimpleJson (3.0) - restriction: >= netstandard2.0
-      Fable.Core (>= 3.0) - restriction: >= netstandard2.0
-      Fable.Parsimmon (>= 4.0) - restriction: >= netstandard2.0
-      FSharp.Core (>= 4.6.2) - restriction: >= netstandard2.0
+    FSharp.Control.AsyncRx (1.0) - restriction: >= netstandard2.0
+      FSharp.Control.AsyncSeq (>= 2.0.21) - restriction: >= netstandard2.0
+      FSharp.Core (>= 4.5.4) - restriction: >= netstandard2.0
+    FSharp.Control.AsyncSeq (2.0.21) - restriction: >= netstandard2.0
+      FSharp.Core (>= 3.1.2) - restriction: >= net45
+      FSharp.Core (>= 4.3.2) - restriction: && (< net45) (>= netstandard2.0)
     FSharp.Core (4.6.2)
       System.Collections (>= 4.0.11) - restriction: && (< net45) (>= netstandard1.6) (< netstandard2.0)
       System.Console (>= 4.0) - restriction: && (< net45) (>= netstandard1.6) (< netstandard2.0)

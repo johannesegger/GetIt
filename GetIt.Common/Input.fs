@@ -81,7 +81,6 @@ type VirtualScreenMouseClick =
 type MouseState =
     {
         Position: Position
-        LastClick: (Guid * MouseClick) option
     }
 
 /// For internal use only.
@@ -89,7 +88,6 @@ module MouseState =
     let empty =
         {
             Position = Position.zero
-            LastClick = None
         }
 
 /// For internal use only.

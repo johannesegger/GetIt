@@ -17,4 +17,8 @@
     <Compile Include="Messages.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Thoth.Json.Net" Version="3.3.0" />
+  </ItemGroup>
+
 </Project>

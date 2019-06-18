@@ -1,7 +1,7 @@
 ﻿namespace GetIt
 
-open Elmish
-open Elmish.Bridge
+open Elmish.Streams.AspNetCore.Middleware
+open FSharp.Control
 open FSharp.Control.Reactive
 open global.Giraffe
 open Microsoft.AspNetCore.Builder
@@ -11,6 +11,7 @@ open System
 open System.Diagnostics
 open System.IO
 open System.Reactive.Disposables
+open Thoth.Json.Net
 
 module UICommunication =
     type CommunicationState = {
@@ -21,49 +22,63 @@ module UICommunication =
     let mutable private communicationState = None
 
     let showScene windowSize =
-        let (subscriptionDisposable, webServerStopDisposable, msgs) = lock communicationStateGate (fun () ->
+        let (webServerCt, controllerMsgs) = lock communicationStateGate (fun () ->
             if Option.isSome communicationState then
                 raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
 
             let subscriptionDisposable = new SingleAssignmentDisposable()
             let webServerStopDisposable = new CancellationDisposable()
-            let msgs = new System.Reactive.Subjects.Subject<_>()
+            let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
             communicationState <-
                 Some {
                     Disposable =
                         subscriptionDisposable
                         |> Disposable.compose webServerStopDisposable
-                    MessageSubject = msgs
+                    MessageSubject = controllerMsgs
                 }
-            (subscriptionDisposable, webServerStopDisposable, msgs)
+            (webServerStopDisposable.Token, controllerMsgs)
         )
 
-        let subscribe model =
-            printfn "Subscribe using model %A" model
-            Cmd.ofSub (fun dispatch ->
-                printfn "Setup subscription"
-                subscriptionDisposable.Disposable <-
-                    Observable.subscribe
-                        (fun x ->
-                            printfn "Dispatch message %A" x
-                            dispatch x
-                        )
-                        msgs
+        let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
+            printfn "Client %s connected" connectionId
+            let controllerMsgs =
+                AsyncRx.create (fun obs -> async {
+                    return
+                        controllerMsgs
+                        |> Observable.subscribeWithCallbacks
+                            (obs.OnNextAsync >> Async.Start)
+                            (obs.OnErrorAsync >> Async.Start)
+                            (obs.OnCompletedAsync >> Async.Start)
+                        |> fun d -> AsyncDisposable.Create (fun () -> async { d.Dispose() })
+                })
+                |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
+            
+            msgs
+            |> AsyncRx.flatMap(fun (msg, connId) ->
+                match msg with
+                | ControllerMsg msg -> AsyncRx.empty ()
+                | UIMsg (SetSceneBounds sceneBounds) ->
+                    Model.updateCurrent (fun model -> Some (SetSceneBounds sceneBounds), { model with SceneBounds = sceneBounds })
+                    AsyncRx.empty ()
+                | UIMsg (ApplyMouseClick mouseClick) ->
+                    Model.updateCurrent (fun model -> Some (ApplyMouseClick mouseClick), model)
+                    AsyncRx.empty ()
             )
-        let server =
-            Bridge.mkServer CommunicationBridge.endpoint Model.init Model.update
-#if DEBUG
-            |> Bridge.withConsoleTrace
-#endif
-            |> Bridge.withSubscription subscribe
-            |> Bridge.run Giraffe.server
-
-        let webApp = server
+            |> AsyncRx.merge controllerMsgs
 
         let configureApp (app: IApplicationBuilder) =
             app
                 .UseWebSockets()
-                .UseGiraffe(webApp)
+                .UseStream(fun options ->
+                    { options with
+                       Stream = stream
+                       Encode = Encode.channelMsg >> Encode.toString 0
+                       Decode = Decode.fromString Decode.channelMsg >> Result.toOption
+                       RequestPath = MessageChannel.endpoint
+                    }
+                )
+                // .UseGiraffe(webApp)
+                |> ignore
 
         let configureServices (services: IServiceCollection) =
             services.AddGiraffe() |> ignore
@@ -78,7 +93,7 @@ module UICommunication =
                 .ConfigureServices(configureServices)
                 .UseUrls(url)
                 .Build()
-                .RunAsync(webServerStopDisposable.Token)
+                .RunAsync(webServerCt)
 
         // TODO check that chrome is installed and/or support other browsers
         let args =
@@ -104,6 +119,15 @@ module UICommunication =
 
         // TODO fail if process couldn't be started
 
+        printfn "Waiting for scene bounds"
+
+        Model.observable
+        |> Observable.firstIf (fst >> function | Some (SetSceneBounds _) -> true | _ -> false)
+        |> Observable.wait
+        |> ignore
+
+        printfn "Setup complete"
+
         ()
 
     let private sendMessage msg =
@@ -116,10 +140,10 @@ module UICommunication =
     let addPlayer playerData =
         let playerId = PlayerId.create ()
         sendMessage <| AddPlayer (playerId, playerData)
-        Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
+        Model.updateCurrent (fun m -> None, { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
 
     let removePlayer playerId =
         let playerId = PlayerId.create ()
         sendMessage <| RemovePlayer playerId
-        Model.updateCurrent (fun m -> { m with Players = Map.remove playerId m.Players })
+        Model.updateCurrent (fun m -> None, { m with Players = Map.remove playerId m.Players })
