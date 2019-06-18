@@ -4,6 +4,7 @@ open System
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Reactive.Subjects
+open Elmish
 open FSharp.Control.Reactive
 
 type internal Model =
@@ -14,19 +15,28 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
+
 module internal Model =
     let private gate = Object()
 
+    let initial =
+        {
+            SceneBounds = Rectangle.zero
+            Players = Map.empty
+            MouseState = MouseState.empty
+            KeyboardState = KeyboardState.empty
+        }
+
     let mutable private subject =
-        let initial =
-            {
-                SceneBounds = Rectangle.zero
-                Players = Map.empty
-                MouseState = MouseState.empty
-                KeyboardState = KeyboardState.empty
-            }
         new BehaviorSubject<_>(initial)
 
+    let init dispatch () =
+        initial, Cmd.none
+
+    let update dispatch msg model =
+        printfn "Received message %A" msg
+        model, Cmd.none
+    
     let observable = subject.AsObservable()
 
     let getCurrent () = subject.Value

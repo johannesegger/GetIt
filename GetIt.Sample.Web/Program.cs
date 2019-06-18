@@ -10,6 +10,8 @@ namespace GetIt.Sample.Web
             Game.ShowSceneAndAddTurtle();
             // Game.ShowScene(300, 200);
             // Game.ShowMaximizedScene();
+
+            Console.ReadLine();
         }
     }
 }

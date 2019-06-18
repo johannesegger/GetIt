@@ -32,11 +32,12 @@ type Degrees = private Degrees of float
     override this.ToString () =
         let (Degrees value) = this
         value.ToString()
-
+#if !FABLE_COMPILER
     interface IFormattable with
         member this.ToString (format: string, formatProvider: IFormatProvider) =
             let (Degrees value) = this
             value.ToString(format, formatProvider)
+#endif
 
 /// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

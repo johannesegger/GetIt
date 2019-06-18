@@ -65,16 +65,6 @@ module Svg =
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 
-/// Provides some easy to use functions for randomness.
-module Randomly =
-    let private generator = Random()
-
-    /// Randomly selects an item from a list
-    [<CompiledName("SelectOneOf")>]
-    let selectOneOf([<ParamArray>] items) =
-        let index = generator.Next(Array.length items)
-        Array.item index items
-
 /// For internal use only.
 module Result =
     let ofOption error = function

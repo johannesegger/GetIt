@@ -15,3 +15,6 @@ module PngImage =
     let toBase64String (PngImage data) =
         Convert.ToBase64String data
         |> sprintf "data:image/png;base64, %s"
+
+module CommunicationBridge =
+    let endpoint = "/bridge"

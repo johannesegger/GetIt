@@ -12,36 +12,10 @@ open System.Diagnostics
 open System.IO
 open System.Reactive.Disposables
 
-module Shared =
-    let endpoint = "/socket"
-
-type ControllerMessage =
-    | AddPlayer of PlayerId * PlayerData
-
-type internal Model =
-    {
-        SceneBounds: Rectangle
-        Players: Map<PlayerId, PlayerData>
-        MouseState: MouseState
-        KeyboardState: KeyboardState
-    }
-
-module internal Model =
-    let init dispatch () =
-        {
-            SceneBounds = Rectangle.zero
-            Players = Map.empty
-            MouseState = MouseState.empty
-            KeyboardState = KeyboardState.empty
-        },
-        Cmd.none
-
-    let update dispatch msg model = model, Cmd.none
-
 module UICommunication =
     type CommunicationState = {
         Disposable: IDisposable
-        MessageSubject: System.Reactive.Subjects.Subject<ControllerMessage>
+        MessageSubject: System.Reactive.Subjects.Subject<ControllerMsg>
     }
     let private communicationStateGate = obj()
     let mutable private communicationState = None
@@ -65,12 +39,22 @@ module UICommunication =
         )
 
         let subscribe model =
+            printfn "Subscribe using model %A" model
             Cmd.ofSub (fun dispatch ->
+                printfn "Setup subscription"
                 subscriptionDisposable.Disposable <-
-                    Observable.subscribe dispatch msgs
+                    Observable.subscribe
+                        (fun x ->
+                            printfn "Dispatch message %A" x
+                            dispatch x
+                        )
+                        msgs
             )
         let server =
-            Bridge.mkServer Shared.endpoint Model.init Model.update
+            Bridge.mkServer CommunicationBridge.endpoint Model.init Model.update
+#if DEBUG
+            |> Bridge.withConsoleTrace
+#endif
             |> Bridge.withSubscription subscribe
             |> Bridge.run Giraffe.server
 
@@ -134,3 +118,8 @@ module UICommunication =
         sendMessage <| AddPlayer (playerId, playerData)
         Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
+
+    let removePlayer playerId =
+        let playerId = PlayerId.create ()
+        sendMessage <| RemovePlayer playerId
+        Model.updateCurrent (fun m -> { m with Players = Map.remove playerId m.Players })
