@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Compile Include="UICommunication.fs" />
+    <Compile Include="Game.fs" />
   </ItemGroup>
 
   <ItemGroup>
