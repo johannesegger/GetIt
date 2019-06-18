@@ -15,6 +15,8 @@ open System.Reactive.Disposables
 module Shared =
     let endpoint = "/socket"
 
+type ControllerMessage = class end
+
 type internal Model =
     {
         SceneBounds: Rectangle
@@ -36,13 +38,35 @@ module internal Model =
     let update dispatch msg model = model, Cmd.none
 
 module UICommunication =
-    let showScene msgs windowSize =
-        let subscriptionDisposable = new SingleAssignmentDisposable()
+    type CommunicationState = {
+        Disposable: IDisposable
+        MessageSubject: System.Reactive.Subjects.Subject<ControllerMessage>
+    }
+    let private communicationStateGate = obj()
+    let mutable private communicationState = None
+
+    let showScene windowSize =
+        let (subscriptionDisposable, webServerStopDisposable, msgs) = lock communicationStateGate (fun () ->
+            if Option.isSome communicationState then
+                raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
+
+            let subscriptionDisposable = new SingleAssignmentDisposable()
+            let webServerStopDisposable = new CancellationDisposable()
+            let msgs = new System.Reactive.Subjects.Subject<_>()
+            communicationState <-
+                Some {
+                    Disposable =
+                        subscriptionDisposable
+                        |> Disposable.compose webServerStopDisposable
+                    MessageSubject = msgs
+                }
+            (subscriptionDisposable, webServerStopDisposable, msgs)
+        )
+
         let subscribe model =
             Cmd.ofSub (fun dispatch ->
                 subscriptionDisposable.Disposable <-
-                    msgs
-                    |> Observable.subscribe dispatch
+                    Observable.subscribe dispatch msgs
             )
         let server =
             Bridge.mkServer Shared.endpoint Model.init Model.update
@@ -58,8 +82,6 @@ module UICommunication =
 
         let configureServices (services: IServiceCollection) =
             services.AddGiraffe() |> ignore
-
-        let webServerStopDisposable = new CancellationDisposable()
 
         let url = "http://localhost:1503/"
 
@@ -95,5 +117,6 @@ module UICommunication =
             |> String.concat " "
         let proc = Process.Start("chrome.exe", args)
 
-        subscriptionDisposable
-        |> Disposable.compose webServerStopDisposable
+        // TODO fail if process couldn't be started
+
+        ()
