@@ -8,5 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\GetIt.Common\GetIt.Common.fsproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Elmish.Nile" Version="0.0.2" />
+  </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
