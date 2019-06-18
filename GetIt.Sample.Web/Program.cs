@@ -7,7 +7,7 @@ namespace GetIt.Sample.Web
     {
         static void Main(string[] args)
         {
-            Game.ShowScene();
+            Game.ShowSceneAndAddTurtle();
             // Game.ShowScene(300, 200);
             // Game.ShowMaximizedScene();
         }

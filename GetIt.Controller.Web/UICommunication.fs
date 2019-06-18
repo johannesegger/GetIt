@@ -15,7 +15,8 @@ open System.Reactive.Disposables
 module Shared =
     let endpoint = "/socket"
 
-type ControllerMessage = class end
+type ControllerMessage =
+    | AddPlayer of PlayerId * PlayerData
 
 type internal Model =
     {
@@ -120,3 +121,16 @@ module UICommunication =
         // TODO fail if process couldn't be started
 
         ()
+
+    let private sendMessage msg =
+        match communicationState with
+        | Some state ->
+            state.MessageSubject.OnNext msg
+        | None ->
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+
+    let addPlayer playerData =
+        let playerId = PlayerId.create ()
+        sendMessage <| AddPlayer (playerId, playerData)
+        Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
+        playerId

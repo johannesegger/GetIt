@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
+    <Compile Include="Player.fs" />
     <Compile Include="Game.fs" />
   </ItemGroup>
 
