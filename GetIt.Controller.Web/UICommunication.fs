@@ -11,6 +11,7 @@ open System
 open System.Diagnostics
 open System.IO
 open System.Reactive.Disposables
+open System.Threading
 open Thoth.Json.Net
 
 module UICommunication =
@@ -18,27 +19,11 @@ module UICommunication =
         Disposable: IDisposable
         MessageSubject: System.Reactive.Subjects.Subject<ControllerMsg>
     }
-    let private communicationStateGate = obj()
+    let mutable private showSceneCalled = 0
     let mutable private communicationState = None
+    let private url = "http://localhost:1503/"
 
-    let showScene windowSize =
-        let (webServerCt, controllerMsgs) = lock communicationStateGate (fun () ->
-            if Option.isSome communicationState then
-                raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
-
-            let subscriptionDisposable = new SingleAssignmentDisposable()
-            let webServerStopDisposable = new CancellationDisposable()
-            let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
-            communicationState <-
-                Some {
-                    Disposable =
-                        subscriptionDisposable
-                        |> Disposable.compose webServerStopDisposable
-                    MessageSubject = controllerMsgs
-                }
-            (webServerStopDisposable.Token, controllerMsgs)
-        )
-
+    let private startWebServer controllerMsgs ct = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             printfn "Client %s connected" connectionId
             let controllerMsgs =
@@ -83,9 +68,7 @@ module UICommunication =
         let configureServices (services: IServiceCollection) =
             services.AddGiraffe() |> ignore
 
-        let url = "http://localhost:1503/"
-
-        let webServerRunTask =
+        do!
             WebHostBuilder()
                 .UseKestrel()
                 .UseWebRoot(Path.GetFullPath "../Client/public")
@@ -93,8 +76,11 @@ module UICommunication =
                 .ConfigureServices(configureServices)
                 .UseUrls(url)
                 .Build()
-                .RunAsync(webServerCt)
+                .RunAsync(ct)
+            |> Async.AwaitTask
+    }
 
+    let private startUI windowSize = async {
         // TODO check that chrome is installed and/or support other browsers
         let args =
             [
@@ -116,8 +102,35 @@ module UICommunication =
             )
             |> String.concat " "
         let proc = Process.Start("chrome.exe", args)
+        proc.WaitForExit ()
+        if proc.ExitCode <> 0 then
+            raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
+    }
 
-        // TODO fail if process couldn't be started
+    let showScene windowSize =
+        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
+
+        let webServerStopDisposable = new CancellationDisposable()
+        let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
+
+        let runThread =
+            Thread(
+                (fun () ->
+                    async {
+                        let! webServerRunTask = startWebServer controllerMsgs webServerStopDisposable.Token |> Async.StartChild
+                        let! processRunTask = startUI windowSize |> Async.StartChild
+
+                        do! processRunTask
+                        webServerStopDisposable.Dispose()
+                        do! webServerRunTask
+                    }
+                    |> Async.RunSynchronously
+                ),
+                Name = "Run thread",
+                IsBackground = false
+            )
+        runThread.Start()
 
         printfn "Waiting for scene bounds"
 
@@ -127,6 +140,12 @@ module UICommunication =
         |> ignore
 
         printfn "Setup complete"
+
+        communicationState <-
+            Some {
+                Disposable = webServerStopDisposable
+                MessageSubject = controllerMsgs
+            }
 
         ()
 
