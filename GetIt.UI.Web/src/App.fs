@@ -15,37 +15,6 @@ open Thoth.Json
 
 importAll "../sass/main.sass"
 
-// type Msg =
-//     | SetSceneBounds of GetIt.Rectangle
-//     | SetMousePosition of positionRelativeToSceneControl: Position
-//     | ApplyMouseClick of MouseButton * positionRelativeToSceneControl: Position
-//     | SetPosition of PlayerId * Position
-//     | ChangePosition of PlayerId * Position
-//     | SetDirection of PlayerId * Degrees
-//     | ChangeDirection of PlayerId * Degrees
-//     | SetSpeechBubble of PlayerId * SpeechBubble option
-//     | UpdateAnswer of PlayerId * string
-//     | ApplyStringAnswer of PlayerId * string
-//     | ApplyBoolAnswer of PlayerId * bool
-//     | SetPenState of PlayerId * isOn: bool
-//     | TogglePenState of PlayerId
-//     | SetPenColor of PlayerId * RGBAColor
-//     | ShiftPenColor of PlayerId * Degrees
-//     | SetPenWeight of PlayerId * float
-//     | ChangePenWeight of PlayerId * float
-//     | SetSizeFactor of PlayerId * float
-//     | ChangeSizeFactor of PlayerId * float
-//     | SetVisibility of PlayerId * isVisible: bool
-//     | SetNextCostume of PlayerId
-//     | SendToBack of PlayerId
-//     | BringToFront of PlayerId
-//     | AddPlayer of PlayerId * PlayerData
-//     | RemovePlayer of PlayerId
-//     | ClearScene
-//     | SetBackground of SvgImage
-//     | StartBatch
-//     | ApplyBatch
-
 type PenLine =
     {
         Start: Position
@@ -57,6 +26,7 @@ type PenLine =
 type Model =
     {
         SceneBounds: GetIt.Rectangle
+        WindowTitle: string option
         Players: Map<PlayerId, PlayerData>
         PlayerStringAnswers: Map<PlayerId, string>
         PenLines: PenLine list
@@ -67,6 +37,7 @@ type Model =
 let init () =
     {
         SceneBounds = GetIt.Rectangle.zero
+        WindowTitle = None
         Players = Map.empty
         PlayerStringAnswers = Map.empty
         PenLines = []
@@ -82,82 +53,86 @@ let rec update msg model =
     match model.BatchMessages, msg with
     | None, UIMsg (SetSceneBounds bounds) ->
         { model with SceneBounds = bounds }
-    // | None, SetMousePosition positionRelativeToSceneControl ->
-    //     model
-    | None, UIMsg (ApplyMouseClick mouseClick) ->
+    | None, UIMsg (SetMousePosition _) ->
         model
-    // | None, SetPosition (playerId, position) ->
-    //     let player = Map.find playerId model.Players
-    //     let player' = { player with Position = position }
-    //     { model with
-    //         Players = Map.add playerId player' model.Players
-    //         PenLines =
-    //             if player.Pen.IsOn
-    //             then
-    //                 let line =
-    //                     {
-    //                         Start = player.Position
-    //                         End = player'.Position
-    //                         Weight = player.Pen.Weight
-    //                         Color = player.Pen.Color
-    //                     }
-    //                 model.PenLines @ [ line ]
-    //             else model.PenLines
-    //     }
-    // | None, ChangePosition (playerId, relativePosition) ->
-    //     let player = Map.find playerId model.Players
-    //     update (SetPosition (playerId, player.Position + relativePosition)) model
-    // | None, SetDirection (playerId, angle) ->
-    //     updatePlayer playerId (fun p -> { p with Direction = angle })
-    // | None, ChangeDirection (playerId, relativeDirection) ->
-    //     let player = Map.find playerId model.Players
-    //     update (SetDirection (playerId, player.Direction + relativeDirection)) model
-    // | None, SetSpeechBubble (playerId, speechBubble) ->
-    //     updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
-    // | None, UpdateAnswer (playerId, answer) ->
-    //     { model with PlayerStringAnswers = Map.add playerId answer model.PlayerStringAnswers }
-    // | None, ApplyStringAnswer (playerId, answer) ->
-    //     let model' =
-    //         updatePlayer playerId (fun p ->
-    //             match p.SpeechBubble with
-    //             | Some (AskString _) -> { p with SpeechBubble = None }
-    //             | Some (AskBool _)
-    //             | Some (Say _)
-    //             | None -> p
-    //         )
-    //     { model' with PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers }
-    // | None, ApplyBoolAnswer (playerId, answer) ->
-    //     updatePlayer playerId (fun p ->
-    //         match p.SpeechBubble with
-    //         | Some (AskBool _) -> { p with SpeechBubble = None }
-    //         | Some (AskString _)
-    //         | Some (Say _)
-    //         | None -> p
-    //     )
-    // | None, SetPenState (playerId, isOn) ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
-    // | None, TogglePenState playerId ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
-    // | None, SetPenColor (playerId, color) ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
-    // | None, ShiftPenColor (playerId, angle) ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
-    // | None, SetPenWeight (playerId, weight) ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
-    // | None, ChangePenWeight (playerId, weight) ->
-    //     updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
-    // | None, SetSizeFactor (playerId, sizeFactor) ->
-    //     updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
-    // | None, ChangeSizeFactor (playerId, sizeFactor) ->
-    //     updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
-    // | None, SetVisibility (playerId, isVisible) ->
-    //     updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
-    // | None, SetNextCostume playerId ->
-    //     updatePlayer playerId Player.nextCostume
-    // | None, SendToBack playerId ->
-    //     { model with Players = Player.sendToBack playerId model.Players }
-    // | None, BringToFront playerId ->
-    //     { model with Players = Player.bringToFront playerId model.Players }
+    | None, UIMsg (ApplyMouseClick _) ->
+        model
+    | None, UIMsg (UpdateStringAnswer (playerId, answer)) ->
+        { model with PlayerStringAnswers = Map.add playerId answer model.PlayerStringAnswers }
+    | None, UIMsg (AnswerStringQuestion (playerId, answer)) ->
+        let model' =
+            updatePlayer playerId (fun p ->
+                match p.SpeechBubble with
+                | Some (AskString _) -> { p with SpeechBubble = None }
+                | Some (AskBool _)
+                | Some (Say _)
+                | None -> p
+            )
+        { model' with PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers }
+    | None, UIMsg (AnswerBoolQuestion (playerId, answer)) ->
+        updatePlayer playerId (fun p ->
+            match p.SpeechBubble with
+            | Some (AskBool _) -> { p with SpeechBubble = None }
+            | Some (AskString _)
+            | Some (Say _)
+            | None -> p
+        )
+    | None, UIMsg (Screenshot _) ->
+        model
+    | None, ControllerMsg (SetPosition (playerId, position)) ->
+        let player = Map.find playerId model.Players
+        let player' = { player with Position = position }
+        { model with
+            Players = Map.add playerId player' model.Players
+            PenLines =
+                if player.Pen.IsOn
+                then
+                    let line =
+                        {
+                            Start = player.Position
+                            End = player'.Position
+                            Weight = player.Pen.Weight
+                            Color = player.Pen.Color
+                        }
+                    model.PenLines @ [ line ]
+                else model.PenLines
+        }
+    | None, ControllerMsg (ChangePosition (playerId, relativePosition)) ->
+        let player = Map.find playerId model.Players
+        update (ControllerMsg (SetPosition (playerId, player.Position + relativePosition))) model
+    | None, ControllerMsg (SetDirection (playerId, angle)) ->
+        updatePlayer playerId (fun p -> { p with Direction = angle })
+    | None, ControllerMsg (ChangeDirection (playerId, relativeDirection)) ->
+        let player = Map.find playerId model.Players
+        update (ControllerMsg (SetDirection (playerId, player.Direction + relativeDirection))) model
+    | None, ControllerMsg (SetSpeechBubble (playerId, speechBubble)) ->
+        updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
+    | None, ControllerMsg (SetPenState (playerId, isOn)) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
+    | None, ControllerMsg (TogglePenState playerId) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
+    | None, ControllerMsg (SetPenColor (playerId, color)) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
+    | None, ControllerMsg (ShiftPenColor (playerId, angle)) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
+    | None, ControllerMsg (SetPenWeight (playerId, weight)) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
+    | None, ControllerMsg (ChangePenWeight (playerId, weight)) ->
+        updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
+    | None, ControllerMsg (SetSizeFactor (playerId, sizeFactor)) ->
+        updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
+    | None, ControllerMsg (ChangeSizeFactor (playerId, sizeFactor)) ->
+        updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
+    | None, ControllerMsg (SetVisibility (playerId, isVisible)) ->
+        updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
+    | None, ControllerMsg (ToggleVisibility playerId) ->
+        updatePlayer playerId (fun p -> { p with IsVisible = not p.IsVisible })
+    | None, ControllerMsg (SetNextCostume playerId) ->
+        updatePlayer playerId Player.nextCostume
+    | None, ControllerMsg (SendToBack playerId) ->
+        { model with Players = Player.sendToBack playerId model.Players }
+    | None, ControllerMsg (BringToFront playerId) ->
+        { model with Players = Player.bringToFront playerId model.Players }
     | None, ControllerMsg (AddPlayer (playerId, player)) ->
         { model with
             Players =
@@ -169,21 +144,33 @@ let rec update msg model =
             Players = Map.remove playerId model.Players
             PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers
         }
-    // | None, ClearScene ->
-    //     { model with PenLines = [] }
-    // | None, SetBackground background ->
-    //     { model with Background = background }
-    // | None, StartBatch ->
-    //     { model with BatchMessages = Some ([], 1) }
-    // | Some (messages, level), StartBatch ->
-    //     { model with BatchMessages = Some (messages, level + 1) }
-    // | None, ApplyBatch ->
-    //     model // TODO send error to controller?
-    // | Some (messages, level), ApplyBatch when level > 1 ->
-    //     { model with BatchMessages = Some (messages, level - 1) }
-    // | Some (messages, level), ApplyBatch ->
-    //     (messages, ({ model with BatchMessages = None }))
-    //     ||> List.foldBack update
+    | None, ControllerMsg (SetWindowTitle title) ->
+        { model with WindowTitle = title }
+    | None, ControllerMsg ClearScene ->
+        { model with PenLines = [] }
+    | None, ControllerMsg MakeScreenshot ->
+        model
+    | None, ControllerMsg (SetBackground background) ->
+        { model with Background = background }
+    | None, ControllerMsg (InputEvent (KeyDown key)) ->
+        model
+    | None, ControllerMsg (InputEvent (KeyUp key)) ->
+        model
+    | None, ControllerMsg (InputEvent (MouseMove virtualScreenPosition)) ->
+        model
+    | None, ControllerMsg (InputEvent (MouseClick virtualScreenMouseClick)) ->
+        model
+    | None, ControllerMsg StartBatch ->
+        { model with BatchMessages = Some ([], 1) }
+    | Some (messages, level), ControllerMsg StartBatch ->
+        { model with BatchMessages = Some (messages, level + 1) }
+    | None, ControllerMsg ApplyBatch ->
+        model // TODO send error to controller?
+    | Some (messages, level), ControllerMsg ApplyBatch when level > 1 ->
+        { model with BatchMessages = Some (messages, level - 1) }
+    | Some (messages, level), ControllerMsg ApplyBatch ->
+        (messages, ({ model with BatchMessages = None }))
+        ||> List.foldBack update
     | Some (messages, level), x ->
         { model with BatchMessages = Some (x :: messages, level) }
 
@@ -274,21 +261,6 @@ let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
         })
     })
 
-let observeResize (element: HTMLElement) : IAsyncObservable<float * float> =
-    AsyncRx.create (fun obs -> async {
-        let resizeObserver = createNew Browser.Dom.window?ResizeObserver (fun entries ->
-            entries
-            |> Seq.exactlyOne
-            |> fun e -> (e?contentRect?width, e?contentRect?height)
-            |> obs.OnNextAsync
-            |> Async.StartImmediate
-        )
-        resizeObserver?observe(element)
-        return AsyncDisposable.Create (fun () -> async {
-            resizeObserver?disconnect()
-        })
-    })
-
 let observeSceneSizeFromWindowResize =
     AsyncRx.create (fun obs -> async {
         let resizeCanvas evt =
@@ -311,27 +283,38 @@ let stream states msgs =
     [
         msgs
 
-        Browser.Dom.document.querySelector "#elmish-app"
-        |> observeSubTreeAdditions
-        |> AsyncRx.choose (fun (n: Node) ->
-            if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
+        states
+        |> AsyncRx.map (fun model -> model.WindowTitle)
+        |> AsyncRx.distinctUntilChanged
+        |> AsyncRx.tapOnNext (fun title ->
+            Browser.Dom.document.title <-
+                match title with
+                | Some text -> sprintf "Get It - %s" text
+                | None -> "Get It"
         )
-        |> AsyncRx.startWith [ Browser.Dom.document.body ]
-        |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
-        // |> AsyncRx.take 1
-        |> AsyncRx.map (fun n -> n.offsetWidth, n.offsetHeight)
-        // |> AsyncRx.flatMapLatest observeResize
-        // |> AsyncRx.debounce 100
-        // |> AsyncRx.distinctUntilChanged
-        |> AsyncRx.merge observeSceneSizeFromWindowResize
-        |> AsyncRx.map(fun (width, height) ->
-            {
-                Position = { X = -width / 2.; Y = -height / 2. }
-                Size = { Width = width; Height = height }
-            }
-            |> SetSceneBounds
-            |> UIMsg
-        )
+        |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
+
+        [
+            Browser.Dom.document.querySelector "#elmish-app"
+            |> observeSubTreeAdditions
+            |> AsyncRx.choose (fun (n: Node) ->
+                if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
+            )
+            |> AsyncRx.startWith [ Browser.Dom.document.body ]
+            |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
+            // |> AsyncRx.take 1
+            |> AsyncRx.map (fun n -> n.offsetWidth, n.offsetHeight)
+            |> AsyncRx.merge observeSceneSizeFromWindowResize
+            |> AsyncRx.map(fun (width, height) ->
+                {
+                    Position = { X = -width / 2.; Y = -height / 2. }
+                    Size = { Width = width; Height = height }
+                }
+                |> SetSceneBounds
+            )
+        ]
+        |> AsyncRx.mergeSeq
+        |> AsyncRx.map UIMsg
         |> AsyncRx.msgChannel (sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint) (Encode.channelMsg >> Encode.toString 0) (Decode.fromString Decode.channelMsg >> Result.toOption)
     ]
     |> AsyncRx.mergeSeq

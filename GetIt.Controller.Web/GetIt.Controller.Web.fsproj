@@ -7,14 +7,19 @@
   <ItemGroup>
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
+    <Compile Include="PrintConfig.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Game.fs" />
+    <Compile Include="Player.generated.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ColorCode.Html" Version="2.0.6" />
     <PackageReference Include="Elmish.Streams.AspNetCore.MiddleWare" Version="1.0.1" />
     <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
-    <PackageReference Update="FSharp.Core" Version="4.6.2" /> <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
+    <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
+    <PackageReference Include="Fue" Version="1.7.0" />
     <PackageReference Include="Giraffe" Version="3.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
   </ItemGroup>

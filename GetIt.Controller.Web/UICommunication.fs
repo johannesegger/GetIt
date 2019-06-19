@@ -42,11 +42,17 @@ module UICommunication =
             |> AsyncRx.flatMap(fun (msg, connId) ->
                 match msg with
                 | ControllerMsg msg -> AsyncRx.empty ()
-                | UIMsg (SetSceneBounds sceneBounds) ->
-                    Model.updateCurrent (fun model -> Some (SetSceneBounds sceneBounds), { model with SceneBounds = sceneBounds })
+                | UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, { model with SceneBounds = sceneBounds })
                     AsyncRx.single (msg, connId)
-                | UIMsg (ApplyMouseClick mouseClick) ->
-                    Model.updateCurrent (fun model -> Some (ApplyMouseClick mouseClick), model)
+                | UIMsg (SetMousePosition mousePosition as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, { model with MouseState = { model.MouseState with Position = mousePosition } })
+                    AsyncRx.single (msg, connId)
+                | UIMsg (ApplyMouseClick _ as uiMsg)
+                | UIMsg (AnswerStringQuestion _ as uiMsg)
+                | UIMsg (AnswerBoolQuestion _ as uiMsg)
+                | UIMsg (Screenshot _ as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, model)
                     AsyncRx.single (msg, connId)
             )
             |> AsyncRx.merge controllerMsgs
@@ -156,6 +162,23 @@ module UICommunication =
         | None ->
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
 
+    let private sendMessageAndWaitForResponse msg responseFilter =
+        let mutable response = None
+        use waitHandle = new ManualResetEventSlim()
+        use d =
+            Model.observable
+            |> Observable.choose responseFilter
+            |> Observable.first
+            |> Observable.subscribe (fun p ->
+                response <- Some p
+                waitHandle.Set()
+            )
+
+        sendMessage msg
+
+        waitHandle.Wait()
+        Option.get response
+
     let addPlayer playerData =
         let playerId = PlayerId.create ()
         sendMessage <| AddPlayer (playerId, playerData)
@@ -163,6 +186,138 @@ module UICommunication =
         playerId
 
     let removePlayer playerId =
-        let playerId = PlayerId.create ()
         sendMessage <| RemovePlayer playerId
         Model.updateCurrent (fun m -> None, { m with Players = Map.remove playerId m.Players })
+
+    let setWindowTitle title =
+        sendMessage <| SetWindowTitle title
+
+    let setBackground background =
+        sendMessage <| SetBackground background
+
+    let clearScene () =
+        sendMessage ClearScene
+
+    let makeScreenshot () =
+        sendMessageAndWaitForResponse
+            MakeScreenshot
+            (fst >> function | Some (Screenshot image) -> Some image | _ -> None)
+
+    let startBatch () =
+        sendMessage StartBatch
+
+    let applyBatch () =
+        sendMessage ApplyBatch
+
+    let setPosition playerId position =
+        SetPosition (playerId, position)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Position = position })
+
+    let changePosition playerId relativePosition =
+        ChangePosition (playerId, relativePosition)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Position = p.Position + relativePosition })
+
+    let setDirection playerId direction =
+        SetDirection (playerId, direction)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Direction = direction })
+
+    let changeDirection playerId relativeDirection =
+        ChangeDirection (playerId, relativeDirection)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Direction = p.Direction + relativeDirection })
+
+    let say playerId text =
+        SetSpeechBubble (playerId, Some (Say text))
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = Some (Say text) })
+
+    let private setTemporarySpeechBubble playerId speechBubble =
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = Some speechBubble })
+        Disposable.create (fun () ->
+            Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = None })
+        )
+
+    let askString playerId text =
+        use d = setTemporarySpeechBubble playerId (AskString text)
+        sendMessageAndWaitForResponse
+            (SetSpeechBubble (playerId, Some (AskString text)))
+            (fst >> function | Some (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
+
+    let askBool playerId text =
+        use d = setTemporarySpeechBubble playerId (AskBool text)
+        sendMessageAndWaitForResponse
+            (SetSpeechBubble (playerId, Some (AskString text)))
+            (fst >> function | Some (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
+
+    let shutUp playerId =
+        SetSpeechBubble (playerId, None)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = None })
+
+    let setPenState playerId isOn =
+        SetPenState (playerId, isOn)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with IsOn = isOn } })
+
+    let togglePenState playerId =
+        TogglePenState playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
+
+    let setPenColor playerId color =
+        SetPenColor (playerId, color)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Color = color } })
+
+    let shiftPenColor playerId angle =
+        ShiftPenColor (playerId, angle)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
+
+    let setPenWeight playerId weight =
+        SetPenWeight (playerId, weight)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Weight = weight } })
+
+    let changePenWeight playerId weight =
+        ChangePenWeight (playerId, weight)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
+
+    let setSizeFactor playerId sizeFactor =
+        SetSizeFactor (playerId, sizeFactor)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SizeFactor = sizeFactor })
+
+    let changeSizeFactor playerId sizeFactor =
+        ChangeSizeFactor (playerId, sizeFactor)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SizeFactor = p.SizeFactor + sizeFactor })
+
+    let setNextCostume playerId =
+        SetNextCostume playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, Player.nextCostume p)
+
+    let sendToBack playerId =
+        SendToBack playerId
+        |> sendMessage
+        Model.updateCurrent (fun m -> None, { m with Players = Player.sendToBack playerId m.Players })
+
+    let bringToFront playerId =
+        BringToFront playerId
+        |> sendMessage
+        Model.updateCurrent (fun m -> None, { m with Players = Player.bringToFront playerId m.Players })
+
+    let setVisibility playerId isVisible =
+        SetVisibility (playerId, isVisible)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with IsVisible = isVisible })
+
+    let toggleVisibility playerId =
+        ToggleVisibility playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with IsVisible = not p.IsVisible })

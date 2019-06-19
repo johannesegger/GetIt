@@ -1,5 +1,6 @@
 namespace GetIt
 
+open System
 #if FABLE_COMPILER
 open Thoth.Json
 #else
@@ -9,10 +10,40 @@ open Thoth.Json.Net
 type ControllerMsg =
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
+    | SetWindowTitle of string option
+    | SetBackground of SvgImage
+    | ClearScene
+    | MakeScreenshot
+    | SetPosition of PlayerId * Position
+    | ChangePosition of PlayerId * Position
+    | SetDirection of PlayerId * Degrees
+    | ChangeDirection of PlayerId * Degrees
+    | SetSpeechBubble of PlayerId * SpeechBubble option
+    | SetPenState of PlayerId * bool
+    | TogglePenState of PlayerId
+    | SetPenColor of PlayerId * RGBAColor
+    | ShiftPenColor of PlayerId * Degrees
+    | SetPenWeight of PlayerId * float
+    | ChangePenWeight of PlayerId * float
+    | SetSizeFactor of PlayerId * float
+    | ChangeSizeFactor of PlayerId * float
+    | SetNextCostume of PlayerId
+    | SendToBack of PlayerId
+    | BringToFront of PlayerId
+    | SetVisibility of PlayerId * bool
+    | ToggleVisibility of PlayerId
+    | InputEvent of InputEvent
+    | StartBatch
+    | ApplyBatch
 
 type UIMsg =
     | SetSceneBounds of Rectangle
     | ApplyMouseClick of MouseClick
+    | SetMousePosition of Position
+    | UpdateStringAnswer of PlayerId * string
+    | AnswerStringQuestion of PlayerId * string
+    | AnswerBoolQuestion of PlayerId * bool
+    | Screenshot of PngImage
 
 type ChannelMsg =
     | UIMsg of UIMsg
@@ -109,7 +140,7 @@ module Decode =
             }
         )
 
-    let KeyboardKey: Decoder<_> =
+    let keyboardKey: Decoder<_> =
         Decode.string
         |> Decode.andThen (fun key ->
             match key with
@@ -176,29 +207,47 @@ module Decode =
             }
         )
 
+    let virtualScreenMouseClick: Decoder<_> =
+        Decode.object (fun get ->
+            {
+                Button = get.Required.Field "button" mouseButton
+                VirtualScreenPosition = get.Required.Field "position" position
+            }
+        )
+
     let controllerMsg: Decoder<_> =
         let decoders =
             [
                 ("addPlayer", Decode.tuple2 playerId playerData |> Decode.map AddPlayer)
                 ("removePlayer", playerId |> Decode.map RemovePlayer)
-                // ("setWindowTitle", Decode.option Decode.string |> Decode.map SetWindowTitle)
-                // ("setBackground", svgImage |> Decode.map SetBackground)
-                // ("clearScene", Decode.nil ClearScene)
-                // ("makeScreenshot", Decode.nil MakeScreenshot)
-                // ("setPosition", Decode.tuple2 playerId position |> Decode.map SetPosition)
-                // ("setDirection", Decode.tuple2 playerId degrees |> Decode.map SetDirection)
-                // ("setSpeechBubble", Decode.tuple2 playerId optionalSpeechBubble |> Decode.map SetSpeechBubble)
-                // ("setPen", Decode.tuple2 playerId pen |> Decode.map SetPen)
-                // ("setSizeFactor", Decode.tuple2 playerId Decode.float |> Decode.map SetSizeFactor)
-                // ("setNextCostume", playerId |> Decode.map SetNextCostume)
-                // ("sendToBack", playerId |> Decode.map SendToBack)
-                // ("bringToFront", playerId |> Decode.map BringToFront)
-                // ("keyDown", keyboardKey |> Decode.map (KeyDown >> ControllerEvent))
-                // ("keyUp", keyboardKey |> Decode.map (KeyUp >> ControllerEvent))
-                // ("mouseMove", position |> Decode.map (MouseMove >> ControllerEvent))
-                // ("mouseClick", Decode.tuple2 mouseButton position |> Decode.map (MouseClick >> ControllerEvent))
-                // ("startBatch", Decode.nil StartBatch)
-                // ("applyBatch", Decode.nil ApplyBatch)
+                ("setWindowTitle", Decode.option Decode.string |> Decode.map SetWindowTitle)
+                ("setBackground", svgImage |> Decode.map SetBackground)
+                ("clearScene", Decode.nil ClearScene)
+                ("makeScreenshot", Decode.nil MakeScreenshot)
+                ("setPosition", Decode.tuple2 playerId position |> Decode.map SetPosition)
+                ("changePosition", Decode.tuple2 playerId position |> Decode.map ChangePosition)
+                ("setDirection", Decode.tuple2 playerId degrees |> Decode.map SetDirection)
+                ("changeDirection", Decode.tuple2 playerId degrees |> Decode.map ChangeDirection)
+                ("setSpeechBubble", Decode.tuple2 playerId optionalSpeechBubble |> Decode.map SetSpeechBubble)
+                ("setPenState", Decode.tuple2 playerId Decode.bool |> Decode.map SetPenState)
+                ("togglePenState", playerId |> Decode.map TogglePenState)
+                ("setPenColor", Decode.tuple2 playerId rgba |> Decode.map SetPenColor)
+                ("shiftPenColor", Decode.tuple2 playerId degrees |> Decode.map ShiftPenColor)
+                ("setPenWeight", Decode.tuple2 playerId Decode.float |> Decode.map SetPenWeight)
+                ("changePenWeight", Decode.tuple2 playerId Decode.float |> Decode.map ChangePenWeight)
+                ("setSizeFactor", Decode.tuple2 playerId Decode.float |> Decode.map SetSizeFactor)
+                ("changeSizeFactor", Decode.tuple2 playerId Decode.float |> Decode.map ChangeSizeFactor)
+                ("setNextCostume", playerId |> Decode.map SetNextCostume)
+                ("sendToBack", playerId |> Decode.map SendToBack)
+                ("bringToFront", playerId |> Decode.map BringToFront)
+                ("setVisibility", Decode.tuple2 playerId Decode.bool |> Decode.map SetVisibility)
+                ("toggleVisibility", playerId |> Decode.map ToggleVisibility)
+                ("keyDown", keyboardKey |> Decode.map (KeyDown >> InputEvent))
+                ("keyUp", keyboardKey |> Decode.map (KeyUp >> InputEvent))
+                ("mouseMove", position |> Decode.map (MouseMove >> InputEvent))
+                ("mouseClick", virtualScreenMouseClick |> Decode.map (MouseClick >> InputEvent))
+                ("startBatch", Decode.nil StartBatch)
+                ("applyBatch", Decode.nil ApplyBatch)
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -211,9 +260,11 @@ module Decode =
             [
                 ("setSceneBounds", rectangle |> Decode.map SetSceneBounds)
                 ("applyMouseClick", mouseClick |> Decode.map ApplyMouseClick)
-                // ("setMousePosition", position |> Decode.map (SetMousePosition >> UIEvent))
-                // ("answerQuestion", Decode.tuple2 playerId Decode.string |> Decode.map (AnswerQuestion >> UIEvent))
-                // ("screenshot", Decode.string |> Decode.map (Convert.FromBase64String >> PngImage >> Screenshot >> UIEvent))
+                ("setMousePosition", position |> Decode.map (SetMousePosition))
+                ("updateStringAnswer", Decode.tuple2 playerId Decode.string |> Decode.map UpdateStringAnswer)
+                ("answerStringQuestion", Decode.tuple2 playerId Decode.string |> Decode.map AnswerStringQuestion)
+                ("answerBoolQuestion", Decode.tuple2 playerId Decode.bool |> Decode.map AnswerBoolQuestion)
+                ("screenshot", Decode.string |> Decode.map (Convert.FromBase64String >> PngImage >> Screenshot))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -365,48 +416,74 @@ module Encode =
             ("position",  position p.Position)
         ]
 
+    let virtualScreenMouseClick (p: VirtualScreenMouseClick) =
+        Encode.object [
+            ("button",  mouseButton p.Button)
+            ("virtualScreenPosition",  position p.VirtualScreenPosition)
+        ]
+
     let controllerMsg msg =
         match msg with
         | AddPlayer (pId, pData) ->
             Encode.object [ ("addPlayer", Encode.tuple2 playerId playerData (pId, pData)) ]
         | RemovePlayer pId ->
             Encode.object [ ("removePlayer", playerId pId) ]
-        // | SetWindowTitle text ->
-        //     Encode.object [ ("setWindowTitle", Encode.option Encode.string text) ]
-        // | SetBackground background ->
-        //     Encode.object [ ("setBackground", svgImage background) ]
-        // | ClearScene ->
-        //     Encode.object [ ("clearScene", Encode.nil) ]
-        // | MakeScreenshot ->
-        //     Encode.object [ ("makeScreenshot", Encode.nil) ]
-        // | SetPosition (playerId, position) ->
-        //     Encode.object [ ("setPosition", Encode.tuple2 playerId position (playerId, position)) ]
-        // | SetDirection (playerId, direction) ->
-        //     Encode.object [ ("setDirection", Encode.tuple2 playerId degrees (playerId, direction))]
-        // | SetSpeechBubble (playerId, speechBubble) ->
-        //     Encode.object [ ("setSpeechBubble", Encode.tuple2 playerId optionalSpeechBubble (playerId, speechBubble)) ]
-        // | SetPen (playerId, pen) ->
-        //     Encode.object [ ("setPen", Encode.tuple2 playerId pen (playerId, pen)) ]
-        // | SetSizeFactor (playerId, sizeFactor) ->
-        //     Encode.object [ ("setSizeFactor", Encode.tuple2 playerId Encode.float (playerId, sizeFactor)) ]
-        // | SetNextCostume playerId ->
-        //     Encode.object [ ("setNextCostume", playerId playerId) ]
-        // | SendToBack playerId ->
-        //     Encode.object [ ("sendToBack", playerId playerId) ]
-        // | BringToFront playerId ->
-        //     Encode.object [ ("bringToFront", playerId playerId) ]
-        // | ControllerEvent (KeyDown keyboardKey) ->
-        //     Encode.object [ ("keyDown", keyboardKey keyboardKey) ]
-        // | ControllerEvent (KeyUp keyboardKey) ->
-        //     Encode.object [ ("keyUp", keyboardKey keyboardKey) ]
-        // | ControllerEvent (MouseMove position) ->
-        //     Encode.object [ ("mouseMove", position position) ]
-        // | ControllerEvent (MouseClick (mouseButton, position)) ->
-        //     Encode.object [ ("mouseClick", Encode.tuple2 mouseButton position (mouseButton, position)) ]
-        // | StartBatch ->
-        //     Encode.object [ ("startBatch", Encode.nil) ]
-        // | ApplyBatch ->
-        //     Encode.object [ ("applyBatch", Encode.nil) ]
+        | SetWindowTitle text ->
+            Encode.object [ ("setWindowTitle", Encode.option Encode.string text) ]
+        | SetBackground background ->
+            Encode.object [ ("setBackground", svgImage background) ]
+        | ClearScene ->
+            Encode.object [ ("clearScene", Encode.nil) ]
+        | MakeScreenshot ->
+            Encode.object [ ("makeScreenshot", Encode.nil) ]
+        | SetPosition (pId, pos) ->
+            Encode.object [ ("setPosition", Encode.tuple2 playerId position (pId, pos)) ]
+        | ChangePosition (pId, pos) ->
+            Encode.object [ ("changePosition", Encode.tuple2 playerId position (pId, pos)) ]
+        | SetDirection (pId, dir) ->
+            Encode.object [ ("setDirection", Encode.tuple2 playerId degrees (pId, dir))]
+        | ChangeDirection (pId, dir) ->
+            Encode.object [ ("changeDirection", Encode.tuple2 playerId degrees (pId, dir))]
+        | SetSpeechBubble (pId, data) ->
+            Encode.object [ ("setSpeechBubble", Encode.tuple2 playerId optionalSpeechBubble (pId, data)) ]
+        | SetPenState (pId, isOn) ->
+            Encode.object [ ("setPenState", Encode.tuple2 playerId Encode.bool (pId, isOn)) ]
+        | TogglePenState pId ->
+            Encode.object [ ("togglePenState", playerId pId) ]
+        | SetPenColor (pId, color) ->
+            Encode.object [ ("setPenColor", Encode.tuple2 playerId rgba (pId, color)) ]
+        | ShiftPenColor (pId, angle) ->
+            Encode.object [ ("shiftPenColor", Encode.tuple2 playerId degrees (pId, angle)) ]
+        | SetPenWeight (pId, weight) ->
+            Encode.object [ ("setPenWeight", Encode.tuple2 playerId Encode.float (pId, weight)) ]
+        | ChangePenWeight (pId, weight) ->
+            Encode.object [ ("changePenWeight", Encode.tuple2 playerId Encode.float (pId, weight)) ]
+        | SetSizeFactor (pId, value) ->
+            Encode.object [ ("setSizeFactor", Encode.tuple2 playerId Encode.float (pId, value)) ]
+        | ChangeSizeFactor (pId, value) ->
+            Encode.object [ ("changeSizeFactor", Encode.tuple2 playerId Encode.float (pId, value)) ]
+        | SetNextCostume pId ->
+            Encode.object [ ("setNextCostume", playerId pId) ]
+        | SendToBack pId ->
+            Encode.object [ ("sendToBack", playerId pId) ]
+        | BringToFront pId ->
+            Encode.object [ ("bringToFront", playerId pId) ]
+        | SetVisibility (pId, isVisible) ->
+            Encode.object [ ("setVisibility", Encode.tuple2 playerId Encode.bool (pId, isVisible)) ]
+        | ToggleVisibility pId ->
+            Encode.object [ ("toggleVisibility", playerId pId) ]
+        | InputEvent (KeyDown key) ->
+            Encode.object [ ("keyDown", keyboardKey key) ]
+        | InputEvent (KeyUp key) ->
+            Encode.object [ ("keyUp", keyboardKey key) ]
+        | InputEvent (MouseMove pos) ->
+            Encode.object [ ("mouseMove", position pos) ]
+        | InputEvent (MouseClick data) ->
+            Encode.object [ ("mouseClick", virtualScreenMouseClick data) ]
+        | StartBatch ->
+            Encode.object [ ("startBatch", Encode.nil) ]
+        | ApplyBatch ->
+            Encode.object [ ("applyBatch", Encode.nil) ]
 
     let uIMsg msg =
         match msg with
@@ -414,12 +491,16 @@ module Encode =
             Encode.object [ ("setSceneBounds", rectangle p) ]
         | ApplyMouseClick p ->
             Encode.object [ ("applyMouseClick", mouseClick p) ]
-        // | SetMousePosition position ->
-        //     Encode.object [ ("setMousePosition", position position) ]
-        // | AnswerQuestion (playerId, answer) ->
-        //     Encode.object [ ("answerQuestion", Encode.tuple2 playerId Encode.string (playerId, answer)) ]
-        // | Screenshot (PngImage data) ->
-        //     Encode.object [ ("screenshot", Encode.string (Convert.ToBase64String data)) ]
+        | SetMousePosition p ->
+            Encode.object [ ("setMousePosition", position p) ]
+        | UpdateStringAnswer (pId, answer) ->
+            Encode.object [ ("updateStringAnswer", Encode.tuple2 playerId Encode.string (pId, answer)) ]
+        | AnswerStringQuestion (pId, answer) ->
+            Encode.object [ ("answerStringQuestion", Encode.tuple2 playerId Encode.string (pId, answer)) ]
+        | AnswerBoolQuestion (pId, answer) ->
+            Encode.object [ ("answerBoolQuestion", Encode.tuple2 playerId Encode.bool (pId, answer)) ]
+        | Screenshot (PngImage data) ->
+            Encode.object [ ("screenshot", Encode.string (Convert.ToBase64String data)) ]
 
     let channelMsg msg =
         match msg with
