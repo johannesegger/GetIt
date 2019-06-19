@@ -7,9 +7,12 @@ namespace GetIt.Sample.Web
     {
         static void Main(string[] args)
         {
-            Game.ShowSceneAndAddTurtle();
+            Game.ShowScene();
+            // Game.ShowSceneAndAddTurtle();
             // Game.ShowScene(300, 200);
             // Game.ShowMaximizedScene();
+            Game.AddPlayer(PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.SteelBlue, new Size(100, 50))).WithDirection(45));
+            // Game.AddPlayer(PlayerData.Turtle.WithDirection(45));
         }
     }
 }

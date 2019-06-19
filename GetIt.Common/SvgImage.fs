@@ -20,7 +20,7 @@ type SvgImage =
             {
                 Size = size
                 SvgData =
-                    sprintf """<svg width="%f" height="%f"><circle cx="%f" cy="%f" r="%f" style="fill:%s;fill-opacity:%f" /></svg>"""
+                    sprintf """<svg xmlns="http://www.w3.org/2000/svg" width="%f" height="%f"><circle cx="%f" cy="%f" r="%f" style="fill:%s;fill-opacity:%f" /></svg>"""
                         size.Width size.Height radius radius radius (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
             }
 
@@ -46,7 +46,7 @@ type SvgImage =
             {
                 Size = size
                 SvgData =
-                    sprintf """<svg width="%f" height="%f"><polygon points="%s" style="fill:%s;fill-opacity:%f;" /></svg>"""
+                    sprintf """<svg xmlns="http://www.w3.org/2000/svg" width="%f" height="%f"><polygon points="%s" style="fill:%s;fill-opacity:%f;" /></svg>"""
                         size.Width size.Height pointString (RGBAColor.rgbHexNotation fillColor) (RGBAColor.transparency fillColor)
             }
 

@@ -200,21 +200,21 @@ let view model dispatch =
         |> List.filter (snd >> fun p -> p.IsVisible)
         |> List.rev
 
+    let drawPlayer (player: PlayerData) position =
+        player.Costume.SvgData
+        |> Browser.Dom.window.btoa
+        |> sprintf "data:image/svg+xml;base64,%s"
+        |> Canvas.drawImage position (player.Size.Width, player.Size.Height)
+
     let drawScenePlayers =
         playersOnScene
         |> List.map (fun (PlayerId playerId, player) ->
             Canvas.Batch [
                 Canvas.Save
-                Canvas.Translate (-model.SceneBounds.Left + player.Bounds.Left + player.Position.X, model.SceneBounds.Top - player.Bounds.Top - player.Position.Y)
-                Canvas.Rotate (Degrees.value player.Direction)
+                Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
+                Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
                 Canvas.Scale (player.SizeFactor, player.SizeFactor)
-
-                player.Costume.SvgData
-                |> Browser.Dom.window.btoa
-                |> sprintf "data:image/svg+xml;base64,%s"
-                |> Canvas.DrawImage
-                // Canvas.DrawImage player.Costume.SvgData
-
+                drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
                 Canvas.Restore
             ]
         )
@@ -224,11 +224,37 @@ let view model dispatch =
         canvasSize model.SceneBounds.Size
         |> Canvas.initialize
         |> Canvas.withId "scene"
-        |> Canvas.draw (Canvas.ClearReact (0., 0., model.SceneBounds.Size.Width, model.SceneBounds.Size.Width))
+        |> Canvas.draw (Canvas.ClearReact (0., 0., model.SceneBounds.Size.Width, model.SceneBounds.Size.Height))
         |> Canvas.draw drawScenePlayers
         |> Canvas.render
 
-        div [ Id "info" ] []
+        div [ Id "info" ] [
+            yield!
+                players
+                |> List.map (fun (playerId, player) ->
+                    let size = { Canvas.Width = 30.; Canvas.Height = 30. }
+                    let ratio = System.Math.Min(size.Width / player.Size.Width, size.Height / player.Size.Height)
+                    div [ Class "player" ] [
+                        Canvas.initialize size
+                        |> Canvas.draw (Canvas.ClearReact (0., 0., size.Width, size.Height))
+                        |> Canvas.draw (
+                            Canvas.Batch [
+                                Canvas.Save
+                                Canvas.Translate (size.Width / 2., size.Height / 2.)
+                                Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
+                                Canvas.Scale (ratio, ratio)
+                                drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
+                                Canvas.Restore
+                            ]
+                        )
+                        |> Canvas.render
+
+                        span [] [
+                            str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
+                        ]
+                    ]
+                )
+        ]
     ]
 
 let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
