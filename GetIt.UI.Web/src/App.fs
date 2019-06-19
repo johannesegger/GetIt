@@ -289,6 +289,24 @@ let observeResize (element: HTMLElement) : IAsyncObservable<float * float> =
         })
     })
 
+let observeSceneSizeFromWindowResize =
+    AsyncRx.create (fun obs -> async {
+        let resizeCanvas evt =
+            Browser.Dom.console.log (evt)
+            obs.OnNextAsync (Browser.Dom.window.innerWidth, Browser.Dom.window.innerHeight)
+            |> Async.StartImmediate
+            ()
+        Browser.Dom.window.addEventListener("resize", resizeCanvas, false)
+        return AsyncDisposable.Create (fun () -> async {
+            Browser.Dom.window.removeEventListener("resize", resizeCanvas, false)
+        })
+    })
+    |> AsyncRx.choose (fun (windowWidth, windowHeight) ->
+        match Browser.Dom.document.querySelector "#info" :?> HTMLElement |> Option.ofObj with
+        | Some info -> Some (windowWidth, windowHeight - info.offsetHeight)
+        | None -> None
+    )
+
 let stream states msgs =
     [
         msgs
@@ -301,9 +319,11 @@ let stream states msgs =
         |> AsyncRx.startWith [ Browser.Dom.document.body ]
         |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
         // |> AsyncRx.take 1
-        |> AsyncRx.flatMapLatest observeResize
-        |> AsyncRx.debounce 100
-        |> AsyncRx.distinctUntilChanged
+        |> AsyncRx.map (fun n -> n.offsetWidth, n.offsetHeight)
+        // |> AsyncRx.flatMapLatest observeResize
+        // |> AsyncRx.debounce 100
+        // |> AsyncRx.distinctUntilChanged
+        |> AsyncRx.merge observeSceneSizeFromWindowResize
         |> AsyncRx.map(fun (width, height) ->
             {
                 Position = { X = -width / 2.; Y = -height / 2. }
