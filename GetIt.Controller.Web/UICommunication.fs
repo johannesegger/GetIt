@@ -44,10 +44,10 @@ module UICommunication =
                 | ControllerMsg msg -> AsyncRx.empty ()
                 | UIMsg (SetSceneBounds sceneBounds) ->
                     Model.updateCurrent (fun model -> Some (SetSceneBounds sceneBounds), { model with SceneBounds = sceneBounds })
-                    AsyncRx.empty ()
+                    AsyncRx.single (msg, connId)
                 | UIMsg (ApplyMouseClick mouseClick) ->
                     Model.updateCurrent (fun model -> Some (ApplyMouseClick mouseClick), model)
-                    AsyncRx.empty ()
+                    AsyncRx.single (msg, connId)
             )
             |> AsyncRx.merge controllerMsgs
 
