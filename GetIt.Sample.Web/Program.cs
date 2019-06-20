@@ -8,9 +8,10 @@ namespace GetIt.Sample.Web
     {
         static void Main(string[] args)
         {
-            Program1();
+            // Program1();
             // Program2();
             // Program3();
+            Program3_2();
             // Program4();
             // Program5();
             // Program6();
@@ -104,6 +105,18 @@ namespace GetIt.Sample.Web
                 Turtle.Sleep(50);
             }
             Turtle.Say("Done");
+        }
+
+        private static void Program3_2()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            for (var i = 1; i <= 10; i++)
+            {
+                Turtle.Say(string.Join(" ", Enumerable.Repeat("Hello", i)));
+
+                Game.Sleep(1000);
+            }
         }
 
         private static void Program4()

@@ -10,6 +10,8 @@ open Fable.React.Props
 type DrawOp =
     | LineTo of (float * float)
     | MoveTo of (float * float)
+    | WithMeasuredText of text: string * getOps: (Map<char, float> -> DrawOp list)
+    | FillText of text: string * x: float * y: float
     | BeginPath
     | Scale of (float * float)
     | Rotate of float
@@ -33,6 +35,13 @@ let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
         | Batch ops -> do! drawOps ctx ops
         | LineTo opts -> ctx.lineTo opts
         | MoveTo opts -> ctx.moveTo opts
+        | WithMeasuredText (text, fn) ->
+            do!
+                [ for c in Seq.distinct text -> c, ctx.measureText(string c).width ]
+                |> Map.ofList
+                |> fn
+                |> drawOps ctx
+        | FillText (text, x, y) -> ctx.fillText (text, x, y)
         | BeginPath -> ctx.beginPath()
         | Scale opts -> ctx.scale opts
         | Rotate opts -> ctx.rotate opts

@@ -188,16 +188,100 @@ let view model dispatch =
         |> List.filter (snd >> fun p -> p.IsVisible)
         |> List.rev
 
+    let drawPlayerOnScene (PlayerId playerId) (player: PlayerData) =
+        [
+            Canvas.Save
+            Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
+            Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
+            Canvas.Scale (player.SizeFactor, player.SizeFactor)
+            Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
+            Canvas.Restore
+        ]
+
+    let tokenize (text: string) =
+        let rec fn startIndex i acc =
+            let startIsWhiteSpace = System.Char.IsWhiteSpace text.[startIndex]
+            let isEnd = i >= text.Length
+            if isEnd then
+                text.Substring(startIndex, i - startIndex) :: acc
+                |> List.rev
+            else
+                let currentIsWhiteSpace = System.Char.IsWhiteSpace text.[i]
+
+                if not startIsWhiteSpace && not currentIsWhiteSpace then
+                    fn startIndex (i + 1) acc
+                elif not startIsWhiteSpace && currentIsWhiteSpace then
+                    let acc' = text.Substring(startIndex, i - startIndex) :: acc
+                    fn i (i + 1) acc'
+                else
+                    fn i (i + 1) (text.Substring(startIndex, 1) :: acc)
+
+        fn 0 1 []
+
+    let align maxWidth letterWidths tokens =
+        let rec fn xOffset line acc tokens =
+            match tokens with
+            | [] -> (line, xOffset) :: acc |> List.rev
+            | token :: xs ->
+                let tokenWidth =
+                    token
+                    |> Seq.sumBy (fun c -> Map.find c letterWidths)
+                let xOffset' = xOffset + tokenWidth
+                if xOffset' <= maxWidth then
+                    fn xOffset' (line + token) acc xs
+                elif tokenWidth <= maxWidth then
+                    fn tokenWidth token ((line, xOffset) :: acc) xs
+                else
+                    let rec chunk startIndex index width acc =
+                        if index >= String.length token then
+                            acc, token.Substring startIndex, width
+                        else
+                            let width' = Map.find token.[index] letterWidths + width
+                            if width' > maxWidth then
+                                chunk index (index + 1) 0. ((token.Substring(startIndex, index - startIndex - 1), width) :: acc)
+                            else
+                                chunk startIndex (index + 1) width' acc
+                    let (lines, line', xOffset') = chunk 0 0 0. []
+                    fn xOffset' line' (lines @ acc) xs
+
+        fn 0. "" [] tokens
+
+    let drawSpeechBubble speechBubble =
+            match speechBubble with
+            | None -> []
+            | Some (Say text)
+            | Some (AskString text)
+            | Some (AskBool text) ->
+                [
+                    Canvas.Save
+                    
+
+                    Canvas.WithMeasuredText (text, fun letterWidths -> [
+                        let lines =
+                            tokenize text
+                            |> align 150. letterWidths
+                        let height = float (List.length lines) * 16.
+                        printfn "Lines: %A" lines
+                        yield Canvas.BeginPath
+                        yield Canvas.Rect (100., 100. - height, 150., height)
+                        yield Canvas.Stroke
+
+                        yield!
+                            lines
+                            |> List.rev
+                            |> List.mapi (fun row (line, width) ->
+                                Canvas.FillText (line, 100. + (150. - width) / 2., (float -row * 16.) + 100.)
+                            )
+                    ])
+                    Canvas.Restore
+                ]
+
     let drawScenePlayers =
         playersOnScene
-        |> List.map (fun (PlayerId playerId, player) ->
+        |> List.map (fun (playerId, player) ->
             Canvas.Batch [
-                Canvas.Save
-                Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
-                Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
-                Canvas.Scale (player.SizeFactor, player.SizeFactor)
-                Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
-                Canvas.Restore
+                yield! drawPlayerOnScene playerId player
+                yield! drawSpeechBubble player.SpeechBubble
             ]
         )
         |> Canvas.Batch
