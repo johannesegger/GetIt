@@ -187,12 +187,6 @@ let view model dispatch =
         |> List.filter (snd >> fun p -> p.IsVisible)
         |> List.rev
 
-    let drawPlayer (player: PlayerData) position =
-        player.Costume.SvgData
-        |> Browser.Dom.window.btoa
-        |> sprintf "data:image/svg+xml;base64,%s"
-        |> Canvas.drawImage position (player.Size.Width, player.Size.Height)
-
     let drawScenePlayers =
         playersOnScene
         |> List.map (fun (PlayerId playerId, player) ->
@@ -201,7 +195,6 @@ let view model dispatch =
                 Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
                 Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
                 Canvas.Scale (player.SizeFactor, player.SizeFactor)
-                // drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
                 Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
                 Canvas.Restore
             ]
@@ -231,7 +224,6 @@ let view model dispatch =
                                 Canvas.Translate (size.Width / 2., size.Height / 2.)
                                 Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
                                 Canvas.Scale (ratio, ratio)
-                                // drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
                                 Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
                                 Canvas.Restore
                             ]

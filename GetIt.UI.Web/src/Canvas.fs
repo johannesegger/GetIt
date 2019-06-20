@@ -22,7 +22,6 @@ type DrawOp =
     | Batch of DrawOp list
     | Stroke
     | ClearReact of (float * float * float * float)
-    | DrawImage of src: string * position: (float * float) * size: (float * float)
     | DrawLoadedImage of elementSelector: string * position: (float * float) * size: (float * float)
 
 let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
@@ -42,15 +41,6 @@ let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
         | Fill -> ctx.fill()
         | FillStyle opts -> ctx.fillStyle <- opts
         | ClearReact opts -> ctx.clearRect opts
-        | DrawImage (src, (x, y), (width, height)) ->
-            let! image =
-                Promise.create (fun resolve reject ->
-                    let img = createNew Browser.Dom.window?Image () :?> HTMLImageElement
-                    img.src <- src
-                    img.onload <- fun evt -> resolve !!img
-                    img.onerror <- !!reject
-                )
-            ctx.drawImage (U3.Case1 image, x, y, width, height)
         | DrawLoadedImage (elementSelector, (x, y), (width, height)) ->
             let image = Browser.Dom.document.querySelector elementSelector :?> HTMLImageElement
             ctx.drawImage (U3.Case1 image, x, y, width, height)
@@ -99,9 +89,6 @@ let initialize (size : Size) : CanvasBuilder =
 
 let draw (drawOp : DrawOp) (builder : CanvasBuilder) : CanvasBuilder =
     { builder with DrawOps = builder.DrawOps @ [drawOp] }
-
-let drawImage position size src =
-    DrawImage (src, position, size)
 
 let playing value (builder : CanvasBuilder) : CanvasBuilder =
     { builder with IsPlaying = value }
