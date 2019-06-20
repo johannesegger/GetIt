@@ -23,6 +23,7 @@ type DrawOp =
     | Stroke
     | ClearReact of (float * float * float * float)
     | DrawImage of src: string * position: (float * float) * size: (float * float)
+    | DrawLoadedImage of elementSelector: string * position: (float * float) * size: (float * float)
 
 let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
     for op in ops do
@@ -49,6 +50,9 @@ let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
                     img.onload <- fun evt -> resolve !!img
                     img.onerror <- !!reject
                 )
+            ctx.drawImage (U3.Case1 image, x, y, width, height)
+        | DrawLoadedImage (elementSelector, (x, y), (width, height)) ->
+            let image = Browser.Dom.document.querySelector elementSelector :?> HTMLImageElement
             ctx.drawImage (U3.Case1 image, x, y, width, height)
 }
 

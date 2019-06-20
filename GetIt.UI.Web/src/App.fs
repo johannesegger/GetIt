@@ -201,7 +201,8 @@ let view model dispatch =
                 Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
                 Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
                 Canvas.Scale (player.SizeFactor, player.SizeFactor)
-                drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
+                // drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
+                Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
                 Canvas.Restore
             ]
         )
@@ -218,7 +219,7 @@ let view model dispatch =
         div [ Id "info" ] [
             yield!
                 players
-                |> List.map (fun (playerId, player) ->
+                |> List.map (fun (PlayerId playerId, player) ->
                     let size = { Canvas.Width = 30.; Canvas.Height = 30. }
                     let ratio = System.Math.Min(size.Width / player.Size.Width, size.Height / player.Size.Height)
                     div [ Class "player" ] [
@@ -230,7 +231,8 @@ let view model dispatch =
                                 Canvas.Translate (size.Width / 2., size.Height / 2.)
                                 Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
                                 Canvas.Scale (ratio, ratio)
-                                drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
+                                // drawPlayer player (-player.Size.Width / 2., -player.Size.Height / 2.)
+                                Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
                                 Canvas.Restore
                             ]
                         )
@@ -242,42 +244,21 @@ let view model dispatch =
                     ]
                 )
         ]
-    ]
 
-let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
-    AsyncRx.create (fun obs -> async {
-        let onMutate mutations =
-            mutations
-            |> Seq.collect (fun m -> m?addedNodes)
-            |> Seq.iter (obs.OnNextAsync >> Async.StartImmediate)
-        let mutationObserver = createNew Browser.Dom.window?MutationObserver (onMutate)
-        let mutationObserverConfig = createObj [
-            "childList" ==> true
-            "subtree" ==> true
+        div [ Style [ Display DisplayOptions.None ] ] [
+            yield!
+                players
+                |> List.map (fun (PlayerId playerId, player) ->
+                    img [
+                        Id (sprintf "player-%O" playerId)
+                        player.Costume.SvgData
+                        |> Browser.Dom.window.btoa
+                        |> sprintf "data:image/svg+xml;base64,%s"
+                        |> Src
+                    ]
+                )
         ]
-        mutationObserver?observe(parent, mutationObserverConfig)
-        return AsyncDisposable.Create (fun () -> async {
-            mutationObserver?disconnect()
-        })
-    })
-
-let observeSceneSizeFromWindowResize =
-    AsyncRx.create (fun obs -> async {
-        let resizeCanvas evt =
-            Browser.Dom.console.log (evt)
-            obs.OnNextAsync (Browser.Dom.window.innerWidth, Browser.Dom.window.innerHeight)
-            |> Async.StartImmediate
-            ()
-        Browser.Dom.window.addEventListener("resize", resizeCanvas, false)
-        return AsyncDisposable.Create (fun () -> async {
-            Browser.Dom.window.removeEventListener("resize", resizeCanvas, false)
-        })
-    })
-    |> AsyncRx.choose (fun (windowWidth, windowHeight) ->
-        match Browser.Dom.document.querySelector "#info" :?> HTMLElement |> Option.ofObj with
-        | Some info -> Some (windowWidth, windowHeight - info.offsetHeight)
-        | None -> None
-    )
+    ]
 
 let stream states msgs =
     [
@@ -296,7 +277,7 @@ let stream states msgs =
 
         [
             Browser.Dom.document.querySelector "#elmish-app"
-            |> observeSubTreeAdditions
+            |> AsyncRx.observeSubTreeAdditions
             |> AsyncRx.choose (fun (n: Node) ->
                 if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
             )
@@ -304,7 +285,7 @@ let stream states msgs =
             |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
             // |> AsyncRx.take 1
             |> AsyncRx.map (fun n -> n.offsetWidth, n.offsetHeight)
-            |> AsyncRx.merge observeSceneSizeFromWindowResize
+            |> AsyncRx.merge AsyncRx.observeSceneSizeFromWindowResize
             |> AsyncRx.map(fun (width, height) ->
                 {
                     Position = { X = -width / 2.; Y = -height / 2. }
@@ -316,6 +297,7 @@ let stream states msgs =
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
         |> AsyncRx.msgChannel (sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint) (Encode.channelMsg >> Encode.toString 0) (Decode.fromString Decode.channelMsg >> Result.toOption)
+        |> AsyncRx.requestAnimationFrame
     ]
     |> AsyncRx.mergeSeq
 
