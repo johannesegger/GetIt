@@ -6,6 +6,7 @@ open Elmish.Debug
 open Elmish.React
 open Elmish.Streams
 open Elmish.HMR // Must be last Elmish.* open declaration (see https://elmish.github.io/hmr/#Usage)
+open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Elmish.Nile
 open Fable.React
@@ -200,12 +201,26 @@ let view model dispatch =
             ]
         )
         |> Canvas.Batch
-    
+
+    let drawPenLines =
+        model.PenLines
+        |> List.collect (fun penLine ->
+            [
+                Canvas.BeginPath
+                Canvas.StrokeStyle (U3.Case1 <| RGBAColor.rgbaHexNotation penLine.Color)
+                Canvas.MoveTo (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
+                Canvas.LineTo (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
+                Canvas.Stroke
+            ]
+        )
+        |> Canvas.Batch
+
     div [ Id "main" ] [
         canvasSize model.SceneBounds.Size
         |> Canvas.initialize
         |> Canvas.withId "scene"
         |> Canvas.draw (Canvas.ClearReact (0., 0., model.SceneBounds.Size.Width, model.SceneBounds.Size.Height))
+        |> Canvas.draw drawPenLines
         |> Canvas.draw drawScenePlayers
         |> Canvas.render
 

@@ -19,6 +19,7 @@ type DrawOp =
     | Fill
     | Rect of (float * float * float * float)
     | FillStyle of U3<string,CanvasGradient,CanvasPattern>
+    | StrokeStyle of U3<string,CanvasGradient,CanvasPattern>
     | Batch of DrawOp list
     | Stroke
     | ClearReact of (float * float * float * float)
@@ -40,6 +41,7 @@ let rec drawOps (ctx : CanvasRenderingContext2D) (ops : DrawOp list) = promise {
         | Restore -> ctx.restore()
         | Fill -> ctx.fill()
         | FillStyle opts -> ctx.fillStyle <- opts
+        | StrokeStyle opts -> ctx.strokeStyle <- opts
         | ClearReact opts -> ctx.clearRect opts
         | DrawLoadedImage (elementSelector, (x, y), (width, height)) ->
             let image = Browser.Dom.document.querySelector elementSelector :?> HTMLImageElement
