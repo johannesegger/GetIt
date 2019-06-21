@@ -175,9 +175,6 @@ let rec update msg model =
     | Some (messages, level), x ->
         { model with BatchMessages = Some (x :: messages, level) }
 
-let canvasSize size =
-    { Canvas.Width = size.Width; Canvas.Height = size.Height }
-
 let view model dispatch =
     let players =
         model.Players
@@ -188,164 +185,98 @@ let view model dispatch =
         |> List.filter (snd >> fun p -> p.IsVisible)
         |> List.rev
 
-    let drawPlayerOnScene (PlayerId playerId) (player: PlayerData) =
-        [
-            Canvas.Save
-            Canvas.Translate (-model.SceneBounds.Left + player.Position.X, model.SceneBounds.Top - player.Position.Y)
-            Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
-            Canvas.Scale (player.SizeFactor, player.SizeFactor)
-            Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
-            Canvas.Restore
-        ]
-
-    let tokenize (text: string) =
-        let rec fn startIndex i acc =
-            let startIsWhiteSpace = System.Char.IsWhiteSpace text.[startIndex]
-            let isEnd = i >= text.Length
-            if isEnd then
-                text.Substring(startIndex, i - startIndex) :: acc
-                |> List.rev
-            else
-                let currentIsWhiteSpace = System.Char.IsWhiteSpace text.[i]
-
-                if not startIsWhiteSpace && not currentIsWhiteSpace then
-                    fn startIndex (i + 1) acc
-                elif not startIsWhiteSpace && currentIsWhiteSpace then
-                    let acc' = text.Substring(startIndex, i - startIndex) :: acc
-                    fn i (i + 1) acc'
-                else
-                    fn i (i + 1) (text.Substring(startIndex, 1) :: acc)
-
-        fn 0 1 []
-
-    let align maxWidth letterWidths tokens =
-        let rec fn xOffset line acc tokens =
-            match tokens with
-            | [] -> (line, xOffset) :: acc |> List.rev
-            | token :: xs ->
-                let tokenWidth =
-                    token
-                    |> Seq.sumBy (fun c -> Map.find c letterWidths)
-                let xOffset' = xOffset + tokenWidth
-                if xOffset' <= maxWidth then
-                    fn xOffset' (line + token) acc xs
-                elif tokenWidth <= maxWidth then
-                    fn tokenWidth token ((line, xOffset) :: acc) xs
-                else
-                    let rec chunk startIndex index width acc =
-                        if index >= String.length token then
-                            acc, token.Substring startIndex, width
-                        else
-                            let width' = Map.find token.[index] letterWidths + width
-                            if width' > maxWidth then
-                                chunk index (index + 1) 0. ((token.Substring(startIndex, index - startIndex - 1), width) :: acc)
-                            else
-                                chunk startIndex (index + 1) width' acc
-                    let (lines, line', xOffset') = chunk 0 0 0. []
-                    fn xOffset' line' (lines @ acc) xs
-
-        fn 0. "" [] tokens
-
-    let drawSpeechBubble speechBubble =
-            match speechBubble with
-            | None -> []
-            | Some (Say text)
-            | Some (AskString text)
-            | Some (AskBool text) ->
+    let drawPlayerOnScene (player: PlayerData) =
+        let left = -model.SceneBounds.Left + player.Bounds.Left
+        let top = model.SceneBounds.Top - player.Bounds.Top
+        g
+            [
                 [
-                    Canvas.Save
-                    
-
-                    Canvas.WithMeasuredText (text, fun letterWidths -> [
-                        let lines =
-                            tokenize text
-                            |> align 150. letterWidths
-                        let height = float (List.length lines) * 16.
-                        printfn "Lines: %A" lines
-                        yield Canvas.BeginPath
-                        yield Canvas.Rect (100., 100. - height, 150., height)
-                        yield Canvas.Stroke
-
-                        yield!
-                            lines
-                            |> List.rev
-                            |> List.mapi (fun row (line, width) ->
-                                Canvas.FillText (line, 100. + (150. - width) / 2., (float -row * 16.) + 100.)
-                            )
-                    ])
-                    Canvas.Restore
+                    sprintf "translate(%f %f)" left top
+                    sprintf "rotate(%f %f %f)" (360. - Degrees.value player.Direction) (player.Size.Width / 2.) (player.Size.Height / 2.)
+                    sprintf "scale(%f %f)" player.SizeFactor player.SizeFactor
                 ]
+                |> String.concat " "
+                |> SVGAttr.Transform
+                DangerouslySetInnerHTML { __html = player.Costume.SvgData }
+            ]
+            []
+
+    let drawSpeechBubble player =
+            match player.SpeechBubble with
+            | None -> None
+            | Some (Say content)
+            | Some (AskString content)
+            | Some (AskBool content) ->
+                g
+                    [
+                        X (-model.SceneBounds.Left + player.Bounds.Right - 75.)
+                        Y (model.SceneBounds.Top + player.Bounds.Top - 20.)
+                    ]
+                    [
+                        text [] [ str content ]
+                    ]
+                |> Some
 
     let drawScenePlayers =
         playersOnScene
-        |> List.map (fun (playerId, player) ->
-            Canvas.Batch [
-                yield! drawPlayerOnScene playerId player
-                yield! drawSpeechBubble player.SpeechBubble
+        |> List.map (snd >> fun player ->
+            g [] [
+                yield drawPlayerOnScene player
+                yield! drawSpeechBubble player |> Option.toList
             ]
         )
-        |> Canvas.Batch
 
     let drawPenLines =
-        model.PenLines
-        |> List.collect (fun penLine ->
-            [
-                Canvas.BeginPath
-                Canvas.StrokeStyle (U3.Case1 <| RGBAColor.rgbaHexNotation penLine.Color)
-                Canvas.MoveTo (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
-                Canvas.LineTo (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
-                Canvas.Stroke
-            ]
-        )
-        |> Canvas.Batch
+        g [] [
+            yield!
+                model.PenLines
+                |> List.map (fun penLine ->
+                    line [
+                            X1 (penLine.Start.X - model.SceneBounds.Left)
+                            Y1 (model.SceneBounds.Top - penLine.Start.Y)
+                            X2 (penLine.End.X - model.SceneBounds.Left)
+                            Y2 (model.SceneBounds.Top - penLine.End.Y)
+                            Style [
+                                Stroke (RGBAColor.rgbaHexNotation penLine.Color)
+                                StrokeWidth penLine.Weight
+                            ]
+                        ]
+                        []
+                )
+        ]
 
     div [ Id "main" ] [
-        canvasSize model.SceneBounds.Size
-        |> Canvas.initialize
-        |> Canvas.withId "scene"
-        |> Canvas.draw (Canvas.ClearReact (0., 0., model.SceneBounds.Size.Width, model.SceneBounds.Size.Height))
-        |> Canvas.draw drawPenLines
-        |> Canvas.draw drawScenePlayers
-        |> Canvas.render
+        svg [ Id "scene" ] [
+            yield drawPenLines
+            yield! drawScenePlayers
+        ]
 
         div [ Id "info" ] [
             yield!
                 players
                 |> List.map (fun (PlayerId playerId, player) ->
-                    let size = { Canvas.Width = 30.; Canvas.Height = 30. }
-                    let ratio = System.Math.Min(size.Width / player.Size.Width, size.Height / player.Size.Height)
+                    let (width, height) = (30., 30.)
+                    let ratio = System.Math.Min(width / player.Size.Width, height / player.Size.Height)
                     div [ Class "player" ] [
-                        Canvas.initialize size
-                        |> Canvas.draw (Canvas.ClearReact (0., 0., size.Width, size.Height))
-                        |> Canvas.draw (
-                            Canvas.Batch [
-                                Canvas.Save
-                                Canvas.Translate (size.Width / 2., size.Height / 2.)
-                                Canvas.Rotate (2. * System.Math.PI - Degrees.toRadians player.Direction)
-                                Canvas.Scale (ratio, ratio)
-                                Canvas.DrawLoadedImage ((sprintf "#player-%O" playerId), (-player.Size.Width / 2., -player.Size.Height / 2.), (player.Size.Width, player.Size.Height))
-                                Canvas.Restore
+                        svg [
+                                Class "view"
+                                SVGAttr.Width width
+                                SVGAttr.Height height
+                                sprintf "rotate(%f 0 0)" (360. - Degrees.value player.Direction)
+                                |> SVGAttr.Transform
+                            ] [
+                                g
+                                    [
+                                        sprintf "scale(%f %f)" ratio ratio
+                                        |> SVGAttr.Transform
+                                        DangerouslySetInnerHTML { __html = player.Costume.SvgData }
+                                    ]
+                                    []
                             ]
-                        )
-                        |> Canvas.render
 
                         span [] [
                             str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
                         ]
-                    ]
-                )
-        ]
-
-        div [ Style [ Display DisplayOptions.None ] ] [
-            yield!
-                players
-                |> List.map (fun (PlayerId playerId, player) ->
-                    img [
-                        Id (sprintf "player-%O" playerId)
-                        player.Costume.SvgData
-                        |> Browser.Dom.window.btoa
-                        |> sprintf "data:image/svg+xml;base64,%s"
-                        |> Src
                     ]
                 )
         ]
@@ -367,15 +298,17 @@ let stream states msgs =
         |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
 
         [
-            Browser.Dom.document.querySelector "#elmish-app"
-            |> AsyncRx.observeSubTreeAdditions
-            |> AsyncRx.choose (fun (n: Node) ->
-                if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
+            AsyncRx.defer (fun () ->
+                Browser.Dom.document.querySelector "#elmish-app"
+                |> AsyncRx.observeSubTreeAdditions
+                |> AsyncRx.choose (fun (n: Node) ->
+                    if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
+                )
+                |> AsyncRx.startWith [ Browser.Dom.document.body ]
             )
-            |> AsyncRx.startWith [ Browser.Dom.document.body ]
             |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
             // |> AsyncRx.take 1
-            |> AsyncRx.map (fun n -> n.offsetWidth, n.offsetHeight)
+            |> AsyncRx.map (fun n -> let bounds = n.getBoundingClientRect() in (bounds.width, bounds.height))
             |> AsyncRx.merge AsyncRx.observeSceneSizeFromWindowResize
             |> AsyncRx.map(fun (width, height) ->
                 {

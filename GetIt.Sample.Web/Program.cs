@@ -8,10 +8,10 @@ namespace GetIt.Sample.Web
     {
         static void Main(string[] args)
         {
-            // Program1();
+            Program1();
             // Program2();
             // Program3();
-            Program3_2();
+            // Program3_2();
             // Program4();
             // Program5();
             // Program6();
@@ -53,7 +53,7 @@ namespace GetIt.Sample.Web
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x80));
+            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x40));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 200)

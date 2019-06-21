@@ -44,8 +44,7 @@ var CONFIG = {
                 // See https://babeljs.io/docs/en/babel-preset-env#usebuiltins
                 "useBuiltIns": "entry",
                 "corejs": "3.1.4",
-            }],
-            "@babel/react"
+            }]
         ],
     }
 }
