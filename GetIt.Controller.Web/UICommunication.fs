@@ -184,12 +184,18 @@ module UICommunication =
 
         printfn "Waiting for scene bounds"
 
-        Model.observable
-        |> Observable.firstIf (fst >> function | Some (SetSceneBounds _) -> true | _ -> false)
+        [
+            Model.observable
+            |> Observable.choose (fst >> function | Some (SetSceneBounds _) -> Some () | _ -> None)
+            |> Observable.first
+
+            Model.observable
+            |> Observable.choose (fst >> function | Some (SetMousePosition _) -> Some () | _ -> None)
+            |> Observable.first
+        ]
+        |> Observable.mergeSeq
         |> Observable.wait
         |> ignore
-
-        // TODO wait for first mouse move
 
         printfn "Setup complete"
 
