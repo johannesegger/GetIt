@@ -51,6 +51,7 @@ module UICommunication =
                     Model.updateCurrent (fun model -> Some uiMsg, { model with MouseState = { model.MouseState with Position = mousePosition } })
                     AsyncRx.single (msg, connId)
                 | UIMsg (ApplyMouseClick _ as uiMsg)
+                | UIMsg (UpdateStringAnswer _ as uiMsg)
                 | UIMsg (AnswerStringQuestion _ as uiMsg)
                 | UIMsg (AnswerBoolQuestion _ as uiMsg)
                 | UIMsg (Screenshot _ as uiMsg) ->
