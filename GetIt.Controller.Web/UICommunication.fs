@@ -10,7 +10,9 @@ open Microsoft.Extensions.DependencyInjection
 open System
 open System.Diagnostics
 open System.IO
+open System.Reactive.Linq
 open System.Reactive.Disposables
+open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
 
@@ -113,9 +115,47 @@ module UICommunication =
             raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
     }
 
+    let inputEvents =
+        if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+
+        Observable.Create (fun (obs: IObserver<InputEvent>) ->
+            let observable =
+                GetIt.Windows.DeviceEvents.observable
+                |> Observable.publish
+
+            let d1 =
+                observable
+                |> Observable.choose (function | MouseMove _ as x -> Some x | _ -> None)
+                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                |> Observable.subscribeObserver obs
+
+            let d2 =
+                observable
+                |> Observable.choose (function | MouseClick _ as x -> Some x | _ -> None)
+                |> Observable.subscribeObserver obs
+
+            let d3 =
+                observable
+                |> Observable.subscribe (function
+                    | MouseMove _ | MouseClick _ -> ()
+                    | KeyDown key ->
+                        Model.updateCurrent (fun m -> None, { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.add key m.KeyboardState.KeysPressed } })
+                    | KeyUp key ->
+                        Model.updateCurrent (fun m -> None, { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.remove key m.KeyboardState.KeysPressed } })
+                )
+
+            let d4 = observable.Connect()
+
+            d1
+            |> Disposable.compose d2
+            |> Disposable.compose d3
+            |> Disposable.compose d4
+        )
+
     let showScene windowSize =
         if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
-            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
 
         let webServerStopDisposable = new CancellationDisposable()
         let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
@@ -126,7 +166,10 @@ module UICommunication =
                     async {
                         let! webServerRunTask = startWebServer controllerMsgs webServerStopDisposable.Token |> Async.StartChild
                         let! processRunTask = startUI windowSize |> Async.StartChild
-
+                        use d =
+                            inputEvents
+                            |> Observable.map InputEvent
+                            |> Observable.subscribeObserver controllerMsgs
                         do! processRunTask
                         webServerStopDisposable.Dispose()
                         do! webServerRunTask
@@ -144,6 +187,8 @@ module UICommunication =
         |> Observable.firstIf (fst >> function | Some (SetSceneBounds _) -> true | _ -> false)
         |> Observable.wait
         |> ignore
+
+        // TODO wait for first mouse move
 
         printfn "Setup complete"
 

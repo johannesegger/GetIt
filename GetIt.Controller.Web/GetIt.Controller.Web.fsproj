@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
+    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
   </ItemGroup>
 
 </Project>
