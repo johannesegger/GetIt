@@ -165,12 +165,13 @@ module UICommunication =
             Thread(
                 (fun () ->
                     async {
-                        let! webServerRunTask = startWebServer controllerMsgs webServerStopDisposable.Token |> Async.StartChild
-                        let! processRunTask = startUI windowSize |> Async.StartChild
-                        use d =
+                        let msgs =
                             inputEvents
                             |> Observable.map InputEvent
-                            |> Observable.subscribeObserver controllerMsgs
+                            |> Observable.merge controllerMsgs
+                        let! webServerRunTask = startWebServer msgs webServerStopDisposable.Token |> Async.StartChild
+                        let! processRunTask = startUI windowSize |> Async.StartChild
+                        
                         do! processRunTask
                         webServerStopDisposable.Dispose()
                         do! webServerRunTask
