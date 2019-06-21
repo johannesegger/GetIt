@@ -117,13 +117,13 @@ module UICommunication =
     }
 
     let inputEvents =
-        if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
-
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
             let observable =
-                GetIt.Windows.DeviceEvents.observable
-                |> Observable.publish
+                if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                    GetIt.Windows.DeviceEvents.observable
+                    |> Observable.publish
+                else
+                    raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
             let d1 =
                 observable
