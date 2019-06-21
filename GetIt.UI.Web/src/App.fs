@@ -201,21 +201,42 @@ let view model dispatch =
             ]
             []
 
-    let drawSpeechBubble player =
-            match player.SpeechBubble with
-            | None -> None
-            | Some (Say content)
-            | Some (AskString content)
-            | Some (AskBool content) ->
-                g
-                    [
-                        X (-model.SceneBounds.Left + player.Bounds.Right - 75.)
-                        Y (model.SceneBounds.Top + player.Bounds.Top - 20.)
+    let drawSpeechBubble (player: PlayerData) =
+        let speechBubble content =
+            svgEl "foreignObject"
+                [
+                    X (-model.SceneBounds.Left + player.Bounds.Right - 30.)
+                    Y (model.SceneBounds.Top - player.Bounds.Top - 20.)
+                    SVGAttr.Width "1"
+                    SVGAttr.Height "1"
+                    Style [ Overflow "visible" ]
+                ]
+                [
+                    div [ Class "speech-bubble" ] content
+                ]
+            |> Some
+
+        match player.SpeechBubble with
+        | None -> None
+        | Some (Say text) ->
+            speechBubble [ span [] [ str text ] ]
+        | Some (AskString text) ->
+            speechBubble [
+                span [] [ str text ]
+                input [ Style [ Width "100%" ] ]
+            ]
+        | Some (AskBool text) ->
+            speechBubble [
+                span [] [ str text ]
+                div [
+                        Style [
+                            Display DisplayOptions.Flex
+                            FlexDirection "row"
+                        ]
+                    ] [
+
                     ]
-                    [
-                        text [] [ str content ]
-                    ]
-                |> Some
+            ]
 
     let drawScenePlayers =
         playersOnScene
