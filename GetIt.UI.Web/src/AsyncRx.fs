@@ -38,14 +38,3 @@ let observeSceneSizeFromWindowResize =
         | Some info -> Some (windowWidth, windowHeight - info.offsetHeight)
         | None -> None
     )
-
-let requestAnimationFrame (source: IAsyncObservable<_>) =
-    source
-    |> AsyncRx.mapAsync (fun item ->
-        Async.FromContinuations (fun (cont, econt, ccont) ->
-            Browser.Dom.window.requestAnimationFrame (fun timestamp ->
-                cont item
-            )
-            |> ignore
-        )
-    )

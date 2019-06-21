@@ -342,7 +342,6 @@ let stream states msgs =
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
         |> AsyncRx.msgChannel (sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint) (Encode.channelMsg >> Encode.toString 0) (Decode.fromString Decode.channelMsg >> Result.toOption)
-        |> AsyncRx.requestAnimationFrame
     ]
     |> AsyncRx.mergeSeq
 
