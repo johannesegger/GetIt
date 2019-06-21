@@ -308,7 +308,7 @@ let stream states msgs =
         msgs
 
         states
-        |> AsyncRx.map (fun model -> model.WindowTitle)
+        |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
         |> AsyncRx.distinctUntilChanged
         |> AsyncRx.tapOnNext (fun title ->
             Browser.Dom.document.title <-
@@ -337,6 +337,16 @@ let stream states msgs =
                     Size = { Width = width; Height = height }
                 }
                 |> SetSceneBounds
+            )
+
+            states
+            |> AsyncRx.choose (fst >> function | Some (ControllerMsg (InputEvent (MouseMove virtualScreenPosition))) -> Some virtualScreenPosition | _ -> None)
+            |> AsyncRx.map (fun virtualScreenPosition ->
+                {
+                    X = virtualScreenPosition.X * Browser.Dom.window.screen.availWidth + 8.
+                    Y = virtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + 27.
+                }
+                |> SetMousePosition
             )
         ]
         |> AsyncRx.mergeSeq
