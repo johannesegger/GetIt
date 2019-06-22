@@ -65,10 +65,17 @@ module UICommunication =
                 .UseWebSockets()
                 .UseStream(fun options ->
                     { options with
-                       Stream = stream
-                       Encode = Encode.channelMsg >> Encode.toString 0
-                       Decode = Decode.fromString Decode.channelMsg >> Result.toOption
-                       RequestPath = MessageChannel.endpoint
+                        Stream = stream
+                        Encode = Encode.channelMsg >> Encode.toString 0
+                        Decode =
+                            Decode.fromString Decode.channelMsg
+                            >> (function
+                                | Ok p -> Some p
+                                | Error p ->
+                                    eprintfn "Deserializing message failed: %O" p
+                                    None
+                            )
+                        RequestPath = MessageChannel.endpoint
                     }
                 )
                 // .UseGiraffe(webApp)
