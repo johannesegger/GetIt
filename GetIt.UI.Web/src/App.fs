@@ -372,8 +372,8 @@ let stream states msgs =
             |> AsyncRx.choose (function | Some (ControllerMsg (InputEvent (MouseMove virtualScreenPosition))), model -> Some (virtualScreenPosition, model.SceneBounds) | _ -> None)
             |> AsyncRx.map (fun (virtualScreenPosition, sceneBounds) ->
                 {
-                    X = sceneBounds.Left + virtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 7.
-                    Y = sceneBounds.Top - virtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + Browser.Dom.window.screenTop + 24.
+                    X = sceneBounds.Left + virtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 5.
+                    Y = sceneBounds.Top - virtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + Browser.Dom.window.screenTop + 19.
                 }
                 |> SetMousePosition
             )
