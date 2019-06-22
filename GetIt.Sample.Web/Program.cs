@@ -542,12 +542,12 @@ namespace GetIt.Sample.Web
 
         private static void Program22()
         {
-            Game.ShowSceneAndAddTurtle();
-            Turtle.MoveUp(100);
+            Game.ShowScene();
 
             using (var food = Game.AddPlayer(PlayerData.Bug))
             {
-                food.Say("I'm just here for 5 seconds", 5);
+                food.Say("I'm just here for 5 seconds");
+                Game.Sleep(5000);
             }
         }
 
