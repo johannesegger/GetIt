@@ -12,6 +12,7 @@ open System.Diagnostics
 open System.IO
 open System.Reactive.Linq
 open System.Reactive.Disposables
+open System.Reflection
 open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
@@ -87,7 +88,7 @@ module UICommunication =
         do!
             WebHostBuilder()
                 .UseKestrel()
-                .UseWebRoot(Path.GetFullPath "../Client/public")
+                .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly()), "GetIt.UI"))
                 .Configure(Action<IApplicationBuilder> configureApp)
                 .ConfigureServices(configureServices)
                 .UseUrls(url)
