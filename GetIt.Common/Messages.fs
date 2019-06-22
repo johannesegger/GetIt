@@ -211,7 +211,7 @@ module Decode =
         Decode.object (fun get ->
             {
                 Button = get.Required.Field "button" mouseButton
-                VirtualScreenPosition = get.Required.Field "position" position
+                VirtualScreenPosition = get.Required.Field "virtualScreenPosition" position
             }
         )
 
