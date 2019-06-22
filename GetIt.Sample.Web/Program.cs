@@ -13,7 +13,7 @@ namespace GetIt.Sample.Web
             // Program3();
             // Program4();
             // Program5();
-            Program6();
+            // Program6();
             // Program7();
             // Program8();
             // Program9();
@@ -43,7 +43,7 @@ namespace GetIt.Sample.Web
             // Program33();
             // Program34();
             // Program35();
-            // Program36();
+            Program36();
         }
 
         private static void Program1()
