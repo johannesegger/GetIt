@@ -277,7 +277,7 @@ let view model dispatch =
                 players
                 |> List.map (fun (PlayerId playerId, player) ->
                     let (width, height) = (30., 30.)
-                    let ratio = System.Math.Min(width / player.Size.Width, height / player.Size.Height)
+                    let ratio = System.Math.Min(width / player.Costume.Size.Width, height / player.Costume.Size.Height)
                     div [ Class "player" ] [
                         svg [
                                 Class "view"
