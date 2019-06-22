@@ -360,6 +360,19 @@ let stream states msgs =
                 }
                 |> SetMousePosition
             )
+
+            states
+            |> AsyncRx.choose (function | Some (ControllerMsg (InputEvent (MouseClick mouseClick))), model -> Some (mouseClick, model.SceneBounds) | _ -> None)
+            |> AsyncRx.map (fun (mouseClick, sceneBounds) ->
+                {
+                    Button = mouseClick.Button
+                    Position = {
+                        X = sceneBounds.Left + mouseClick.VirtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 7.
+                        Y = sceneBounds.Top - mouseClick.VirtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + Browser.Dom.window.screenTop + 24.
+                    }
+                }
+                |> ApplyMouseClick
+            )
         ]
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
