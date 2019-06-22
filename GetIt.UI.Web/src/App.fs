@@ -278,39 +278,41 @@ let view model dispatch =
         ]
 
         div [ Id "info" ] [
-            yield!
-                players
-                |> List.map (fun (PlayerId playerId, player) ->
-                    let (width, height) = (30., 30.)
-                    let ratio = System.Math.Min(width / player.Costume.Size.Width, height / player.Costume.Size.Height)
-                    let playerWidth = ratio * player.Costume.Size.Width
-                    let playerHeight = ratio * player.Costume.Size.Height
-                    div [ Class "player" ] [
-                        svg [
-                                Class "view"
-                                SVGAttr.Width width
-                                SVGAttr.Height height
-                                sprintf "rotate(%f 0 0)" (360. - Degrees.value player.Direction)
-                                |> SVGAttr.Transform
-                            ] [
-                                g
-                                    [
+            div [ Id "inner-info" ] [
+                yield!
+                    players
+                    |> List.map (fun (PlayerId playerId, player) ->
+                        let (width, height) = (30., 30.)
+                        let ratio = System.Math.Min(width / player.Costume.Size.Width, height / player.Costume.Size.Height)
+                        let playerWidth = ratio * player.Costume.Size.Width
+                        let playerHeight = ratio * player.Costume.Size.Height
+                        div [ Class "player" ] [
+                            svg [
+                                    Class "view"
+                                    SVGAttr.Width width
+                                    SVGAttr.Height height
+                                    sprintf "rotate(%f 0 0)" (360. - Degrees.value player.Direction)
+                                    |> SVGAttr.Transform
+                                ] [
+                                    g
                                         [
-                                            sprintf "translate(%f %f)" ((width - playerWidth) / 2.) ((height - playerHeight) / 2.)
-                                            sprintf "scale(%f %f)" ratio ratio
+                                            [
+                                                sprintf "translate(%f %f)" ((width - playerWidth) / 2.) ((height - playerHeight) / 2.)
+                                                sprintf "scale(%f %f)" ratio ratio
+                                            ]
+                                            |> String.concat " "
+                                            |> SVGAttr.Transform
+                                            DangerouslySetInnerHTML { __html = player.Costume.SvgData }
                                         ]
-                                        |> String.concat " "
-                                        |> SVGAttr.Transform
-                                        DangerouslySetInnerHTML { __html = player.Costume.SvgData }
-                                    ]
-                                    []
-                            ]
+                                        []
+                                ]
 
-                        span [] [
-                            str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
+                            span [ Class "info" ] [
+                                str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
+                            ]
                         ]
-                    ]
-                )
+                    )
+            ]
         ]
     ]
 

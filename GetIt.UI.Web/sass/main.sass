@@ -50,14 +50,22 @@ html, body, #elmish-app, #main
     display: block
     width: 0
 #info
-  display: flex
-  height: 50px
-  padding: 10px 20px
+  overflow-x: auto
   background: lightgray
-  .player
+  padding: 10px 20px
+  #inner-info
     display: flex
-    align-items: center
-    .view
-      margin-right: 10px
-  .player:not(:first-child)
-    margin-left: 10px
+    height: 30px
+    .player
+      display: flex
+      flex: 0 0 auto
+      align-items: center
+      .view
+        flex: 0 0 auto
+        margin-right: 10px
+      .info
+        flex: 0 0 auto
+    .player:not(:first-child)
+      margin-left: 10px
+    .player:last-child
+      padding-right: 20px
