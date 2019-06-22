@@ -304,6 +304,18 @@ let view model dispatch =
     ]
 
 let stream states msgs =
+    let msgChannel =
+        let url = sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint
+        let encode = Encode.channelMsg >> Encode.toString 0
+        let decode =
+            Decode.fromString Decode.channelMsg
+            >> (function
+                | Ok p -> Some p
+                | Error p ->
+                    eprintfn "Deserializing message failed: %O" p
+                    None
+            )
+        AsyncRx.msgChannel url encode decode
     [
         msgs
 
@@ -351,7 +363,7 @@ let stream states msgs =
         ]
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
-        |> AsyncRx.msgChannel (sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint) (Encode.channelMsg >> Encode.toString 0) (Decode.fromString Decode.channelMsg >> Result.toOption)
+        |> msgChannel
     ]
     |> AsyncRx.mergeSeq
 
