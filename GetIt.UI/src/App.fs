@@ -166,7 +166,8 @@ let rec update msg model =
     | Some (messages, level), ControllerMsg StartBatch ->
         { model with BatchMessages = Some (messages, level + 1) }
     | None, ControllerMsg ApplyBatch ->
-        model // TODO send error to controller?
+        eprintfn "Can't apply batch because no batch is running"
+        model
     | Some (messages, level), ControllerMsg ApplyBatch when level > 1 ->
         { model with BatchMessages = Some (messages, level - 1) }
     | Some (messages, level), ControllerMsg ApplyBatch ->
