@@ -198,8 +198,7 @@ let view model dispatch =
             |> String.concat " "
             |> SVGAttr.Transform
             DangerouslySetInnerHTML { __html = model.Background.SvgData }
-            ] [
-            ]
+        ] []
 
     let drawPlayerOnScene (player: PlayerData) =
         let left = -model.SceneBounds.Left + player.Bounds.Left
