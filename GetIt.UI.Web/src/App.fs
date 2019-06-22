@@ -278,6 +278,8 @@ let view model dispatch =
                 |> List.map (fun (PlayerId playerId, player) ->
                     let (width, height) = (30., 30.)
                     let ratio = System.Math.Min(width / player.Costume.Size.Width, height / player.Costume.Size.Height)
+                    let playerWidth = ratio * player.Costume.Size.Width
+                    let playerHeight = ratio * player.Costume.Size.Height
                     div [ Class "player" ] [
                         svg [
                                 Class "view"
@@ -288,7 +290,11 @@ let view model dispatch =
                             ] [
                                 g
                                     [
-                                        sprintf "scale(%f %f)" ratio ratio
+                                        [
+                                            sprintf "translate(%f %f)" ((width - playerWidth) / 2.) ((height - playerHeight) / 2.)
+                                            sprintf "scale(%f %f)" ratio ratio
+                                        ]
+                                        |> String.concat " "
                                         |> SVGAttr.Transform
                                         DangerouslySetInnerHTML { __html = player.Costume.SvgData }
                                     ]
