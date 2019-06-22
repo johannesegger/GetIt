@@ -88,7 +88,7 @@ module UICommunication =
         do!
             WebHostBuilder()
                 .UseKestrel()
-                .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly()), "GetIt.UI"))
+                .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI"))
                 .Configure(Action<IApplicationBuilder> configureApp)
                 .ConfigureServices(configureServices)
                 .UseUrls(url)
