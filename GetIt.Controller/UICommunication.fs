@@ -61,6 +61,8 @@ module UICommunication =
 
         let configureApp (app: IApplicationBuilder) =
             app
+                .UseDefaultFiles()
+                .UseStaticFiles()
                 .UseWebSockets()
                 .UseStream(fun options ->
                     { options with
