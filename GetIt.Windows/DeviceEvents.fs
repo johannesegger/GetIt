@@ -261,10 +261,13 @@ module DeviceEvents =
 
             waitHandle.Wait()
 
-            let position = getCurrentMousePosition ()
-            obs.OnNext (MouseMove position)
-
             Disposable.create (fun () ->
                 Win32.SendMessage(windowHandle, shutDownMessage, UIntPtr.Zero, IntPtr.Zero) |> ignore
             )
         )
+        |> Observable.publish
+        |> Observable.refCount
+        |> Observable.merge (Observable.defer (fun () ->
+            let position = getCurrentMousePosition ()
+            Observable.result (MouseMove position)
+        ))

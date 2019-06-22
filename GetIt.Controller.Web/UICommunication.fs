@@ -121,7 +121,6 @@ module UICommunication =
             let observable =
                 if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
                     GetIt.Windows.DeviceEvents.observable
-                    |> Observable.publish
                 else
                     raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
@@ -146,12 +145,9 @@ module UICommunication =
                         Model.updateCurrent (fun m -> None, { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.remove key m.KeyboardState.KeysPressed } })
                 )
 
-            let d4 = observable.Connect()
-
             d1
             |> Disposable.compose d2
             |> Disposable.compose d3
-            |> Disposable.compose d4
         )
 
     let showScene windowSize =

@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\GetIt.UI.Web\paket-files\johannesegger\Elmish.Streams\AspNetCore.Middleware\StreamsMiddleware.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
     <Compile Include="PrintConfig.fs" />
@@ -15,13 +16,15 @@
 
   <ItemGroup>
     <PackageReference Include="ColorCode.Html" Version="2.0.6" />
-    <PackageReference Include="Elmish.Streams.AspNetCore.MiddleWare" Version="1.0.1" />
     <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
     <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Include="Fue" Version="1.7.0" />
     <PackageReference Include="Giraffe" Version="3.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.2.1" />
+    <PackageReference Include="FSharp.Control.AsyncRx" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
