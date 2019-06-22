@@ -197,26 +197,27 @@ let main argv =
         )
     )
     |> Seq.iteri (fun index population ->
-        use x = Game.BatchCommands()
-        Game.ClearScene()
-        let fittest =
-            population
-            |> Seq.maxBy(fun individual -> individual.Fitness)
-        let text =
-            [
-                sprintf "Iteration: %d" index
-                sprintf "Min distance: %f" (Math.Abs fittest.Fitness)
-                sprintf "Global optimum: %f" (Math.Abs globalOptimum)
-            ]
-            |> String.concat Environment.NewLine
-        Turtle.Say text
+        do
+            use x = Game.BatchCommands()
+            Game.ClearScene()
+            let fittest =
+                population
+                |> Seq.maxBy(fun individual -> individual.Fitness)
+            let text =
+                [
+                    sprintf "Iteration: %d" index
+                    sprintf "Min distance: %f" (Math.Abs fittest.Fitness)
+                    sprintf "Global optimum: %f" (Math.Abs globalOptimum)
+                ]
+                |> String.concat Environment.NewLine
+            Turtle.Say text
 
-        Turtle.SetPenColor RGBAColors.orange
-        drawTour fittest.Tour
-        if drawGlobalOptimum then
-            Turtle.SetPenColor RGBAColors.green
-            drawTour optimalTour
-        
+            Turtle.SetPenColor RGBAColors.orange
+            drawTour fittest.Tour
+            if drawGlobalOptimum then
+                Turtle.SetPenColor RGBAColors.green
+                drawTour optimalTour
+
         Turtle.Sleep iterationDelay
     )
 
