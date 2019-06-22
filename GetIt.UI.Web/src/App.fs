@@ -201,7 +201,7 @@ let view model dispatch =
             ]
             []
 
-    let drawSpeechBubble (player: PlayerData) =
+    let drawSpeechBubble playerId (player: PlayerData) =
         let speechBubble content =
             svgEl "foreignObject"
                 [
@@ -223,7 +223,12 @@ let view model dispatch =
         | Some (AskString text) ->
             speechBubble [
                 span [] [ str text ]
-                input [ Style [ Width "100%" ] ]
+                input [
+                    OnChange (fun ev -> dispatch (UpdateStringAnswer (playerId, ev.Value)))
+                    OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
+                    Value (model.PlayerStringAnswers |> Map.tryFind playerId |> Option.defaultValue "")
+                    Style [ Width "100%"; MarginTop "5px" ]
+                ]
             ]
         | Some (AskBool text) ->
             speechBubble [
@@ -240,10 +245,10 @@ let view model dispatch =
 
     let drawScenePlayers =
         playersOnScene
-        |> List.map (snd >> fun player ->
+        |> List.map (fun (playerId, player) ->
             g [] [
                 yield drawPlayerOnScene player
-                yield! drawSpeechBubble player |> Option.toList
+                yield! drawSpeechBubble playerId player |> Option.toList
             ]
         )
 
@@ -324,6 +329,10 @@ let stream states msgs =
         AsyncRx.msgChannel url encode decode
     [
         msgs
+        |> AsyncRx.choose (function
+            | UIMsg (UpdateStringAnswer _) as x -> Some x
+            | _ -> None
+        )
 
         states
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
@@ -379,6 +388,9 @@ let stream states msgs =
                 }
                 |> ApplyMouseClick
             )
+
+            msgs
+            |> AsyncRx.choose (function | UIMsg (AnswerStringQuestion _ as msg) -> Some msg | _ -> None)
         ]
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
@@ -386,7 +398,7 @@ let stream states msgs =
     ]
     |> AsyncRx.mergeSeq
 
-Program.mkSimple init update view
+Program.mkSimple init update (fun model dispatch -> view model (UIMsg >> dispatch))
 |> Program.withStream stream
 #if DEBUG
 |> Program.withDebugger
