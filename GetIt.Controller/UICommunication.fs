@@ -3,10 +3,8 @@
 open Elmish.Streams.AspNetCore.Middleware
 open FSharp.Control
 open FSharp.Control.Reactive
-open global.Giraffe
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.DependencyInjection
 open System
 open System.Diagnostics
 open System.IO
@@ -79,18 +77,13 @@ module UICommunication =
                         RequestPath = MessageChannel.endpoint
                     }
                 )
-                // .UseGiraffe(webApp)
                 |> ignore
-
-        let configureServices (services: IServiceCollection) =
-            services.AddGiraffe() |> ignore
 
         do!
             WebHostBuilder()
                 .UseKestrel()
                 .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI"))
                 .Configure(Action<IApplicationBuilder> configureApp)
-                .ConfigureServices(configureServices)
                 .UseUrls(url)
                 .Build()
                 .RunAsync(ct)
