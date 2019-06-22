@@ -309,6 +309,7 @@ let view model dispatch =
                                     SVGAttr.Height height
                                     sprintf "rotate(%f 0 0)" (360. - Degrees.value player.Direction)
                                     |> SVGAttr.Transform
+                                    SVGAttr.Opacity (if player.IsVisible then 1. else 0.5)
                                 ] [
                                     g
                                         [
