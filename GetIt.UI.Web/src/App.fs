@@ -189,7 +189,6 @@ let view model dispatch =
         let ratio = System.Math.Max(model.SceneBounds.Size.Width / model.Background.Size.Width, model.SceneBounds.Size.Height / model.Background.Size.Height)
         let backgroundWidth = ratio * model.Background.Size.Width
         let backgroundHeight = ratio * model.Background.Size.Height
-        printfn "ratio %f" ratio
         g [
             [
                 sprintf "translate(%f %f)" ((model.SceneBounds.Size.Width - backgroundWidth) / 2.) ((model.SceneBounds.Size.Height - backgroundHeight) / 2.)
