@@ -373,7 +373,7 @@ namespace GetIt.Sample.Web
 
             Turtle.Say("Press any key to start");
             var key = Game.WaitForAnyKeyDown();
-            Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
+            Turtle.Say($"You started with <{key}>. Press <Space> to stop.");
             Game.WaitForKeyDown(KeyboardKey.Space);
             Turtle.Say("Game over.");
         }
