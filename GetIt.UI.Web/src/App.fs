@@ -248,14 +248,10 @@ let view model dispatch =
         | Some (AskBool text) ->
             speechBubble [
                 span [] [ str text ]
-                div [
-                        Style [
-                            Display DisplayOptions.Flex
-                            FlexDirection "row"
-                        ]
-                    ] [
-
-                    ]
+                div [ Class "askbool-answers" ] [
+                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
+                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
+                ]
             ]
 
     let drawScenePlayers =
@@ -409,7 +405,11 @@ let stream states msgs =
             )
 
             msgs
-            |> AsyncRx.choose (function | UIMsg (AnswerStringQuestion _ as msg) -> Some msg | _ -> None)
+            |> AsyncRx.choose (function
+                | UIMsg (AnswerStringQuestion _ as msg)
+                | UIMsg (AnswerBoolQuestion _ as msg) -> Some msg
+                | _ -> None
+            )
         ]
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg

@@ -305,7 +305,7 @@ module UICommunication =
     let askBool playerId text =
         use d = setTemporarySpeechBubble playerId (AskBool text)
         sendMessageAndWaitForResponse
-            (SetSpeechBubble (playerId, Some (AskString text)))
+            (SetSpeechBubble (playerId, Some (AskBool text)))
             (fst >> function | Some (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
     let shutUp playerId =
