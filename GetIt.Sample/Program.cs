@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using static MoreLinq.Extensions.ForEachExtension;
-using static MoreLinq.Extensions.MaxByExtension;
-using static MoreLinq.Extensions.PipeExtension;
-using static MoreLinq.Extensions.ScanExtension;
-using static MoreLinq.Extensions.ShuffleExtension;
-using static MoreLinq.Extensions.WindowExtension;
 
 namespace GetIt.Sample
 {
@@ -59,7 +52,7 @@ namespace GetIt.Sample
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x80));
+            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x40));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 200)
@@ -380,7 +373,7 @@ namespace GetIt.Sample
 
             Turtle.Say("Press any key to start");
             var key = Game.WaitForAnyKeyDown();
-            Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
+            Turtle.Say($"You started with <{key}>. Press <Space> to stop.");
             Game.WaitForKeyDown(KeyboardKey.Space);
             Turtle.Say("Game over.");
         }
@@ -549,12 +542,12 @@ namespace GetIt.Sample
 
         private static void Program22()
         {
-            Game.ShowSceneAndAddTurtle();
-            Turtle.MoveUp(100);
+            Game.ShowScene();
 
             using (var food = Game.AddPlayer(PlayerData.Bug))
             {
-                food.Say("I'm just here for 5 seconds", 5);
+                food.Say("I'm just here for 5 seconds");
+                Game.Sleep(5000);
             }
         }
 

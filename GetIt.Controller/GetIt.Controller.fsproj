@@ -3,30 +3,46 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NuspecFile>GetIt.Controller.nuspec</NuspecFile>
-    <NuspecProperties>version=$(PackageVersion)</NuspecProperties>
+    <Title>GetIt</Title>
+    <Authors>JEgger</Authors>
+    <Description>.NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/johannesegger/GetIt</PackageProjectUrl>
+    <PackageTags></PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <RepositoryUrl>https://github.com/johannesegger/GetIt</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\GetIt.UI\paket-files\johannesegger\Elmish.Streams\AspNetCore.Middleware\StreamsMiddleware.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
-    <Compile Include="Connection.fs" />
+    <Compile Include="PrintConfig.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Game.fs" />
     <Compile Include="Player.generated.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
-    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
-    <ProjectReference Include="..\GetIt.InterProcessCommunication\GetIt.InterProcessCommunication.csproj" />
+    <Content Include="GetIt.Controller.targets" PackagePath="build\GetIt.targets" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ColorCode.Html" Version="2.0.6" />
     <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
+    <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Include="Fue" Version="1.7.0" />
-    <PackageReference Include="Thoth.Json.Net" Version="2.5.0" />
+    <PackageReference Include="Giraffe" Version="3.6.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.2.1" />
+    <PackageReference Include="FSharp.Control.AsyncRx" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
+    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
   </ItemGroup>
 
 </Project>

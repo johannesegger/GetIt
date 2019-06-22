@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GetIt.Controller.Web\GetIt.Controller.Web.fsproj" />
+    <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,332 +1,379 @@
-namespace GetIt
+﻿namespace GetIt
 
+open Elmish.Streams.AspNetCore.Middleware
+open FSharp.Control
+open FSharp.Control.Reactive
+open global.Giraffe
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.DependencyInjection
 open System
+open System.Diagnostics
+open System.IO
 open System.Reactive.Linq
-open System.Runtime.CompilerServices
+open System.Reactive.Disposables
 open System.Runtime.InteropServices
 open System.Threading
-open System.Threading.Tasks
-open FSharp.Control.Reactive
-open Google.Protobuf.WellKnownTypes
-open Grpc.Core
+open Thoth.Json.Net
 
-[<assembly: InternalsVisibleTo("GetIt.Test")>]
-do ()
+module UICommunication =
+    type CommunicationState = {
+        Disposable: IDisposable
+        MessageSubject: System.Reactive.Subjects.Subject<ControllerMsg>
+    }
+    let mutable private showSceneCalled = 0
+    let mutable private communicationState = None
+    let private url = "http://localhost:1503/"
 
-module internal UICommunication =
-    let setupConnectionToUI host port = async {
-        let channel = Channel(sprintf "%s:%d" host port, ChannelCredentials.Insecure)
-        let! connectionResult =
-#if DEBUG
-            channel.ConnectAsync()
-#else
-            channel.ConnectAsync(Nullable<_>(DateTime.UtcNow.Add(TimeSpan.FromSeconds 30.)))
-#endif
+    let private startWebServer controllerMsgs ct = async {
+        let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
+            printfn "Client %s connected" connectionId
+            let controllerMsgs =
+                AsyncRx.create (fun obs -> async {
+                    return
+                        controllerMsgs
+                        |> Observable.subscribeWithCallbacks
+                            (obs.OnNextAsync >> Async.Start)
+                            (obs.OnErrorAsync >> Async.Start)
+                            (obs.OnCompletedAsync >> Async.Start)
+                        |> fun d -> AsyncDisposable.Create (fun () -> async { d.Dispose() })
+                })
+                |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
+            
+            msgs
+            |> AsyncRx.flatMap(fun (msg, connId) ->
+                match msg with
+                | ControllerMsg msg -> AsyncRx.empty ()
+                | UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, { model with SceneBounds = sceneBounds })
+                    AsyncRx.single (msg, connId)
+                | UIMsg (SetMousePosition mousePosition as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, { model with MouseState = { model.MouseState with Position = mousePosition } })
+                    AsyncRx.single (msg, connId)
+                | UIMsg (ApplyMouseClick _ as uiMsg)
+                | UIMsg (UpdateStringAnswer _ as uiMsg)
+                | UIMsg (AnswerStringQuestion _ as uiMsg)
+                | UIMsg (AnswerBoolQuestion _ as uiMsg)
+                | UIMsg (Screenshot _ as uiMsg) ->
+                    Model.updateCurrent (fun model -> Some uiMsg, model)
+                    AsyncRx.single (msg, connId)
+            )
+            |> AsyncRx.merge controllerMsgs
+
+        let configureApp (app: IApplicationBuilder) =
+            app
+                .UseWebSockets()
+                .UseStream(fun options ->
+                    { options with
+                        Stream = stream
+                        Encode = Encode.channelMsg >> Encode.toString 0
+                        Decode =
+                            Decode.fromString Decode.channelMsg
+                            >> (function
+                                | Ok p -> Some p
+                                | Error p ->
+                                    eprintfn "Deserializing message failed: %O" p
+                                    None
+                            )
+                        RequestPath = MessageChannel.endpoint
+                    }
+                )
+                // .UseGiraffe(webApp)
+                |> ignore
+
+        let configureServices (services: IServiceCollection) =
+            services.AddGiraffe() |> ignore
+
+        do!
+            WebHostBuilder()
+                .UseKestrel()
+                .UseWebRoot(Path.GetFullPath "../Client/public")
+                .Configure(Action<IApplicationBuilder> configureApp)
+                .ConfigureServices(configureServices)
+                .UseUrls(url)
+                .Build()
+                .RunAsync(ct)
             |> Async.AwaitTask
-            |> Async.Catch
-
-        match connectionResult with
-        | Choice1Of2 () -> ()
-        | Choice2Of2 e -> raise (GetItException ("Can't connect to UI.", e))
-
-        return channel
     }
 
-    let private run fn arg =
-        try
-            fn arg
-        with e ->
-            // TODO verify it's the connection that failed 
-            // TODO dispose subscriptions etc. ?
-#if !DEBUG
-            Environment.Exit 0
+    let private startUI windowSize = async {
+        // TODO check that chrome is installed and/or support other browsers
+        let args =
+            [
+                yield "--user-data-dir", Path.Combine(Path.GetTempPath(), "chrome-workspace-for-getit") |> Some
+#if DEBUG
+                yield "--app", "http://localhost:8080" |> Some
+#else
+                yield "--app", url |> Some
 #endif
-            raise (GetItException ("Error while executing command", e))
+                match windowSize with
+                | SpecificSize windowSize ->
+                    yield "--window-size", sprintf "%d,%d" (int windowSize.Width) (int windowSize.Height) |> Some
+                | Maximized ->
+                    yield "--start-maximized", None
+            ]
+            |> List.map (function
+                | key, Some value -> sprintf "%s=\"%s\"" key value
+                | key, None -> key
+            )
+            |> String.concat " "
+        let proc = Process.Start("chrome.exe", args)
+        proc.WaitForExit ()
+        if proc.ExitCode <> 0 then
+            raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
+    }
 
-    let showScene (connection: Ui.UI.UIClient) windowSize =
-        let sceneBounds =
-            windowSize
-            |> Message.WindowSize.FromDomain
-            |> run connection.ShowScene
-            |> Message.Rectangle.ToDomain
-        Model.updateCurrent (fun m -> { m with SceneBounds = sceneBounds })
+    let inputEvents =
+        Observable.Create (fun (obs: IObserver<InputEvent>) ->
+            let observable =
+                if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                    GetIt.Windows.DeviceEvents.observable
+                else
+                    raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
-        let d0 =
-            Observable.Create(fun (obs: IObserver<Rectangle>) ct ->
-                async {
-                    use sceneBoundsSubscription = run connection.SceneBoundsChanged (Empty())
-                    use enumerator = sceneBoundsSubscription.ResponseStream
-                    let rec iterate () = async {
-                        let! ct = Async.CancellationToken
-                        let! hasMore = enumerator.MoveNext(ct) |> Async.AwaitTask
-                        if hasMore then
-                            Message.Rectangle.ToDomain enumerator.Current
-                            |> obs.OnNext
-                            do! iterate()
-                        else
-                            obs.OnCompleted()
+            let d1 =
+                observable
+                |> Observable.choose (function | MouseMove _ as x -> Some x | _ -> None)
+                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
+                |> Observable.subscribeObserver obs
+
+            let d2 =
+                observable
+                |> Observable.choose (function | MouseClick _ as x -> Some x | _ -> None)
+                |> Observable.subscribeObserver obs
+
+            let d3 =
+                observable
+                |> Observable.subscribe (function
+                    | MouseMove _ | MouseClick _ -> ()
+                    | KeyDown key ->
+                        Model.updateCurrent (fun m -> None, { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.add key m.KeyboardState.KeysPressed } })
+                    | KeyUp key ->
+                        Model.updateCurrent (fun m -> None, { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.remove key m.KeyboardState.KeysPressed } })
+                )
+
+            d1
+            |> Disposable.compose d2
+            |> Disposable.compose d3
+        )
+
+    let showScene windowSize =
+        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
+
+        let webServerStopDisposable = new CancellationDisposable()
+        let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
+
+        let runThread =
+            Thread(
+                (fun () ->
+                    async {
+                        let msgs =
+                            inputEvents
+                            |> Observable.map InputEvent
+                            |> Observable.merge controllerMsgs
+                        let! webServerRunTask = startWebServer msgs webServerStopDisposable.Token |> Async.StartChild
+                        let! processRunTask = startUI windowSize |> Async.StartChild
+                        
+                        do! processRunTask
+                        webServerStopDisposable.Dispose()
+                        do! webServerRunTask
                     }
-                    do! iterate()
-                }
-                |> fun a -> Async.StartAsTask(a, cancellationToken = ct)
-                :> Task
+                    |> Async.RunSynchronously
+                ),
+                Name = "Run thread",
+                IsBackground = false
             )
-            |> Observable.subscribe (fun sceneBounds ->
-                Model.updateCurrent (fun model -> { model with SceneBounds = sceneBounds })
-            )
+        runThread.Start()
 
-        let subject = new System.Reactive.Subjects.Subject<_>()
+        printfn "Waiting for scene bounds"
 
-        let waitHandle = new ManualResetEventSlim()
+        [
+            Model.observable
+            |> Observable.choose (fst >> function | Some (SetSceneBounds _) -> Some () | _ -> None)
+            |> Observable.first
 
-        let d1 =
-            Observable.Create (fun (obs: IObserver<Position>) ct ->
-                async {
-                    use mouseMovedSubscription = run (fun () -> connection.MouseMoved()) ()
-                    use enumerator = mouseMovedSubscription.ResponseStream
-                    let rec iterate () = async {
-                        let! ct = Async.CancellationToken
-                        let! hasMore = enumerator.MoveNext(ct) |> Async.AwaitTask
-                        if hasMore then
-                            Message.Position.ToDomain enumerator.Current
-                            |> obs.OnNext
-                            do! iterate()
-                        else
-                            obs.OnCompleted()
-                    }
+            Model.observable
+            |> Observable.choose (fst >> function | Some (SetMousePosition _) -> Some () | _ -> None)
+            |> Observable.first
+        ]
+        |> Observable.mergeSeq
+        |> Observable.wait
+        |> ignore
 
-                    use d =
-                        subject
-                        |> Observable.choose (function | MouseMove position -> Some position | _ -> None)
-                        |> Observable.sample (TimeSpan.FromMilliseconds 50.)
-                        |> Observable.map (fun position ->
-                            Observable.ofAsync (async {
-                                return!
-                                    position
-                                    |> Message.Position.FromDomain
-                                    |> mouseMovedSubscription.RequestStream.WriteAsync
-                                    |> Async.AwaitTask
-                            })
-                        )
-                        |> Observable.concatInner
-                        |> Observable.subscribe ignore
+        printfn "Setup complete"
 
-                    do! iterate ()
-                }
-                |> fun a -> Async.StartAsTask(a, cancellationToken = ct)
-                :> Task
-            )
-            |> Observable.subscribe (fun position ->
-                Model.updateCurrent (fun model -> { model with MouseState = { model.MouseState with Position = position } })
+        communicationState <-
+            Some {
+                Disposable = webServerStopDisposable
+                MessageSubject = controllerMsgs
+            }
+
+        ()
+
+    let private sendMessage msg =
+        match communicationState with
+        | Some state ->
+            state.MessageSubject.OnNext msg
+        | None ->
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+
+    let private sendMessageAndWaitForResponse msg responseFilter =
+        let mutable response = None
+        use waitHandle = new ManualResetEventSlim()
+        use d =
+            Model.observable
+            |> Observable.choose responseFilter
+            |> Observable.first
+            |> Observable.subscribe (fun p ->
+                response <- Some p
                 waitHandle.Set()
             )
 
-        let d2 =
-            subject
-            |> Observable.choose (function | MouseClick data -> Some data | _ -> None)
-            |> Observable.map (fun mouseClick ->
-                async {
-                    let request = Message.VirtualScreenMouseClick.FromDomain mouseClick
-                    let! ct = Async.CancellationToken
-                    use response = run (fun (r, ct) -> connection.MouseClickedAsync(r, cancellationToken = ct)) (request, ct)
-                    let! responseData = response.ResponseAsync |> Async.AwaitTask
-                    return Message.MouseClick.ToDomain responseData
-                }
-                |> Observable.ofAsync
-            )
-            |> Observable.switch
-            |> Observable.subscribe (fun mouseClick ->
-                Model.updateCurrent (fun m -> { m with MouseState = { m.MouseState with LastClick = Some (Guid.NewGuid(), mouseClick) } })
-            )
-
-        let d3 =
-            subject
-            |> Observable.subscribe (function
-                | MouseMove _ | MouseClick _ -> ()
-                | KeyDown key ->
-                    Model.updateCurrent (fun m -> { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.add key m.KeyboardState.KeysPressed } })
-                | KeyUp key ->
-                    Model.updateCurrent (fun m -> { m with KeyboardState = { m.KeyboardState with KeysPressed = Set.remove key m.KeyboardState.KeysPressed } })
-            )
-
-        let d4 =
-            if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-                GetIt.Windows.DeviceEvents.register subject
-            else
-                raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+        sendMessage msg
 
         waitHandle.Wait()
+        Option.get response
 
-    let addPlayer (connection: Ui.UI.UIClient) playerData =
+    let addPlayer playerData =
         let playerId = PlayerId.create ()
-        Message.Player.FromDomain (playerId, playerData)
-        |> run connection.AddPlayer
-        |> ignore
-        Model.updateCurrent (fun m -> { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
+        sendMessage <| AddPlayer (playerId, playerData)
+        Model.updateCurrent (fun m -> None, { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
 
-    let removePlayer (connection: Ui.UI.UIClient) playerId =
-        Message.PlayerId.FromDomain playerId
-        |> run connection.RemovePlayer
-        |> ignore
-        Model.updateCurrent (fun m -> { m with Players = Map.remove playerId m.Players })
+    let removePlayer playerId =
+        sendMessage <| RemovePlayer playerId
+        Model.updateCurrent (fun m -> None, { m with Players = Map.remove playerId m.Players })
 
-    let setPosition (connection: Ui.UI.UIClient) playerId position =
-        Message.PlayerPosition.FromDomain (playerId, position)
-        |> run connection.SetPosition
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Position = position })
+    let setWindowTitle title =
+        sendMessage <| SetWindowTitle title
 
-    let changePosition (connection: Ui.UI.UIClient) playerId relativePosition =
-        Message.PlayerPosition.FromDomain (playerId, relativePosition)
-        |> run connection.ChangePosition
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Position = p.Position + relativePosition })
+    let setBackground background =
+        sendMessage <| SetBackground background
 
-    let setDirection (connection: Ui.UI.UIClient) playerId direction =
-        Message.PlayerDirection.FromDomain (playerId, direction)
-        |> run connection.SetDirection
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Direction = direction })
+    let clearScene () =
+        sendMessage ClearScene
 
-    let changeDirection (connection: Ui.UI.UIClient) playerId relativeDirection =
-        Message.PlayerDirection.FromDomain (playerId, relativeDirection)
-        |> run connection.ChangeDirection
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Direction = p.Direction + relativeDirection })
+    let makeScreenshot () =
+        sendMessageAndWaitForResponse
+            MakeScreenshot
+            (fst >> function | Some (Screenshot image) -> Some image | _ -> None)
 
-    let say (connection: Ui.UI.UIClient) playerId text =
-        Message.PlayerText.FromDomain (playerId, text)
-        |> run connection.Say
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (Say text) })
+    let startBatch () =
+        sendMessage StartBatch
 
-    let ask (connection: Ui.UI.UIClient) playerId text =
-        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskString text) })
-        try
-            Message.PlayerText.FromDomain (playerId, text)
-            |> run connection.AskString
-            |> Message.StringAnswer.ToDomain
-        finally
-            Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
+    let applyBatch () =
+        sendMessage ApplyBatch
 
-    let askBool (connection: Ui.UI.UIClient) playerId text =
-        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = Some (AskBool text) })
-        try
-            Message.PlayerText.FromDomain (playerId, text)
-            |> run connection.AskBool
-            |> Message.BoolAnswer.ToDomain
-        finally
-            Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
+    let setPosition playerId position =
+        SetPosition (playerId, position)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Position = position })
 
-    let shutUp (connection: Ui.UI.UIClient) playerId =
-        let answer =
-            Message.PlayerId.FromDomain playerId
-            |> run connection.ShutUp
-            |> ignore
-        Model.updatePlayer playerId (fun p -> { p with SpeechBubble = None })
-        answer
+    let changePosition playerId relativePosition =
+        ChangePosition (playerId, relativePosition)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Position = p.Position + relativePosition })
 
-    let setPenState (connection: Ui.UI.UIClient) playerId isOn =
-        Message.PlayerPenState.FromDomain (playerId, isOn)
-        |> run connection.SetPenState
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
+    let setDirection playerId direction =
+        SetDirection (playerId, direction)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Direction = direction })
 
-    let togglePenState (connection: Ui.UI.UIClient) playerId =
-        Message.PlayerId.FromDomain playerId
-        |> run connection.TogglePenState
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
+    let changeDirection playerId relativeDirection =
+        ChangeDirection (playerId, relativeDirection)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Direction = p.Direction + relativeDirection })
 
-    let setPenColor (connection: Ui.UI.UIClient) playerId color =
-        Message.PlayerPenColor.FromDomain (playerId, color)
-        |> run connection.SetPenColor
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
+    let say playerId text =
+        SetSpeechBubble (playerId, Some (Say text))
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = Some (Say text) })
 
-    let shiftPenColor (connection: Ui.UI.UIClient) playerId angle =
-        Message.PlayerPenColorShift.FromDomain (playerId, angle)
-        |> run connection.ShiftPenColor
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
+    let private setTemporarySpeechBubble playerId speechBubble =
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = Some speechBubble })
+        Disposable.create (fun () ->
+            Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = None })
+        )
 
-    let setPenWeight (connection: Ui.UI.UIClient) playerId weight =
-        Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> run connection.SetPenWeight
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
+    let askString playerId text =
+        use d = setTemporarySpeechBubble playerId (AskString text)
+        sendMessageAndWaitForResponse
+            (SetSpeechBubble (playerId, Some (AskString text)))
+            (fst >> function | Some (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
-    let changePenWeight (connection: Ui.UI.UIClient) playerId weight =
-        Message.PlayerPenWeight.FromDomain (playerId, weight)
-        |> run connection.ChangePenWeight
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
+    let askBool playerId text =
+        use d = setTemporarySpeechBubble playerId (AskBool text)
+        sendMessageAndWaitForResponse
+            (SetSpeechBubble (playerId, Some (AskBool text)))
+            (fst >> function | Some (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
-    let setSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
-        Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> run connection.SetSizeFactor
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
+    let shutUp playerId =
+        SetSpeechBubble (playerId, None)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SpeechBubble = None })
 
-    let changeSizeFactor (connection: Ui.UI.UIClient) playerId sizeFactor =
-        Message.PlayerSizeFactor.FromDomain (playerId, sizeFactor)
-        |> run connection.ChangeSizeFactor
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
+    let setPenState playerId isOn =
+        SetPenState (playerId, isOn)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with IsOn = isOn } })
 
-    let setNextCostume (connection: Ui.UI.UIClient) playerId =
-        Message.PlayerId.FromDomain playerId
-        |> run connection.SetNextCostume
-        |> ignore
-        Model.updatePlayer playerId Player.nextCostume
+    let togglePenState playerId =
+        TogglePenState playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
 
-    let sendToBack (connection: Ui.UI.UIClient) playerId =
-        Message.PlayerId.FromDomain playerId
-        |> run connection.SendToBack
-        |> ignore
-        Model.updateCurrent (fun m -> { m with Players = Player.sendToBack playerId m.Players })
+    let setPenColor playerId color =
+        SetPenColor (playerId, color)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Color = color } })
 
-    let bringToFront (connection: Ui.UI.UIClient) playerId =
-        Message.PlayerId.FromDomain playerId
-        |> run connection.BringToFront
-        |> ignore
-        Model.updateCurrent (fun m -> { m with Players = Player.bringToFront playerId m.Players })
+    let shiftPenColor playerId angle =
+        ShiftPenColor (playerId, angle)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
 
-    let setVisibility (connection: Ui.UI.UIClient) playerId isVisible =
-        Message.PlayerVisibility.FromDomain (playerId, isVisible)
-        |> run connection.SetVisibility
-        |> ignore
-        Model.updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
+    let setPenWeight playerId weight =
+        SetPenWeight (playerId, weight)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Weight = weight } })
 
-    let setWindowTitle (connection: Ui.UI.UIClient) text =
-        text
-        |> Message.WindowTitle.FromDomain
-        |> run connection.SetWindowTitle
-        |> ignore
+    let changePenWeight playerId weight =
+        ChangePenWeight (playerId, weight)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
 
-    let setBackground (connection: Ui.UI.UIClient) image =
-        image
-        |> Message.SvgImage.FromDomain
-        |> run connection.SetBackground
-        |> ignore
+    let setSizeFactor playerId sizeFactor =
+        SetSizeFactor (playerId, sizeFactor)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SizeFactor = sizeFactor })
 
-    let clearScene (connection: Ui.UI.UIClient) () =
-        Empty()
-        |> run connection.ClearScene
-        |> ignore
+    let changeSizeFactor playerId sizeFactor =
+        ChangeSizeFactor (playerId, sizeFactor)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with SizeFactor = p.SizeFactor + sizeFactor })
 
-    let makeScreenshot (connection: Ui.UI.UIClient) () =
-        Empty()
-        |> run connection.MakeScreenshot
-        |> Message.PngImage.ToDomain
+    let setNextCostume playerId =
+        SetNextCostume playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, Player.nextCostume p)
 
-    let startBatch (connection: Ui.UI.UIClient) () =
-        Empty()
-        |> run connection.StartBatch
-        |> ignore
+    let sendToBack playerId =
+        SendToBack playerId
+        |> sendMessage
+        Model.updateCurrent (fun m -> None, { m with Players = Player.sendToBack playerId m.Players })
 
-    let applyBatch (connection: Ui.UI.UIClient) () =
-        Empty()
-        |> run connection.ApplyBatch
-        |> ignore
+    let bringToFront playerId =
+        BringToFront playerId
+        |> sendMessage
+        Model.updateCurrent (fun m -> None, { m with Players = Player.bringToFront playerId m.Players })
+
+    let setVisibility playerId isVisible =
+        SetVisibility (playerId, isVisible)
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with IsVisible = isVisible })
+
+    let toggleVisibility playerId =
+        ToggleVisibility playerId
+        |> sendMessage
+        Model.updatePlayer playerId (fun p -> None, { p with IsVisible = not p.IsVisible })

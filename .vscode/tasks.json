@@ -10,16 +10,6 @@
                 "${workspaceFolder}/GetIt.Sample/GetIt.Sample.csproj"
             ],
             "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "buildWeb",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/GetIt.Sample.Web/GetIt.Sample.Web.csproj"
-            ],
-            "problemMatcher": "$msCompile"
         }
     ]
 }
