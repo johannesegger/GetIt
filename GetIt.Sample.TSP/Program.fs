@@ -1,6 +1,7 @@
 ﻿module GetIt.Sample.TSP.Main
 
 open System
+open System.Threading
 open GetIt
 
 type City =
@@ -20,6 +21,9 @@ let main argv =
     Game.ShowSceneAndAddTurtle()
 
     Turtle.Say ("TSP solver", 1.)
+
+    use cts = new CancellationTokenSource()
+    use d = Game.OnKeyDown(KeyboardKey.Space, fun _ -> cts.Cancel())
 
     let problem = GetIt.Sample.TSP.Samples.ulysses16
 
@@ -196,6 +200,7 @@ let main argv =
             twoOptChange child mutationProbability
         )
     )
+    |> Seq.takeWhile (fun _ -> not cts.Token.IsCancellationRequested)
     |> Seq.iteri (fun index population ->
         do
             use x = Game.BatchCommands()
