@@ -23,7 +23,7 @@
       <dependency id="Microsoft.AspNetCore.WebSockets" version="2.2.1" />
       <dependency id="Microsoft.Extensions.Logging" version="2.2.0" />
       <dependency id="SharpLibWin32" version="0.2.1" />
-      <dependency id="Thoth.Json.Net" version="3.3.0" />
+      <dependency id="Thoth.Json.Net" version="3.4.0" />
     </dependencies>
   </metadata>
   <files>
