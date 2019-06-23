@@ -78,6 +78,11 @@ type Position =
             X = p1.X - p2.X
             Y = p1.Y - p2.Y
         }
+    static member (~-) (p) =
+        {
+            X = -p.X
+            Y = -p.Y
+        }
 
 /// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
