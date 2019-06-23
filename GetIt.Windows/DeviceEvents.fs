@@ -193,6 +193,8 @@ module DeviceEvents =
                     let errorCode = Marshal.GetLastWin32Error()
                     raise (Win32Exception(sprintf "Failed to register window class. Error code: 0x%08x" errorCode))
 
+                use disposableWindowClass = Disposable.create (fun () -> Win32.UnregisterClass(windowClassAtom, moduleHandle) |> ignore)
+
                 windowHandle <-
                     Win32.CreateWindowEx(
                         0u,
@@ -211,6 +213,8 @@ module DeviceEvents =
                 if windowHandle = IntPtr.Zero then
                     let errorCode = Marshal.GetLastWin32Error()
                     raise(Win32Exception(sprintf "Failed to create window. Error code: 0x%08x" errorCode))
+
+                use disposableWindow = Disposable.create (fun () -> Win32.DestroyWindow(windowHandle) |> ignore)
 
                 // https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/top-level-collections-opened-by-windows-for-system-use
                 let keyboardUsagePage = 0x01us

@@ -160,6 +160,9 @@ module Win32 =
         IntPtr hInstance,
         IntPtr lpParam)
 
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool DestroyWindow(IntPtr hwnd)
+
     [<Struct; StructLayout(LayoutKind.Sequential)>]
     type WNDCLASSEX =
         val mutable cbSize: int
@@ -177,3 +180,6 @@ module Win32 =
 
     [<DllImport("user32.dll")>]
     extern uint16 RegisterClassEx(WNDCLASSEX& lpwcx)
+
+    [<DllImport("user32.dll")>]
+    extern bool UnregisterClass(uint16 classAtom, IntPtr hInstance)
