@@ -5,6 +5,7 @@ open FSharp.Control
 open FSharp.Control.Reactive
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Logging
 open System
 open System.Diagnostics
 open System.IO
@@ -86,6 +87,13 @@ module UICommunication =
                 .UseKestrel()
                 .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI"))
                 .Configure(Action<IApplicationBuilder> configureApp)
+                .ConfigureLogging(fun hostingContext logging ->
+                    logging
+                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
+                        .AddConsole()
+                        .AddDebug()
+                    |> ignore
+                )
                 .UseUrls(url)
                 .Build()
                 .RunAsync(ct)
