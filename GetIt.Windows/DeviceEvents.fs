@@ -244,7 +244,7 @@ module DeviceEvents =
                         uint32 rawInputDevices.Length,
                         uint32 (Marshal.SizeOf(rawInputDevices.[0])))
                 if not isRegistered then
-                    let errorCode = Marshal.GetLastWin32Error();
+                    let errorCode = Marshal.GetLastWin32Error()
                     raise(Win32Exception(sprintf "Failed to register raw input devices. Error code: 0x%08x" errorCode))
 
                 let mutable message: Win32.WinMsg = Unchecked.defaultof<Win32.WinMsg>
