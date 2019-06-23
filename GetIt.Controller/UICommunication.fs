@@ -39,7 +39,7 @@ module UICommunication =
                         |> fun d -> AsyncDisposable.Create (fun () -> async { d.Dispose() })
                 })
                 |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
-            
+
             msgs
             |> AsyncRx.flatMap(fun (msg, connId) ->
                 match msg with
@@ -180,7 +180,7 @@ module UICommunication =
                             |> Observable.merge controllerMsgs
                         let! webServerRunTask = startWebServer msgs webServerStopDisposable.Token |> Async.StartChild
                         let! processRunTask = startUI windowSize |> Async.StartChild
-                        
+
                         do! processRunTask
                         webServerStopDisposable.Dispose()
                         do! webServerRunTask
