@@ -33,9 +33,9 @@ module UICommunication =
                     return
                         controllerMsgs
                         |> Observable.subscribeWithCallbacks
-                            (obs.OnNextAsync >> Async.Start)
-                            (obs.OnErrorAsync >> Async.Start)
-                            (obs.OnCompletedAsync >> Async.Start)
+                            (obs.OnNextAsync >> Async.StartImmediate)
+                            (obs.OnErrorAsync >> Async.StartImmediate)
+                            (obs.OnCompletedAsync >> Async.StartImmediate)
                         |> fun d -> AsyncDisposable.Create (fun () -> async { d.Dispose() })
                 })
                 |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
