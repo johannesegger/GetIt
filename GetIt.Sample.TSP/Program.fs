@@ -222,6 +222,8 @@ let main argv =
             if drawGlobalOptimum then
                 Turtle.SetPenColor RGBAColors.green
                 drawTour optimalTour
+            Turtle.TurnOffPen ()
+            Turtle.MoveTo (Game.SceneBounds.Left, Game.SceneBounds.Bottom)
 
         Turtle.Sleep iterationDelay
     )
