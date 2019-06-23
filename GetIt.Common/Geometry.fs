@@ -26,6 +26,9 @@ type Degrees = private Degrees of float
     static member op_Implicit value =
         Degrees.Create value
 
+    static member op_Implicit (Degrees v) =
+        v
+
     override this.ToString () =
         let (Degrees value) = this
         value.ToString()
