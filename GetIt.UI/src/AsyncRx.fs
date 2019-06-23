@@ -24,7 +24,6 @@ let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
 let observeSceneSizeFromWindowResize =
     AsyncRx.create (fun obs -> async {
         let resizeCanvas evt =
-            Browser.Dom.console.log (evt)
             obs.OnNextAsync (Browser.Dom.window.innerWidth, Browser.Dom.window.innerHeight)
             |> Async.StartImmediate
             ()
