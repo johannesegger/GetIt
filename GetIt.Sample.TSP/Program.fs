@@ -70,7 +70,7 @@ let main argv =
     let mutable iterationDelay = TimeSpan.FromMilliseconds 1000.
     use d1 = Turtle.OnKeyDown (KeyboardKey.Down, fun _ -> iterationDelay <- iterationDelay * 2.)
     use d2 = Turtle.OnKeyDown (KeyboardKey.Up, fun _ -> iterationDelay <- iterationDelay / 2.)
-    
+
     let mutable drawGlobalOptimum = false
     use d3 = Turtle.OnKeyDown (KeyboardKey.G, fun _ -> drawGlobalOptimum <- not drawGlobalOptimum)
 
