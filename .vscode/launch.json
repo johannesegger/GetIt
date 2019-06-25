@@ -12,9 +12,8 @@
             "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.2/GetIt.Sample.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "console": "integratedTerminal", // the only option that works with running electron from the controller
+            "stopAtEntry": false
         },
         {
             "name": ".NET Core Attach",

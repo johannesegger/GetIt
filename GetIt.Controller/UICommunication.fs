@@ -102,19 +102,11 @@ module UICommunication =
     }
 
     let private startUI windowSize = async {
-        // TODO check that chrome is installed and/or support other browsers
         let args =
             [
-                yield "--user-data-dir", Path.Combine(Path.GetTempPath(), "chrome-workspace-for-getit") |> Some
-#if DEBUG
-                yield "--app", "http://localhost:8080" |> Some
-                // yield "--app", url |> Some
-#else
-                yield "--app", url |> Some
-#endif
                 match windowSize with
                 | SpecificSize windowSize ->
-                    yield "--window-size", sprintf "%d,%d" (int windowSize.Width) (int windowSize.Height) |> Some
+                    yield "--window-size", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height) |> Some
                 | Maximized ->
                     yield "--start-maximized", None
             ]
@@ -123,7 +115,18 @@ module UICommunication =
                 | key, None -> key
             )
             |> String.concat " "
-        let proc = Process.Start("chrome.exe", args)
+#if DEBUG
+        let proc =
+            let psi = ProcessStartInfo("powershell.exe", sprintf "%s %s" (Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1"))) args)
+            psi.EnvironmentVariables.Add("ELECTRON_WEBPACK_WDS_PORT", "8080")
+            psi
+            |> Process.Start
+#else
+        let proc =
+            ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI", "GetIt.UI.exe"), args)
+            |> Process.Start
+#endif
+
         proc.WaitForExit ()
         if proc.ExitCode <> 0 then
             raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
