@@ -14,7 +14,7 @@ open Fable.React.Props
 open FSharp.Control
 open Thoth.Json
 
-importAll "../sass/main.sass"
+importAll "../../sass/main.sass"
 
 type PenLine =
     {
