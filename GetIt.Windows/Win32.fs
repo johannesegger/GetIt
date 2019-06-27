@@ -44,7 +44,7 @@ module Win32 =
 
     [<DllImport("user32.dll", SetLastError = true)>]
     extern bool GetCursorPos(WinPoint& lpPoint)
-    
+
     type SystemMetric =
         | SM_CXSCREEN = 0x00
         | SM_CYSCREEN = 0x01
@@ -183,3 +183,33 @@ module Win32 =
 
     [<DllImport("user32.dll")>]
     extern bool UnregisterClass(uint16 classAtom, IntPtr hInstance)
+
+    [<DllImport("user32.dll")>]
+    extern IntPtr GetForegroundWindow()
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type Rect =
+        val mutable left: int
+        val mutable top: int
+        val mutable right: int
+        val mutable bottom: int
+
+    [<DllImport("user32.dll")>]
+    extern IntPtr GetWindowRect(IntPtr hWnd, Rect& rect)
+
+    type DWMWINDOWATTRIBUTE =
+        | NCRenderingEnabled = 1u
+        | NCRenderingPolicy = 2u
+        | TransitionsForceDisabled = 3u
+        | AllowNCPaint = 4u
+        | CaptionButtonBounds = 5u
+        | NonClientRtlLayout = 6u
+        | ForceIconicRepresentation = 7u
+        | Flip3DPolicy = 8u
+        | ExtendedFrameBounds = 9u
+        | HasIconicBitmap = 10u
+        | DisallowPeek = 11u
+        | ExcludedFromPeek = 12u
+        | Cloak = 13u
+        | Cloaked = 14u
+        | FreezeRepresentation = 15u

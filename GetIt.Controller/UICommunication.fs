@@ -136,7 +136,7 @@ module UICommunication =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
             let observable =
                 if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-                    GetIt.Windows.DeviceEvents.observable
+                    Windows.DeviceEvents.observable
                 else
                     raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
@@ -264,9 +264,12 @@ module UICommunication =
         sendMessage ClearScene
 
     let makeScreenshot () =
-        sendMessageAndWaitForResponse
-            MakeScreenshot
-            (fst >> function | Some (Screenshot image) -> Some image | _ -> None)
+        if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+            Windows.DeviceEvents.observable
+        else
+            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+
+        Windows.ScreenCapture.capture
 
     let startBatch () =
         sendMessage StartBatch
