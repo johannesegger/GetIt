@@ -10,7 +10,6 @@ let mainWindow
 
 function createMainWindow() {
   const window = new BrowserWindow({webPreferences: {nodeIntegration: true}})
-  console.log(argv);
   if (argv.windowSize)
   {
     let [width, height] = argv.windowSize.split("x")
