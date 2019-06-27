@@ -247,7 +247,7 @@ module DeviceEvents =
                     let errorCode = Marshal.GetLastWin32Error()
                     raise(Win32Exception(sprintf "Failed to register raw input devices. Error code: 0x%08x" errorCode))
 
-                let mutable message: Win32.WinMsg = Unchecked.defaultof<Win32.WinMsg>
+                let mutable message = Unchecked.defaultof<Win32.WinMsg>
 
                 // Ensure queue is created
                 Win32.PeekMessage(&message, IntPtr.Zero, 0u, 0u, 0u) |> ignore
