@@ -28,6 +28,7 @@ function createMainWindow() {
     window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
   }
   else {
+    window.setMenu(null)
     window.loadFile('index.html')
   }
 
