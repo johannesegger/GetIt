@@ -78,7 +78,7 @@ let rec update msg model =
             | Some (Say _)
             | None -> p
         )
-    | None, ControllerMsg (SetPosition (playerId, position)) ->
+    | None, ControllerMsg (msgId, SetPosition (playerId, position)) ->
         let player = Map.find playerId model.Players
         let player' = { player with Position = position }
         { model with
@@ -96,79 +96,77 @@ let rec update msg model =
                     model.PenLines @ [ line ]
                 else model.PenLines
         }
-    | None, ControllerMsg (ChangePosition (playerId, relativePosition)) ->
+    | None, ControllerMsg (msgId, ChangePosition (playerId, relativePosition)) ->
         let player = Map.find playerId model.Players
-        update (ControllerMsg (SetPosition (playerId, player.Position + relativePosition))) model
-    | None, ControllerMsg (SetDirection (playerId, angle)) ->
+        update (ControllerMsg (System.Guid.NewGuid(), SetPosition (playerId, player.Position + relativePosition))) model
+    | None, ControllerMsg (msgId, SetDirection (playerId, angle)) ->
         updatePlayer playerId (fun p -> { p with Direction = angle })
-    | None, ControllerMsg (ChangeDirection (playerId, relativeDirection)) ->
+    | None, ControllerMsg (msgId, ChangeDirection (playerId, relativeDirection)) ->
         let player = Map.find playerId model.Players
-        update (ControllerMsg (SetDirection (playerId, player.Direction + relativeDirection))) model
-    | None, ControllerMsg (SetSpeechBubble (playerId, speechBubble)) ->
+        update (ControllerMsg (System.Guid.NewGuid(), SetDirection (playerId, player.Direction + relativeDirection))) model
+    | None, ControllerMsg (msgId, SetSpeechBubble (playerId, speechBubble)) ->
         updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
-    | None, ControllerMsg (SetPenState (playerId, isOn)) ->
+    | None, ControllerMsg (msgId, SetPenState (playerId, isOn)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
-    | None, ControllerMsg (TogglePenState playerId) ->
+    | None, ControllerMsg (msgId, TogglePenState playerId) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
-    | None, ControllerMsg (SetPenColor (playerId, color)) ->
+    | None, ControllerMsg (msgId, SetPenColor (playerId, color)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
-    | None, ControllerMsg (ShiftPenColor (playerId, angle)) ->
+    | None, ControllerMsg (msgId, ShiftPenColor (playerId, angle)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
-    | None, ControllerMsg (SetPenWeight (playerId, weight)) ->
+    | None, ControllerMsg (msgId, SetPenWeight (playerId, weight)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
-    | None, ControllerMsg (ChangePenWeight (playerId, weight)) ->
+    | None, ControllerMsg (msgId, ChangePenWeight (playerId, weight)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
-    | None, ControllerMsg (SetSizeFactor (playerId, sizeFactor)) ->
+    | None, ControllerMsg (msgId, SetSizeFactor (playerId, sizeFactor)) ->
         updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
-    | None, ControllerMsg (ChangeSizeFactor (playerId, sizeFactor)) ->
+    | None, ControllerMsg (msgId, ChangeSizeFactor (playerId, sizeFactor)) ->
         updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
-    | None, ControllerMsg (SetVisibility (playerId, isVisible)) ->
+    | None, ControllerMsg (msgId, SetVisibility (playerId, isVisible)) ->
         updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
-    | None, ControllerMsg (ToggleVisibility playerId) ->
+    | None, ControllerMsg (msgId, ToggleVisibility playerId) ->
         updatePlayer playerId (fun p -> { p with IsVisible = not p.IsVisible })
-    | None, ControllerMsg (SetNextCostume playerId) ->
+    | None, ControllerMsg (msgId, SetNextCostume playerId) ->
         updatePlayer playerId Player.nextCostume
-    | None, ControllerMsg (SendToBack playerId) ->
+    | None, ControllerMsg (msgId, SendToBack playerId) ->
         { model with Players = Player.sendToBack playerId model.Players }
-    | None, ControllerMsg (BringToFront playerId) ->
+    | None, ControllerMsg (msgId, BringToFront playerId) ->
         { model with Players = Player.bringToFront playerId model.Players }
-    | None, ControllerMsg (AddPlayer (playerId, player)) ->
+    | None, ControllerMsg (msgId, AddPlayer (playerId, player)) ->
         { model with
             Players =
                 Map.add playerId player model.Players
                 |> Player.sendToBack playerId
         }
-    | None, ControllerMsg (RemovePlayer playerId) ->
+    | None, ControllerMsg (msgId, RemovePlayer playerId) ->
         { model with
             Players = Map.remove playerId model.Players
             PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers
         }
-    | None, ControllerMsg (SetWindowTitle title) ->
+    | None, ControllerMsg (msgId, SetWindowTitle title) ->
         { model with WindowTitle = title }
-    | None, ControllerMsg ClearScene ->
+    | None, ControllerMsg (msgId, ClearScene) ->
         { model with PenLines = [] }
-    | None, ControllerMsg MakeScreenshot ->
-        model
-    | None, ControllerMsg (SetBackground background) ->
+    | None, ControllerMsg (msgId, SetBackground background) ->
         { model with Background = background }
-    | None, ControllerMsg (InputEvent (KeyDown key)) ->
+    | None, ControllerMsg (msgId, InputEvent (KeyDown key)) ->
         model
-    | None, ControllerMsg (InputEvent (KeyUp key)) ->
+    | None, ControllerMsg (msgId, InputEvent (KeyUp key)) ->
         model
-    | None, ControllerMsg (InputEvent (MouseMove virtualScreenPosition)) ->
+    | None, ControllerMsg (msgId, InputEvent (MouseMove virtualScreenPosition)) ->
         model
-    | None, ControllerMsg (InputEvent (MouseClick virtualScreenMouseClick)) ->
+    | None, ControllerMsg (msgId, InputEvent (MouseClick virtualScreenMouseClick)) ->
         model
-    | None, ControllerMsg StartBatch ->
+    | None, ControllerMsg (msgId, StartBatch) ->
         { model with BatchMessages = Some ([], 1) }
-    | Some (messages, level), ControllerMsg StartBatch ->
+    | Some (messages, level), ControllerMsg (msgId, StartBatch) ->
         { model with BatchMessages = Some (messages, level + 1) }
-    | None, ControllerMsg ApplyBatch ->
+    | None, ControllerMsg (msgId, ApplyBatch) ->
         eprintfn "Can't apply batch because no batch is running"
         model
-    | Some (messages, level), ControllerMsg ApplyBatch when level > 1 ->
+    | Some (messages, level), ControllerMsg (msgId, ApplyBatch) when level > 1 ->
         { model with BatchMessages = Some (messages, level - 1) }
-    | Some (messages, level), ControllerMsg ApplyBatch ->
+    | Some (messages, level), ControllerMsg (msgId, ApplyBatch) ->
         (messages, ({ model with BatchMessages = None }))
         ||> List.foldBack update
     | Some (messages, level), x ->
@@ -380,7 +378,7 @@ let stream states msgs =
             )
 
             states
-            |> AsyncRx.choose (function | Some (ControllerMsg (InputEvent (MouseMove virtualScreenPosition))), model -> Some (virtualScreenPosition, model.SceneBounds) | _ -> None)
+            |> AsyncRx.choose (function | Some (ControllerMsg (msgId, InputEvent (MouseMove virtualScreenPosition))), model -> Some (virtualScreenPosition, model.SceneBounds) | _ -> None)
             |> AsyncRx.map (fun (virtualScreenPosition, sceneBounds) ->
                 {
                     X = sceneBounds.Left + virtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 5.
@@ -390,7 +388,7 @@ let stream states msgs =
             )
 
             states
-            |> AsyncRx.choose (function | Some (ControllerMsg (InputEvent (MouseClick mouseClick))), model -> Some (mouseClick, model.SceneBounds) | _ -> None)
+            |> AsyncRx.choose (function | Some (ControllerMsg (msgId, InputEvent (MouseClick mouseClick))), model -> Some (mouseClick, model.SceneBounds) | _ -> None)
             |> AsyncRx.map (fun (mouseClick, sceneBounds) ->
                 {
                     Button = mouseClick.Button
@@ -411,6 +409,10 @@ let stream states msgs =
         ]
         |> AsyncRx.mergeSeq
         |> AsyncRx.map UIMsg
+        |> AsyncRx.merge (
+            states
+            |> AsyncRx.choose (fst >> function | Some (ControllerMsg _ as msg) -> Some msg | _ -> None)
+        )
         |> msgChannel
     ]
     |> AsyncRx.mergeSeq

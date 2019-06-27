@@ -19,13 +19,14 @@ open Thoth.Json.Net
 module UICommunication =
     type CommunicationState = {
         Disposable: IDisposable
-        MessageSubject: System.Reactive.Subjects.Subject<ControllerMsg>
+        CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
+        ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
     }
     let mutable private showSceneCalled = 0
     let mutable private communicationState = None
     let private url = "http://localhost:1503/"
 
-    let private startWebServer controllerMsgs ct = async {
+    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) ct = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             printfn "Client %s connected" connectionId
             let controllerMsgs =
@@ -41,9 +42,10 @@ module UICommunication =
                 |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
 
             msgs
+            |> AsyncRx.tapOnNext uiMsgs.OnNext
             |> AsyncRx.flatMap(fun (msg, connId) ->
                 match msg with
-                | ControllerMsg msg -> AsyncRx.empty ()
+                | ControllerMsg (msgId, msg) -> AsyncRx.empty () // confirmations
                 | UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
                     Model.updateCurrent (fun model -> Some uiMsg, { model with SceneBounds = sceneBounds })
                     AsyncRx.single (msg, connId)
@@ -69,13 +71,15 @@ module UICommunication =
                         Stream = stream
                         Encode = Encode.channelMsg >> Encode.toString 0
                         Decode =
-                            Decode.fromString Decode.channelMsg
-                            >> (function
-                                | Ok p -> Some p
-                                | Error p ->
-                                    eprintfn "Deserializing message failed: %O" p
-                                    None
-                            )
+                            fun value ->
+                                Decode.fromString Decode.channelMsg value
+                                |> (function
+                                    | Ok p -> Some p
+                                    | Error p ->
+                                        eprintfn "Deserializing message failed: %s, Message: %s" p value
+                                        File.WriteAllText ("msg.json", value)
+                                        None
+                                )
                         RequestPath = MessageChannel.endpoint
                     }
                 )
@@ -170,7 +174,8 @@ module UICommunication =
             raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
 
         let webServerStopDisposable = new CancellationDisposable()
-        let controllerMsgs = new System.Reactive.Subjects.Subject<_>()
+        let controllerMsgs = new Reactive.Subjects.Subject<_>()
+        let uiMsgs = new Reactive.Subjects.Subject<_>()
 
         let runThread =
             Thread(
@@ -178,9 +183,9 @@ module UICommunication =
                     async {
                         let msgs =
                             inputEvents
-                            |> Observable.map InputEvent
+                            |> Observable.map (fun evt -> Guid.NewGuid(), InputEvent evt)
                             |> Observable.merge controllerMsgs
-                        let! webServerRunTask = startWebServer msgs webServerStopDisposable.Token |> Async.StartChild
+                        let! webServerRunTask = startWebServer msgs uiMsgs webServerStopDisposable.Token |> Async.StartChild
                         let! processRunTask = startUI windowSize |> Async.StartChild
 
                         do! processRunTask
@@ -214,15 +219,29 @@ module UICommunication =
         communicationState <-
             Some {
                 Disposable = webServerStopDisposable
-                MessageSubject = controllerMsgs
+                CommandSubject = controllerMsgs
+                ResponseSubject = uiMsgs
             }
 
         ()
 
-    let private sendMessage msg =
+    let private sendMessage message =
         match communicationState with
         | Some state ->
-            state.MessageSubject.OnNext msg
+            use waitHandle = new ManualResetEventSlim()
+            let messageId = Guid.NewGuid()
+            use d =
+                state.ResponseSubject
+                |> Observable.firstIf (fst >> fun r ->
+                    match r with
+                    | ControllerMsg (msgId, msg) when msgId = messageId -> true
+                    | _ -> false
+                )
+                |> Observable.subscribe (fun p ->
+                    waitHandle.Set()
+                )
+            state.CommandSubject.OnNext (messageId, message)
+            waitHandle.Wait()
         | None ->
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
 

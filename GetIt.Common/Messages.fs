@@ -45,7 +45,7 @@ type UIMsg =
 
 type ChannelMsg =
     | UIMsg of UIMsg
-    | ControllerMsg of ControllerMsg
+    | ControllerMsg of Guid * ControllerMsg
 
 module Decode =
     let position : Decoder<_> =
@@ -271,7 +271,7 @@ module Decode =
     let channelMsg: Decoder<_> =
         let decoders =
             [
-                ("controllerMsg", controllerMsg |> Decode.map ControllerMsg)
+                ("controllerMsg", Decode.tuple2 Decode.guid controllerMsg |> Decode.map ControllerMsg)
                 ("uiMsg", uiMsg |> Decode.map UIMsg)
             ]
             |> List.map (fun (key, decoder) ->
@@ -496,7 +496,7 @@ module Encode =
 
     let channelMsg msg =
         match msg with
-        | ControllerMsg msg ->
-            Encode.object [ ("controllerMsg", controllerMsg msg) ]
+        | ControllerMsg (msgId, msg) ->
+            Encode.object [ ("controllerMsg", Encode.tuple2 Encode.guid controllerMsg (msgId, msg)) ]
         | UIMsg msg ->
             Encode.object [ ("uiMsg", uIMsg msg) ]
