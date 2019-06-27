@@ -283,11 +283,9 @@ module UICommunication =
 
     let makeScreenshot () =
         if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            Windows.DeviceEvents.observable
+            Windows.ScreenCapture.captureActiveWindow ()
         else
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
-
-        Windows.ScreenCapture.capture
 
     let startBatch () =
         sendMessage StartBatch

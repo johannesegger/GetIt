@@ -189,10 +189,10 @@ module Win32 =
 
     [<Struct; StructLayout(LayoutKind.Sequential)>]
     type Rect =
-        val mutable left: int
-        val mutable top: int
-        val mutable right: int
-        val mutable bottom: int
+        val mutable Left: int
+        val mutable Top: int
+        val mutable Right: int
+        val mutable Bottom: int
 
     [<DllImport("user32.dll")>]
     extern IntPtr GetWindowRect(IntPtr hWnd, Rect& rect)
@@ -213,3 +213,6 @@ module Win32 =
         | Cloak = 13u
         | Cloaked = 14u
         | FreezeRepresentation = 15u
+
+    [<DllImport("dwmapi.dll")>]
+    extern int DwmGetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, Rect& pvAttribute, int cbAttribute)

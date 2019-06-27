@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
     <PackageReference Include="SharpLibWin32" Version="0.2.1" />
+    <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
   </ItemGroup>
 
 </Project>
