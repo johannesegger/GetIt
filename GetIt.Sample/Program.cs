@@ -175,6 +175,8 @@ namespace GetIt.Sample
 
             Turtle.Sleep(1000);
 
+            Turtle.Say("🎉✔👍👋👍🏽", 2);
+
             for (int i = 0; i < 500; i++)
             {
                 Turtle.Say(new string(Enumerable.Range(0, i).Select(j => (char)('A' + j)).ToArray()));
