@@ -1,7 +1,7 @@
 'use strict'
 
 import { app, BrowserWindow } from 'electron'
-const argv = require('yargs').argv
+import { argv } from "yargs";
 
 const isDevelopment = !app.isPackaged
 
