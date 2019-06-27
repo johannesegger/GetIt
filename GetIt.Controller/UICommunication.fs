@@ -53,8 +53,7 @@ module UICommunication =
                 | UIMsg (ApplyMouseClick _ as uiMsg)
                 | UIMsg (UpdateStringAnswer _ as uiMsg)
                 | UIMsg (AnswerStringQuestion _ as uiMsg)
-                | UIMsg (AnswerBoolQuestion _ as uiMsg)
-                | UIMsg (Screenshot _ as uiMsg) ->
+                | UIMsg (AnswerBoolQuestion _ as uiMsg) ->
                     Model.updateCurrent (fun model -> Some uiMsg, model)
                     AsyncRx.single (msg, connId)
             )

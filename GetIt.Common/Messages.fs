@@ -13,7 +13,6 @@ type ControllerMsg =
     | SetWindowTitle of string option
     | SetBackground of SvgImage
     | ClearScene
-    | MakeScreenshot
     | SetPosition of PlayerId * Position
     | ChangePosition of PlayerId * Position
     | SetDirection of PlayerId * Degrees
@@ -43,7 +42,6 @@ type UIMsg =
     | UpdateStringAnswer of PlayerId * string
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
-    | Screenshot of PngImage
 
 type ChannelMsg =
     | UIMsg of UIMsg
@@ -223,7 +221,6 @@ module Decode =
                 ("setWindowTitle", Decode.option Decode.string |> Decode.map SetWindowTitle)
                 ("setBackground", svgImage |> Decode.map SetBackground)
                 ("clearScene", Decode.nil ClearScene)
-                ("makeScreenshot", Decode.nil MakeScreenshot)
                 ("setPosition", Decode.tuple2 playerId position |> Decode.map SetPosition)
                 ("changePosition", Decode.tuple2 playerId position |> Decode.map ChangePosition)
                 ("setDirection", Decode.tuple2 playerId degrees |> Decode.map SetDirection)
@@ -264,7 +261,6 @@ module Decode =
                 ("updateStringAnswer", Decode.tuple2 playerId Decode.string |> Decode.map UpdateStringAnswer)
                 ("answerStringQuestion", Decode.tuple2 playerId Decode.string |> Decode.map AnswerStringQuestion)
                 ("answerBoolQuestion", Decode.tuple2 playerId Decode.bool |> Decode.map AnswerBoolQuestion)
-                ("screenshot", Decode.string |> Decode.map (Convert.FromBase64String >> PngImage >> Screenshot))
             ]
             |> List.map (fun (key, decoder) ->
                 Decode.field key decoder
@@ -434,8 +430,6 @@ module Encode =
             Encode.object [ ("setBackground", svgImage background) ]
         | ClearScene ->
             Encode.object [ ("clearScene", Encode.nil) ]
-        | MakeScreenshot ->
-            Encode.object [ ("makeScreenshot", Encode.nil) ]
         | SetPosition (pId, pos) ->
             Encode.object [ ("setPosition", Encode.tuple2 playerId position (pId, pos)) ]
         | ChangePosition (pId, pos) ->
@@ -499,8 +493,6 @@ module Encode =
             Encode.object [ ("answerStringQuestion", Encode.tuple2 playerId Encode.string (pId, answer)) ]
         | AnswerBoolQuestion (pId, answer) ->
             Encode.object [ ("answerBoolQuestion", Encode.tuple2 playerId Encode.bool (pId, answer)) ]
-        | Screenshot (PngImage data) ->
-            Encode.object [ ("screenshot", Encode.string (Convert.ToBase64String data)) ]
 
     let channelMsg msg =
         match msg with

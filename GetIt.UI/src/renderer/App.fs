@@ -78,8 +78,6 @@ let rec update msg model =
             | Some (Say _)
             | None -> p
         )
-    | None, UIMsg (Screenshot _) ->
-        model
     | None, ControllerMsg (SetPosition (playerId, position)) ->
         let player = Map.find playerId model.Players
         let player' = { player with Position = position }
