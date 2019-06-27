@@ -5,11 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "Launch GetIt.Sample",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "build-sample",
             "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.2/GetIt.Sample.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal", // the only option that works with running electron from the controller
+            "stopAtEntry": false
+        },
+        {
+            "name": "Launch GetIt.Sample.Print",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-print-sample",
+            "program": "${workspaceFolder}/GetIt.Sample.Print/bin/Debug/netcoreapp2.2/GetIt.Sample.Print.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal", // the only option that works with running electron from the controller
