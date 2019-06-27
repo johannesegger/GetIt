@@ -25,11 +25,11 @@ var CONFIG = {
     // to a external API server. See https://webpack.js.org/configuration/dev-server/#devserver-proxy
     devServerProxy: {
         "/api/*": {
-            target: "http://localhost:1503",
+            target: "http://localhost:57132",
             changeOrigin: true
         },
         "/msgs": {
-            target: "http://localhost:1503",
+            target: "http://localhost:57132",
             ws: true
         }
     },
