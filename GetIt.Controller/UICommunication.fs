@@ -105,25 +105,22 @@ module UICommunication =
             [
                 match windowSize with
                 | SpecificSize windowSize ->
-                    yield "--window-size", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height) |> Some
+                    yield "ELECTRON_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
                 | Maximized ->
-                    yield "--start-maximized", None
+                    yield "ELECTRON_START_MAXIMIZED", "1"
             ]
-            |> List.map (function
-                | key, Some value -> sprintf "%s=\"%s\"" key value
-                | key, None -> key
-            )
-            |> String.concat " "
 #if DEBUG
         let proc =
-            let psi = ProcessStartInfo("powershell.exe", sprintf "%s %s" (Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1"))) args)
-            psi.EnvironmentVariables.Add("ELECTRON_WEBPACK_WDS_PORT", "8080")
-            psi
-            |> Process.Start
+            let psi = ProcessStartInfo("powershell.exe", Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1")))
+            List.append [ "ELECTRON_WEBPACK_WDS_PORT", "8080" ] args
+            |> List.iter psi.EnvironmentVariables.Add
+            Process.Start psi
 #else
         let proc =
-            ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI.exe"), args)
-            |> Process.Start
+            let psi = ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI.exe"))
+            args
+            |> List.iter psi.EnvironmentVariables.Add
+            |> Process.Start psi
 #endif
 
         proc.WaitForExit ()

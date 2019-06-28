@@ -1,7 +1,6 @@
 'use strict'
 
 import { app, BrowserWindow } from 'electron'
-import { argv } from "yargs";
 
 const isDevelopment = !app.isPackaged
 
@@ -10,12 +9,12 @@ let mainWindow
 
 function createMainWindow() {
   const window = new BrowserWindow({webPreferences: {nodeIntegration: true}})
-  if (argv.windowSize)
+  if (process.env.ELECTRON_WINDOW_SIZE)
   {
-    let [width, height] = argv.windowSize.split("x")
+    let [width, height] = process.env.ELECTRON_WINDOW_SIZE.split("x")
     window.setSize(parseInt(width), parseInt(height));
   }
-  if (argv.startMaximized)
+  if (process.env.ELECTRON_START_MAXIMIZED)
   {
     window.maximize();
   }
