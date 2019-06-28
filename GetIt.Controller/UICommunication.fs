@@ -178,16 +178,20 @@ module UICommunication =
             Thread(
                 (fun () ->
                     async {
-                        let msgs =
-                            inputEvents
-                            |> Observable.map (fun evt -> Guid.NewGuid(), InputEvent evt)
-                            |> Observable.merge controllerMsgs
-                        let! webServerRunTask = startWebServer msgs uiMsgs webServerStopDisposable.Token |> Async.StartChild
-                        let! processRunTask = startUI windowSize |> Async.StartChild
+                        try
+                            let msgs =
+                                inputEvents
+                                |> Observable.map (fun evt -> Guid.NewGuid(), InputEvent evt)
+                                |> Observable.merge controllerMsgs
+                            let! webServerRunTask = startWebServer msgs uiMsgs webServerStopDisposable.Token |> Async.StartChild
+                            let! processRunTask = startUI windowSize |> Async.StartChild
 
-                        do! processRunTask
-                        webServerStopDisposable.Dispose()
-                        do! webServerRunTask
+                            do! processRunTask
+                            webServerStopDisposable.Dispose()
+                            do! webServerRunTask
+                            Environment.Exit 0
+                        with e ->
+                            Environment.Exit 1
                     }
                     |> Async.RunSynchronously
                 ),
