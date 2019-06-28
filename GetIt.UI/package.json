@@ -48,8 +48,7 @@
       "package.json"
     ],
     "win": {
-      "target": "portable",
-      "icon": "public/img/favicon-256x256.png"
+      "target": "portable"
     }
   }
 }
