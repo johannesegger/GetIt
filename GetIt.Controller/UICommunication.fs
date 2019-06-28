@@ -120,7 +120,7 @@ module UICommunication =
             let psi = ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI.exe"))
             args
             |> List.iter psi.EnvironmentVariables.Add
-            |> Process.Start psi
+            Process.Start psi
 #endif
 
         proc.WaitForExit ()
