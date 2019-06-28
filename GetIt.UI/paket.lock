@@ -866,7 +866,7 @@ NUGET
       System.ValueTuple (>= 4.4) - restriction: || (&& (>= net45) (< netstandard2.0)) (&& (< net45) (>= netstandard2.0)) (>= net47)
 GITHUB
   remote: johannesegger/Elmish.Streams
-    AspNetCore.Middleware/StreamsMiddleware.fs (3f9996350bc8704ebfc27607aa734bf5ef29628f)
+    AspNetCore.Middleware/StreamsMiddleware.fs (207999c044d6e76247b2db3abde0f0e49f6ce8d8)
       FSharp.Control.AsyncRx (>= 1.0 < 2.0)
       FSharp.Core
       Giraffe (>= 3.0 < 4.0)

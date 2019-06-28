@@ -9,4 +9,4 @@ nuget FSharp.Core
 nuget Fable.Core
 nuget Fable.Elmish.React
 nuget Fable.Elmish.Debugger
-github johannesegger/Elmish.Streams:complete-websocket-messages AspNetCore.Middleware/StreamsMiddleware.fs
+github johannesegger/Elmish.Streams:master AspNetCore.Middleware/StreamsMiddleware.fs
