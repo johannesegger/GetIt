@@ -76,7 +76,6 @@ module UICommunication =
                                     | Ok p -> Some p
                                     | Error p ->
                                         eprintfn "Deserializing message failed: %s, Message: %s" p value
-                                        File.WriteAllText ("msg.json", value)
                                         None
                                 )
                         RequestPath = MessageChannel.endpoint
