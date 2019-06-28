@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Control.Reactive" Version="4.2.0" />
+    <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Include="SharpLibWin32" Version="0.2.1" />
     <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
   </ItemGroup>
