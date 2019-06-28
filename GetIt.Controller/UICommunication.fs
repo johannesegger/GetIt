@@ -88,8 +88,6 @@ module UICommunication =
         do!
             WebHostBuilder()
                 .UseKestrel()
-                .UseWebRoot(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI"))
-                // .UseWebRoot(Path.GetFullPath("GetIt.UI\\deploy"))
                 .Configure(Action<IApplicationBuilder> configureApp)
                 .ConfigureLogging(fun hostingContext logging ->
                     logging
