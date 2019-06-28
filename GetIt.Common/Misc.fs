@@ -16,5 +16,8 @@ module PngImage =
         Convert.ToBase64String data
         |> sprintf "data:image/png;base64, %s"
 
+module Server =
+    let host = "localhost:57132"
+
 module MessageChannel =
     let endpoint = "/msgs"

@@ -327,7 +327,7 @@ let view model dispatch =
 
 let stream states msgs =
     let msgChannel =
-        let url = sprintf "ws://%s%s" Browser.Dom.window.location.host MessageChannel.endpoint
+        let url = sprintf "ws://%s%s" Server.host MessageChannel.endpoint
         let encode = Encode.channelMsg >> Encode.toString 0
         let decode =
             Decode.fromString Decode.channelMsg

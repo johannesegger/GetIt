@@ -24,7 +24,6 @@ module UICommunication =
     }
     let mutable private showSceneCalled = 0
     let mutable private communicationState = None
-    let private url = "http://localhost:57132/"
 
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) ct = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
@@ -96,7 +95,7 @@ module UICommunication =
                         .AddDebug()
                     |> ignore
                 )
-                .UseUrls(url)
+                .UseUrls(sprintf "http://%s" Server.host)
                 .Build()
                 .RunAsync(ct)
             |> Async.AwaitTask
