@@ -164,6 +164,7 @@ module UICommunication =
             |> Disposable.compose d2
             |> Disposable.compose d3
         )
+        |> Observable.publish
 
     let showScene windowSize =
         if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
@@ -201,24 +202,27 @@ module UICommunication =
 
         printfn "Waiting for scene bounds"
 
-        [
-            Model.observable
-            |> Observable.choose (fst >> function | Some (SetSceneBounds _) -> Some () | _ -> None)
-            |> Observable.first
-
-            Model.observable
-            |> Observable.choose (fst >> function | Some (SetMousePosition _) -> Some () | _ -> None)
-            |> Observable.first
-        ]
-        |> Observable.mergeSeq
+        Model.observable
+        |> Observable.choose (fst >> function | Some (SetSceneBounds _) -> Some () | _ -> None)
+        |> Observable.first
         |> Observable.wait
-        |> ignore
+
+        let inputEventsSubscription = Observable.connect inputEvents
+
+        printfn "Waiting for mouse position"
+
+        Model.observable
+        |> Observable.choose (fst >> function | Some (SetMousePosition _) -> Some () | _ -> None)
+        |> Observable.first
+        |> Observable.wait
 
         printfn "Setup complete"
 
         communicationState <-
             Some {
-                Disposable = webServerStopDisposable
+                Disposable =
+                    webServerStopDisposable
+                    |> Disposable.compose inputEventsSubscription
                 CommandSubject = controllerMsgs
                 ResponseSubject = uiMsgs
             }
