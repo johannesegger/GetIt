@@ -124,7 +124,7 @@ module UICommunication =
             |> Process.Start
 #else
         let proc =
-            ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI", "GetIt.UI.exe"), args)
+            ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI.exe"), args)
             |> Process.Start
 #endif
 
