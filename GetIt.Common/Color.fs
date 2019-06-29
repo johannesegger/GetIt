@@ -26,9 +26,11 @@ type RGBAColor =
         static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
             Randomly.selectOneOf colors
 
-module internal RGBAColor =
+module RGBAColor =
     let rgbHexNotation v =
         sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
+    let rgbaHexNotation v =
+        sprintf "%s%02x" (rgbHexNotation v) v.Alpha
     let transparency v =
         float v.Alpha / float Byte.MaxValue
 

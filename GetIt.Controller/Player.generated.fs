@@ -13,7 +13,7 @@ module private Raw =
         player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
-        Connection.run UICommunication.setPosition player.PlayerId position
+        UICommunication.setPosition player.PlayerId position
 
     let moveToXY (player: GetIt.Player) (x: System.Double) (y: System.Double) =
         moveTo player { X = x; Y = y }
@@ -22,7 +22,7 @@ module private Raw =
         moveTo player Position.zero
 
     let moveBy (player: GetIt.Player) (deltaX: System.Double) (deltaY: System.Double) =
-        Connection.run UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }
+        UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }
 
     let moveRight (player: GetIt.Player) (steps: System.Double) =
         moveBy player steps 0.
@@ -49,7 +49,7 @@ module private Raw =
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
-        Connection.run UICommunication.setDirection player.PlayerId angle
+        UICommunication.setDirection player.PlayerId angle
 
     let turnUp (player: GetIt.Player) =
         setDirection player (Degrees.op_Implicit 90.)
@@ -64,7 +64,7 @@ module private Raw =
         setDirection player (Degrees.op_Implicit 180.)
 
     let rotateClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
-        Connection.run UICommunication.changeDirection player.PlayerId -angle
+        UICommunication.changeDirection player.PlayerId -angle
 
     let rotateCounterClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
         rotateClockwise player -angle
@@ -90,10 +90,10 @@ module private Raw =
         sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     let say (player: GetIt.Player) (text: System.String) =
-        Connection.run UICommunication.say player.PlayerId text
+        UICommunication.say player.PlayerId text
 
     let shutUp (player: GetIt.Player) =
-        Connection.run UICommunication.shutUp player.PlayerId
+        UICommunication.shutUp player.PlayerId
 
     let sayWithDuration (player: GetIt.Player) (text: System.String) (duration: System.TimeSpan) =
         say player text
@@ -104,46 +104,46 @@ module private Raw =
         sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)
 
     let ask (player: GetIt.Player) (question: System.String) =
-        Connection.run UICommunication.ask player.PlayerId question
+        UICommunication.askString player.PlayerId question
 
     let askBool (player: GetIt.Player) (question: System.String) =
-        Connection.run UICommunication.askBool player.PlayerId question
+        UICommunication.askBool player.PlayerId question
 
     let turnOnPen (player: GetIt.Player) =
-        Connection.run UICommunication.setPenState player.PlayerId true
+        UICommunication.setPenState player.PlayerId true
 
     let turnOffPen (player: GetIt.Player) =
-        Connection.run UICommunication.setPenState player.PlayerId false
+        UICommunication.setPenState player.PlayerId false
 
     let togglePenState (player: GetIt.Player) =
-        Connection.run UICommunication.togglePenState player.PlayerId
+        UICommunication.togglePenState player.PlayerId
 
     let setPenColor (player: GetIt.Player) (color: GetIt.RGBAColor) =
-        Connection.run UICommunication.setPenColor player.PlayerId color
+        UICommunication.setPenColor player.PlayerId color
 
     let shiftPenColor (player: GetIt.Player) (angle: GetIt.Degrees) =
-        Connection.run UICommunication.shiftPenColor player.PlayerId angle
+        UICommunication.shiftPenColor player.PlayerId angle
 
     let setPenWeight (player: GetIt.Player) (weight: System.Double) =
-        Connection.run UICommunication.setPenWeight player.PlayerId weight
+        UICommunication.setPenWeight player.PlayerId weight
 
     let changePenWeight (player: GetIt.Player) (weight: System.Double) =
-        Connection.run UICommunication.changePenWeight player.PlayerId weight
+        UICommunication.changePenWeight player.PlayerId weight
 
     let setSizeFactor (player: GetIt.Player) (sizeFactor: System.Double) =
-        Connection.run UICommunication.setSizeFactor player.PlayerId sizeFactor
+        UICommunication.setSizeFactor player.PlayerId sizeFactor
 
     let changeSizeFactor (player: GetIt.Player) (change: System.Double) =
-        Connection.run UICommunication.changeSizeFactor player.PlayerId change
+        UICommunication.changeSizeFactor player.PlayerId change
 
     let nextCostume (player: GetIt.Player) =
-        Connection.run UICommunication.setNextCostume player.PlayerId
+        UICommunication.setNextCostume player.PlayerId
 
     let sendToBack (player: GetIt.Player) =
-        Connection.run UICommunication.sendToBack player.PlayerId
+        UICommunication.sendToBack player.PlayerId
 
     let bringToFront (player: GetIt.Player) =
-        Connection.run UICommunication.bringToFront player.PlayerId
+        UICommunication.bringToFront player.PlayerId
 
     let getDirectionToMouse (player: GetIt.Player) =
         player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
@@ -158,10 +158,13 @@ module private Raw =
         player1.Position |> Position.distanceTo player2.Position
 
     let show (player: GetIt.Player) =
-        Connection.run UICommunication.setVisibility player.PlayerId true
+        UICommunication.setVisibility player.PlayerId true
 
     let hide (player: GetIt.Player) =
-        Connection.run UICommunication.setVisibility player.PlayerId false
+        UICommunication.setVisibility player.PlayerId false
+
+    let toggleVisibility (player: GetIt.Player) =
+        UICommunication.toggleVisibility player.PlayerId
 
     let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
         Model.onKeyDown key (fun () -> action.Invoke player)
@@ -188,23 +191,23 @@ type Turtle() =
             match Game.defaultTurtle with
             | Some player -> player
             | None -> raise (GetItException "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
-    
+
     /// The actual size of the player.
     static member Size with get () = Turtle.Player.Size
-    
+
     /// The factor that is used to change the size of the player.
     static member SizeFactor with get () = Turtle.Player.SizeFactor
-    
+
     /// The position of the player's center point.
     static member Position with get () = Turtle.Player.Position
-    
+
     /// The rectangular bounds of the player.
     /// Note that this doesn't take into account the current rotation of the player.
     static member Bounds with get () = Turtle.Player.Bounds
-    
+
     /// The rotation of the player.
     static member Direction with get () = Turtle.Player.Direction
-    
+
     /// The pen that belongs to the player.
     static member Pen with get () = Turtle.Player.Pen
 
@@ -482,6 +485,11 @@ type Turtle() =
     /// <returns></returns>
     static member Hide () =
         Raw.hide Turtle.Player
+
+    /// <summary>Shows the player if it is hidden. Hides the player if it is visible.</summary>
+    /// <returns></returns>
+    static member ToggleVisibility () =
+        Raw.toggleVisibility Turtle.Player
 
     /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="key">The keyboard key that should be listened to.</param>
@@ -947,6 +955,14 @@ type PlayerExtensions() =
     static member Hide(player: GetIt.Player) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         Raw.hide player
+
+    /// <summary>Shows the player if it is hidden. Hides the player if it is visible.</summary>
+    /// <param name="player">The player that should get its visibility toggled.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member ToggleVisibility(player: GetIt.Player) =
+        if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
+        Raw.toggleVisibility player
 
     /// <summary>Registers an event handler that is called once when a specific keyboard key is pressed.</summary>
     /// <param name="player">The player that gets passed to the event handler.</param>

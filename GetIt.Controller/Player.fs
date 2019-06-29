@@ -36,7 +36,7 @@ type Player(playerId) =
     abstract member Dispose: unit -> unit
     default x.Dispose () =
         if Interlocked.Exchange (&isDisposed, 1) = 0 then
-            Connection.run UICommunication.removePlayer playerId
+            UICommunication.removePlayer playerId
 
     interface IDisposable with
         member x.Dispose () = x.Dispose ()

@@ -11,34 +11,21 @@ steps:
   displayName: 'Run GitVersion'
   inputs:
     preferBundledVersion: false
-# - task: DotNetCoreCLI@2
-#   inputs:
-#     command: 'run'
-#     projects: '--project GetIt.Test'
-- task: BatchScript@1
-  displayName: 'Run tests'
+- task: CmdLine@2
+  displayName: 'Restore yarn packages'
   inputs:
-    filename: 'C:\\Program Files\\dotnet\\dotnet.exe'
-    arguments: 'run --project GetIt.Test'
-    failOnStandardError: true
-- task: PublishTestResults@2
-  displayName: 'Publish test results'
+    script: 'yarn install --frozen-lockfile'
+    workingDirectory: 'GetIt.UI'
+- task: CmdLine@2
+  displayName: 'Restore packages for GetIt.UI'
   inputs:
-    testResultsFormat: 'NUnit'
-    testResultsFiles: '**/TestResults.xml'
-    mergeTestResults: true
-    failTaskOnFailedTests: true
-    buildPlatform: '$(BuildPlatform)'
-    buildConfiguration: '$(BuildConfiguration)'
-- task: DotNetCoreCLI@2
-  displayName: 'Build GetIt.WPF'
+    script: 'dotnet restore'
+    workingDirectory: 'GetIt.UI/src/renderer'
+- task: CmdLine@2
+  displayName: 'Build GetIt.UI'
   inputs:
-    command: 'publish'
-    projects: 'GetIt.Wpf'
-    arguments: '-c Release'
-    publishWebProjects: false
-    zipAfterPublish: false
-    modifyOutputPath: false
+    script: 'yarn bundle'
+    workingDirectory: 'GetIt.UI'
 - task: DotNetCoreCLI@2
   displayName: 'Build NuGet package'
   inputs:

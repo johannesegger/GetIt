@@ -2,6 +2,7 @@ namespace GetIt.Windows
 
 open System
 open System.ComponentModel
+open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
@@ -137,130 +138,140 @@ module DeviceEvents =
         else
             []
 
-    let register (subject: ISubject<_>) =
-        let mutable windowHandle = IntPtr.Zero
-        let shutDownMessage = uint32 SharpLib.Win32.Const.WM_USER + 1u
+    let observable =
+        Observable.Create (fun (obs: IObserver<_>) ->
+            let mutable windowHandle = IntPtr.Zero
+            let shutDownMessage = uint32 SharpLib.Win32.Const.WM_USER + 1u
+            use waitHandle = new ManualResetEventSlim()
 
-        use waitHandle = new ManualResetEventSlim()
+            let run () =
+                let moduleHandle = Win32.GetModuleHandle(null)
 
-        let run () =
-            let moduleHandle = Win32.GetModuleHandle(null)
+                let wndProc = WndProc(fun hWnd msg wParam lParam ->
+                    if msg = shutDownMessage then
+                        Win32.PostQuitMessage(0)
+                        IntPtr.Zero
+                    elif msg = uint32 SharpLib.Win32.Const.WM_INPUT then
+                        try
+                            processMessage lParam
+                            |> Seq.iter obs.OnNext
+                        with e ->
+                            printfn "Error while processing message: %O" e
+                        IntPtr.Zero
+                        // case WM_DESTROY:
+                        //     DestroyWindow(hWnd);
 
-            let wndProc = WndProc(fun hWnd msg wParam lParam ->
-                if msg = shutDownMessage then
-                    Win32.PostQuitMessage(0)
-                    IntPtr.Zero
-                elif msg = uint32 SharpLib.Win32.Const.WM_INPUT then
-                    try
-                        processMessage lParam
-                        |> Seq.iter subject.OnNext
-                    with e ->
-                        printfn "Error while processing message: %O" e
-                    IntPtr.Zero
-                    // case WM_DESTROY:
-                    //     DestroyWindow(hWnd);
-
-                    //     //If you want to shutdown the application, call the next function instead of DestroyWindow
-                    //     //PostQuitMessage(0);
-                    //     break;
-                else
-                    Win32.DefWindowProc(hWnd, msg, wParam, lParam)
-            )
-
-            // Prevent GC'ing the allocated delegate (see https://github.com/johannesegger/GetIt/issues/8 and https://stackoverflow.com/a/16544880/1293659)
-            let wndProcHandle = GCHandle.Alloc wndProc
-            use disposableWndProcHandle = Disposable.create wndProcHandle.Free
-
-            let mutable windowClass =
-                Win32.WNDCLASSEX(
-                    cbSize = Marshal.SizeOf(typeof<Win32.WNDCLASSEX>),
-                    style = 0,
-                    lpfnWndProc = Marshal.GetFunctionPointerForDelegate(wndProc),
-                    cbClsExtra = 0,
-                    cbWndExtra = 0,
-                    hInstance = moduleHandle,
-                    hIcon = IntPtr.Zero,
-                    hCursor = IntPtr.Zero,
-                    hbrBackground = IntPtr.Zero,
-                    lpszMenuName = null,
-                    lpszClassName = "GetItWindowClass",
-                    hIconSm = IntPtr.Zero
+                        //     //If you want to shutdown the application, call the next function instead of DestroyWindow
+                        //     //PostQuitMessage(0);
+                        //     break;
+                    else
+                        Win32.DefWindowProc(hWnd, msg, wParam, lParam)
                 )
 
-            let windowClassAtom = Win32.RegisterClassEx(&windowClass)
-            if windowClassAtom = 0us then
-                let errorCode = Marshal.GetLastWin32Error()
-                raise (Win32Exception(sprintf "Failed to register window class. Error code: 0x%08x" errorCode))
+                // Prevent GC'ing the allocated delegate (see https://github.com/johannesegger/GetIt/issues/8 and https://stackoverflow.com/a/16544880/1293659)
+                let wndProcHandle = GCHandle.Alloc wndProc
+                use disposableWndProcHandle = Disposable.create wndProcHandle.Free
 
-            let windowHandle =
-                Win32.CreateWindowEx(
-                    0u,
-                    windowClassAtom,
-                    null,
-                    0u,
-                    0,
-                    0,
-                    0,
-                    0,
-                    IntPtr.Zero,
-                    IntPtr.Zero,
-                    moduleHandle,
-                    IntPtr.Zero)
-
-            if windowHandle = IntPtr.Zero then
-                let errorCode = Marshal.GetLastWin32Error()
-                raise(Win32Exception(sprintf "Failed to create window. Error code: 0x%08x" errorCode))
-
-            // https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/top-level-collections-opened-by-windows-for-system-use
-            let keyboardUsagePage = 0x01us
-            let keyboardUsageId = 0x06us
-            let mouseUsagePage = 0x01us
-            let mouseUsageId = 0x02us
-
-            let rawInputDevices =
-                [|
-                    SharpLib.Win32.RAWINPUTDEVICE(
-                        usUsagePage = keyboardUsagePage,
-                        usUsage = keyboardUsageId,
-                        dwFlags = SharpLib.Win32.RawInputDeviceFlags.RIDEV_INPUTSINK,
-                        hwndTarget = windowHandle
+                let mutable windowClass =
+                    Win32.WNDCLASSEX(
+                        cbSize = Marshal.SizeOf(typeof<Win32.WNDCLASSEX>),
+                        style = 0,
+                        lpfnWndProc = Marshal.GetFunctionPointerForDelegate(wndProc),
+                        cbClsExtra = 0,
+                        cbWndExtra = 0,
+                        hInstance = moduleHandle,
+                        hIcon = IntPtr.Zero,
+                        hCursor = IntPtr.Zero,
+                        hbrBackground = IntPtr.Zero,
+                        lpszMenuName = null,
+                        lpszClassName = "GetItWindowClass",
+                        hIconSm = IntPtr.Zero
                     )
-                    SharpLib.Win32.RAWINPUTDEVICE(
-                        usUsagePage = mouseUsagePage,
-                        usUsage = mouseUsageId,
-                        dwFlags = SharpLib.Win32.RawInputDeviceFlags.RIDEV_INPUTSINK,
-                        hwndTarget = windowHandle
-                    )
-                |]
 
-            let isRegistered =
-                SharpLib.Win32.Function.RegisterRawInputDevices(
-                    rawInputDevices,
-                    uint32 rawInputDevices.Length,
-                    uint32 (Marshal.SizeOf(rawInputDevices.[0])))
-            if not isRegistered then
-                let errorCode = Marshal.GetLastWin32Error();
-                raise(Win32Exception(sprintf "Failed to register raw input devices. Error code: 0x%08x" errorCode))
+                let windowClassAtom = Win32.RegisterClassEx(&windowClass)
+                if windowClassAtom = 0us then
+                    let errorCode = Marshal.GetLastWin32Error()
+                    raise (Win32Exception(sprintf "Failed to register window class. Error code: 0x%08x" errorCode))
 
-            let mutable message: Win32.WinMsg = Unchecked.defaultof<Win32.WinMsg>
+                use disposableWindowClass = Disposable.create (fun () -> Win32.UnregisterClass(windowClassAtom, moduleHandle) |> ignore)
 
-            // Ensure queue is created
-            Win32.PeekMessage(&message, IntPtr.Zero, 0u, 0u, 0u) |> ignore
+                windowHandle <-
+                    Win32.CreateWindowEx(
+                        0u,
+                        windowClassAtom,
+                        null,
+                        0u,
+                        0,
+                        0,
+                        0,
+                        0,
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        moduleHandle,
+                        IntPtr.Zero)
 
-            waitHandle.Set()
+                if windowHandle = IntPtr.Zero then
+                    let errorCode = Marshal.GetLastWin32Error()
+                    raise(Win32Exception(sprintf "Failed to create window. Error code: 0x%08x" errorCode))
 
-            while Win32.GetMessage(&message, IntPtr.Zero, 0u, 0u) > 0 do
-                Win32.TranslateMessage(&message) |> ignore
-                Win32.DispatchMessage(&message) |> ignore
+                use disposableWindow = Disposable.create (fun () -> Win32.DestroyWindow(windowHandle) |> ignore)
 
-        let messageLoopThread = Thread(run)
-        messageLoopThread.Name <- "Win32 message loop"
-        messageLoopThread.IsBackground <- false
-        messageLoopThread.Start()
+                // https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/top-level-collections-opened-by-windows-for-system-use
+                let keyboardUsagePage = 0x01us
+                let keyboardUsageId = 0x06us
+                let mouseUsagePage = 0x01us
+                let mouseUsageId = 0x02us
 
-        waitHandle.Wait()
+                let rawInputDevices =
+                    [|
+                        SharpLib.Win32.RAWINPUTDEVICE(
+                            usUsagePage = keyboardUsagePage,
+                            usUsage = keyboardUsageId,
+                            dwFlags = SharpLib.Win32.RawInputDeviceFlags.RIDEV_INPUTSINK,
+                            hwndTarget = windowHandle
+                        )
+                        SharpLib.Win32.RAWINPUTDEVICE(
+                            usUsagePage = mouseUsagePage,
+                            usUsage = mouseUsageId,
+                            dwFlags = SharpLib.Win32.RawInputDeviceFlags.RIDEV_INPUTSINK,
+                            hwndTarget = windowHandle
+                        )
+                    |]
 
-        let position = getCurrentMousePosition ()
-        subject.OnNext (MouseMove position)
+                let isRegistered =
+                    SharpLib.Win32.Function.RegisterRawInputDevices(
+                        rawInputDevices,
+                        uint32 rawInputDevices.Length,
+                        uint32 (Marshal.SizeOf(rawInputDevices.[0])))
+                if not isRegistered then
+                    let errorCode = Marshal.GetLastWin32Error()
+                    raise(Win32Exception(sprintf "Failed to register raw input devices. Error code: 0x%08x" errorCode))
 
-        Disposable.create (fun () -> Win32.SendMessage(windowHandle, shutDownMessage, UIntPtr.Zero, IntPtr.Zero) |> ignore)
+                let mutable message = Unchecked.defaultof<Win32.WinMsg>
+
+                // Ensure queue is created
+                Win32.PeekMessage(&message, IntPtr.Zero, 0u, 0u, 0u) |> ignore
+
+                waitHandle.Set()
+
+                while Win32.GetMessage(&message, IntPtr.Zero, 0u, 0u) > 0 do
+                    Win32.TranslateMessage(&message) |> ignore
+                    Win32.DispatchMessage(&message) |> ignore
+
+            let messageLoopThread = Thread(run)
+            messageLoopThread.Name <- "Win32 message loop"
+            messageLoopThread.IsBackground <- false
+            messageLoopThread.Start()
+
+            waitHandle.Wait()
+
+            Disposable.create (fun () ->
+                Win32.SendMessage(windowHandle, shutDownMessage, UIntPtr.Zero, IntPtr.Zero) |> ignore
+            )
+        )
+        |> Observable.publish
+        |> Observable.refCount
+        |> Observable.merge (Observable.defer (fun () ->
+            let position = getCurrentMousePosition ()
+            Observable.result (MouseMove position)
+        ))

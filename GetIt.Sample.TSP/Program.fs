@@ -1,6 +1,7 @@
 ﻿module GetIt.Sample.TSP.Main
 
 open System
+open System.Threading
 open GetIt
 
 type City =
@@ -20,6 +21,9 @@ let main argv =
     Game.ShowSceneAndAddTurtle()
 
     Turtle.Say ("TSP solver", 1.)
+
+    use cts = new CancellationTokenSource()
+    use d = Game.OnKeyDown(KeyboardKey.Space, fun _ -> cts.Cancel())
 
     let problem = GetIt.Sample.TSP.Samples.ulysses16
 
@@ -63,10 +67,10 @@ let main argv =
         |> Seq.map (fun city -> city.Id, city)
         |> Map.ofSeq
 
-    let mutable iterationDelay = TimeSpan.FromMilliseconds 500.
+    let mutable iterationDelay = TimeSpan.FromMilliseconds 1000.
     use d1 = Turtle.OnKeyDown (KeyboardKey.Down, fun _ -> iterationDelay <- iterationDelay * 2.)
     use d2 = Turtle.OnKeyDown (KeyboardKey.Up, fun _ -> iterationDelay <- iterationDelay / 2.)
-    
+
     let mutable drawGlobalOptimum = false
     use d3 = Turtle.OnKeyDown (KeyboardKey.G, fun _ -> drawGlobalOptimum <- not drawGlobalOptimum)
 
@@ -196,27 +200,31 @@ let main argv =
             twoOptChange child mutationProbability
         )
     )
+    |> Seq.takeWhile (fun _ -> not cts.Token.IsCancellationRequested)
     |> Seq.iteri (fun index population ->
-        use x = Game.BatchCommands()
-        Game.ClearScene()
-        let fittest =
-            population
-            |> Seq.maxBy(fun individual -> individual.Fitness)
-        let text =
-            [
-                sprintf "Iteration: %d" index
-                sprintf "Min distance: %f" (Math.Abs fittest.Fitness)
-                sprintf "Global optimum: %f" (Math.Abs globalOptimum)
-            ]
-            |> String.concat Environment.NewLine
-        Turtle.Say text
+        do
+            use x = Game.BatchCommands()
+            Game.ClearScene()
+            let fittest =
+                population
+                |> Seq.maxBy(fun individual -> individual.Fitness)
+            let text =
+                [
+                    sprintf "Iteration: %d" index
+                    sprintf "Min distance: %f" (Math.Abs fittest.Fitness)
+                    sprintf "Global optimum: %f" (Math.Abs globalOptimum)
+                ]
+                |> String.concat Environment.NewLine
+            Turtle.Say text
 
-        Turtle.SetPenColor RGBAColors.orange
-        drawTour fittest.Tour
-        if drawGlobalOptimum then
-            Turtle.SetPenColor RGBAColors.green
-            drawTour optimalTour
-        
+            Turtle.SetPenColor RGBAColors.orange
+            drawTour fittest.Tour
+            if drawGlobalOptimum then
+                Turtle.SetPenColor RGBAColors.green
+                drawTour optimalTour
+            Turtle.TurnOffPen ()
+            Turtle.MoveTo (Game.SceneBounds.Left, Game.SceneBounds.Bottom)
+
         Turtle.Sleep iterationDelay
     )
 

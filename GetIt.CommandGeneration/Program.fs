@@ -52,7 +52,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setPosition player.PlayerId position" ]
+            Body = [ "UICommunication.setPosition player.PlayerId position" ]
         }
 
         {
@@ -120,7 +120,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }" ]
+            Body = [ "UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }" ]
         }
 
         {
@@ -274,7 +274,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setDirection player.PlayerId angle" ]
+            Body = [ "UICommunication.setDirection player.PlayerId angle" ]
         }
 
         {
@@ -359,7 +359,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.changeDirection player.PlayerId -angle" ]
+            Body = [ "UICommunication.changeDirection player.PlayerId -angle" ]
         }
 
         {
@@ -507,7 +507,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.say player.PlayerId text" ]
+            Body = [ "UICommunication.say player.PlayerId text" ]
         }
 
         {
@@ -523,7 +523,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.shutUp player.PlayerId" ]
+            Body = [ "UICommunication.shutUp player.PlayerId" ]
         }
 
         {
@@ -601,7 +601,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<string>; Description = "The text the user typed in." }
-            Body = [ "Connection.run UICommunication.ask player.PlayerId question" ]
+            Body = [ "UICommunication.askString player.PlayerId question" ]
         }
 
         {
@@ -622,7 +622,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the user pressed the \"confirm\" button, false otherwise." }
-            Body = [ "Connection.run UICommunication.askBool player.PlayerId question" ]
+            Body = [ "UICommunication.askBool player.PlayerId question" ]
         }
 
         {
@@ -638,7 +638,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setPenState player.PlayerId true" ]
+            Body = [ "UICommunication.setPenState player.PlayerId true" ]
         }
 
         {
@@ -654,7 +654,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setPenState player.PlayerId false" ]
+            Body = [ "UICommunication.setPenState player.PlayerId false" ]
         }
 
         {
@@ -670,7 +670,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.togglePenState player.PlayerId" ]
+            Body = [ "UICommunication.togglePenState player.PlayerId" ]
         }
 
         {
@@ -691,7 +691,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setPenColor player.PlayerId color" ]
+            Body = [ "UICommunication.setPenColor player.PlayerId color" ]
         }
 
         {
@@ -712,7 +712,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.shiftPenColor player.PlayerId angle" ]
+            Body = [ "UICommunication.shiftPenColor player.PlayerId angle" ]
         }
 
         {
@@ -733,7 +733,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setPenWeight player.PlayerId weight" ]
+            Body = [ "UICommunication.setPenWeight player.PlayerId weight" ]
         }
 
         {
@@ -754,7 +754,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.changePenWeight player.PlayerId weight" ]
+            Body = [ "UICommunication.changePenWeight player.PlayerId weight" ]
         }
 
         {
@@ -775,7 +775,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setSizeFactor player.PlayerId sizeFactor" ]
+            Body = [ "UICommunication.setSizeFactor player.PlayerId sizeFactor" ]
         }
 
         {
@@ -796,7 +796,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.changeSizeFactor player.PlayerId change" ]
+            Body = [ "UICommunication.changeSizeFactor player.PlayerId change" ]
         }
 
         {
@@ -812,7 +812,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setNextCostume player.PlayerId" ]
+            Body = [ "UICommunication.setNextCostume player.PlayerId" ]
         }
 
         {
@@ -828,7 +828,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.sendToBack player.PlayerId" ]
+            Body = [ "UICommunication.sendToBack player.PlayerId" ]
         }
 
         {
@@ -844,7 +844,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.bringToFront player.PlayerId" ]
+            Body = [ "UICommunication.bringToFront player.PlayerId" ]
         }
 
         {
@@ -936,7 +936,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setVisibility player.PlayerId true" ]
+            Body = [ "UICommunication.setVisibility player.PlayerId true" ]
         }
 
         {
@@ -952,7 +952,23 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Connection.run UICommunication.setVisibility player.PlayerId false" ]
+            Body = [ "UICommunication.setVisibility player.PlayerId false" ]
+        }
+
+        {
+            Name = "toggleVisibility"
+            CompiledName = "ToggleVisibility"
+            Summary = "Shows the player if it is hidden. Hides the player if it is visible."
+            Parameters =
+                [
+                    {
+                        Name = "player"
+                        Type = typeof<GetIt.Player>
+                        Description = "The player that should get its visibility toggled."
+                    }
+                ]
+            Result = { Type = typeof<unit>; Description = "" }
+            Body = [ "UICommunication.toggleVisibility player.PlayerId" ]
         }
 
         {
