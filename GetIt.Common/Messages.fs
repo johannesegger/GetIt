@@ -31,14 +31,11 @@ type ControllerMsg =
     | BringToFront of PlayerId
     | SetVisibility of PlayerId * bool
     | ToggleVisibility of PlayerId
-    | InputEvent of InputEvent
     | StartBatch
     | ApplyBatch
 
 type UIMsg =
     | SetSceneBounds of Rectangle
-    | ApplyMouseClick of MouseClick
-    | SetMousePosition of Position
     | UpdateStringAnswer of PlayerId * string
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
@@ -138,81 +135,6 @@ module Decode =
             }
         )
 
-    let keyboardKey: Decoder<_> =
-        Decode.string
-        |> Decode.andThen (fun key ->
-            match key with
-            | "space" -> Decode.succeed Space
-            | "escape" -> Decode.succeed Escape
-            | "enter" -> Decode.succeed Enter
-            | "up" -> Decode.succeed Up
-            | "down" -> Decode.succeed Down
-            | "left" -> Decode.succeed Left
-            | "right" -> Decode.succeed Right
-            | "a" -> Decode.succeed A
-            | "b" -> Decode.succeed B
-            | "c" -> Decode.succeed C
-            | "d" -> Decode.succeed D
-            | "e" -> Decode.succeed E
-            | "f" -> Decode.succeed F
-            | "g" -> Decode.succeed G
-            | "h" -> Decode.succeed H
-            | "i" -> Decode.succeed I
-            | "j" -> Decode.succeed J
-            | "k" -> Decode.succeed K
-            | "l" -> Decode.succeed L
-            | "m" -> Decode.succeed M
-            | "n" -> Decode.succeed N
-            | "o" -> Decode.succeed O
-            | "p" -> Decode.succeed P
-            | "q" -> Decode.succeed Q
-            | "r" -> Decode.succeed R
-            | "s" -> Decode.succeed S
-            | "t" -> Decode.succeed T
-            | "u" -> Decode.succeed U
-            | "v" -> Decode.succeed V
-            | "w" -> Decode.succeed W
-            | "x" -> Decode.succeed X
-            | "y" -> Decode.succeed Y
-            | "z" -> Decode.succeed Z
-            | "0" -> Decode.succeed Digit0
-            | "1" -> Decode.succeed Digit1
-            | "2" -> Decode.succeed Digit2
-            | "3" -> Decode.succeed Digit3
-            | "4" -> Decode.succeed Digit4
-            | "5" -> Decode.succeed Digit5
-            | "6" -> Decode.succeed Digit6
-            | "7" -> Decode.succeed Digit7
-            | "8" -> Decode.succeed Digit8
-            | "9" -> Decode.succeed Digit9
-            | x -> Decode.fail (sprintf "Can't decode \"%s\" as keyboard key" x)
-        )
-
-    let mouseButton: Decoder<_> =
-        Decode.string
-        |> Decode.andThen (fun key ->
-            match key with
-            | "primary" -> Decode.succeed Primary
-            | "secondary" -> Decode.succeed Secondary
-            | x -> Decode.fail (sprintf "Can't decode \"%s\" as mouse button" x)
-        )
-
-    let mouseClick: Decoder<_> =
-        Decode.object (fun get ->
-            {
-                Button = get.Required.Field "button" mouseButton
-                Position = get.Required.Field "position" position
-            }
-        )
-
-    let virtualScreenMouseClick: Decoder<_> =
-        Decode.object (fun get ->
-            {
-                Button = get.Required.Field "button" mouseButton
-                VirtualScreenPosition = get.Required.Field "virtualScreenPosition" position
-            }
-        )
-
     let controllerMsg: Decoder<_> =
         let decoders =
             [
@@ -239,10 +161,6 @@ module Decode =
                 ("bringToFront", playerId |> Decode.map BringToFront)
                 ("setVisibility", Decode.tuple2 playerId Decode.bool |> Decode.map SetVisibility)
                 ("toggleVisibility", playerId |> Decode.map ToggleVisibility)
-                ("keyDown", keyboardKey |> Decode.map (KeyDown >> InputEvent))
-                ("keyUp", keyboardKey |> Decode.map (KeyUp >> InputEvent))
-                ("mouseMove", position |> Decode.map (MouseMove >> InputEvent))
-                ("mouseClick", virtualScreenMouseClick |> Decode.map (MouseClick >> InputEvent))
                 ("startBatch", Decode.nil StartBatch)
                 ("applyBatch", Decode.nil ApplyBatch)
             ]
@@ -256,8 +174,6 @@ module Decode =
         let decoders =
             [
                 ("setSceneBounds", rectangle |> Decode.map SetSceneBounds)
-                ("applyMouseClick", mouseClick |> Decode.map ApplyMouseClick)
-                ("setMousePosition", position |> Decode.map (SetMousePosition))
                 ("updateStringAnswer", Decode.tuple2 playerId Decode.string |> Decode.map UpdateStringAnswer)
                 ("answerStringQuestion", Decode.tuple2 playerId Decode.string |> Decode.map AnswerStringQuestion)
                 ("answerBoolQuestion", Decode.tuple2 playerId Decode.bool |> Decode.map AnswerBoolQuestion)
@@ -353,71 +269,6 @@ module Encode =
             ("size", size p.Size)
         ]
 
-    let keyboardKey p =
-        match p with
-        | Space -> "space"
-        | Escape -> "escape"
-        | Enter -> "enter"
-        | Up -> "up"
-        | Down -> "down"
-        | Left -> "left"
-        | Right -> "right"
-        | A -> "a"
-        | B -> "b"
-        | C -> "c"
-        | D -> "d"
-        | E -> "e"
-        | F -> "f"
-        | G -> "g"
-        | H -> "h"
-        | I -> "i"
-        | J -> "j"
-        | K -> "k"
-        | L -> "l"
-        | M -> "m"
-        | N -> "n"
-        | O -> "o"
-        | P -> "p"
-        | Q -> "q"
-        | R -> "r"
-        | S -> "s"
-        | T -> "t"
-        | U -> "u"
-        | V -> "v"
-        | W -> "w"
-        | X -> "x"
-        | Y -> "y"
-        | Z -> "z"
-        | Digit0 -> "0"
-        | Digit1 -> "1"
-        | Digit2 -> "2"
-        | Digit3 -> "3"
-        | Digit4 -> "4"
-        | Digit5 -> "5"
-        | Digit6 -> "6"
-        | Digit7 -> "7"
-        | Digit8 -> "8"
-        | Digit9 -> "9"
-        |> Encode.string
-
-    let mouseButton p =
-        match p with
-        | Primary -> "primary"
-        | Secondary -> "secondary"
-        |> Encode.string
-
-    let mouseClick (p: MouseClick) =
-        Encode.object [
-            ("button",  mouseButton p.Button)
-            ("position",  position p.Position)
-        ]
-
-    let virtualScreenMouseClick (p: VirtualScreenMouseClick) =
-        Encode.object [
-            ("button",  mouseButton p.Button)
-            ("virtualScreenPosition",  position p.VirtualScreenPosition)
-        ]
-
     let controllerMsg msg =
         match msg with
         | AddPlayer (pId, pData) ->
@@ -466,14 +317,6 @@ module Encode =
             Encode.object [ ("setVisibility", Encode.tuple2 playerId Encode.bool (pId, isVisible)) ]
         | ToggleVisibility pId ->
             Encode.object [ ("toggleVisibility", playerId pId) ]
-        | InputEvent (KeyDown key) ->
-            Encode.object [ ("keyDown", keyboardKey key) ]
-        | InputEvent (KeyUp key) ->
-            Encode.object [ ("keyUp", keyboardKey key) ]
-        | InputEvent (MouseMove pos) ->
-            Encode.object [ ("mouseMove", position pos) ]
-        | InputEvent (MouseClick data) ->
-            Encode.object [ ("mouseClick", virtualScreenMouseClick data) ]
         | StartBatch ->
             Encode.object [ ("startBatch", Encode.nil) ]
         | ApplyBatch ->
@@ -483,10 +326,6 @@ module Encode =
         match msg with
         | SetSceneBounds p ->
             Encode.object [ ("setSceneBounds", rectangle p) ]
-        | ApplyMouseClick p ->
-            Encode.object [ ("applyMouseClick", mouseClick p) ]
-        | SetMousePosition p ->
-            Encode.object [ ("setMousePosition", position p) ]
         | UpdateStringAnswer (pId, answer) ->
             Encode.object [ ("updateStringAnswer", Encode.tuple2 playerId Encode.string (pId, answer)) ]
         | AnswerStringQuestion (pId, answer) ->

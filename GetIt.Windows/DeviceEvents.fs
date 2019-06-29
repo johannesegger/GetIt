@@ -45,20 +45,14 @@ module DeviceEvents =
         Marshal.PtrToStructure(rawInputBuffer, typeof<SharpLib.Win32.RAWINPUT>) :?> SharpLib.Win32.RAWINPUT
 
     let private getCurrentMousePosition () =
-        let virtualDesktopLeft = Win32.GetSystemMetrics(Win32.SystemMetric.SM_XVIRTUALSCREEN)
-        let virtualDesktopTop = Win32.GetSystemMetrics(Win32.SystemMetric.SM_YVIRTUALSCREEN)
-        let virtualDesktopWidth = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CXVIRTUALSCREEN)
-        let virtualDesktopHeight = Win32.GetSystemMetrics(Win32.SystemMetric.SM_CYVIRTUALSCREEN)
-
         let mutable point = Unchecked.defaultof<Win32.WinPoint>
         if not <| Win32.GetCursorPos(&point) then
             let errorCode = Marshal.GetLastWin32Error()
             raise (Win32Exception (sprintf "GetCursorPos failed. Error code 0x%08x" errorCode))
 
-        // Use percent for position to support different screen sizes for controller and UI
         {
-            X = float (point.x - virtualDesktopLeft) / float virtualDesktopWidth
-            Y = float (point.y - virtualDesktopTop) / float virtualDesktopHeight
+            X = float point.x
+            Y = float point.y
         }
 
     let private processMessage messageLParam =
@@ -275,3 +269,9 @@ module DeviceEvents =
             let position = getCurrentMousePosition ()
             Observable.result (MouseMove position)
         ))
+
+    let screenToClient hWnd position =
+        let mutable point = Win32.WinPoint(x = int position.X, y = int position.Y)
+        if not <| Win32.ScreenToClient(hWnd, &point) then
+            raise (Win32Exception "ScreenToClient failed")
+        { X = float point.x; Y = float point.y }

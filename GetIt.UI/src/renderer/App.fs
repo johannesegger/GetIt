@@ -54,10 +54,6 @@ let rec update msg model =
     match model.BatchMessages, msg with
     | None, UIMsg (SetSceneBounds bounds) ->
         { model with SceneBounds = bounds }
-    | None, UIMsg (SetMousePosition _) ->
-        model
-    | None, UIMsg (ApplyMouseClick _) ->
-        model
     | None, UIMsg (UpdateStringAnswer (playerId, answer)) ->
         { model with PlayerStringAnswers = Map.add playerId answer model.PlayerStringAnswers }
     | None, UIMsg (AnswerStringQuestion (playerId, answer)) ->
@@ -149,14 +145,6 @@ let rec update msg model =
         { model with PenLines = [] }
     | None, ControllerMsg (msgId, SetBackground background) ->
         { model with Background = background }
-    | None, ControllerMsg (msgId, InputEvent (KeyDown key)) ->
-        model
-    | None, ControllerMsg (msgId, InputEvent (KeyUp key)) ->
-        model
-    | None, ControllerMsg (msgId, InputEvent (MouseMove virtualScreenPosition)) ->
-        model
-    | None, ControllerMsg (msgId, InputEvent (MouseClick virtualScreenMouseClick)) ->
-        model
     | None, ControllerMsg (msgId, StartBatch) ->
         { model with BatchMessages = Some ([], 1) }
     | Some (messages, level), ControllerMsg (msgId, StartBatch) ->
@@ -375,29 +363,6 @@ let stream states msgs =
                     Size = { Width = width; Height = height }
                 }
                 |> SetSceneBounds
-            )
-
-            states
-            |> AsyncRx.choose (function | Some (ControllerMsg (msgId, InputEvent (MouseMove virtualScreenPosition))), model -> Some (virtualScreenPosition, model.SceneBounds) | _ -> None)
-            |> AsyncRx.map (fun (virtualScreenPosition, sceneBounds) ->
-                {
-                    X = sceneBounds.Left + virtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 5.
-                    Y = sceneBounds.Top - virtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + Browser.Dom.window.screenTop + 19.
-                }
-                |> SetMousePosition
-            )
-
-            states
-            |> AsyncRx.choose (function | Some (ControllerMsg (msgId, InputEvent (MouseClick mouseClick))), model -> Some (mouseClick, model.SceneBounds) | _ -> None)
-            |> AsyncRx.map (fun (mouseClick, sceneBounds) ->
-                {
-                    Button = mouseClick.Button
-                    Position = {
-                        X = sceneBounds.Left + mouseClick.VirtualScreenPosition.X * Browser.Dom.window.screen.availWidth - Browser.Dom.window.screenLeft - 7.
-                        Y = sceneBounds.Top - mouseClick.VirtualScreenPosition.Y * Browser.Dom.window.screen.availHeight + Browser.Dom.window.screenTop + 24.
-                    }
-                }
-                |> ApplyMouseClick
             )
 
             msgs

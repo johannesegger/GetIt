@@ -15,6 +15,10 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
+type ModelChangeEvent =
+    | ApplyMouseClick of MouseClick
+    | UIMsg of UIMsg
+    | Other
 
 module internal Model =
     let private gate = Object()
@@ -28,7 +32,7 @@ module internal Model =
         }
 
     let mutable private subject =
-        new BehaviorSubject<_>(None, initial)
+        new BehaviorSubject<_>(Other, initial)
 
     let observable = subject.AsObservable()
 
@@ -105,7 +109,7 @@ module internal Model =
         observable
         |> Observable.choose (fun (evt, model) ->
             match evt with
-            | Some (ApplyMouseClick mouseClick) when Rectangle.contains mouseClick.Position model.SceneBounds ->
+            | ApplyMouseClick mouseClick when Rectangle.contains mouseClick.Position model.SceneBounds ->
                 Some mouseClick
             | _ -> None
         )
@@ -116,7 +120,7 @@ module internal Model =
         observable
         |> Observable.choose (fun (evt, model) ->
             match evt, Map.tryFind playerId model.Players with
-            | Some (ApplyMouseClick mouseClick), Some player when Rectangle.contains mouseClick.Position player.Bounds ->
+            | ApplyMouseClick mouseClick, Some player when Rectangle.contains mouseClick.Position player.Bounds ->
                 Some mouseClick
             | _ -> None
         )
