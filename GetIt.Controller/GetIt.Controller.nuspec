@@ -18,7 +18,6 @@
       <dependency id="Fue" version="1.7.0" />
       <dependency id="Giraffe" version="3.6.0" />
       <dependency id="Microsoft.AspNetCore" version="2.2.0" />
-      <dependency id="Microsoft.AspNetCore.StaticFiles" version="2.2.0" />
       <dependency id="Microsoft.AspNetCore.Server.Kestrel" version="2.2.0" />
       <dependency id="Microsoft.AspNetCore.WebSockets" version="2.2.1" />
       <dependency id="Microsoft.Extensions.Logging" version="2.2.0" />
