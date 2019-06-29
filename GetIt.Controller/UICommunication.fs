@@ -115,7 +115,7 @@ module UICommunication =
             Process.Start psi
 #else
         let proc =
-            let psi = ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI.exe"))
+            let psi = ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GetIt.UI", "GetIt.UI.exe"))
             args
             |> List.iter psi.EnvironmentVariables.Add
             Process.Start psi
