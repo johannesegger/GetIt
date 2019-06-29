@@ -194,7 +194,7 @@ module UICommunication =
             |> Seq.tryFind (fun p -> p.MainWindowHandle <> nativeint 0)
             |> function
             | Some p -> p
-            | None -> raise (GetItException "Can't find UI process")
+            | None -> raise (GetItException (sprintf "Can't find process \"%s\" with main window handle." processName))
 
         let inputEventsSubscription =
             inputEvents
