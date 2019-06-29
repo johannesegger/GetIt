@@ -191,25 +191,31 @@ type Turtle() =
             match Game.defaultTurtle with
             | Some player -> player
             | None -> raise (GetItException "Default player hasn't been added to the scene. Consider calling `Game.ShowSceneAndAddTurtle()` at the beginning.")
-
+    
     /// The actual size of the player.
     static member Size with get () = Turtle.Player.Size
-
+    
     /// The factor that is used to change the size of the player.
     static member SizeFactor with get () = Turtle.Player.SizeFactor
-
+    
     /// The position of the player's center point.
     static member Position with get () = Turtle.Player.Position
-
+    
     /// The rectangular bounds of the player.
     /// Note that this doesn't take into account the current rotation of the player.
     static member Bounds with get () = Turtle.Player.Bounds
-
+    
     /// The rotation of the player.
     static member Direction with get () = Turtle.Player.Direction
-
+    
     /// The pen that belongs to the player.
     static member Pen with get () = Turtle.Player.Pen
+    
+    /// The current costume of the player.
+    static member Costume with get () = Turtle.Player.Costume
+    
+    /// True, if the player should be drawn, otherwise false.
+    static member IsVisible with get () = Turtle.Player.IsVisible
 
     /// <summary>Moves the player to a position.</summary>
     /// <param name="position">The absolute destination position.</param>

@@ -1227,6 +1227,12 @@ let main _argv =
                         ""
                         "/// The pen that belongs to the player."
                         "static member Pen with get () = Turtle.Player.Pen"
+                        ""
+                        "/// The current costume of the player."
+                        "static member Costume with get () = Turtle.Player.Costume"
+                        ""
+                        "/// True, if the player should be drawn, otherwise false."
+                        "static member IsVisible with get () = Turtle.Player.IsVisible"
                     ]
                     |> List.map (sprintf "    %s")
                 yield ""
