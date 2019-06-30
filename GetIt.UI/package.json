@@ -47,7 +47,7 @@
       "package.json"
     ],
     "win": {
-      "target": "portable"
+      "target": "dir"
     }
   }
 }
