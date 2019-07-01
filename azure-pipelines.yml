@@ -21,6 +21,7 @@ steps:
   inputs:
     script: 'dotnet restore'
 - task: DotNetCoreCLI@2
+  displayName: 'Build GetIt.Controller'
   inputs:
     command: 'build'
     projects: 'GetIt.Controller'
@@ -47,6 +48,7 @@ steps:
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
 - task: GitHubRelease@0
+  displayName: 'Tag git commit'
   inputs:
     gitHubConnection: johannesegger
     repositoryName: '$(Build.Repository.Name)' 
