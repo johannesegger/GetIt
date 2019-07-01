@@ -5,9 +5,17 @@ open System.ComponentModel
 open System.Drawing
 open System.IO
 open System.Runtime.InteropServices
+open System.Threading
 
 module ScreenCapture =
     let captureWindow handle =
+        if not <| Win32.ShowWindow(handle, Win32.ShowWindowCommand.SW_RESTORE) then
+            printfn "Warning: ShowWindow returned false"
+        if not <| Win32.SetForegroundWindow(handle) then
+            printfn "Warning: SetForegroundWindow returned false"
+
+        Thread.Sleep(500) // Restoring from minimized state takes some time
+
         let mutable rect = Unchecked.defaultof<Win32.Rect>
         let status = Win32.DwmGetWindowAttribute(handle, Win32.DWMWINDOWATTRIBUTE.ExtendedFrameBounds, &rect, Marshal.SizeOf<Win32.Rect>())
         if status <> 0 then
