@@ -17,10 +17,9 @@ steps:
     script: 'yarn install --frozen-lockfile'
     workingDirectory: 'GetIt.UI'
 - task: CmdLine@2
-  displayName: 'Restore packages for GetIt.UI'
+  displayName: 'Restore packages'
   inputs:
     script: 'dotnet restore'
-    workingDirectory: 'GetIt.UI/src/renderer'
 - task: CmdLine@2
   displayName: 'Build GetIt.UI'
   inputs:

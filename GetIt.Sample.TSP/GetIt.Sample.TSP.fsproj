@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -15,9 +16,5 @@
     <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Fixes compilation error: "error NU1605: Detected package downgrade: FSharp.Core from 4.6.2 to 4.5.2. Reference the package directly from the project to select a different version." -->
-    <PackageReference Update="FSharp.Core" Version="4.6.2" />
-  </ItemGroup>
-
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

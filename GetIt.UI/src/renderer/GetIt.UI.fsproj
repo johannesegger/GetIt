@@ -2,12 +2,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="AsyncRx.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\GetIt.Common\GetIt.Common.fsproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+
+  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>
