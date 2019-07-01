@@ -1,0 +1,14 @@
+type project
+id GetIt
+title GetIt
+authors JEgger
+owners JEgger
+licenseUrl http://opensource.org/licenses/MIT
+projectUrl https://github.com/johannesegger/GetIt
+requireLicenseAcceptance false
+description .NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.
+include-referenced-projects true
+files
+  GetIt.targets ==> build
+  ../GetIt.UI/dist/win-unpacked ==> tools/GetIt.UI
+  
