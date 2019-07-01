@@ -22,9 +22,9 @@
         <p style="text-align: right">
             With ♥ made by {{{name}}}
         </p>
-        <p fs-for="fileName,content in sourceFiles">
+        <div fs-for="fileName,content in sourceFiles">
             <div class="file-name">{{{fileName}}}</div>
             <div class="file-content">{{{content}}}</div>
-        </p>
+        </div>
     </body>
 </html>
