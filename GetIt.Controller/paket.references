@@ -1,0 +1,10 @@
+group Controller
+ColorCode.Html
+FSharp.Control.AsyncRx
+FSharp.Control.Reactive
+FSharp.Core
+Fue
+Microsoft.AspNetCore
+Microsoft.AspNetCore.Server.Kestrel
+Microsoft.AspNetCore.WebSockets
+Microsoft.Extensions.Logging

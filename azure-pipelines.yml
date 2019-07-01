@@ -17,37 +17,33 @@ steps:
     script: 'yarn install --frozen-lockfile'
     workingDirectory: 'GetIt.UI'
 - task: CmdLine@2
-  displayName: 'Restore packages for GetIt.UI'
+  displayName: 'Restore packages'
   inputs:
     script: 'dotnet restore'
-    workingDirectory: 'GetIt.UI/src/renderer'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: 'GetIt.Controller'
+    arguments: '-c Release'
 - task: CmdLine@2
   displayName: 'Build GetIt.UI'
   inputs:
     script: 'yarn bundle'
     workingDirectory: 'GetIt.UI'
-- task: DotNetCoreCLI@2
+- task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
-    command: 'pack'
-    packagesToPack: 'GetIt.Controller'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: GitVersion.NuGetVersion
+    script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) GetIt.Controller
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
     artifactName: 'GetIt.nupkg'
-    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
-# - task: PublishBuildArtifacts@1
-#   inputs:
-#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
-#     ArtifactName: 'GetIt NuGet package 2'
-#     publishLocation: 'Container'
+    targetPath: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
 - task: DotNetCoreCLI@2
   displayName: 'Push NuGet package to internal feed'
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(GitVersion.NuGetVersion).nupkg'
+    packagesToPush: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
 - task: GitHubRelease@0

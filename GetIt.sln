@@ -2,6 +2,11 @@
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{08CA0E48-E26D-4137-A36C-5BEDCEFBB1A8}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GetIt.Common", "GetIt.Common\GetIt.Common.fsproj", "{33F61FBB-B012-4CD3-BD24-315B7DFEBB2E}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GetIt.Controller", "GetIt.Controller\GetIt.Controller.fsproj", "{122DDE46-FCAD-46AA-B773-B710E3258279}"
