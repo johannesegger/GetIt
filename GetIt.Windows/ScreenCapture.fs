@@ -31,6 +31,3 @@ module ScreenCapture =
         bitmap.Save(stream, Imaging.ImageFormat.Png)
         stream.ToArray()
         |> PngImage
-
-    let captureActiveWindow () =
-        captureWindow <| Win32.GetForegroundWindow ()
