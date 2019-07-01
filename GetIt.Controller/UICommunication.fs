@@ -21,6 +21,7 @@ module UICommunication =
         Disposable: IDisposable
         CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
         ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
+        UIWindowProcess: Process
     }
     let mutable private showSceneCalled = 0
     let mutable private communicationState = None
@@ -225,13 +226,19 @@ module UICommunication =
                     |> Disposable.compose inputEventsSubscription
                 CommandSubject = controllerMsgs
                 ResponseSubject = uiMsgs
+                UIWindowProcess = uiWindowProcess
             }
 
         ()
 
-    let private sendMessage message =
+    let private doWithCommunicationState fn =
         match communicationState with
-        | Some state ->
+        | Some state -> fn state
+        | None ->
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+
+    let private sendMessage message =
+        doWithCommunicationState (fun state ->
             use waitHandle = new ManualResetEventSlim()
             let messageId = Guid.NewGuid()
             use d =
@@ -246,8 +253,7 @@ module UICommunication =
                 )
             state.CommandSubject.OnNext (messageId, message)
             waitHandle.Wait()
-        | None ->
-            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+        )
 
     let private sendMessageAndWaitForResponse msg responseFilter =
         let mutable response = None
@@ -286,10 +292,12 @@ module UICommunication =
         sendMessage ClearScene
 
     let makeScreenshot () =
-        if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            Windows.ScreenCapture.captureActiveWindow ()
-        else
-            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+        doWithCommunicationState (fun state ->
+            if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
+                Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle
+            else
+                raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+        )
 
     let startBatch () =
         sendMessage StartBatch
