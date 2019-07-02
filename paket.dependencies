@@ -1,6 +1,8 @@
 source https://api.nuget.org/v3/index.json
 
 group Controller
+    strategy: min
+
     source https://api.nuget.org/v3/index.json
 
     github johannesegger/Elmish.Streams:master AspNetCore.Middleware/StreamsMiddleware.fs
