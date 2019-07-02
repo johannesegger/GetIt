@@ -12,9 +12,9 @@ group Controller
     nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
-    nuget Microsoft.AspNetCore
+    nuget Microsoft.AspNetCore ~> 2.2
     nuget Microsoft.AspNetCore.Server.Kestrel
-    nuget Microsoft.AspNetCore.WebSockets
+    nuget Microsoft.AspNetCore.WebSockets ~> 2.2
     nuget Microsoft.Extensions.Logging
     nuget Polly
     nuget SharpLibWin32
