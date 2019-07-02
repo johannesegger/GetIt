@@ -331,7 +331,7 @@ NUGET
       System.Threading.Timer (>= 4.3) - restriction: >= netstandard1.2
       System.Xml.ReaderWriter (>= 4.3) - restriction: >= netstandard1.0
       System.Xml.XDocument (>= 4.3) - restriction: >= netstandard1.0
-    Newtonsoft.Json (12.0.2) - restriction: || (>= net46) (>= netstandard2.0)
+    Newtonsoft.Json (11.0.2) - restriction: || (>= net46) (>= netstandard2.0)
     Polly (7.1)
       NETStandard.Library (>= 1.6.1) - restriction: && (>= netstandard1.1) (< netstandard2.0)
       System.ValueTuple (>= 4.5) - restriction: && (>= netstandard1.1) (< netstandard2.0)
