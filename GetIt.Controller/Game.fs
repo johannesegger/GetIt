@@ -118,10 +118,12 @@ type Game() =
                 |> Map.map (fun key value -> value :> obj)
                 |> Map.toList
             let sourceFiles =
-                let sourceFilesDir = Path.Combine(assemblyDir, "source-files")
-                Directory.GetFiles(sourceFilesDir, "*", SearchOption.AllDirectories)
+                let sourceFilesDir = Path.Combine(assemblyDir, "src")
+                Directory.GetFiles(sourceFilesDir, "*.source", SearchOption.AllDirectories)
                 |> Seq.map (fun f ->
-                    let relativePath = f.Substring(sourceFilesDir.Length).TrimStart('/', '\\')
+                    let relativePath =
+                        f.Substring(sourceFilesDir.Length).TrimStart('/', '\\')
+                        |> fun p -> Path.ChangeExtension(p, null)
                     let content = File.ReadAllText f
                     let formattedContent = HtmlFormatter().GetHtmlString(content, Languages.CSharp)
                     relativePath, formattedContent

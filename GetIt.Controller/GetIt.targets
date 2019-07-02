@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <SourceFiles Include="$(MSBuildProjectDirectory)\**\*.cs" Exclude="$(MSBuildProjectDirectory)\obj\**\*.cs;$(MSBuildProjectDirectory)\bin\**\*.cs" />
+    <SourceFiles Include="$(MSBuildProjectDirectory)\**\*.cs" Exclude="$(MSBuildProjectDirectory)\obj\**\*;$(MSBuildProjectDirectory)\bin\**\*" />
     <None Include="@(SourceFiles)">
-      <Link>source-files\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <Link>src\%(RecursiveDir)%(FileName)%(Extension).source</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
