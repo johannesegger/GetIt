@@ -123,6 +123,13 @@ module UICommunication =
             raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
     }
 
+    let disposeCommunicationState () =
+        match communicationState with
+        | Some state ->
+            state.Disposable.Dispose()
+            communicationState <- None
+        | None -> ()
+
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
             let observable = Windows.DeviceEvents.observable
@@ -162,7 +169,7 @@ module UICommunication =
                             let! processRunTask = startUI windowSize |> Async.StartChild
 
                             do! processRunTask
-                            webServerStopDisposable.Dispose()
+                            disposeCommunicationState ()
                             do! webServerRunTask
                             Environment.Exit 0
                         with e ->
