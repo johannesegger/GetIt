@@ -1,0 +1,8 @@
+- name: Prerequisites
+  link: /prerequisites.html
+- name: Setting up a new project
+  link: /setting-up-a-new-project.html
+- name: Features
+  link: /features.html
+- name: Credits
+  link: /credits.html
