@@ -10,7 +10,7 @@ It's intended to be used by people that have no prior knowledge in software deve
 
 ## Nice, tell me more
 
-*Get It* provides access to a 2D scene that can be programmed using C# - a popular [general-purpose programming language](https://en.wikipedia.org/wiki/General-purpose_programming_language). Using C# code you can create programs that customize the scene by adding players, moving them around, drawing with them and [much more](/features). Here are some screenshots of programs you can create:
+*Get It* provides access to a 2D scene that can be programmed using C# - a popular [general-purpose programming language](https://en.wikipedia.org/wiki/General-purpose_programming_language){:target="_blank"}. Using C# code you can create programs that customize the scene by adding players, moving them around, drawing with them and [much more](/features). Here are some screenshots of programs you can create:
 
 ![Turtle graphics](turtle-graphics.png)
 ![Catch me](catch-me.png)
