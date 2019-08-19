@@ -1,3 +1,12 @@
+trigger:
+  branches:
+    include:
+    - master
+    - develop
+  paths:
+    exclude:
+    - docs/*
+
 pool:
   vmImage: 'windows-latest'
 
