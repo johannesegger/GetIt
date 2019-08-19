@@ -2,3 +2,5 @@
   items:
     - name: Draw triangle
       link: /challenges/draw-triangle.html
+    - name: Draw letter
+      link: /challenges/draw-letter.html
