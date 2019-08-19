@@ -109,10 +109,15 @@ module UICommunication =
             let psi = ProcessStartInfo("powershell.exe", Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1")))
             List.append [ "ELECTRON_WEBPACK_WDS_PORT", "8080" ] args
             |> List.iter psi.EnvironmentVariables.Add
+            psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
+            psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
             Process.Start psi
 #else
         let proc =
-            let psi = ProcessStartInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..", "..", "tools", "GetIt.UI", "GetIt.UI.exe"))
+            let path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..", "..", "tools", "GetIt.UI", "GetIt.UI.exe")
+            let psi = ProcessStartInfo(path)
+            psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
+            psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
             args
             |> List.iter psi.EnvironmentVariables.Add
             Process.Start psi

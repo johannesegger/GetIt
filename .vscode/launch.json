@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/GetIt.Sample/bin/Debug/netcoreapp2.2/GetIt.Sample.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal", // the only option that works with running electron from the controller
+            "console": "internalConsole",
             "stopAtEntry": false
         },
         {
@@ -23,7 +23,7 @@
             "program": "${workspaceFolder}/GetIt.Sample.Print/bin/Debug/netcoreapp2.2/GetIt.Sample.Print.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal", // the only option that works with running electron from the controller
+            "console": "internalConsole",
             "stopAtEntry": false
         },
         {
