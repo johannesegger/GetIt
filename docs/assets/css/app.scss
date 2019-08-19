@@ -1,5 +1,30 @@
 ---
 ---
 $primary: #87b027;
+$border: lighten($primary, 10%);
+$menu-item-active-background-color: $primary;
 // Import Main CSS file from theme
 @import "main";
+
+// https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style
+kbd {
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    color: #333;
+    display: inline-block;
+    font-family: Arial,Helvetica,sans-serif;
+    font-size: 11px;
+    padding: .1em .6em;
+    text-shadow: 0 1px 0 #fff;
+    vertical-align: text-bottom;
+}
+
+li blockquote {
+    margin-top: 0.5em;
+}
+
+blockquote code {
+    background: darken($code-background, 5%);
+}
