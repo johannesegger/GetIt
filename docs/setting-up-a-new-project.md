@@ -19,4 +19,25 @@ After setting up a few projects you won't need the help anymore.
 * Open `Program.cs`, add `using GetIt;` to the list of `using` declarations at the top of the file and replace `Console.WriteLine("Hello World!");` with `Game.ShowSceneAndAddTurtle();`
 * Press <kbd>F5</kbd> to launch the program and you should see a window with a turtle at its center.
   * If VSCode asks you to select an environment, choose `.NET Core`.
-* Congratulations, you just created and ran a brand new C# program with *Get It*.
+
+Congratulations, you just created and ran a brand new C# program with *Get It*.
+
+`Program.cs` should now look like this:
+
+```csharp
+using System;
+using GetIt;
+
+namespace GetItStarted
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Game.ShowSceneAndAddTurtle();
+        }
+}
+```
+
+For the first few projects everything will happen inside the two innermost curly braces `{` and `}`.
+There you'll write all commands that should get executed when the program is started.
