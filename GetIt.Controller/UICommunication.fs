@@ -105,6 +105,7 @@ module UICommunication =
                     yield "ELECTRON_START_MAXIMIZED", "1"
             ]
 #if DEBUG
+        // Ensure that `yarn webpack-dev-server` is running before starting this
         let proc =
             let psi = ProcessStartInfo("powershell.exe", Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1")))
             List.append [ "ELECTRON_WEBPACK_WDS_PORT", "8080" ] args
