@@ -5,6 +5,7 @@ $border: lighten($primary, 10%);
 $menu-item-active-background-color: $primary;
 // Import Main CSS file from theme
 @import "main";
+@import "ribbons.css";
 
 // https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style
 kbd {
