@@ -1,8 +1,7 @@
 trigger:
   branches:
     include:
-    - master
-    - develop
+    - '*'
   paths:
     exclude:
     - docs/*
