@@ -15,7 +15,7 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: GitVersion@4
+- task: GitVersion@5
   displayName: 'Run GitVersion'
   inputs:
     preferBundledVersion: false
