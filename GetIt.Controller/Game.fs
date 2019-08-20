@@ -1,5 +1,9 @@
 namespace GetIt
 
+open ColorCode
+open FSharp.Control.Reactive
+open Fue.Compiler
+open Fue.Data
 open System
 open System.Diagnostics
 open System.IO
@@ -7,118 +11,24 @@ open System.Reflection
 open System.Runtime.InteropServices
 open System.Text
 open System.Threading
-open ColorCode
-open FSharp.Control.Reactive
-open Fue.Data
-open Fue.Compiler
-open Thoth.Json.Net
-
-type PrintConfig =
-    {
-        TemplatePath: string
-        TemplateParams: Map<string, string>
-        PrinterName: string
-    }
-    with
-        static member Create (templatePath, printerName) =
-            {
-                TemplatePath = templatePath
-                TemplateParams = Map.empty
-                PrinterName = printerName
-            }
-        /// Read the print config from the environment.
-        static member CreateFromEnvironment () =
-            let decoder =
-                Decode.object (fun get ->
-                    let templateParamsDecoder =
-                        Decode.list (Decode.tuple2 Decode.string Decode.string)
-                        |> Decode.map Map.ofList
-                    {
-                        TemplatePath = get.Required.Field "templatePath" Decode.string
-                        TemplateParams =
-                            get.Optional.Field "templateParams" templateParamsDecoder
-                            |> Option.defaultValue Map.empty
-                        PrinterName = get.Required.Field "printerName" Decode.string
-                    }
-                )
-            let envVarName = "GET_IT_PRINT_CONFIG"
-            let configString = Environment.GetEnvironmentVariable envVarName
-            if isNull configString then raise (GetItException (sprintf "Can't read config from environment: Environment variable \"%s\" doesn't exist." envVarName))
-            match Decode.fromString decoder configString with
-            | Ok printConfig -> printConfig
-            | Error e -> raise (GetItException (sprintf "Can't read config from environment: %s" e))
-
-        /// Set the value of a template parameter.
-        member this.Set (key, value) =
-            { this with TemplateParams = Map.add key value this.TemplateParams }
 
 module internal Game =
     let mutable defaultTurtle = None
-
-    let private startUIProcess () =
-        if RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            Process.GetProcessesByName("GetIt.WPF")
-            |> Seq.iter (fun p ->
-                if not <| p.CloseMainWindow() then p.Kill()
-                p.WaitForExit()
-            )
-
-            let startInfo =
-#if DEBUG
-                let path =
-                    let rec parentPaths path acc =
-                        if isNull path then List.rev acc
-                        else parentPaths (Path.GetDirectoryName path) (path :: acc)
-                    parentPaths (Path.GetFullPath ".") []
-                    |> Seq.choose (fun p ->
-                        let projectDir = Path.Combine(p, "GetIt.WPF")
-                        if Directory.Exists projectDir
-                        then Some projectDir
-                        else None
-                    )
-                    |> Seq.head
-                ProcessStartInfo("dotnet", sprintf "run --project %s" path)
-#else
-                let baseDir =
-                    System.Reflection.Assembly.GetExecutingAssembly().Location
-                    |> Path.GetDirectoryName
-                    |> Path.GetDirectoryName
-                    |> Path.GetDirectoryName
-                let path = Path.Combine(baseDir, "runtimes", "win-x64", "native", "GetIt.UI", "GetIt.WPF.exe")
-                ProcessStartInfo(path)
-#endif
-
-            Process.Start(startInfo)
-        else
-            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
-
-    let showScene windowSize =
-        if Connection.hasCurrent () then
-            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowSceneAndAddTurtle()` multiple times?")
-
-        let proc = startUIProcess ()
-        Connection.setup "127.0.0.1" 1503 |> Async.RunSynchronously
-
-        Connection.run UICommunication.showScene windowSize
-
-    let addTurtle () =
-        let turtleId = Connection.run UICommunication.addPlayer PlayerData.Turtle
-        defaultTurtle <- Some (new Player (turtleId))
 
 /// Defines methods to setup a game, add players, register global events and more.
 [<AbstractClass; Sealed>]
 type Game() =
     /// Initializes and shows an empty scene with the default size and no players on it.
     static member ShowScene () =
-        Game.showScene (SpecificSize { Width = 800.; Height = 600. })
+        UICommunication.showScene (SpecificSize { Width = 800.; Height = 600. })
 
     /// Initializes and shows an empty scene with a specific size and no players on it.
     static member ShowScene (windowWidth, windowHeight) =
-        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
+        UICommunication.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
 
     /// Initializes and shows an empty scene with maximized size and no players on it.
     static member ShowMaximizedScene () =
-        Game.showScene Maximized
+        UICommunication.showScene Maximized
 
     /// <summary>
     /// Adds a player to the scene.
@@ -128,12 +38,12 @@ type Game() =
     static member AddPlayer (playerData: PlayerData) =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
 
-        let playerId = Connection.run UICommunication.addPlayer playerData
+        let playerId = UICommunication.addPlayer playerData
         new Player(playerId)
 
     /// <summary>
     /// Adds a player to the scene and calls a method to control the player.
-    /// The method runs on a task pool thread so that multiple players can be controlled in parallel.
+    /// The method runs on a thread pool thread so that multiple players can be controlled in parallel.
     /// </summary>
     /// <param name="player">The definition of the player that should be added.</param>
     /// <param name="run">The method that is used to control the player.</param>
@@ -146,35 +56,38 @@ type Game() =
         async { run.Invoke player } |> Async.Start
         player
 
+    static member private AddTurtle() =
+        Game.defaultTurtle <- Some <| Game.AddPlayer PlayerData.Turtle
+
     /// Initializes and shows an empty scene and adds the default player to it.
     static member ShowSceneAndAddTurtle () =
         Game.ShowScene ()
-        Game.addTurtle ()
+        Game.AddTurtle ()
 
     /// Initializes and shows an empty scene with a specific size and adds the default player to it.
     static member ShowSceneAndAddTurtle (windowWidth, windowHeight) =
-        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
-        Game.addTurtle ()
+        Game.ShowScene (windowWidth, windowHeight)
+        Game.AddTurtle ()
 
     /// Initializes and shows an empty scene with maximized size and adds the default player to it.
     static member ShowMaximizedSceneAndAddTurtle () =
-        Game.showScene Maximized
-        Game.addTurtle ()
+        Game.ShowMaximizedScene ()
+        Game.AddTurtle ()
 
     /// Sets the title of the window.
     static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
-        Connection.run UICommunication.setWindowTitle textOpt
+        UICommunication.setWindowTitle textOpt
 
     /// Sets the scene background.
     static member SetBackground background =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
 
-        Connection.run UICommunication.setBackground background
+        UICommunication.setBackground background
 
     /// Clears all drawings from the scene.
     static member ClearScene () =
-        Connection.run UICommunication.clearScene ()
+        UICommunication.clearScene ()
 
     /// <summary>
     /// Prints the scene. Note that `wkhtmltopdf` and `SumatraPDF` must be installed.
@@ -191,7 +104,7 @@ type Game() =
             |> Path.GetDirectoryName
 
         let base64ImageData =
-            Connection.run UICommunication.makeScreenshot ()
+            UICommunication.makeScreenshot ()
             |> PngImage.toBase64String
 
         let documentTemplate =
@@ -205,10 +118,12 @@ type Game() =
                 |> Map.map (fun key value -> value :> obj)
                 |> Map.toList
             let sourceFiles =
-                let sourceFilesDir = Path.Combine(assemblyDir, "source-files")
-                Directory.GetFiles(sourceFilesDir, "*", SearchOption.AllDirectories)
+                let sourceFilesDir = Path.Combine(assemblyDir, "src")
+                Directory.GetFiles(sourceFilesDir, "*.source", SearchOption.AllDirectories)
                 |> Seq.map (fun f ->
-                    let relativePath = f.Substring(sourceFilesDir.Length).TrimStart('/', '\\')
+                    let relativePath =
+                        f.Substring(sourceFilesDir.Length).TrimStart('/', '\\')
+                        |> fun p -> Path.ChangeExtension(p, null)
                     let content = File.ReadAllText f
                     let formattedContent = HtmlFormatter().GetHtmlString(content, Languages.CSharp)
                     relativePath, formattedContent
@@ -251,8 +166,8 @@ type Game() =
     /// Start batching multiple commands to skip drawing intermediate state.
     /// Note that commands from all threads are batched.
     static member BatchCommands () =
-        Connection.run UICommunication.startBatch ()
-        Disposable.create (fun () -> Connection.run UICommunication.applyBatch ())
+        UICommunication.startBatch ()
+        Disposable.create (fun () -> UICommunication.applyBatch ())
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.
@@ -390,3 +305,4 @@ type Game() =
     /// The current position of the mouse.
     static member MousePosition
         with get () = Model.getCurrent().MouseState.Position
+

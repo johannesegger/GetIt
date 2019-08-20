@@ -1,0 +1,5 @@
+group Controller
+FSharp.Control.Reactive
+FSharp.Core
+SharpLibWin32
+System.Drawing.Common

@@ -26,14 +26,18 @@ type Degrees = private Degrees of float
     static member op_Implicit value =
         Degrees.Create value
 
+    static member op_Implicit (Degrees v) =
+        v
+
     override this.ToString () =
         let (Degrees value) = this
         value.ToString()
-
+#if !FABLE_COMPILER
     interface IFormattable with
         member this.ToString (format: string, formatProvider: IFormatProvider) =
             let (Degrees value) = this
             value.ToString(format, formatProvider)
+#endif
 
 /// For internal use only.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -69,6 +73,16 @@ type Position =
         {
             X = p1.X + p2.X
             Y = p1.Y + p2.Y
+        }
+    static member (-) (p1, p2) =
+        {
+            X = p1.X - p2.X
+            Y = p1.Y - p2.Y
+        }
+    static member (~-) (p) =
+        {
+            X = -p.X
+            Y = -p.Y
         }
 
 /// For internal use only.

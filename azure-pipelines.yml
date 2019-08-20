@@ -1,5 +1,11 @@
 trigger:
-- master
+  branches:
+    include:
+    - master
+    - develop
+  paths:
+    exclude:
+    - docs/*
 
 pool:
   vmImage: 'windows-latest'
@@ -14,59 +20,44 @@ steps:
   displayName: 'Run GitVersion'
   inputs:
     preferBundledVersion: false
-# - task: DotNetCoreCLI@2
-#   inputs:
-#     command: 'run'
-#     projects: '--project GetIt.Test'
-- task: BatchScript@1
-  displayName: 'Run tests'
+- task: CmdLine@2
+  displayName: 'Restore yarn packages'
   inputs:
-    filename: 'C:\\Program Files\\dotnet\\dotnet.exe'
-    arguments: 'run --project GetIt.Test'
-    failOnStandardError: true
-- task: PublishTestResults@2
-  displayName: 'Publish test results'
+    script: 'yarn install --frozen-lockfile'
+    workingDirectory: 'GetIt.UI'
+- task: CmdLine@2
+  displayName: 'Restore packages'
   inputs:
-    testResultsFormat: 'NUnit'
-    testResultsFiles: '**/TestResults.xml'
-    mergeTestResults: true
-    failTaskOnFailedTests: true
-    buildPlatform: '$(BuildPlatform)'
-    buildConfiguration: '$(BuildConfiguration)'
+    script: 'dotnet restore'
 - task: DotNetCoreCLI@2
-  displayName: 'Build GetIt.WPF'
+  displayName: 'Build GetIt.Controller'
   inputs:
-    command: 'publish'
-    projects: 'GetIt.Wpf'
+    command: 'build'
+    projects: 'GetIt.Controller'
     arguments: '-c Release'
-    publishWebProjects: false
-    zipAfterPublish: false
-    modifyOutputPath: false
-- task: DotNetCoreCLI@2
+- task: CmdLine@2
+  displayName: 'Build GetIt.UI'
+  inputs:
+    script: 'yarn bundle'
+    workingDirectory: 'GetIt.UI'
+- task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
-    command: 'pack'
-    packagesToPack: 'GetIt.Controller'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: Build.BuildNumber
+    script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) GetIt.Controller
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
     artifactName: 'GetIt.nupkg'
-    targetPath: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
-# - task: PublishBuildArtifacts@1
-#   inputs:
-#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
-#     ArtifactName: 'GetIt NuGet package 2'
-#     publishLocation: 'Container'
+    targetPath: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
 - task: DotNetCoreCLI@2
   displayName: 'Push NuGet package to internal feed'
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/GetIt.$(Build.BuildNumber).nupkg'
+    packagesToPush: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
 - task: GitHubRelease@0
+  displayName: 'Tag git commit'
   inputs:
     gitHubConnection: johannesegger
     repositoryName: '$(Build.Repository.Name)' 

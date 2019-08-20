@@ -4,6 +4,7 @@ open System
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Reactive.Subjects
+open Elmish
 open FSharp.Control.Reactive
 
 type internal Model =
@@ -14,40 +15,47 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
+type ModelChangeEvent =
+    | ApplyMouseClick of MouseClick
+    | UIMsg of UIMsg
+    | Other
+
 module internal Model =
     let private gate = Object()
 
+    let initial =
+        {
+            SceneBounds = Rectangle.zero
+            Players = Map.empty
+            MouseState = MouseState.empty
+            KeyboardState = KeyboardState.empty
+        }
+
     let mutable private subject =
-        let initial =
-            {
-                SceneBounds = Rectangle.zero
-                Players = Map.empty
-                MouseState = MouseState.empty
-                KeyboardState = KeyboardState.empty
-            }
-        new BehaviorSubject<_>(initial)
+        new BehaviorSubject<_>(Other, initial)
 
     let observable = subject.AsObservable()
 
-    let getCurrent () = subject.Value
+    let getCurrent () = snd subject.Value
 
     let updateCurrent fn =
-        lock gate (fun () -> subject.OnNext(fn subject.Value))
+        lock gate (fun () -> subject.OnNext(fn <| snd subject.Value))
 
     let updatePlayer playerId fn =
         updateCurrent (fun m ->
-            let player = Map.find playerId m.Players |> fn
-            { m with Players = Map.add playerId player m.Players }
+            let (evt, player) = Map.find playerId m.Players |> fn
+            evt, { m with Players = Map.add playerId player m.Players }
         )
 
     let private keyDownFilter filter =
         observable
-        |> Observable.map (fun model ->
+        |> Observable.map (snd >> fun model ->
             let hasActiveTextInput =
                 model.Players
                 |> Map.exists (fun playerId player ->
                     match player.SpeechBubble with
-                    | Some (Ask _) -> true
+                    | Some (AskString _) -> true
+                    | Some (AskBool _)
                     | Some (Say _)
                     | None -> false
                 )
@@ -76,7 +84,7 @@ module internal Model =
         |> Observable.switchMap (fun key ->
             let keyUpObservable =
                 observable
-                |> Observable.choose (fun model ->
+                |> Observable.choose (snd >> fun model ->
                     if Set.contains key model.KeyboardState.KeysPressed then None
                     else Some ()
                 )
@@ -99,33 +107,29 @@ module internal Model =
 
     let onClickScene fn =
         observable
-        |> Observable.choose (fun model ->
-            match model.MouseState.LastClick with
-            | Some (eventId, mouseClickEvent) when Rectangle.contains mouseClickEvent.Position model.SceneBounds ->
-                Some (eventId, mouseClickEvent)
+        |> Observable.choose (fun (evt, model) ->
+            match evt with
+            | ApplyMouseClick mouseClick when Rectangle.contains mouseClick.Position model.SceneBounds ->
+                Some mouseClick
             | _ -> None
         )
-        |> Observable.distinctUntilChangedKey fst
-        |> Observable.map snd
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe fn
 
     let onClickPlayer playerId fn =
         observable
-        |> Observable.choose (fun model ->
-            match model.MouseState.LastClick, Map.tryFind playerId model.Players with
-            | Some (eventId, mouseClickEvent), Some player when Rectangle.contains mouseClickEvent.Position player.Bounds ->
-                Some (eventId, mouseClickEvent)
+        |> Observable.choose (fun (evt, model) ->
+            match evt, Map.tryFind playerId model.Players with
+            | ApplyMouseClick mouseClick, Some player when Rectangle.contains mouseClick.Position player.Bounds ->
+                Some mouseClick
             | _ -> None
         )
-        |> Observable.distinctUntilChanged
-        |> Observable.map snd
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe fn
 
     let onEnterPlayer playerId fn =
         observable
-        |> Observable.map (fun model -> Map.tryFind playerId model.Players, model.MouseState.Position)
+        |> Observable.map (snd >> fun model -> Map.tryFind playerId model.Players, model.MouseState.Position)
         |> Observable.pairwise
         |> Observable.choose (function
             | (Some p1, mousePosition1), (Some p2, mousePosition2) ->

@@ -7,14 +7,12 @@
   <ItemGroup>
     <Compile Include="Win32.fs" />
     <Compile Include="DeviceEvents.fs" />
+    <Compile Include="ScreenCapture.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="SharpLibWin32" Version="0.2.1" />
-  </ItemGroup>
-
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -29,6 +29,9 @@ type Player(playerId) =
     /// The pen that belongs to the player.
     member x.Pen with get () = x.Player.Pen
 
+    /// The current costume of the player.
+    member x.Costume with get () = x.Player.Costume
+
     /// True, if the player should be drawn, otherwise false.
     member x.IsVisible with get () = x.Player.IsVisible
 
@@ -36,7 +39,7 @@ type Player(playerId) =
     abstract member Dispose: unit -> unit
     default x.Dispose () =
         if Interlocked.Exchange (&isDisposed, 1) = 0 then
-            Connection.run UICommunication.removePlayer playerId
+            UICommunication.removePlayer playerId
 
     interface IDisposable with
         member x.Dispose () = x.Dispose ()

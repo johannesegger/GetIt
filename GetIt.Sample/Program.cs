@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using static MoreLinq.Extensions.ForEachExtension;
-using static MoreLinq.Extensions.MaxByExtension;
-using static MoreLinq.Extensions.PipeExtension;
-using static MoreLinq.Extensions.ScanExtension;
-using static MoreLinq.Extensions.ShuffleExtension;
-using static MoreLinq.Extensions.WindowExtension;
 
 namespace GetIt.Sample
 {
@@ -49,7 +42,8 @@ namespace GetIt.Sample
             // Program32();
             // Program33();
             // Program34();
-            Program35();
+            // Program35();
+            Program36();
         }
 
         private static void Program1()
@@ -58,7 +52,7 @@ namespace GetIt.Sample
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x80));
+            Turtle.SetPenColor(RGBAColors.Cyan.WithAlpha(0x40));
             Turtle.TurnOnPen();
             var n = 5;
             while (n < 200)
@@ -180,6 +174,8 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.Sleep(1000);
+
+            Turtle.Say("🎉✔👍👋👍🏽", 2);
 
             for (int i = 0; i < 500; i++)
             {
@@ -379,7 +375,7 @@ namespace GetIt.Sample
 
             Turtle.Say("Press any key to start");
             var key = Game.WaitForAnyKeyDown();
-            Turtle.Say($"You started with <{key}>. Let's go. Press <Space> to stop.");
+            Turtle.Say($"You started with <{key}>. Press <Space> to stop.");
             Game.WaitForKeyDown(KeyboardKey.Space);
             Turtle.Say("Game over.");
         }
@@ -548,12 +544,12 @@ namespace GetIt.Sample
 
         private static void Program22()
         {
-            Game.ShowSceneAndAddTurtle();
-            Turtle.MoveUp(100);
+            Game.ShowScene();
 
             using (var food = Game.AddPlayer(PlayerData.Bug))
             {
-                food.Say("I'm just here for 5 seconds", 5);
+                food.Say("I'm just here for 5 seconds");
+                Game.Sleep(5000);
             }
         }
 
@@ -863,6 +859,23 @@ namespace GetIt.Sample
             }
             Turtle.Say("Done.");
             player.ShutUp();
+        }
+
+        private static void Program36()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            if (Turtle.AskBool("Continue?"))
+            {
+                if (Turtle.AskBool("Ok, let's do it. Move right?"))
+                {
+                    Turtle.MoveRight(100);
+                }
+            }
+            else
+            {
+                Turtle.Say("Ok. Bye bye.");
+            }
         }
     }
 }
