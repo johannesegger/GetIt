@@ -16,6 +16,6 @@ In this challenge you'll learn some basics of *Get It*. This includes the coordi
     > The movement of the turtle still happens instantly, but now you can at least see that the position changes.
 1. Try to change the argument of `MoveInDirection` so that the turtle moves 200 steps to the left.
 1. Make yourself familiar with the commands `Turtle.RotateClockwise` and `Turtle.RotateCounterClockwise` by inserting multiple of them into your program and pausing execution between them. What's the physical unit of the methods' parameter? Kilograms? Seconds? Meters?
-1. Now try to move the turtle so that it walks along a triangle by alternately moving and rotating the turtle. A triangle that fits on the scene and is *equilateral* gives bonus points. Add some pauses to verify that everything works as expected.
+1. Now try to move the turtle so that it walks along a triangle by alternately moving and rotating the turtle. A triangle that fits on the scene and is *regular* gives bonus points. Add some pauses to verify that everything works as expected.
 1. No matter how good you know turtles, you certainly didn't know that our turtle has a pen that can be turned on and off. The command to turn on the pen is `Turtle.TurnOnPen` and is simply invoked by appending `()` because it doesn't expect any parameters. However don't forget to finish the command with a semicolon `;`. Add the command before making the first move, run the program and be amazed by the fantastic triangle your turtle can draw.
-1. Nicely done! Now change the program to draw a square and then a equilateral pentagon (five sides with equal length and equal angle).
+1. Nicely done! Now change the program to draw a square and then a regular pentagon (five sides with equal length and equal angle).
