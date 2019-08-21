@@ -4,3 +4,7 @@
       link: /challenges/draw-triangle.html
     - name: Draw letter
       link: /challenges/draw-letter.html
+- label: Variables
+  items:
+    - name: Greeting
+      link: /challenges/greeting.html
