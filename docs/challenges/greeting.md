@@ -24,3 +24,4 @@ We'll see how variables help to use those results.
     > Now it's not `"Marie"` that is stored in `user`, it's *the result of `Turtle.Ask`* that is stored in `user`.
 
     > Some commands *return* values after they've been invoked. It's very common to store returned values in variables for later use -- as we did. But you can also use the returned value directly (e.g. between `{` and `}` in string interpolation expressions) or ignore it altogether.
+1. Run the program and finally enjoy a personalized experience.
