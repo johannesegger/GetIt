@@ -1,4 +1,4 @@
-- label: Basics
+- label: Get It Basics
   items:
     - name: Draw triangle
       link: /challenges/draw-triangle.html
