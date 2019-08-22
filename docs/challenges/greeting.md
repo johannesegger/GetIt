@@ -11,8 +11,8 @@ We'll see how variables help to use those results.
     > Don't forget to put quotes `"` around the text. This is different from numbers because they don't need to be enclosed by any characters at all.
 1. Run the program and see how the turtle greets you.
     > Does it really greet you? Probably not, except your name is Marie. But we want our program to be able to greet anyone. This is where variables come in very handy.
-1. Create a new line before the greeting command, insert `var user = "Marie";` to define a variable and store the value `"Marie"` in it.
-    > Although it's slightly more complicated, for now we can safely assume that new variables are defined using `var`. In the next challenge we'll see what `var` really is and how it helps simplifying variable definitions.
+1. Create a new line before the greeting command, insert `string user = "Marie";` to define a variable and store the value `"Marie"` in it.
+    > `string` defines the type of values we can store in the variable. `string` in this sense is a *chain of characters* which simply means *text*.
 
     > Every variable must have a name, which in our case is `user`. Valid variable names must obey some rules, but if you only use letters you're on the safe side.
 
