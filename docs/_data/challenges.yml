@@ -8,3 +8,5 @@
   items:
     - name: Greeting
       link: /challenges/greeting.html
+    - name: Ask for position
+      link: /challenges/ask-for-position.html
