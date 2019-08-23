@@ -11,6 +11,10 @@ $menu-item-active-background-color: $primary;
     text-align: justify;
 }
 
+code {
+    white-space: pre;
+}
+
 // https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style
 kbd {
     background-color: #f7f7f7;
