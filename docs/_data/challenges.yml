@@ -10,3 +10,5 @@
       link: /challenges/greeting.html
     - name: Ask for position
       link: /challenges/ask-for-position.html
+    - name: Calculator
+      link: /challenges/calculator.html
