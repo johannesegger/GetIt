@@ -37,3 +37,10 @@ li blockquote {
 blockquote code {
     background: darken($code-background, 5%);
 }
+
+blockquote pre code {
+    background: none;
+}
+blockquote .highlight {
+    background: darken($code-background, 5%);
+}
