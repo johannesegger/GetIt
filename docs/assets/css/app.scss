@@ -7,6 +7,10 @@ $menu-item-active-background-color: $primary;
 @import "main";
 @import "ribbons.css";
 
+.content {
+    text-align: justify;
+}
+
 // https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style
 kbd {
     background-color: #f7f7f7;
