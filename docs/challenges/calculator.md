@@ -37,14 +37,15 @@ As you probably know from maths there is an infinite number of integer values an
 1. Let the turtle tell us the minimum and maximum value for `int` using `Turtle.Say($"Minimum int: {int.MinValue}\r\nMaximum int: {int.MaxValue}");`.
     > You can think of `int.MinValue` and `int.MaxValue` as variables except that you can't store another value in them. They are *constant*.
 1. If `int.MaxValue` is the maximum number that we can respresent with four bytes, what happens when we increase it by 1? Try `Turtle.Say($"Maximum int + 1: {int.MaxValue + 1}");`?
-    > C# apparently is smart enough to detect an *overflow* and prevents us from running the program. We can tell C# to ignore overflows by using `Turtle.Say($"Maximum int + 1: {unchecked(int.MaxValue + 1)}");`. While very useful for demonstration purposes it's very unlikely that you'll ever need the `unchecked` operator. If you look at the binary representation of an `int` value in C# it's very obvious why `int.MaxValue + 1` equals `int.MinValue`.
+    > C# apparently is smart enough to detect an *overflow* and prevents us from running the program. We can tell C# to ignore overflows by using `Turtle.Say($"Maximum int + 1: {unchecked(int.MaxValue + 1)}");`. While very useful for demonstration purposes it's very unlikely that you'll ever need the `unchecked` operator. If you look at the *binary representation* of an `int` value in C# -- which we are not going to do because this challenge is already complicated enough -- it's very obvious why `int.MaxValue + 1` equals `int.MinValue`.
 1. Try the same experiment with `int.MinValue`.
 
 The internal representation of real numbers is much more complicated because of the fractional part. The most obvious thing to do would be splitting the eight bytes of a `double` into four bytes for the integer part and four bytes for the fractional part -- this is called [fixed-point representation](https://en.wikipedia.org/wiki/Fixed-point_arithmetic){:target="_blank"}. However most systems use [floating-point representation](https://en.wikipedia.org/wiki/Floating-point_arithmetic){:target="_blank"} which gives a much wider range of possible values but in exchange suffers from a loss of precision which we are going to explore now.
 
 1. Add the command `Turtle.Say($"0.1 + 0.2 = {0.1 + 0.2:R}");` and check the result.
-    > `:R` after the calculation prevents rounding the value. Again we use this here for demonstration purposes and you'll probably need this very rarely.
+    > `:R` after the calculation prevents rounding the value. Again we use this here for demonstration purposes. In real life this is needed very rarely.
 
     > It's not important why exactly we have a rounding error in this calculation, but the take-away from this lesson is that a computer can't represent all real numbers (not even close) and that we have to be very careful when working with such numbers.
 1. Check the bounds of `double` as we did before with `int`.
 1. Try to overflow it by multiplying `double.MaxValue` by 2 and see what happens.
+1. Try the same experiment with `double.MinValue`.
