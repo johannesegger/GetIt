@@ -25,11 +25,13 @@ This challenge is all about [*arithmetic*](https://en.wikipedia.org/wiki/Arithme
     > An integer can be turned into a real number quite easily by appending `.0` at the end, so in the above example we get the real result if we wrote `17.0 / 7`.
     > For variables it's slightly more verbose. If you have `a / b` and both `a` and `b` are of type `int` -- shorthand for *integer* -- you need to convert at least one of them to a `double` by prepending `(double)`, for example `(double)a / b`. This conversion is typically called *cast*. Here is the full example:
     >
-    > ```csharp
-int a = 17;
-int b = 7;
-double result = (double)a / b;
-      ```
+    >
+   ```csharp
+   int a = 17;
+   int b = 7;
+   double result = (double)a / b;
+   ```
+
 1. Maybe integer division is not as unfamiliar as it initially seemed. When doing division by hand you might have learned to calculate the integer quotient as well as the remainder. C# has an easy to use operator to calculate the remainder because there are many use cases for remainders. To calculate the remainder of a division you use the modulo operator `%`, for example `17 % 7`.
 
 As you probably know from maths there is an infinite number of integer values and an [even larger number](https://en.wikipedia.org/wiki/Uncountable_set){:target="_blank"} of real numbers. But in C# we only have four bytes to represent an `int` and eight bytes for a `double`, so the number of different values is limited. Let's explore those limits and see what happens when we exceed them.
