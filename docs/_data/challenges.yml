@@ -18,3 +18,5 @@
   items:
     - name: Jump around
       link: /challenges/jump-around.html
+    - name: Draw staircase
+      link: /challenges/draw-staircase.html
