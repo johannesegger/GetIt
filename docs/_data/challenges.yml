@@ -16,3 +16,5 @@
       link: /challenges/comparisons.html
 - label: Loops
   items:
+    - name: Jump around
+      link: /challenges/jump-around.html
