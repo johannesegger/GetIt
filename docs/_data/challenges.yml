@@ -14,3 +14,5 @@
       link: /challenges/calculator.html
     - name: Comparisons
       link: /challenges/comparisons.html
+- label: Loops
+  items:
