@@ -20,3 +20,5 @@
       link: /challenges/jump-around.html
     - name: Draw staircase
       link: /challenges/draw-staircase.html
+    - name: Draw polygon
+      link: /challenges/draw-polygon.html
