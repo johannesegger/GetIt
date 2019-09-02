@@ -15,7 +15,7 @@ title: Draw polygon
 }
 </style>
 
-This challenge will introduce you to loops -- a way to repeat one or more commands.
+In this challenge you'll use loops to create regular polygons with an arbitrary number of sides.
 
 1. Draw a regular triangle with a side length of 200 using `Turtle.MoveInDirection` and `Turtle.RotateCounterClockwise`.
     > Don't forget to turn on the pen at the beginning.
