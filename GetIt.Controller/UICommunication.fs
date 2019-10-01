@@ -78,6 +78,7 @@ module UICommunication =
                 )
                 |> ignore
 
+        printfn "Starting server"
         do!
             WebHostBuilder()
                 .UseKestrel()
@@ -106,24 +107,25 @@ module UICommunication =
             ]
 #if DEBUG
         // Ensure that `yarn webpack-dev-server` is running before starting this
-        let proc =
+        let psi =
             let psi = ProcessStartInfo("powershell.exe", Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1")))
             List.append [ "ELECTRON_WEBPACK_WDS_PORT", "8080" ] args
             |> List.iter psi.EnvironmentVariables.Add
             psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
             psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
-            Process.Start psi
+            psi
 #else
-        let proc =
+        let psi =
             let path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..", "..", "tools", "GetIt.UI", "GetIt.UI.exe")
             let psi = ProcessStartInfo(path)
             psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
             psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
             args
             |> List.iter psi.EnvironmentVariables.Add
-            Process.Start psi
+            psi
 #endif
-
+        printfn "Starting UI with %s %s" psi.FileName psi.Arguments
+        let proc = Process.Start psi
         proc.WaitForExit ()
         if proc.ExitCode <> 0 then
             raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
@@ -177,8 +179,10 @@ module UICommunication =
                             do! processRunTask
                             disposeCommunicationState ()
                             do! webServerRunTask
+                            printfn "Stopping app."
                             Environment.Exit 0
                         with e ->
+                            printfn "Stopping app. %O" e
                             Environment.Exit 1
                     }
                     |> Async.RunSynchronously
