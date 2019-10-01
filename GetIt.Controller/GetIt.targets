@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!--
+        .NET Core 3 by default copies all dependencies to the output folder.
+        We don't want this because GetIt.UI can't be found then.
+        And we also don't want to copy GetIt.UI to the output folder because of its size.
+        The following property disables copying dependencies to the output folder
+        and instead loads them from the nuget folder.
+     -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
   <ItemGroup>
     <SourceFiles Include="$(MSBuildProjectDirectory)\**\*.cs" Exclude="$(MSBuildProjectDirectory)\obj\**\*;$(MSBuildProjectDirectory)\bin\**\*" />
     <None Include="@(SourceFiles)">
