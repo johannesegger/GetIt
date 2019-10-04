@@ -29,7 +29,6 @@ type Model =
         SceneBounds: GetIt.Rectangle
         WindowTitle: string option
         Players: Map<PlayerId, PlayerData>
-        PlayerStringAnswers: Map<PlayerId, string>
         PenLines: PenLine list
         Background: SvgImage
         BatchMessages: (ChannelMsg list * int) option
@@ -40,7 +39,6 @@ let init () =
         SceneBounds = GetIt.Rectangle.zero
         WindowTitle = None
         Players = Map.empty
-        PlayerStringAnswers = Map.empty
         PenLines = []
         Background = Background.none
         BatchMessages = None
@@ -54,18 +52,14 @@ let rec update msg model =
     match model.BatchMessages, msg with
     | None, UIMsg (SetSceneBounds bounds) ->
         { model with SceneBounds = bounds }
-    | None, UIMsg (UpdateStringAnswer (playerId, answer)) ->
-        { model with PlayerStringAnswers = Map.add playerId answer model.PlayerStringAnswers }
     | None, UIMsg (AnswerStringQuestion (playerId, answer)) ->
-        let model' =
-            updatePlayer playerId (fun p ->
-                match p.SpeechBubble with
-                | Some (AskString _) -> { p with SpeechBubble = None }
-                | Some (AskBool _)
-                | Some (Say _)
-                | None -> p
-            )
-        { model' with PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers }
+        updatePlayer playerId (fun p ->
+            match p.SpeechBubble with
+            | Some (AskString _) -> { p with SpeechBubble = None }
+            | Some (AskBool _)
+            | Some (Say _)
+            | None -> p
+        )
     | None, UIMsg (AnswerBoolQuestion (playerId, answer)) ->
         updatePlayer playerId (fun p ->
             match p.SpeechBubble with
@@ -137,7 +131,6 @@ let rec update msg model =
     | None, ControllerMsg (msgId, RemovePlayer playerId) ->
         { model with
             Players = Map.remove playerId model.Players
-            PlayerStringAnswers = Map.remove playerId model.PlayerStringAnswers
         }
     | None, ControllerMsg (msgId, SetWindowTitle title) ->
         { model with WindowTitle = title }
@@ -223,10 +216,8 @@ let view model dispatch =
             speechBubble [
                 span [] [ str text ]
                 input [
-                    OnChange (fun ev -> dispatch (UpdateStringAnswer (playerId, ev.Value)))
                     AutoFocus true
                     OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
-                    Value (model.PlayerStringAnswers |> Map.tryFind playerId |> Option.defaultValue "")
                     Style [ Width "100%"; MarginTop "5px" ]
                 ]
             ]
@@ -328,12 +319,6 @@ let stream states msgs =
             )
         AsyncRx.msgChannel url encode decode
     [
-        msgs
-        |> AsyncRx.choose (function
-            | UIMsg (UpdateStringAnswer _) as x -> Some x
-            | _ -> None
-        )
-
         states
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
         |> AsyncRx.distinctUntilChanged

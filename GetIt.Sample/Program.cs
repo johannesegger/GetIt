@@ -355,6 +355,7 @@ namespace GetIt.Sample
             string input = Turtle.Ask("How old are you?");
             while (!int.TryParse(input, out age))
             {
+                Turtle.Sleep(500);
                 input = Turtle.Ask("Are you kidding? That's not a number. How old are you?");
             }
             Turtle.Say($"{age}? You're looking good for your age!");

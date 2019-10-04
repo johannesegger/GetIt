@@ -49,7 +49,6 @@ module UICommunication =
                 | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
                     Model.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds })
                     AsyncRx.single (msg, connId)
-                | ChannelMsg.UIMsg (UpdateStringAnswer _ as uiMsg)
                 | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
                 | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
                     Model.updateCurrent (fun model -> UIMsg uiMsg, model)

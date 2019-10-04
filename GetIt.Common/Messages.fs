@@ -36,7 +36,6 @@ type ControllerMsg =
 
 type UIMsg =
     | SetSceneBounds of Rectangle
-    | UpdateStringAnswer of PlayerId * string
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
 
@@ -174,7 +173,6 @@ module Decode =
         let decoders =
             [
                 ("setSceneBounds", rectangle |> Decode.map SetSceneBounds)
-                ("updateStringAnswer", Decode.tuple2 playerId Decode.string |> Decode.map UpdateStringAnswer)
                 ("answerStringQuestion", Decode.tuple2 playerId Decode.string |> Decode.map AnswerStringQuestion)
                 ("answerBoolQuestion", Decode.tuple2 playerId Decode.bool |> Decode.map AnswerBoolQuestion)
             ]
@@ -326,8 +324,6 @@ module Encode =
         match msg with
         | SetSceneBounds p ->
             Encode.object [ ("setSceneBounds", rectangle p) ]
-        | UpdateStringAnswer (pId, answer) ->
-            Encode.object [ ("updateStringAnswer", Encode.tuple2 playerId Encode.string (pId, answer)) ]
         | AnswerStringQuestion (pId, answer) ->
             Encode.object [ ("answerStringQuestion", Encode.tuple2 playerId Encode.string (pId, answer)) ]
         | AnswerBoolQuestion (pId, answer) ->
