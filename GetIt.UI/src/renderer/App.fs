@@ -224,6 +224,7 @@ let view model dispatch =
                 span [] [ str text ]
                 input [
                     OnChange (fun ev -> dispatch (UpdateStringAnswer (playerId, ev.Value)))
+                    AutoFocus true
                     OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
                     Value (model.PlayerStringAnswers |> Map.tryFind playerId |> Option.defaultValue "")
                     Style [ Width "100%"; MarginTop "5px" ]
