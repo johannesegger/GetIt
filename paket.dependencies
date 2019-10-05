@@ -1,22 +1,23 @@
 source https://api.nuget.org/v3/index.json
 
 group Controller
+    # use NuGet-like strategy because this package will be used preferrably from projects that use NuGet
     strategy: min
 
     source https://api.nuget.org/v3/index.json
 
-    github johannesegger/Elmish.Streams:master AspNetCore.Middleware/StreamsMiddleware.fs
     nuget ColorCode.Html
     nuget FSharp.Control.AsyncRx
     nuget FSharp.Control.Reactive
     nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
-    nuget Microsoft.AspNetCore ~> 2.2
+    nuget Microsoft.AspNetCore
     nuget Microsoft.AspNetCore.Server.Kestrel
-    nuget Microsoft.AspNetCore.WebSockets ~> 2.2
+    nuget Microsoft.AspNetCore.WebSockets
     nuget Microsoft.Extensions.Logging
     nuget Polly
+    nuget Reaction.AspNetCore.Middleware
     nuget SharpLibWin32
     nuget SharpZipLib
     nuget System.Drawing.Common
@@ -27,6 +28,7 @@ group UI
 
     storage:none
 
+    nuget FSharp.Control.AsyncRx
     nuget Fable.Elmish.HMR
     nuget Fable.Elmish.Nile
     nuget Fable.Elmish.Streams

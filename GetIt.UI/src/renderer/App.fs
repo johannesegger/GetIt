@@ -340,7 +340,7 @@ let stream states msgs =
                 |> AsyncRx.startWith [ Browser.Dom.document.body ]
             )
             |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
-            // |> AsyncRx.take 1
+            |> AsyncRx.take 1
             |> AsyncRx.map (fun n -> let bounds = n.getBoundingClientRect() in (bounds.width, bounds.height))
             |> AsyncRx.merge AsyncRx.observeSceneSizeFromWindowResize
             |> AsyncRx.map(fun (width, height) ->
