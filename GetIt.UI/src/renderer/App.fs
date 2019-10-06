@@ -318,6 +318,22 @@ let stream states msgs =
                     None
             )
         AsyncRx.msgChannel url encode decode
+
+    let sceneSizeChanged =
+        AsyncRx.defer (fun () ->
+            Browser.Dom.document.querySelector "#elmish-app"
+            |> AsyncRx.observeSubTreeAdditions
+            |> AsyncRx.choose (fun (n: Node) ->
+                if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
+            )
+            |> AsyncRx.startWith [ Browser.Dom.document.body ]
+        )
+        |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
+        |> AsyncRx.take 1
+        |> AsyncRx.flatMapLatest (fun sceneElement ->
+            AsyncRx.observeSceneSizeFromWindowResize
+            |> AsyncRx.map (fun sceneSize -> (sceneElement, sceneSize))
+        )
     [
         states
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
@@ -331,19 +347,8 @@ let stream states msgs =
         |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
 
         [
-            AsyncRx.defer (fun () ->
-                Browser.Dom.document.querySelector "#elmish-app"
-                |> AsyncRx.observeSubTreeAdditions
-                |> AsyncRx.choose (fun (n: Node) ->
-                    if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
-                )
-                |> AsyncRx.startWith [ Browser.Dom.document.body ]
-            )
-            |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
-            |> AsyncRx.take 1
-            |> AsyncRx.map (fun n -> let bounds = n.getBoundingClientRect() in (bounds.width, bounds.height))
-            |> AsyncRx.merge AsyncRx.observeSceneSizeFromWindowResize
-            |> AsyncRx.map(fun (width, height) ->
+            sceneSizeChanged
+            |> AsyncRx.map(snd >> fun (width, height) ->
                 {
                     Position = { X = -width / 2.; Y = -height / 2. }
                     Size = { Width = width; Height = height }

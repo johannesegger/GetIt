@@ -27,6 +27,7 @@ let observeSceneSizeFromWindowResize =
             obs.OnNextAsync (Browser.Dom.window.innerWidth, Browser.Dom.window.innerHeight)
             |> Async.StartImmediate
             ()
+        resizeCanvas ()
         Browser.Dom.window.addEventListener("resize", resizeCanvas, false)
         return AsyncDisposable.Create (fun () -> async {
             Browser.Dom.window.removeEventListener("resize", resizeCanvas, false)
