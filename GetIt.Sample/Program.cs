@@ -43,7 +43,8 @@ namespace GetIt.Sample
             // Program33();
             // Program34();
             // Program35();
-            Program36();
+            // Program36();
+            Program37();
         }
 
         private static void Program1()
@@ -876,6 +877,42 @@ namespace GetIt.Sample
             else
             {
                 Turtle.Say("Ok. Bye bye.");
+            }
+        }
+
+        private static void Program37()
+        {
+            Game.ShowScene();
+            Player player = Game.AddPlayer(PlayerData.Ant);
+            player.SetSizeFactor(3);
+
+            while (true)
+            {
+                // Game.ClearScene();
+                player.MoveToRandomPosition();
+                player.TurnOnPen();
+                player.SetPenColor(RGBAColors.Red);
+                player.SetPenWeight(3);
+                for (int i = 0; i < 100; i++)
+                {
+                    player.MoveInDirection(1);
+                    player.ShiftPenColor(1);
+                }
+                player.SetDirection(Directions.Down);
+                for (int i = 0; i < 200; i++)
+                {
+                    player.MoveInDirection(1);
+                    player.ShiftPenColor(1);
+                }
+                while (player.Direction > 90)
+                {
+                    player.MoveInDirection(1);
+                    player.RotateClockwise(1);
+                    player.ShiftPenColor(1);
+                }
+                player.TurnOffPen();
+                player.SetDirection(Directions.Right);
+                player.Sleep(1000);
             }
         }
     }

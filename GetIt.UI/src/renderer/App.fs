@@ -29,7 +29,7 @@ type Model =
         SceneBounds: GetIt.Rectangle
         WindowTitle: string option
         Players: Map<PlayerId, PlayerData>
-        PenLines: PenLine list
+        PenLineChunks: PenLine list list
         Background: SvgImage
         BatchMessages: (ChannelMsg list * int) option
     }
@@ -39,7 +39,7 @@ let init () =
         SceneBounds = GetIt.Rectangle.zero
         WindowTitle = None
         Players = Map.empty
-        PenLines = []
+        PenLineChunks = []
         Background = Background.none
         BatchMessages = None
     }
@@ -73,7 +73,7 @@ let rec update msg model =
         let player' = { player with Position = position }
         { model with
             Players = Map.add playerId player' model.Players
-            PenLines =
+            PenLineChunks =
                 if player.Pen.IsOn
                 then
                     let line =
@@ -83,8 +83,11 @@ let rec update msg model =
                             Weight = player.Pen.Weight
                             Color = player.Pen.Color
                         }
-                    model.PenLines @ [ line ]
-                else model.PenLines
+                    match model.PenLineChunks with
+                    | x :: xs when x.Length < 500 ->
+                        (line :: x) :: xs
+                    | x -> [ line ] :: x
+                else model.PenLineChunks
         }
     | None, ControllerMsg (msgId, ChangePosition (playerId, relativePosition)) ->
         let player = Map.find playerId model.Players
@@ -135,7 +138,7 @@ let rec update msg model =
     | None, ControllerMsg (msgId, SetWindowTitle title) ->
         { model with WindowTitle = title }
     | None, ControllerMsg (msgId, ClearScene) ->
-        { model with PenLines = [] }
+        { model with PenLineChunks = [] }
     | None, ControllerMsg (msgId, SetBackground background) ->
         { model with Background = background }
     | None, ControllerMsg (msgId, StartBatch) ->
@@ -242,19 +245,30 @@ let view model dispatch =
     let drawPenLines =
         g [] [
             yield!
-                model.PenLines
-                |> List.map (fun penLine ->
-                    line [
-                            X1 (penLine.Start.X - model.SceneBounds.Left)
-                            Y1 (model.SceneBounds.Top - penLine.Start.Y)
-                            X2 (penLine.End.X - model.SceneBounds.Left)
-                            Y2 (model.SceneBounds.Top - penLine.End.Y)
-                            Style [
-                                Stroke (RGBAColor.rgbaHexNotation penLine.Color)
-                                StrokeWidth penLine.Weight
-                            ]
-                        ]
-                        []
+                model.PenLineChunks
+                |> Seq.rev
+                |> Seq.map (fun penLines ->
+                    lazyView
+                        (fun _ ->
+                            penLines
+                            |> Seq.rev
+                            |> Seq.map (fun penLine ->
+                                line
+                                    [
+                                        X1 (penLine.Start.X - model.SceneBounds.Left)
+                                        Y1 (model.SceneBounds.Top - penLine.Start.Y)
+                                        X2 (penLine.End.X - model.SceneBounds.Left)
+                                        Y2 (model.SceneBounds.Top - penLine.End.Y)
+                                        Style [
+                                            Stroke (RGBAColor.rgbaHexNotation penLine.Color)
+                                            StrokeWidth penLine.Weight
+                                        ]
+                                    ]
+                                    []
+                            )
+                            |> g []
+                        )
+                        penLines.Length
                 )
         ]
 
