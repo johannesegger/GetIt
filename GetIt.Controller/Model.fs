@@ -4,7 +4,6 @@ open System
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Reactive.Subjects
-open Elmish
 open FSharp.Control.Reactive
 
 type internal Model =

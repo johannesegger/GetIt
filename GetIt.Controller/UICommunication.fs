@@ -1,11 +1,11 @@
 ﻿namespace GetIt
 
-open Elmish.Streams.AspNetCore.Middleware
 open FSharp.Control
 open FSharp.Control.Reactive
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
+open Reaction.AspNetCore.Middleware
 open System
 open System.Diagnostics
 open System.IO
