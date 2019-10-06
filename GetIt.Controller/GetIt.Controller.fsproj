@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\paket-files\controller\johannesegger\Elmish.Streams\AspNetCore.Middleware\StreamsMiddleware.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
     <Compile Include="PrintConfig.fs" />
