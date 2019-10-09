@@ -13,6 +13,7 @@ After setting up a few projects you won't need the help anymore.
     dotnet new console -o GetItStarted
     cd .\GetItStarted
     dotnet add package GetIt
+    dotnet restore
     code .
     ```
 
