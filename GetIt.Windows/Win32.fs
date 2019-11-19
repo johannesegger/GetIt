@@ -114,8 +114,8 @@ module Win32 =
         val mutable Right: int
         val mutable Bottom: int
 
-    [<DllImport("user32.dll")>]
-    extern IntPtr GetWindowRect(IntPtr hWnd, Rect& rect)
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool GetWindowRect(IntPtr hWnd, Rect& rect)
 
     type DWMWINDOWATTRIBUTE =
         | NCRenderingEnabled = 1u

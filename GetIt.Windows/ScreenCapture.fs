@@ -19,7 +19,8 @@ module ScreenCapture =
         let mutable rect = Unchecked.defaultof<Win32.Rect>
         let status = Win32.DwmGetWindowAttribute(handle, Win32.DWMWINDOWATTRIBUTE.ExtendedFrameBounds, &rect, Marshal.SizeOf<Win32.Rect>())
         if status <> 0 then
-            raise (Win32Exception(sprintf "DwmGetWindowAttribute failed. Status code: %d" status))
+            if not <| Win32.GetWindowRect(handle, &rect)
+            then raise (Win32Exception(sprintf "Failed to get window size (DwmGetWindowAttribute returned status code %d, GetWindowRect returned false)" status))
         let bounds = Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top)
         use bitmap = new Bitmap(bounds.Width, bounds.Height)
 
