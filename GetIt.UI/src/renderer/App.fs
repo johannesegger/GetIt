@@ -249,16 +249,16 @@ let view model dispatch =
                 |> Seq.rev
                 |> Seq.map (fun penLines ->
                     lazyView
-                        (fun _ ->
+                        (fun (_, sceneBounds: Rectangle) ->
                             penLines
                             |> Seq.rev
                             |> Seq.map (fun penLine ->
                                 line
                                     [
-                                        X1 (penLine.Start.X - model.SceneBounds.Left)
-                                        Y1 (model.SceneBounds.Top - penLine.Start.Y)
-                                        X2 (penLine.End.X - model.SceneBounds.Left)
-                                        Y2 (model.SceneBounds.Top - penLine.End.Y)
+                                        X1 (penLine.Start.X - sceneBounds.Left)
+                                        Y1 (sceneBounds.Top - penLine.Start.Y)
+                                        X2 (penLine.End.X - sceneBounds.Left)
+                                        Y2 (sceneBounds.Top - penLine.End.Y)
                                         Style [
                                             Stroke (RGBAColor.rgbaHexNotation penLine.Color)
                                             StrokeWidth penLine.Weight
@@ -268,7 +268,7 @@ let view model dispatch =
                             )
                             |> g []
                         )
-                        penLines.Length
+                        (penLines.Length, model.SceneBounds)
                 )
         ]
 
