@@ -1,6 +1,7 @@
 namespace GetIt
 
 open System
+open System.Globalization
 open System.IO
 open System.Text.RegularExpressions
 open System.Xml
@@ -19,11 +20,18 @@ module Utils =
     let flip fn a b = fn b a
 
 /// For internal use only.
+module Double =
+    let tryParseCultureInvariant arg =
+        match Double.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture) with
+        | (true, v) -> Some v
+        | (false, _) -> None
+
+/// For internal use only.
 module Svg =
     let parseViewBox (text: string) =
         let parts =
             text.Split ' '
-            |> Array.map float
+            |> Array.choose Double.tryParseCultureInvariant
             |> Array.toList
         match parts with
         | x :: y :: width :: [ height ] -> Some (x, y, width, height)
@@ -34,9 +42,7 @@ module Svg =
         else
             let m = Regex.Match(text, @"^.*(?=(px)?$)")
             if m.Success then
-                match System.Double.TryParse m.Value with
-                | (true, v) -> Some v
-                | _ -> None
+                Double.tryParseCultureInvariant m.Value
             else
                 None
 
