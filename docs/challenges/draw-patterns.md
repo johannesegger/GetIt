@@ -42,7 +42,7 @@ Here are some hints for each pattern that should get you started:
   * Find the command that calculates the tangent and draw the curve according to "Sine wave - Version 1".
 * Christmas tree - Version 1
   * Similar to "Vertical saw", but the horizontal line is not as long.
-  * Also you probably need two loops to draw both sides of the tree
+  * You probably need two loops to draw both sides of the tree.
 * Christmas tree - Version 2
   * Continuously increase the x distance until you hit the bottom edge. The y distance should be constant.
 * Sawing blade
