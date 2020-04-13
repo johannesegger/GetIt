@@ -6,7 +6,7 @@ In this challenge you'll learn about data types -- what they are, why we need th
 
 1. We want to move our turtle to a user-defined position. So we have to ask the user for the x and y coordinate. Add a command `Turtle.Ask("Hi! Where should I move?\r\nX coordinate:")` and store the result in a new variable `xCoordinateText`.
     > `\r\n` is a [line break](https://en.wikipedia.org/wiki/Newline){:target="_blank"} -- similar to pressing <kbd>Enter</kbd> in a text document.
-1. Run the program, enter a number when the turtle asks you for the x coordinate and press <kbd>Enter</kbd> to confirm your input.
+1. Run the program, enter a number when the turtle asks you for the X coordinate and press <kbd>Enter</kbd> to confirm your input.
     > Note that you can input any text, not just numbers. `"53"`, `"-163.4"` or `"slightly right"` are all possible inputs that might be stored in `xCoordinateText`. So before we can use the users input as number we have to make sure it actually is a number. We do this by *parsing* the input as number.
 1. Define a new variable `xCoordinate` and store `double.Parse(xCoordinateText)` in it. The type of values `xCoordinate` can store is not `string` but `double`.
     > `double` means *real number with [**double precision**](https://en.wikipedia.org/wiki/Double-precision_floating-point_format){:target="_blank"}*. Most of the time you don't really care about the precision and just use *double*.

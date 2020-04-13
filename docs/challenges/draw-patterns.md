@@ -13,9 +13,9 @@ Your browser does not support the video tag.
 Here are some hints for each pattern that should get you started:
 
 * Horizontal saw
-  * At the beginning move the turtle to the left edge. Use `Game.SceneBounds.Left` to get the x coordinate of the left edge. The y coordinate is the center of the scene.
+  * At the beginning move the turtle to the left edge. Use `Game.SceneBounds.Left` to get the X coordinate of the left edge. The y coordinate is the center of the scene.
   * Turn on the pen and alternately move the turtle diagonally up and down.
-  * Repeat the movement until the turtle's x position is greater than `Game.SceneBounds.Right`.
+  * Repeat the movement until the turtle's X position is greater than `Game.SceneBounds.Right`.
 * Vertical saw
   * Same as above, but the turtle should move from `Game.SceneBounds.Top` to `Game.SceneBounds.Bottom`.
 * Cross saw
@@ -26,12 +26,12 @@ Here are some hints for each pattern that should get you started:
   * Continue drawing the two lines until the turtle is at the bottom right corner.
 * Sine wave - Version 1
   * Make sure you know how a [sine wave](https://en.wikipedia.org/wiki/Sine) looks like before you start.
-  * Start at the left edge and calculate the sine of the current x coordinate using `Math.Sin`.
-    > `Math.Sin` works with [radians](https://en.wikipedia.org/wiki/Radian), but we want our x coordinates to be interpreted as [degrees](https://en.wikipedia.org/wiki/Degree_(angle)).
-    > To do that we have to convert the x coordinate to radians before passing it to `Math.Sin`.
+  * Start at the left edge and calculate the sine of the current X coordinate using `Math.Sin`.
+    > `Math.Sin` works with [radians](https://en.wikipedia.org/wiki/Radian), but we want our X coordinates to be interpreted as [degrees](https://en.wikipedia.org/wiki/Degree_(angle)).
+    > To do that we have to convert the X coordinate to radians before passing it to `Math.Sin`.
     > The value we get back from `Math.Sin` is between -1 and 1 (that's how sine is defined).
     > Basically this is now the value that we use as y coordinate. However we should scale the value (i.e. multiply it by e.g. 100) before moving the turtle to that position.
-  * Calculate the y coordinate for the next x coordinate (you get a better resolution the smaller x steps you make) according to the above procedure until you hit the right edge.
+  * Calculate the y coordinate for the next X coordinate (you get a better resolution the smaller x steps you make) according to the above procedure until you hit the right edge.
 * Sine wave - Version 2
   * Instead of simply moving the turtle along the curve we draw a straight line from the scene bottom to the y value.
 * Sine wave - Version 3
