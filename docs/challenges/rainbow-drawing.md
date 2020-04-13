@@ -115,4 +115,4 @@ Follow the steps below to create the rainbow drawing app:
     }
     ```
 
-While `if` at first looks very similar to `while`, `else` and `else if` bring in some peculiarities which you should get familiar with by playing around with the above example.
+While `if` at first looks very similar to `while`, `else` and especially the use of `else if` bring in some peculiarities which you should get familiar with by playing around with the above example.
