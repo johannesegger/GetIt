@@ -1,22 +1,20 @@
-$fa-font-path: "./../node_modules/@fortawesome/fontawesome-free/webfonts/"
-@import './../node_modules/@fortawesome/fontawesome-free/scss/fontawesome'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/regular'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/solid'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/brands'
 
-@import '../node_modules/bulma/bulma'
 
 html
   overflow-y: auto
   font-size: 0.8em
 html, body, #elmish-app, #main
   height: 100%
+body
+  font-family: "Segoe UI"
+  margin: 0
 #main
   display: flex
   flex-direction: column
 #scene
   flex: auto
   width: 100%
+  position: relative
   .speech-bubble
     position: relative
     width: max-content

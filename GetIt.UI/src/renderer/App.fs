@@ -29,7 +29,7 @@ type Model =
         SceneBounds: GetIt.Rectangle
         WindowTitle: string option
         Players: Map<PlayerId, PlayerData>
-        PenLineChunks: PenLine list list
+        PenLines: PenLine list
         Background: SvgImage
         BatchMessages: (ChannelMsg list * int) option
     }
@@ -39,20 +39,20 @@ let init () =
         SceneBounds = GetIt.Rectangle.zero
         WindowTitle = None
         Players = Map.empty
-        PenLineChunks = []
+        PenLines = []
         Background = Background.none
         BatchMessages = None
     }
 
-let rec update msg model =
+let rec private updateDirectly msg model =
     let updatePlayer playerId fn =
         let player = Map.find playerId model.Players |> fn
         { model with Players = Map.add playerId player model.Players }
 
-    match model.BatchMessages, msg with
-    | None, UIMsg (SetSceneBounds bounds) ->
+    match msg with
+    | UIMsg (SetSceneBounds bounds) ->
         { model with SceneBounds = bounds }
-    | None, UIMsg (AnswerStringQuestion (playerId, answer)) ->
+    | UIMsg (AnswerStringQuestion (playerId, answer)) ->
         updatePlayer playerId (fun p ->
             match p.SpeechBubble with
             | Some (AskString _) -> { p with SpeechBubble = None }
@@ -60,7 +60,7 @@ let rec update msg model =
             | Some (Say _)
             | None -> p
         )
-    | None, UIMsg (AnswerBoolQuestion (playerId, answer)) ->
+    | UIMsg (AnswerBoolQuestion (playerId, answer)) ->
         updatePlayer playerId (fun p ->
             match p.SpeechBubble with
             | Some (AskBool _) -> { p with SpeechBubble = None }
@@ -68,12 +68,12 @@ let rec update msg model =
             | Some (Say _)
             | None -> p
         )
-    | None, ControllerMsg (msgId, SetPosition (playerId, position)) ->
+    | ControllerMsg (msgId, SetPosition (playerId, position)) ->
         let player = Map.find playerId model.Players
         let player' = { player with Position = position }
         { model with
             Players = Map.add playerId player' model.Players
-            PenLineChunks =
+            PenLines =
                 if player.Pen.IsOn
                 then
                     let line =
@@ -83,78 +83,83 @@ let rec update msg model =
                             Weight = player.Pen.Weight
                             Color = player.Pen.Color
                         }
-                    match model.PenLineChunks with
-                    | x :: xs when x.Length < 500 ->
-                        (line :: x) :: xs
-                    | x -> [ line ] :: x
-                else model.PenLineChunks
+                    model.PenLines @ [ line ] // TODO measure performance
+                else model.PenLines
         }
-    | None, ControllerMsg (msgId, ChangePosition (playerId, relativePosition)) ->
+    | ControllerMsg (msgId, ChangePosition (playerId, relativePosition)) ->
         let player = Map.find playerId model.Players
-        update (ControllerMsg (System.Guid.NewGuid(), SetPosition (playerId, player.Position + relativePosition))) model
-    | None, ControllerMsg (msgId, SetDirection (playerId, angle)) ->
+        updateDirectly (ControllerMsg (System.Guid.NewGuid(), SetPosition (playerId, player.Position + relativePosition))) model
+    | ControllerMsg (msgId, SetDirection (playerId, angle)) ->
         updatePlayer playerId (fun p -> { p with Direction = angle })
-    | None, ControllerMsg (msgId, ChangeDirection (playerId, relativeDirection)) ->
+    | ControllerMsg (msgId, ChangeDirection (playerId, relativeDirection)) ->
         let player = Map.find playerId model.Players
-        update (ControllerMsg (System.Guid.NewGuid(), SetDirection (playerId, player.Direction + relativeDirection))) model
-    | None, ControllerMsg (msgId, SetSpeechBubble (playerId, speechBubble)) ->
+        updateDirectly (ControllerMsg (System.Guid.NewGuid(), SetDirection (playerId, player.Direction + relativeDirection))) model
+    | ControllerMsg (msgId, SetSpeechBubble (playerId, speechBubble)) ->
         updatePlayer playerId (fun p -> { p with SpeechBubble = speechBubble })
-    | None, ControllerMsg (msgId, SetPenState (playerId, isOn)) ->
+    | ControllerMsg (msgId, SetPenState (playerId, isOn)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = isOn } })
-    | None, ControllerMsg (msgId, TogglePenState playerId) ->
+    | ControllerMsg (msgId, TogglePenState playerId) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
-    | None, ControllerMsg (msgId, SetPenColor (playerId, color)) ->
+    | ControllerMsg (msgId, SetPenColor (playerId, color)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = color } })
-    | None, ControllerMsg (msgId, ShiftPenColor (playerId, angle)) ->
+    | ControllerMsg (msgId, ShiftPenColor (playerId, angle)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
-    | None, ControllerMsg (msgId, SetPenWeight (playerId, weight)) ->
+    | ControllerMsg (msgId, SetPenWeight (playerId, weight)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = weight } })
-    | None, ControllerMsg (msgId, ChangePenWeight (playerId, weight)) ->
+    | ControllerMsg (msgId, ChangePenWeight (playerId, weight)) ->
         updatePlayer playerId (fun p -> { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
-    | None, ControllerMsg (msgId, SetSizeFactor (playerId, sizeFactor)) ->
+    | ControllerMsg (msgId, SetSizeFactor (playerId, sizeFactor)) ->
         updatePlayer playerId (fun p -> { p with SizeFactor = sizeFactor })
-    | None, ControllerMsg (msgId, ChangeSizeFactor (playerId, sizeFactor)) ->
+    | ControllerMsg (msgId, ChangeSizeFactor (playerId, sizeFactor)) ->
         updatePlayer playerId (fun p -> { p with SizeFactor = p.SizeFactor + sizeFactor })
-    | None, ControllerMsg (msgId, SetVisibility (playerId, isVisible)) ->
+    | ControllerMsg (msgId, SetVisibility (playerId, isVisible)) ->
         updatePlayer playerId (fun p -> { p with IsVisible = isVisible })
-    | None, ControllerMsg (msgId, ToggleVisibility playerId) ->
+    | ControllerMsg (msgId, ToggleVisibility playerId) ->
         updatePlayer playerId (fun p -> { p with IsVisible = not p.IsVisible })
-    | None, ControllerMsg (msgId, SetNextCostume playerId) ->
+    | ControllerMsg (msgId, SetNextCostume playerId) ->
         updatePlayer playerId Player.nextCostume
-    | None, ControllerMsg (msgId, SendToBack playerId) ->
+    | ControllerMsg (msgId, SendToBack playerId) ->
         { model with Players = Player.sendToBack playerId model.Players }
-    | None, ControllerMsg (msgId, BringToFront playerId) ->
+    | ControllerMsg (msgId, BringToFront playerId) ->
         { model with Players = Player.bringToFront playerId model.Players }
-    | None, ControllerMsg (msgId, AddPlayer (playerId, player)) ->
+    | ControllerMsg (msgId, AddPlayer (playerId, player)) ->
         { model with
             Players =
                 Map.add playerId player model.Players
                 |> Player.sendToBack playerId
         }
-    | None, ControllerMsg (msgId, RemovePlayer playerId) ->
+    | ControllerMsg (msgId, RemovePlayer playerId) ->
         { model with
             Players = Map.remove playerId model.Players
         }
-    | None, ControllerMsg (msgId, SetWindowTitle title) ->
+    | ControllerMsg (msgId, SetWindowTitle title) ->
         { model with WindowTitle = title }
-    | None, ControllerMsg (msgId, ClearScene) ->
-        { model with PenLineChunks = [] }
-    | None, ControllerMsg (msgId, SetBackground background) ->
+    | ControllerMsg (msgId, ClearScene) ->
+        { model with PenLines = [] }
+    | ControllerMsg (msgId, SetBackground background) ->
         { model with Background = background }
-    | None, ControllerMsg (msgId, StartBatch) ->
+    | ControllerMsg (msgId, StartBatch) ->
         { model with BatchMessages = Some ([], 1) }
-    | Some (messages, level), ControllerMsg (msgId, StartBatch) ->
-        { model with BatchMessages = Some (messages, level + 1) }
-    | None, ControllerMsg (msgId, ApplyBatch) ->
+    | ControllerMsg (msgId, ApplyBatch) ->
         eprintfn "Can't apply batch because no batch is running"
         model
-    | Some (messages, level), ControllerMsg (msgId, ApplyBatch) when level > 1 ->
-        { model with BatchMessages = Some (messages, level - 1) }
-    | Some (messages, level), ControllerMsg (msgId, ApplyBatch) ->
-        (messages, ({ model with BatchMessages = None }))
-        ||> List.foldBack update
-    | Some (messages, level), x ->
-        { model with BatchMessages = Some (x :: messages, level) }
+
+let update msg model =
+    match model.BatchMessages with
+    | None ->
+        updateDirectly msg model
+    | Some (messages, level) ->
+        match msg with
+        | ControllerMsg (msgId, StartBatch) ->
+            { model with BatchMessages = Some (messages, level + 1) }
+        | ControllerMsg (msgId, ApplyBatch) when level > 1 ->
+            { model with BatchMessages = Some (messages, level - 1) }
+        | ControllerMsg (msgId, ApplyBatch) ->
+            (messages, ({ model with BatchMessages = None }))
+            ||> List.foldBack updateDirectly
+        | x ->
+            { model with BatchMessages = Some (x :: messages, level) }
+
 
 let view model dispatch =
     let players =
@@ -166,152 +171,171 @@ let view model dispatch =
         |> List.filter (snd >> fun p -> p.IsVisible)
         |> List.rev
 
-    let drawBackground =
-        let ratio = System.Math.Max(model.SceneBounds.Size.Width / model.Background.Size.Width, model.SceneBounds.Size.Height / model.Background.Size.Height)
-        let backgroundWidth = ratio * model.Background.Size.Width
-        let backgroundHeight = ratio * model.Background.Size.Height
-        g [
-            [
-                sprintf "translate(%f %f)" ((model.SceneBounds.Size.Width - backgroundWidth) / 2.) ((model.SceneBounds.Size.Height - backgroundHeight) / 2.)
-                sprintf "scale(%f %f)" ratio ratio
+    let background =
+        img [
+            Src (
+                model.Background.SvgData
+                |> Browser.Dom.window.btoa
+                |> sprintf "data:image/svg+xml;base64,%s"
+            )
+            Style [
+                Width "100%"
+                Height "100%"
+                ObjectFit "cover"
             ]
-            |> String.concat " "
-            |> SVGAttr.Transform
-            DangerouslySetInnerHTML { __html = model.Background.SvgData }
-        ] []
+        ]
 
-    let drawPlayerOnScene (player: PlayerData) =
+    let scenePlayerView (player: PlayerData) =
         let left = -model.SceneBounds.Left + player.Bounds.Left
         let top = model.SceneBounds.Top - player.Bounds.Top
-        g
-            [
-                [
-                    sprintf "translate(%f %f)" left top
-                    sprintf "rotate(%f %f %f)" (360. - Degrees.value player.Direction) (player.Size.Width / 2.) (player.Size.Height / 2.)
-                    sprintf "scale(%f %f)" player.SizeFactor player.SizeFactor
-                ]
-                |> String.concat " "
-                |> SVGAttr.Transform
-                DangerouslySetInnerHTML { __html = player.Costume.SvgData }
+        img [
+            Src (
+                player.Costume.SvgData
+                |> Browser.Dom.window.btoa
+                |> sprintf "data:image/svg+xml;base64,%s"
+            )
+            Style [
+                Width player.Size.Width
+                Height player.Size.Height
+                Transform (
+                    [
+                        sprintf "translate(%fpx,%fpx)" left top
+                        sprintf "rotate(%fdeg)" (360. - Degrees.value player.Direction)
+                    ]
+                    |> String.concat " "
+                )
             ]
-            []
+        ]
 
-    let drawSpeechBubble playerId (player: PlayerData) =
-        let speechBubble content =
-            svgEl "foreignObject"
-                [
-                    X (-model.SceneBounds.Left + player.Bounds.Right - 30.)
-                    Y (model.SceneBounds.Top - player.Bounds.Top - 20.)
-                    SVGAttr.Width "1"
-                    SVGAttr.Height "1"
-                    Style [ Overflow "visible" ]
-                ]
-                [
-                    div [ Class "speech-bubble" ] content
-                ]
-            |> Some
+    // let drawSpeechBubble playerId (player: PlayerData) =
+    //     let speechBubble content =
+    //         svgEl "foreignObject"
+    //             [
+    //                 X (-model.SceneBounds.Left + player.Bounds.Right - 30.)
+    //                 Y (model.SceneBounds.Top - player.Bounds.Top - 20.)
+    //                 SVGAttr.Width "1"
+    //                 SVGAttr.Height "1"
+    //                 Style [ Overflow "visible" ]
+    //             ]
+    //             [
+    //                 div [ Class "speech-bubble" ] content
+    //             ]
+    //         |> Some
 
-        match player.SpeechBubble with
-        | None -> None
-        | Some (Say text) ->
-            speechBubble [ span [] [ str text ] ]
-        | Some (AskString text) ->
-            speechBubble [
-                span [] [ str text ]
-                input [
-                    AutoFocus true
-                    OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
-                    Style [ Width "100%"; MarginTop "5px" ]
-                ]
-            ]
-        | Some (AskBool text) ->
-            speechBubble [
-                span [] [ str text ]
-                div [ Class "askbool-answers" ] [
-                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
-                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
-                ]
-            ]
+    //     match player.SpeechBubble with
+    //     | None -> None
+    //     | Some (Say text) ->
+    //         speechBubble [ span [] [ str text ] ]
+    //     | Some (AskString text) ->
+    //         speechBubble [
+    //             span [] [ str text ]
+    //             input [
+    //                 AutoFocus true
+    //                 OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
+    //                 Style [ Width "100%"; MarginTop "5px" ]
+    //             ]
+    //         ]
+    //     | Some (AskBool text) ->
+    //         speechBubble [
+    //             span [] [ str text ]
+    //             div [ Class "askbool-answers" ] [
+    //                 button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
+    //                 button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
+    //             ]
+    //         ]
 
-    let drawScenePlayers =
+    let scenePlayersView =
         playersOnScene
-        |> List.map (fun (playerId, player) ->
-            g [] [
-                yield drawPlayerOnScene player
-                yield! drawSpeechBubble playerId player |> Option.toList
+        |> List.collect (fun (playerId, player) ->
+            [
+                scenePlayerView player
+                // yield! speechBubbleView playerId player |> Option.toList
             ]
         )
 
-    let drawPenLines =
-        g [] [
-            yield!
-                model.PenLineChunks
-                |> Seq.rev
-                |> Seq.map (fun penLines ->
-                    lazyView
-                        (fun (_, sceneBounds: Rectangle) ->
-                            penLines
-                            |> Seq.rev
-                            |> Seq.map (fun penLine ->
-                                line
-                                    [
-                                        X1 (penLine.Start.X - sceneBounds.Left)
-                                        Y1 (sceneBounds.Top - penLine.Start.Y)
-                                        X2 (penLine.End.X - sceneBounds.Left)
-                                        Y2 (sceneBounds.Top - penLine.End.Y)
-                                        Style [
-                                            Stroke (RGBAColor.rgbaHexNotation penLine.Color)
-                                            StrokeWidth penLine.Weight
-                                        ]
-                                    ]
-                                    []
-                            )
-                            |> g []
-                        )
-                        (penLines.Length, model.SceneBounds)
-                )
-        ]
+    let penLines =
+        let size = model.SceneBounds.Size
+        { Canvas.Width = size.Width; Canvas.Height = size.Height }
+        |> Canvas.initialize
+        |> Canvas.draw (Canvas.ClearReact (0., 0., size.Width, size.Width))
+        |> Canvas.draw (
+            model.PenLines
+            |> List.collect (fun penLine ->
+                [
+                    Canvas.BeginPath
+                    Canvas.StrokeStyle (U3.Case1 <| RGBAColor.rgbaHexNotation penLine.Color)
+                    Canvas.MoveTo (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
+                    Canvas.LineTo (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
+                    Canvas.Stroke
+                ]
+            )
+            |> Canvas.Batch
+        )
+        |> Canvas.render
+        // g [] [
+        //     yield!
+        //         model.PenLineChunks
+        //         |> Seq.rev
+        //         |> Seq.map (fun penLines ->
+        //             lazyView
+        //                 (fun (_, sceneBounds: Rectangle) ->
+        //                     penLines
+        //                     |> Seq.rev
+        //                     |> Seq.map (fun penLine ->
+        //                         line
+        //                             [
+        //                                 X1 (penLine.Start.X - sceneBounds.Left)
+        //                                 Y1 (sceneBounds.Top - penLine.Start.Y)
+        //                                 X2 (penLine.End.X - sceneBounds.Left)
+        //                                 Y2 (sceneBounds.Top - penLine.End.Y)
+        //                                 Style [
+        //                                     Stroke (RGBAColor.rgbaHexNotation penLine.Color)
+        //                                     StrokeWidth penLine.Weight
+        //                                 ]
+        //                             ]
+        //                             []
+        //                     )
+        //                     |> g []
+        //                 )
+        //                 (penLines.Length, model.SceneBounds)
+        //         )
+        // ]
 
     div [ Id "main" ] [
-        svg [ Id "scene" ] [
-            yield drawBackground
-            yield drawPenLines
-            yield! drawScenePlayers
+        div [ Id "scene" ] [
+            yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ background ]
+            yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ penLines ]
+            yield! scenePlayersView |> List.map (List.singleton >> div [ Style [ Position PositionOptions.Absolute ] ])
         ]
+        // svg [ Id "scene" ] [
+        //     yield drawBackground
+        //     yield drawPenLines
+        //     yield! drawScenePlayers
+        // ]
 
         div [ Id "info" ] [
             div [ Id "inner-info" ] [
                 yield!
                     players
-                    |> List.map (fun (PlayerId playerId, player) ->
-                        let (width, height) = (30., 30.)
-                        let ratio = System.Math.Min(width / player.Costume.Size.Width, height / player.Costume.Size.Height)
-                        let playerWidth = ratio * player.Costume.Size.Width
-                        let playerHeight = ratio * player.Costume.Size.Height
+                    |> List.map (fun (_playerId, player) ->
                         div [ Class "player" ] [
-                            svg [
-                                    Class "view"
-                                    SVGAttr.Width width
-                                    SVGAttr.Height height
-                                    sprintf "rotate(%f 0 0)" (360. - Degrees.value player.Direction)
-                                    |> SVGAttr.Transform
-                                    SVGAttr.Opacity (if player.IsVisible then 1. else 0.5)
-                                ] [
-                                    g
-                                        [
-                                            [
-                                                sprintf "translate(%f %f)" ((width - playerWidth) / 2.) ((height - playerHeight) / 2.)
-                                                sprintf "scale(%f %f)" ratio ratio
-                                            ]
-                                            |> String.concat " "
-                                            |> SVGAttr.Transform
-                                            DangerouslySetInnerHTML { __html = player.Costume.SvgData }
-                                        ]
-                                        []
+                            img [
+                                Class "view"
+                                Src (
+                                    player.Costume.SvgData
+                                    |> Browser.Dom.window.btoa
+                                    |> sprintf "data:image/svg+xml;base64,%s"
+                                )
+                                Style [
+                                    Width 30
+                                    Height 30
+                                    Transform (sprintf "rotate(%fdeg)" (360. - Degrees.value player.Direction))
+                                    Opacity (if player.IsVisible then 1. else 0.5)
                                 ]
+                            ]
 
                             span [ Class "info" ] [
-                                str (sprintf "X: %.2f | Y: %.2f | ∠ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
+                                str (sprintf "X: %.2f | Y: %.2f | ↻ %.2f°" player.Position.X player.Position.Y (Degrees.value player.Direction))
                             ]
                         ]
                     )
@@ -319,7 +343,7 @@ let view model dispatch =
         ]
     ]
 
-let stream states msgs =
+let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
     let msgChannel =
         let url = sprintf "ws://%s%s" Server.host MessageChannel.endpoint
         let encode = Encode.channelMsg >> Encode.toString 0
@@ -348,6 +372,31 @@ let stream states msgs =
             AsyncRx.observeSceneSizeFromWindowResize
             |> AsyncRx.map (fun sceneSize -> (sceneElement, sceneSize))
         )
+
+    let uiMsgs =
+        [
+            sceneSizeChanged
+            |> AsyncRx.map(snd >> fun (width, height) ->
+                {
+                    Position = { X = -width / 2.; Y = -height / 2. }
+                    Size = { Width = width; Height = height }
+                }
+                |> SetSceneBounds
+                |> UIMsg
+            )
+
+            msgs
+            |> AsyncRx.choose (function
+                | UIMsg (AnswerStringQuestion _)
+                | UIMsg (AnswerBoolQuestion _) as msg -> Some msg
+                | _ -> None
+            )
+        ]
+        |> AsyncRx.mergeSeq
+
+    let controllerMsgs =
+        states |> AsyncRx.choose (fst >> function | Some (ControllerMsg _ as msg) -> Some msg | _ -> None)
+
     [
         states
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
@@ -361,28 +410,10 @@ let stream states msgs =
         |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
 
         [
-            sceneSizeChanged
-            |> AsyncRx.map(snd >> fun (width, height) ->
-                {
-                    Position = { X = -width / 2.; Y = -height / 2. }
-                    Size = { Width = width; Height = height }
-                }
-                |> SetSceneBounds
-            )
-
-            msgs
-            |> AsyncRx.choose (function
-                | UIMsg (AnswerStringQuestion _ as msg)
-                | UIMsg (AnswerBoolQuestion _ as msg) -> Some msg
-                | _ -> None
-            )
+            uiMsgs
+            controllerMsgs
         ]
         |> AsyncRx.mergeSeq
-        |> AsyncRx.map UIMsg
-        |> AsyncRx.merge (
-            states
-            |> AsyncRx.choose (fst >> function | Some (ControllerMsg _ as msg) -> Some msg | _ -> None)
-        )
         |> msgChannel
     ]
     |> AsyncRx.mergeSeq
