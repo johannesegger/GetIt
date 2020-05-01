@@ -22,7 +22,7 @@ module Utils =
 /// For internal use only.
 module Double =
     let tryParseCultureInvariant arg =
-        match Double.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture) with
+        match Double.TryParse(arg, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
         | (true, v) -> Some v
         | (false, _) -> None
 
