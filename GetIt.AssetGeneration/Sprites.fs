@@ -82,14 +82,17 @@ let generate (httpClient: HttpClient) =
         }
     ]
     |> Seq.sortBy (fun p -> p.Name)
-    |> Seq.map (fun asset ->
+    |> Seq.collect (fun asset ->
         let costumes =
             asset.Costumes
             |> List.map (fun c ->
                 sprintf "{ Size = { Width = %f; Height = %f }; SvgData = \"\"\"%s\"\"\" }"
                     c.Width c.Height (String.removeNewLines c.Data)
             )
-        sprintf "static member %s = PlayerData.Create [ %s ]" (String.toCamelCase asset.Name) (String.concat "; " costumes)
+        [
+            sprintf "[<CompiledName(\"%s\")>]" (String.toPascalCase asset.Name)
+            sprintf "static member %s = PlayerData.Create [ %s ]" (String.toCamelCase asset.Name) (String.concat "; " costumes)
+        ]
     )
     |> fun lines -> File.WriteAllLines("sprites.fs", lines)
 

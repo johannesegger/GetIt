@@ -45,15 +45,25 @@ let generate (httpClient: HttpClient) =
     |> Async.Parallel
     |> Async.RunSynchronously
     |> Seq.append [
-        { Name = "None"; Categories = []; Image = { Width = 1.; Height = 1.; Data = """<svg width="1" height="1"><rect x="0" y="0" width="1" height="1" style="fill:#FFFFFF;" /></svg>""" } }
+        { Name = "none"; Categories = []; Image = { Width = 1.; Height = 1.; Data = """<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect x="0" y="0" width="1" height="1" style="fill:#FFFFFF;" /></svg>""" } }
     ]
     |> Seq.sortBy (fun p -> p.Name)
-    |> Seq.map (fun background ->
-        sprintf "static member %s = { Size = { Width = %f; Height = %f }; SvgData = \"\"\"%s\"\"\" }"
-            (String.toCamelCase background.Name)
-            background.Image.Width
-            background.Image.Height
-            (String.removeNewLines background.Image.Data)
+    |> Seq.collect (fun background ->
+        [
+            sprintf "[<CompiledName(\"%s\")>]" (String.toPascalCase background.Name)
+            sprintf "let %s = { Size = { Width = %f; Height = %f }; SvgData = \"\"\"%s\"\"\" }"
+                (String.toCamelCase background.Name)
+                background.Image.Width
+                background.Image.Height
+                (String.removeNewLines background.Image.Data)
+        ]
     )
-    |> fun lines -> File.WriteAllLines("backgrounds.fs", lines)
+    |> Seq.map (sprintf "    %s")
+    |> Seq.append [
+        "namespace GetIt"
+        ""
+        "/// Defines some scene backgrounds."
+        "module Background ="
+    ]
+    |> fun lines -> File.WriteAllLines("GetIt.Common\\Backgrounds.fs", lines)
 
