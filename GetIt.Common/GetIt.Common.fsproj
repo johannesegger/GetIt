@@ -11,6 +11,7 @@
     <Compile Include="Geometry.fs" />
     <Compile Include="Color.fs" />
     <Compile Include="SvgImage.fs" />
+    <Compile Include="Backgrounds.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Input.fs" />
     <Compile Include="Misc.fs" />
