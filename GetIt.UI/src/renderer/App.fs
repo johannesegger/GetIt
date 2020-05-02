@@ -207,83 +207,55 @@ let view model dispatch =
             ]
         ]
 
-    // let drawSpeechBubble playerId (player: PlayerData) =
-    //     let speechBubble content =
-    //         svgEl "foreignObject"
-    //             [
-    //                 X (-model.SceneBounds.Left + player.Bounds.Right - 30.)
-    //                 Y (model.SceneBounds.Top - player.Bounds.Top - 20.)
-    //                 SVGAttr.Width "1"
-    //                 SVGAttr.Height "1"
-    //                 Style [ Overflow "visible" ]
-    //             ]
-    //             [
-    //                 div [ Class "speech-bubble" ] content
-    //             ]
-    //         |> Some
+    let speechBubbleView playerId (player: PlayerData) =
+        let speechBubble content =
+            div
+                [
+                    Class "speech-bubble"
+                    Style [
+                        let offsetLeft = -model.SceneBounds.Left + player.Bounds.Right - 30.
+                        let offsetTop = model.SceneBounds.Top - player.Bounds.Top - 20.
+                        yield Transform (sprintf "translate(%fpx, %fpx) translate(0,-100%%)" offsetLeft offsetTop)
+                    ]
+                ]
+                content
+            |> Some
 
-    //     match player.SpeechBubble with
-    //     | None -> None
-    //     | Some (Say text) ->
-    //         speechBubble [ span [] [ str text ] ]
-    //     | Some (AskString text) ->
-    //         speechBubble [
-    //             span [] [ str text ]
-    //             input [
-    //                 AutoFocus true
-    //                 OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
-    //                 Style [ Width "100%"; MarginTop "5px" ]
-    //             ]
-    //         ]
-    //     | Some (AskBool text) ->
-    //         speechBubble [
-    //             span [] [ str text ]
-    //             div [ Class "askbool-answers" ] [
-    //                 button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
-    //                 button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
-    //             ]
-    //         ]
+        match player.SpeechBubble with
+        | None -> None
+        | Some (Say text) ->
+            speechBubble [ span [] [ str text ] ]
+        | Some (AskString text) ->
+            speechBubble [
+                span [] [ str text ]
+                input [
+                    AutoFocus true
+                    OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
+                    Style [ Width "100%"; MarginTop "5px" ]
+                ]
+            ]
+        | Some (AskBool text) ->
+            speechBubble [
+                span [] [ str text ]
+                div [ Class "askbool-answers" ] [
+                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
+                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
+                ]
+            ]
 
     let scenePlayersView =
         playersOnScene
         |> List.collect (fun (playerId, player) ->
             [
-                scenePlayerView player
-                // yield! speechBubbleView playerId player |> Option.toList
+                yield scenePlayerView player
+                yield! speechBubbleView playerId player |> Option.toList
             ]
         )
-
-    let penLines =
-    //     let size = model.SceneBounds.Size
-    //     { Canvas.Width = size.Width; Canvas.Height = size.Height }
-    //     |> Canvas.initialize
-    //     |> Canvas.draw (
-    //         [
-    //             if model.PenLines.Length < 10 then
-    //                 yield Canvas.ClearReact (0., 0., size.Width, size.Height)
-
-    //             yield!
-    //                 model.PenLines
-    //                 |> List.truncate 10
-    //                 |> List.rev
-    //                 |> List.map (fun penLine ->
-    //                     Canvas.Line {
-    //                         Start = (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
-    //                         End = (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
-    //                         Weight = penLine.Weight
-    //                         Color = RGBAColor.rgbaHexNotation penLine.Color
-    //                     }
-    //                 )
-    //         ]
-    //         |> Canvas.Batch
-    //     )
-    //     |> Canvas.render
-        canvas [ Id "scene-pen-lines" ] []
 
     div [ Id "main" ] [
         div [ Id "scene" ] [
             yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ background ]
-            yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ penLines ]
+            yield div [ Style [ Position PositionOptions.Absolute ] ] [ canvas [ Id "scene-pen-lines" ] [] ]
             yield! scenePlayersView |> List.map (List.singleton >> div [ Style [ Position PositionOptions.Absolute ] ])
         ]
         div [ Id "info" ] [
