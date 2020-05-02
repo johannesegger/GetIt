@@ -26,7 +26,7 @@
       link: /challenges/pyramid.html
     - name: Draw patterns
       link: /challenges/draw-patterns.html
-- label: Branching
+- label: Branches
   items:
     - name: Rainbow drawing
       link: /challenges/rainbow-drawing.html
