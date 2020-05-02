@@ -272,34 +272,6 @@ let view model dispatch =
             |> Canvas.Batch
         )
         |> Canvas.render
-        // g [] [
-        //     yield!
-        //         model.PenLineChunks
-        //         |> Seq.rev
-        //         |> Seq.map (fun penLines ->
-        //             lazyView
-        //                 (fun (_, sceneBounds: Rectangle) ->
-        //                     penLines
-        //                     |> Seq.rev
-        //                     |> Seq.map (fun penLine ->
-        //                         line
-        //                             [
-        //                                 X1 (penLine.Start.X - sceneBounds.Left)
-        //                                 Y1 (sceneBounds.Top - penLine.Start.Y)
-        //                                 X2 (penLine.End.X - sceneBounds.Left)
-        //                                 Y2 (sceneBounds.Top - penLine.End.Y)
-        //                                 Style [
-        //                                     Stroke (RGBAColor.rgbaHexNotation penLine.Color)
-        //                                     StrokeWidth penLine.Weight
-        //                                 ]
-        //                             ]
-        //                             []
-        //                     )
-        //                     |> g []
-        //                 )
-        //                 (penLines.Length, model.SceneBounds)
-        //         )
-        // ]
 
     div [ Id "main" ] [
         div [ Id "scene" ] [
@@ -307,12 +279,6 @@ let view model dispatch =
             yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ penLines ]
             yield! scenePlayersView |> List.map (List.singleton >> div [ Style [ Position PositionOptions.Absolute ] ])
         ]
-        // svg [ Id "scene" ] [
-        //     yield drawBackground
-        //     yield drawPenLines
-        //     yield! drawScenePlayers
-        // ]
-
         div [ Id "info" ] [
             div [ Id "inner-info" ] [
                 yield!
