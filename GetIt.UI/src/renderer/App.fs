@@ -83,7 +83,7 @@ let rec private updateDirectly msg model =
                             Weight = player.Pen.Weight
                             Color = player.Pen.Color
                         }
-                    model.PenLines @ [ line ] // TODO measure performance
+                    line :: model.PenLines
                 else model.PenLines
         }
     | ControllerMsg (msgId, ChangePosition (playerId, relativePosition)) ->
@@ -254,24 +254,31 @@ let view model dispatch =
         )
 
     let penLines =
-        let size = model.SceneBounds.Size
-        { Canvas.Width = size.Width; Canvas.Height = size.Height }
-        |> Canvas.initialize
-        |> Canvas.draw (Canvas.ClearReact (0., 0., size.Width, size.Width))
-        |> Canvas.draw (
-            model.PenLines
-            |> List.collect (fun penLine ->
-                [
-                    Canvas.BeginPath
-                    Canvas.StrokeStyle (U3.Case1 <| RGBAColor.rgbaHexNotation penLine.Color)
-                    Canvas.MoveTo (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
-                    Canvas.LineTo (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
-                    Canvas.Stroke
-                ]
-            )
-            |> Canvas.Batch
-        )
-        |> Canvas.render
+    //     let size = model.SceneBounds.Size
+    //     { Canvas.Width = size.Width; Canvas.Height = size.Height }
+    //     |> Canvas.initialize
+    //     |> Canvas.draw (
+    //         [
+    //             if model.PenLines.Length < 10 then
+    //                 yield Canvas.ClearReact (0., 0., size.Width, size.Height)
+
+    //             yield!
+    //                 model.PenLines
+    //                 |> List.truncate 10
+    //                 |> List.rev
+    //                 |> List.map (fun penLine ->
+    //                     Canvas.Line {
+    //                         Start = (penLine.Start.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.Start.Y)
+    //                         End = (penLine.End.X - model.SceneBounds.Left, model.SceneBounds.Top - penLine.End.Y)
+    //                         Weight = penLine.Weight
+    //                         Color = RGBAColor.rgbaHexNotation penLine.Color
+    //                     }
+    //                 )
+    //         ]
+    //         |> Canvas.Batch
+    //     )
+    //     |> Canvas.render
+        canvas [ Id "scene-pen-lines" ] []
 
     div [ Id "main" ] [
         div [ Id "scene" ] [
@@ -309,6 +316,24 @@ let view model dispatch =
         ]
     ]
 
+let getSceneBounds width height =
+    {
+        Position = { X = -width / 2.; Y = -height / 2. }
+        Size = { Width = width; Height = height }
+    }
+
+let drawLine (canvas: HTMLCanvasElement) line =
+    let sceneBounds = getSceneBounds canvas.width canvas.height
+    let ctx = canvas.getContext_2d()
+    ctx.beginPath()
+    ctx.strokeStyle <- U3.Case1 (RGBAColor.rgbaHexNotation line.Color)
+    ctx.lineWidth <- line.Weight
+    ctx.moveTo(line.Start.X - sceneBounds.Left, sceneBounds.Top - line.Start.Y)
+    ctx.lineTo(line.End.X - sceneBounds.Left, sceneBounds.Top - line.End.Y)
+    ctx.stroke ()
+
+let drawLines canvas = List.iter (drawLine canvas)
+
 let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
     let msgChannel =
         let url = sprintf "ws://%s%s" Server.host MessageChannel.endpoint
@@ -323,7 +348,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
             )
         AsyncRx.msgChannel url encode decode
 
-    let sceneSizeChanged =
+    let nodeCreated selector =
         AsyncRx.defer (fun () ->
             Browser.Dom.document.querySelector "#elmish-app"
             |> AsyncRx.observeSubTreeAdditions
@@ -332,21 +357,50 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
             )
             |> AsyncRx.startWith [ Browser.Dom.document.body ]
         )
-        |> AsyncRx.choose (fun n -> n.querySelector("#scene") :?> HTMLElement |> Option.ofObj)
+        |> AsyncRx.choose (fun n -> n.querySelector(selector) :?> HTMLElement |> Option.ofObj)
         |> AsyncRx.take 1
+
+    let sceneSizeChanged =
+        nodeCreated "#scene"
         |> AsyncRx.flatMapLatest (fun sceneElement ->
-            AsyncRx.observeSceneSizeFromWindowResize
+            AsyncRx.observeElementSizeFromWindowResize "#scene"
             |> AsyncRx.map (fun sceneSize -> (sceneElement, sceneSize))
         )
+
+    let resizePenLineCanvas =
+        sceneSizeChanged
+        |> AsyncRx.map (fun (scene, size) -> scene.querySelector("#scene-pen-lines") :?> HTMLCanvasElement, size)
+        |> AsyncRx.tapOnNext (fun (canvas, (width, height)) ->
+            canvas.width <- width
+            canvas.height <- height
+        )
+        |> AsyncRx.map fst
+
+    let penLines =
+        let source =
+            states
+            |> AsyncRx.map (snd >> fun s -> s.PenLines)
+        resizePenLineCanvas
+        |> AsyncRx.flatMapLatest (fun canvas ->
+            source
+            |> AsyncRx.sampleWith AsyncRx.requestAnimationFrameObservable
+            |> AsyncRx.startWith [[]] // redraw all lines after scene size changed
+            |> AsyncRx.pairwise
+            |> AsyncRx.map (fun penLines -> canvas, penLines)
+        )
+        |> AsyncRx.tapOnNext (fun (canvas, (previousPenLines, nextPenLines)) ->
+            nextPenLines
+            |> List.take (nextPenLines.Length - previousPenLines.Length)
+            |> drawLines canvas
+
+        )
+        |> AsyncRx.ignore
 
     let uiMsgs =
         [
             sceneSizeChanged
             |> AsyncRx.map(snd >> fun (width, height) ->
-                {
-                    Position = { X = -width / 2.; Y = -height / 2. }
-                    Size = { Width = width; Height = height }
-                }
+                getSceneBounds width height
                 |> SetSceneBounds
                 |> UIMsg
             )
@@ -373,7 +427,9 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
                 | Some text -> sprintf "Get It - %s" text
                 | None -> "Get It"
         )
-        |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
+        |> AsyncRx.ignore
+
+        penLines
 
         [
             uiMsgs
@@ -386,9 +442,9 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
 
 Program.mkSimple init update (fun model dispatch -> view model (UIMsg >> dispatch))
 |> Program.withStream stream
-#if DEBUG
-|> Program.withDebugger
-|> Program.withConsoleTrace
-#endif
+// #if DEBUG
+// |> Program.withDebugger
+// |> Program.withConsoleTrace
+// #endif
 |> Program.withReactBatched "elmish-app"
 |> Program.run
