@@ -20,6 +20,16 @@
                 "${workspaceFolder}/GetIt.Sample.Print/GetIt.Sample.Print.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/GetIt.Test/GetIt.Test.fsproj"
+            ],
+            "problemMatcher": "$msCompile"
         }
     ]
 }

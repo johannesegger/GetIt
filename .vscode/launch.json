@@ -27,6 +27,17 @@
             "stopAtEntry": false
         },
         {
+            "name": "Launch GetIt.Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-test",
+            "program": "${workspaceFolder}/GetIt.Test/bin/Debug/netcoreapp3.1/GetIt.Test.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",

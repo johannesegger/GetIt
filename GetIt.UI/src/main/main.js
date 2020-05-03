@@ -19,14 +19,17 @@ function createMainWindow() {
     window.maximize();
   }
 
-  if (isDevelopment) {
+  if (isDevelopment && !process.env.GET_IT_TEST) {
     window.webContents.openDevTools()
+  }
+  if (isDevelopment) {
     window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
   }
   else {
-    window.setMenu(null)
     window.loadFile('index.html')
   }
+
+  window.setMenu(null)
 
   window.on('closed', () => {
     mainWindow = null
