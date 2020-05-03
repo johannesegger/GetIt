@@ -4,13 +4,13 @@ open Browser.Types
 open Elmish
 open Elmish.Debug
 open Elmish.React
-open Elmish.Streams
 open Elmish.HMR // Must be last Elmish.* open declaration (see https://elmish.github.io/hmr/#Usage)
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Elmish.Nile
 open Fable.React
 open Fable.React.Props
+open Fable.Reaction
 open FSharp.Control
 open Thoth.Json
 
