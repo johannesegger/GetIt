@@ -816,7 +816,10 @@ namespace GetIt.Sample
             while (true)
             {
                 UpdateDirection();
-                MoveSnake(10);
+                using (Game.BatchCommands())
+                {
+                    MoveSnake(10);
+                }
                 CheckIfSnakeEatsFood();
                 if (CheckIfSnakeHitsWall())
                 {

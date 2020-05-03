@@ -10,6 +10,4 @@
 
   <!-- Remove this when NuGet package is referenced -->
   <Import Project="..\GetIt.Controller\GetIt.targets" />
-
-  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
