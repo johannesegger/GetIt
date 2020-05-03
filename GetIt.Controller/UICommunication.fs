@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Logging
 open Reaction.AspNetCore.Middleware
 open System
+open System.ComponentModel
 open System.Diagnostics
 open System.IO
 open System.Reactive.Linq
@@ -185,16 +186,24 @@ module internal UICommunication =
             inputEvents
             |> Observable.subscribe (function
                 | MouseMove position as msg ->
-                    let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle position
-                    Model.updateCurrent (fun model ->
-                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                        Other, { model with MouseState = { model.MouseState with Position = scenePosition } })
+                    try
+                        let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle position
+                        Model.updateCurrent (fun model ->
+                            let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
+                            Other, { model with MouseState = { model.MouseState with Position = scenePosition } })
+                    with
+                        | :? Win32Exception when uiWindowProcess.HasExited -> ()
+                        | :? Win32Exception -> reraise ()
                 | MouseClick mouseClick as msg ->
-                    let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle mouseClick.VirtualScreenPosition
-                    Model.updateCurrent (fun model ->
-                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                        let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
-                        ApplyMouseClick mouseClick, model)
+                    try
+                        let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle mouseClick.VirtualScreenPosition
+                        Model.updateCurrent (fun model ->
+                            let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
+                            let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
+                            ApplyMouseClick mouseClick, model)
+                    with
+                        | :? Win32Exception when uiWindowProcess.HasExited -> ()
+                        | :? Win32Exception -> reraise ()
                 | KeyDown key as msg ->
                     Model.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } })
                 | KeyUp key as msg ->
