@@ -127,9 +127,16 @@ module internal UICommunication =
 #endif
         printfn "Starting UI with %s %s" psi.FileName psi.Arguments
         let proc = Process.Start psi
-        Disposable.create (fun () ->
-            proc.Kill() // TODO catch exceptions?
-        )
+        proc.EnableRaisingEvents <- true
+        let exitSubscription = proc.Exited.Subscribe (fun _ -> Environment.Exit 0)
+        
+        let killProcessDisposable =
+            Disposable.create (fun () ->
+                proc.Kill() // TODO catch exceptions?
+            )
+
+        exitSubscription
+        |> Disposable.compose killProcessDisposable
 
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
