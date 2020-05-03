@@ -11,22 +11,19 @@ open System.Diagnostics
 open System.IO
 open System.Reactive.Linq
 open System.Reactive.Disposables
-open System.Reflection
 open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
 
-module UICommunication =
+module internal UICommunication =
     type CommunicationState = {
         Disposable: IDisposable
         CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
         ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
         UIWindowProcess: Process
     }
-    let mutable private showSceneCalled = 0
-    let mutable private communicationState = None
 
-    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) ct = async {
+    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) =
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             printfn "Client %s connected" connectionId
             let controllerMsgs =
@@ -78,24 +75,28 @@ module UICommunication =
                 |> ignore
 
         printfn "Starting server"
-        do!
-            WebHostBuilder()
-                .UseKestrel()
-                .Configure(Action<IApplicationBuilder> configureApp)
-                .ConfigureLogging(fun hostingContext logging ->
-                    logging
-                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
-                        .AddConsole()
-                        .AddDebug()
-                    |> ignore
-                )
-                .UseUrls(sprintf "http://%s" Server.host)
-                .Build()
-                .RunAsync(ct)
-            |> Async.AwaitTask
-    }
 
-    let private startUI windowSize = async {
+        let cancellation = new CancellationDisposable()
+
+        WebHostBuilder()
+            .UseKestrel()
+            .Configure(Action<IApplicationBuilder> configureApp)
+            .ConfigureLogging(fun hostingContext logging ->
+                logging
+                    .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
+                    .AddConsole()
+                    .AddDebug()
+                |> ignore
+            )
+            .UseUrls(sprintf "http://%s" Server.host)
+            .Build()
+            .RunAsync(cancellation.Token)
+        |> Async.AwaitTask
+        |> Async.Start
+
+        cancellation :> IDisposable
+
+    let private startUI windowSize =
         let args =
             [
                 match windowSize with
@@ -125,17 +126,9 @@ module UICommunication =
 #endif
         printfn "Starting UI with %s %s" psi.FileName psi.Arguments
         let proc = Process.Start psi
-        proc.WaitForExit ()
-        if proc.ExitCode <> 0 then
-            raise (GetItException (sprintf "UI exited with non-zero exit code: %d" proc.ExitCode))
-    }
-
-    let disposeCommunicationState () =
-        match communicationState with
-        | Some state ->
-            state.Disposable.Dispose()
-            communicationState <- None
-        | None -> ()
+        Disposable.create (fun () ->
+            proc.Kill() // TODO catch exceptions?
+        )
 
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
@@ -160,36 +153,11 @@ module UICommunication =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
-        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
-            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
-
-        let webServerStopDisposable = new CancellationDisposable()
         let controllerMsgs = new Reactive.Subjects.Subject<_>()
         let uiMsgs = new Reactive.Subjects.Subject<_>()
 
-        let runThread =
-            Thread(
-                (fun () ->
-                    async {
-                        try
-                            let! webServerRunTask = startWebServer controllerMsgs uiMsgs webServerStopDisposable.Token |> Async.StartChild
-                            let! processRunTask = startUI windowSize |> Async.StartChild
-
-                            do! processRunTask
-                            disposeCommunicationState ()
-                            do! webServerRunTask
-                            printfn "Stopping app."
-                            Environment.Exit 0
-                        with e ->
-                            printfn "Stopping app. %O" e
-                            Environment.Exit 1
-                    }
-                    |> Async.RunSynchronously
-                ),
-                Name = "Run thread",
-                IsBackground = false
-            )
-        runThread.Start()
+        let webServerDisposable = startWebServer controllerMsgs uiMsgs
+        let uiProcessDisposable = startUI windowSize
 
         printfn "Waiting for scene bounds"
 
@@ -235,43 +203,33 @@ module UICommunication =
 
         printfn "Setup complete"
 
-        communicationState <-
-            Some {
-                Disposable =
-                    webServerStopDisposable
-                    |> Disposable.compose inputEventsSubscription
-                CommandSubject = controllerMsgs
-                ResponseSubject = uiMsgs
-                UIWindowProcess = uiWindowProcess
-            }
+        {
+            Disposable =
+                inputEventsSubscription
+                |> Disposable.compose uiProcessDisposable
+                |> Disposable.compose webServerDisposable
+            CommandSubject = controllerMsgs
+            ResponseSubject = uiMsgs
+            UIWindowProcess = uiWindowProcess
+        }
 
-        ()
+    let private sendMessage state message =
+        use waitHandle = new ManualResetEventSlim()
+        let messageId = Guid.NewGuid()
+        use d =
+            state.ResponseSubject
+            |> Observable.firstIf (fst >> fun r ->
+                match r with
+                | ControllerMsg (msgId, msg) when msgId = messageId -> true
+                | _ -> false
+            )
+            |> Observable.subscribe (fun p ->
+                waitHandle.Set()
+            )
+        state.CommandSubject.OnNext (messageId, message)
+        waitHandle.Wait()
 
-    let private doWithCommunicationState fn =
-        match communicationState with
-        | Some state -> fn state
-        | None ->
-            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
-
-    let private sendMessage message =
-        doWithCommunicationState (fun state ->
-            use waitHandle = new ManualResetEventSlim()
-            let messageId = Guid.NewGuid()
-            use d =
-                state.ResponseSubject
-                |> Observable.firstIf (fst >> fun r ->
-                    match r with
-                    | ControllerMsg (msgId, msg) when msgId = messageId -> true
-                    | _ -> false
-                )
-                |> Observable.subscribe (fun p ->
-                    waitHandle.Set()
-                )
-            state.CommandSubject.OnNext (messageId, message)
-            waitHandle.Wait()
-        )
-
-    let private sendMessageAndWaitForResponse msg responseFilter =
+    let private sendMessageAndWaitForResponse state msg responseFilter =
         let mutable response = None
         use waitHandle = new ManualResetEventSlim()
         use d =
@@ -283,67 +241,65 @@ module UICommunication =
                 waitHandle.Set()
             )
 
-        sendMessage msg
+        sendMessage state msg
 
         waitHandle.Wait()
         Option.get response
 
-    let addPlayer playerData =
+    let addPlayer playerData state =
         let playerId = PlayerId.create ()
-        sendMessage <| AddPlayer (playerId, playerData)
+        sendMessage state <| AddPlayer (playerId, playerData)
         Model.updateCurrent (fun m -> Other, { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
         playerId
 
-    let removePlayer playerId =
-        sendMessage <| RemovePlayer playerId
+    let removePlayer playerId state =
+        sendMessage state <| RemovePlayer playerId
         Model.updateCurrent (fun m -> Other, { m with Players = Map.remove playerId m.Players })
 
-    let setWindowTitle title =
-        sendMessage <| SetWindowTitle title
+    let setWindowTitle title state =
+        sendMessage state <| SetWindowTitle title
 
-    let setBackground background =
-        sendMessage <| SetBackground background
+    let setBackground background state =
+        sendMessage state <| SetBackground background
 
-    let clearScene () =
-        sendMessage ClearScene
+    let clearScene state =
+        sendMessage state ClearScene
 
-    let makeScreenshot () =
-        doWithCommunicationState (fun state ->
-            if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
-                Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle
-            else
-                raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
-        )
+    let makeScreenshot state =
+        if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
+            Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle
+        else
+            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
-    let startBatch () =
-        sendMessage StartBatch
+    let startBatch state =
+        sendMessage state StartBatch
 
-    let applyBatch () =
-        sendMessage ApplyBatch
+    let applyBatch state =
+        sendMessage state ApplyBatch
 
-    let setPosition playerId position =
+    let setPosition playerId position state =
         SetPosition (playerId, position)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Position = position })
 
-    let changePosition playerId relativePosition =
+    let changePosition playerId relativePosition state =
         ChangePosition (playerId, relativePosition)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Position = p.Position + relativePosition })
 
-    let setDirection playerId direction =
+    let setDirection playerId direction state =
         SetDirection (playerId, direction)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Direction = direction })
 
-    let changeDirection playerId relativeDirection =
+    let changeDirection playerId relativeDirection state =
         ChangeDirection (playerId, relativeDirection)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Direction = p.Direction + relativeDirection })
 
-    let say playerId text =
+    let say playerId text state =
         SetSpeechBubble (playerId, Some (Say text))
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = Some (Say text) })
 
     let private setTemporarySpeechBubble playerId speechBubble =
@@ -352,84 +308,86 @@ module UICommunication =
             Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None })
         )
 
-    let askString playerId text =
+    let askString playerId text state =
         use d = setTemporarySpeechBubble playerId (AskString text)
         sendMessageAndWaitForResponse
+            state
             (SetSpeechBubble (playerId, Some (AskString text)))
             (fst >> function | UIMsg (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
-    let askBool playerId text =
+    let askBool playerId text state =
         use d = setTemporarySpeechBubble playerId (AskBool text)
         sendMessageAndWaitForResponse
+            state
             (SetSpeechBubble (playerId, Some (AskBool text)))
             (fst >> function | UIMsg (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
-    let shutUp playerId =
+    let shutUp playerId state =
         SetSpeechBubble (playerId, None)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None })
 
-    let setPenState playerId isOn =
+    let setPenState playerId isOn state =
         SetPenState (playerId, isOn)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = isOn } })
 
-    let togglePenState playerId =
+    let togglePenState playerId state =
         TogglePenState playerId
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
 
-    let setPenColor playerId color =
+    let setPenColor playerId color state =
         SetPenColor (playerId, color)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = color } })
 
-    let shiftPenColor playerId angle =
+    let shiftPenColor playerId angle state =
         ShiftPenColor (playerId, angle)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
 
-    let setPenWeight playerId weight =
+    let setPenWeight playerId weight state =
         SetPenWeight (playerId, weight)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = weight } })
 
-    let changePenWeight playerId weight =
+    let changePenWeight playerId weight state =
         ChangePenWeight (playerId, weight)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
 
-    let setSizeFactor playerId sizeFactor =
+    let setSizeFactor playerId sizeFactor state =
         SetSizeFactor (playerId, sizeFactor)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with SizeFactor = sizeFactor })
 
-    let changeSizeFactor playerId sizeFactor =
+    let changeSizeFactor playerId sizeFactor state =
         ChangeSizeFactor (playerId, sizeFactor)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with SizeFactor = p.SizeFactor + sizeFactor })
 
-    let setNextCostume playerId =
+    let setNextCostume playerId state =
         SetNextCostume playerId
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, Player.nextCostume p)
 
-    let sendToBack playerId =
+    let sendToBack playerId state =
         SendToBack playerId
-        |> sendMessage
+        |> sendMessage state
         Model.updateCurrent (fun m -> Other, { m with Players = Player.sendToBack playerId m.Players })
 
-    let bringToFront playerId =
+    let bringToFront playerId state =
         BringToFront playerId
-        |> sendMessage
+        |> sendMessage state
         Model.updateCurrent (fun m -> Other, { m with Players = Player.bringToFront playerId m.Players })
 
-    let setVisibility playerId isVisible =
+    let setVisibility playerId isVisible state =
         SetVisibility (playerId, isVisible)
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with IsVisible = isVisible })
 
-    let toggleVisibility playerId =
+    let toggleVisibility playerId state =
         ToggleVisibility playerId
-        |> sendMessage
+        |> sendMessage state
         Model.updatePlayer playerId (fun p -> Other, { p with IsVisible = not p.IsVisible })

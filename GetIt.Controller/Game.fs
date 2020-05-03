@@ -15,20 +15,75 @@ open System.Threading
 module internal Game =
     let mutable defaultTurtle = None
 
+    let mutable private showSceneCalled = 0
+    let mutable private communicationState : UICommunication.CommunicationState option = None
+
+    let disposeCommunicationState () =
+        match communicationState with
+        | Some state ->
+            state.Disposable.Dispose()
+            showSceneCalled <- 0
+            communicationState <- None
+        | None -> ()
+
+    let doWithCommunicationState fn =
+        match communicationState with
+        | Some state -> fn state
+        | None ->
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+
+    let showScene windowSize =
+        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
+
+        let state = UICommunication.showScene windowSize
+        communicationState <- Some state
+        Disposable.create disposeCommunicationState
+
+    let addPlayer playerData = doWithCommunicationState (UICommunication.addPlayer playerData)
+    let removePlayer playerId = doWithCommunicationState (UICommunication.removePlayer playerId)
+    let setWindowTitle title = doWithCommunicationState (UICommunication.setWindowTitle title)
+    let setBackground background = doWithCommunicationState (UICommunication.setBackground background)
+    let clearScene () =  doWithCommunicationState UICommunication.clearScene
+    let startBatch () = doWithCommunicationState UICommunication.startBatch
+    let applyBatch () = doWithCommunicationState UICommunication.applyBatch
+    let makeScreenshot () = doWithCommunicationState UICommunication.makeScreenshot
+    let setPosition playerId position = doWithCommunicationState (UICommunication.setPosition playerId position)
+    let changePosition playerId position = doWithCommunicationState (UICommunication.changePosition playerId position)
+    let setDirection playerId angle = doWithCommunicationState (UICommunication.setDirection playerId angle)
+    let changeDirection playerId angle = doWithCommunicationState (UICommunication.changeDirection playerId angle)
+    let say playerId text = doWithCommunicationState (UICommunication.say playerId text)
+    let shutUp playerId = doWithCommunicationState (UICommunication.shutUp playerId)
+    let askString playerId question = doWithCommunicationState (UICommunication.askString playerId question)
+    let askBool playerId question = doWithCommunicationState (UICommunication.askBool playerId question)
+    let setPenState playerId isOn = doWithCommunicationState (UICommunication.setPenState playerId isOn)
+    let togglePenState playerId = doWithCommunicationState (UICommunication.togglePenState playerId)
+    let setPenColor playerId color = doWithCommunicationState (UICommunication.setPenColor playerId color)
+    let shiftPenColor playerId angle = doWithCommunicationState (UICommunication.shiftPenColor playerId angle)
+    let setPenWeight playerId weight = doWithCommunicationState (UICommunication.setPenWeight playerId weight)
+    let changePenWeight playerId weight = doWithCommunicationState (UICommunication.changePenWeight playerId weight)
+    let setSizeFactor playerId sizeFactor = doWithCommunicationState (UICommunication.setSizeFactor playerId sizeFactor)
+    let changeSizeFactor playerId sizeFactor = doWithCommunicationState (UICommunication.changeSizeFactor playerId sizeFactor)
+    let setNextCostume playerId = doWithCommunicationState (UICommunication.setNextCostume playerId)
+    let sendToBack playerId = doWithCommunicationState (UICommunication.sendToBack playerId)
+    let bringToFront playerId = doWithCommunicationState (UICommunication.bringToFront playerId)
+    let setVisibility playerId isVisible = doWithCommunicationState (UICommunication.setVisibility playerId isVisible)
+    let toggleVisibility playerId = doWithCommunicationState (UICommunication.toggleVisibility playerId)
+
 /// Defines methods to setup a game, add players, register global events and more.
 [<AbstractClass; Sealed>]
 type Game() =
     /// Initializes and shows an empty scene with the default size and no players on it.
     static member ShowScene () =
-        UICommunication.showScene (SpecificSize { Width = 800.; Height = 600. })
+        Game.showScene (SpecificSize { Width = 800.; Height = 600. })
 
     /// Initializes and shows an empty scene with a specific size and no players on it.
     static member ShowScene (windowWidth, windowHeight) =
-        UICommunication.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
+        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
 
     /// Initializes and shows an empty scene with maximized size and no players on it.
     static member ShowMaximizedScene () =
-        UICommunication.showScene Maximized
+        Game.showScene Maximized
 
     /// <summary>
     /// Adds a player to the scene.
@@ -38,8 +93,8 @@ type Game() =
     static member AddPlayer (playerData: PlayerData) =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
 
-        let playerId = UICommunication.addPlayer playerData
-        new Player(playerId)
+        let playerId = Game.addPlayer playerData
+        new Player(playerId, fun () -> Game.removePlayer playerId)
 
     /// <summary>
     /// Adds a player to the scene and calls a method to control the player.
@@ -61,33 +116,35 @@ type Game() =
 
     /// Initializes and shows an empty scene and adds the default player to it.
     static member ShowSceneAndAddTurtle () =
-        Game.ShowScene ()
+        let d = Game.ShowScene ()
         Game.AddTurtle ()
+        d
 
     /// Initializes and shows an empty scene with a specific size and adds the default player to it.
     static member ShowSceneAndAddTurtle (windowWidth, windowHeight) =
-        Game.ShowScene (windowWidth, windowHeight)
+        let d = Game.ShowScene (windowWidth, windowHeight)
         Game.AddTurtle ()
+        d
 
     /// Initializes and shows an empty scene with maximized size and adds the default player to it.
     static member ShowMaximizedSceneAndAddTurtle () =
-        Game.ShowMaximizedScene ()
+        let d = Game.ShowMaximizedScene ()
         Game.AddTurtle ()
+        d
 
     /// Sets the title of the window.
     static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
-        UICommunication.setWindowTitle textOpt
+        Game.setWindowTitle textOpt
 
     /// Sets the scene background.
     static member SetBackground background =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
-
-        UICommunication.setBackground background
+        Game.setBackground background
 
     /// Clears all drawings from the scene.
     static member ClearScene () =
-        UICommunication.clearScene ()
+        Game.clearScene ()
 
     /// <summary>
     /// Prints the scene. Note that `wkhtmltopdf` and `SumatraPDF` must be installed.
@@ -104,7 +161,7 @@ type Game() =
             |> Path.GetDirectoryName
 
         let base64ImageData =
-            UICommunication.makeScreenshot ()
+            Game.makeScreenshot ()
             |> PngImage.toBase64String
 
         let documentTemplate =
@@ -166,8 +223,8 @@ type Game() =
     /// Start batching multiple commands to skip drawing intermediate state.
     /// Note that commands from all threads are batched.
     static member BatchCommands () =
-        UICommunication.startBatch ()
-        Disposable.create (fun () -> UICommunication.applyBatch ())
+        Game.startBatch ()
+        Disposable.create Game.applyBatch
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.

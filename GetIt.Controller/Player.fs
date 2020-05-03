@@ -4,7 +4,7 @@ open System
 open System.Threading
 
 /// A player that is added to the scene.
-type Player(playerId) =
+type Player(playerId, remove) =
     let mutable isDisposed = 0
 
     member internal x.PlayerId with get () = playerId
@@ -39,7 +39,7 @@ type Player(playerId) =
     abstract member Dispose: unit -> unit
     default x.Dispose () =
         if Interlocked.Exchange (&isDisposed, 1) = 0 then
-            UICommunication.removePlayer playerId
+            remove ()
 
     interface IDisposable with
         member x.Dispose () = x.Dispose ()

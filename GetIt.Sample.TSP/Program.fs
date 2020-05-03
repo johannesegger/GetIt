@@ -18,12 +18,12 @@ type Individual =
 
 [<EntryPoint>]
 let main argv =
-    Game.ShowSceneAndAddTurtle()
+    use __ = Game.ShowSceneAndAddTurtle()
 
     Turtle.Say ("TSP solver", 1.)
 
     use cts = new CancellationTokenSource()
-    use d = Game.OnKeyDown(KeyboardKey.Space, fun _ -> cts.Cancel())
+    use __ = Game.OnKeyDown(KeyboardKey.Space, fun _ -> cts.Cancel())
 
     let problem = GetIt.Sample.TSP.Samples.ulysses16
 

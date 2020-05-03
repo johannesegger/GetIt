@@ -13,7 +13,7 @@ module private Raw =
         player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
-        UICommunication.setPosition player.PlayerId position
+        Game.setPosition player.PlayerId position
 
     let moveToXY (player: GetIt.Player) (x: System.Double) (y: System.Double) =
         moveTo player { X = x; Y = y }
@@ -22,7 +22,7 @@ module private Raw =
         moveTo player Position.zero
 
     let moveBy (player: GetIt.Player) (deltaX: System.Double) (deltaY: System.Double) =
-        UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }
+        Game.changePosition player.PlayerId { X = deltaX; Y = deltaY }
 
     let moveRight (player: GetIt.Player) (steps: System.Double) =
         moveBy player steps 0.
@@ -49,7 +49,7 @@ module private Raw =
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
-        UICommunication.setDirection player.PlayerId angle
+        Game.setDirection player.PlayerId angle
 
     let turnUp (player: GetIt.Player) =
         setDirection player (Degrees.op_Implicit 90.)
@@ -64,7 +64,7 @@ module private Raw =
         setDirection player (Degrees.op_Implicit 180.)
 
     let rotateClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
-        UICommunication.changeDirection player.PlayerId -angle
+        Game.changeDirection player.PlayerId -angle
 
     let rotateCounterClockwise (player: GetIt.Player) (angle: GetIt.Degrees) =
         rotateClockwise player -angle
@@ -90,10 +90,10 @@ module private Raw =
         sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     let say (player: GetIt.Player) (text: System.String) =
-        UICommunication.say player.PlayerId text
+        Game.say player.PlayerId text
 
     let shutUp (player: GetIt.Player) =
-        UICommunication.shutUp player.PlayerId
+        Game.shutUp player.PlayerId
 
     let sayWithDuration (player: GetIt.Player) (text: System.String) (duration: System.TimeSpan) =
         say player text
@@ -104,46 +104,46 @@ module private Raw =
         sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)
 
     let ask (player: GetIt.Player) (question: System.String) =
-        UICommunication.askString player.PlayerId question
+        Game.askString player.PlayerId question
 
     let askBool (player: GetIt.Player) (question: System.String) =
-        UICommunication.askBool player.PlayerId question
+        Game.askBool player.PlayerId question
 
     let turnOnPen (player: GetIt.Player) =
-        UICommunication.setPenState player.PlayerId true
+        Game.setPenState player.PlayerId true
 
     let turnOffPen (player: GetIt.Player) =
-        UICommunication.setPenState player.PlayerId false
+        Game.setPenState player.PlayerId false
 
     let togglePenState (player: GetIt.Player) =
-        UICommunication.togglePenState player.PlayerId
+        Game.togglePenState player.PlayerId
 
     let setPenColor (player: GetIt.Player) (color: GetIt.RGBAColor) =
-        UICommunication.setPenColor player.PlayerId color
+        Game.setPenColor player.PlayerId color
 
     let shiftPenColor (player: GetIt.Player) (angle: GetIt.Degrees) =
-        UICommunication.shiftPenColor player.PlayerId angle
+        Game.shiftPenColor player.PlayerId angle
 
     let setPenWeight (player: GetIt.Player) (weight: System.Double) =
-        UICommunication.setPenWeight player.PlayerId weight
+        Game.setPenWeight player.PlayerId weight
 
     let changePenWeight (player: GetIt.Player) (weight: System.Double) =
-        UICommunication.changePenWeight player.PlayerId weight
+        Game.changePenWeight player.PlayerId weight
 
     let setSizeFactor (player: GetIt.Player) (sizeFactor: System.Double) =
-        UICommunication.setSizeFactor player.PlayerId sizeFactor
+        Game.setSizeFactor player.PlayerId sizeFactor
 
     let changeSizeFactor (player: GetIt.Player) (change: System.Double) =
-        UICommunication.changeSizeFactor player.PlayerId change
+        Game.changeSizeFactor player.PlayerId change
 
     let nextCostume (player: GetIt.Player) =
-        UICommunication.setNextCostume player.PlayerId
+        Game.setNextCostume player.PlayerId
 
     let sendToBack (player: GetIt.Player) =
-        UICommunication.sendToBack player.PlayerId
+        Game.sendToBack player.PlayerId
 
     let bringToFront (player: GetIt.Player) =
-        UICommunication.bringToFront player.PlayerId
+        Game.bringToFront player.PlayerId
 
     let getDirectionToMouse (player: GetIt.Player) =
         player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
@@ -158,13 +158,13 @@ module private Raw =
         player1.Position |> Position.distanceTo player2.Position
 
     let show (player: GetIt.Player) =
-        UICommunication.setVisibility player.PlayerId true
+        Game.setVisibility player.PlayerId true
 
     let hide (player: GetIt.Player) =
-        UICommunication.setVisibility player.PlayerId false
+        Game.setVisibility player.PlayerId false
 
     let toggleVisibility (player: GetIt.Player) =
-        UICommunication.toggleVisibility player.PlayerId
+        Game.toggleVisibility player.PlayerId
 
     let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
         Model.onKeyDown key (fun () -> action.Invoke player)
