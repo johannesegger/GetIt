@@ -136,3 +136,9 @@ module Win32 =
 
     [<DllImport("dwmapi.dll")>]
     extern int DwmGetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, Rect& pvAttribute, int cbAttribute)
+
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool GetClientRect(IntPtr hWnd, Rect& rect)
+
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool ClientToScreen(IntPtr hWnd, WinPoint& point)

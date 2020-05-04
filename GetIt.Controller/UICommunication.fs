@@ -281,9 +281,15 @@ module internal UICommunication =
     let clearScene state =
         sendMessage state ClearScene
 
-    let makeScreenshot state =
+    type ScreenshotCaptureRegion = FullWindow | WindowContent
+
+    let makeScreenshot region state =
         if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
-            Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle
+            let region' =
+                match region with
+                | FullWindow -> Windows.CaptureRegion.FullWindow
+                | WindowContent -> Windows.CaptureRegion.WindowContent
+            Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle region'
         else
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
