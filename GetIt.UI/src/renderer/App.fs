@@ -1,5 +1,6 @@
 module GetIt.UI
 
+open Browser.Dom
 open Browser.Types
 open Elmish
 open Elmish.Debug
@@ -175,7 +176,7 @@ let view model dispatch =
         img [
             Src (
                 model.Background.SvgData
-                |> Browser.Dom.window.btoa
+                |> window.btoa
                 |> sprintf "data:image/svg+xml;base64,%s"
             )
             Style [
@@ -191,7 +192,7 @@ let view model dispatch =
         img [
             Src (
                 player.Costume.SvgData
-                |> Browser.Dom.window.btoa
+                |> window.btoa
                 |> sprintf "data:image/svg+xml;base64,%s"
             )
             Style [
@@ -268,7 +269,7 @@ let view model dispatch =
                                 Class "view"
                                 Src (
                                     player.Costume.SvgData
-                                    |> Browser.Dom.window.btoa
+                                    |> window.btoa
                                     |> sprintf "data:image/svg+xml;base64,%s"
                                 )
                                 Style [
@@ -322,12 +323,12 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
 
     let nodeCreated selector =
         AsyncRx.defer (fun () ->
-            Browser.Dom.document.querySelector "#elmish-app"
+            document.querySelector "#elmish-app"
             |> AsyncRx.observeSubTreeAdditions
             |> AsyncRx.choose (fun (n: Node) ->
                 if n.nodeType = n.ELEMENT_NODE then Some (n :?> HTMLElement) else None
             )
-            |> AsyncRx.startWith [ Browser.Dom.document.body ]
+            |> AsyncRx.startWith [ document.body ]
         )
         |> AsyncRx.choose (fun n -> n.querySelector(selector) :?> HTMLElement |> Option.ofObj)
         |> AsyncRx.take 1
@@ -394,7 +395,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
         |> AsyncRx.distinctUntilChanged
         |> AsyncRx.tapOnNext (fun title ->
-            Browser.Dom.document.title <-
+            document.title <-
                 match title with
                 | Some text -> sprintf "Get It - %s" text
                 | None -> "Get It"
