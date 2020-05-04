@@ -5,7 +5,6 @@
 
   <ItemGroup>
     <Compile Include="AsyncRx.fs" />
-    <Compile Include="Canvas.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
 
