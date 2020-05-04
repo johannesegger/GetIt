@@ -19,14 +19,17 @@ function createMainWindow() {
     window.maximize();
   }
 
+  let communicationEndpoint = process.env.COMMUNICATION_ENDPOINT || "ws://localhost/socket"
+  let communicationEndpointQueryParameter = `communicationEndpoint=${encodeURIComponent(communicationEndpoint)}`
+
   if (isDevelopment && !process.env.GET_IT_TEST) {
     window.webContents.openDevTools()
   }
   if (isDevelopment) {
-    window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
+    window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${communicationEndpointQueryParameter}`)
   }
   else {
-    window.loadFile('index.html')
+    window.loadFile(`index.html?${communicationEndpointQueryParameter}`)
   }
 
   window.setMenu(null)

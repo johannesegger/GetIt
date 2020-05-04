@@ -4,6 +4,7 @@ open FSharp.Control
 open FSharp.Control.Reactive
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Hosting.Server.Features
 open Microsoft.Extensions.Logging
 open Reaction.AspNetCore.Middleware
 open System
@@ -24,7 +25,8 @@ module internal UICommunication =
         UIWindowProcess: Process
     }
 
-    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) =
+    let private communicationEndpointPath = "/msgs"
+    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             printfn "Client %s connected" connectionId
             let controllerMsgs =
@@ -70,7 +72,7 @@ module internal UICommunication =
                                         eprintfn "Deserializing message failed: %s, Message: %s" p value
                                         None
                                 )
-                        RequestPath = MessageChannel.endpoint
+                        RequestPath = communicationEndpointPath
                     }
                 )
                 |> ignore
@@ -79,32 +81,35 @@ module internal UICommunication =
 
         let cancellation = new CancellationDisposable()
 
-        WebHostBuilder()
-            .UseKestrel()
-            .Configure(Action<IApplicationBuilder> configureApp)
-            .ConfigureLogging(fun hostingContext logging ->
-                logging
-                    .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
-                    .AddConsole()
-                    .AddDebug()
-                |> ignore
-            )
-            .UseUrls(sprintf "http://%s" Server.host)
-            .Build()
-            .RunAsync(cancellation.Token)
-        |> Async.AwaitTask
-        |> Async.Start
+        let webHost =
+            WebHostBuilder()
+                .UseKestrel()
+                .Configure(Action<IApplicationBuilder> configureApp)
+                .ConfigureLogging(fun hostingContext logging ->
+                    logging
+                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
+                        .AddConsole()
+                        .AddDebug()
+                    |> ignore
+                )
+                .UseUrls("http://[::1]:0")
+                .Build()
 
-        cancellation :> IDisposable
+        do! webHost.StartAsync(cancellation.Token) |> Async.AwaitTask
+        let url = webHost.ServerFeatures.Get<IServerAddressesFeature>().Addresses |> Seq.head
 
-    let private startUI windowSize =
+        return (url, cancellation :> IDisposable)
+    }
+
+    let private startUI windowSize communicationEndpoint =
         let args =
             [
                 match windowSize with
                 | SpecificSize windowSize ->
-                    yield "ELECTRON_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
+                    "ELECTRON_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
                 | Maximized ->
-                    yield "ELECTRON_START_MAXIMIZED", "1"
+                    "ELECTRON_START_MAXIMIZED", "1"
+                "COMMUNICATION_ENDPOINT", communicationEndpoint
             ]
 #if DEBUG
         // Ensure that `yarn webpack-dev-server` is running before starting this
@@ -129,7 +134,7 @@ module internal UICommunication =
         let proc = Process.Start psi
         proc.EnableRaisingEvents <- true
         let exitSubscription = proc.Exited.Subscribe (fun _ -> Environment.Exit 0)
-        
+
         let killProcessDisposable =
             Disposable.create (fun () ->
                 proc.Kill() // TODO catch exceptions?
@@ -164,8 +169,13 @@ module internal UICommunication =
         let controllerMsgs = new Reactive.Subjects.Subject<_>()
         let uiMsgs = new Reactive.Subjects.Subject<_>()
 
-        let webServerDisposable = startWebServer controllerMsgs uiMsgs
-        let uiProcessDisposable = startUI windowSize
+        let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs |> Async.RunSynchronously
+        let communicationEndpoint =
+            let uriBuilder = UriBuilder(serviceUrl)
+            uriBuilder.Scheme <- "ws"
+            uriBuilder.Path <- communicationEndpointPath
+            uriBuilder.ToString()
+        let uiProcessDisposable = startUI windowSize communicationEndpoint
 
         printfn "Waiting for scene bounds"
 

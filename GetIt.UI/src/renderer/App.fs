@@ -309,7 +309,10 @@ let drawLines canvas = List.iter (drawLine canvas)
 
 let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
     let msgChannel =
-        let url = sprintf "ws://%s%s" Server.host MessageChannel.endpoint
+        let communicationEndpoint =
+            let urlParams = createNew window?URLSearchParams (window.location.search)
+            urlParams?get("communicationEndpoint") |> Option.ofObj
+            |> Option.defaultValue "ws://localhost/socket"
         let encode = Encode.channelMsg >> Encode.toString 0
         let decode =
             Decode.fromString Decode.channelMsg
@@ -319,7 +322,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
                     eprintfn "Deserializing message failed: %O" p
                     None
             )
-        AsyncRx.msgChannel url encode decode
+        AsyncRx.msgChannel communicationEndpoint encode decode
 
     let nodeCreated selector =
         AsyncRx.defer (fun () ->
