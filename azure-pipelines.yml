@@ -34,6 +34,12 @@ steps:
     command: 'build'
     projects: 'GetIt.Controller'
     arguments: '-c Release'
+- task: DotNetCoreCLI@2
+  displayName: 'Build GetIt.UI.Container'
+  inputs:
+    command: 'build'
+    projects: 'GetIt.UI.Container'
+    arguments: '-c Release'
 - task: CmdLine@2
   displayName: 'Build GetIt.UI'
   inputs:
@@ -59,7 +65,7 @@ steps:
   displayName: 'Tag git commit'
   inputs:
     gitHubConnection: johannesegger
-    repositoryName: '$(Build.Repository.Name)' 
+    repositoryName: '$(Build.Repository.Name)'
     action: 'create'
     target: '$(Build.SourceVersion)'
     tagSource: 'manual'

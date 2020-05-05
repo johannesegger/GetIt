@@ -10,5 +10,5 @@ description .NET library to help introduce programming in a funnier way. Inspire
 include-referenced-projects true
 files
   GetIt.targets ==> build
-  ../GetIt.UI/dist/win-unpacked ==> tools/GetIt.UI
-  
+  ../GetIt.UI.Container/bin/Release/netcoreapp3.1 ==> tools/GetIt.UI.Container
+  ../GetIt.UI/deploy ==> tools/GetIt.UI
