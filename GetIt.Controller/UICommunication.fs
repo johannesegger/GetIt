@@ -148,14 +148,14 @@ module internal UICommunication =
             exit 0
         )
 
-        let killProcessDisposable =
+        let stopProcessDisposable =
             Disposable.create (fun () ->
-                proc.Kill() // TODO catch exceptions?
+                proc.Close() // TODO catch exceptions?
             )
 
         let d =
             exitSubscription
-            |> Disposable.compose killProcessDisposable
+            |> Disposable.compose stopProcessDisposable
         (proc, d)
 
     let inputEvents =
