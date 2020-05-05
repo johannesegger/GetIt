@@ -298,6 +298,7 @@ module internal UICommunication =
                 match region with
                 | FullWindow -> Windows.CaptureRegion.FullWindow
                 | WindowContent -> Windows.CaptureRegion.WindowContent
+            Thread.Sleep 500 // calm down
             Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle region'
         else
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
