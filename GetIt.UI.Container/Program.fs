@@ -1,6 +1,7 @@
 open Chromely
 open Chromely.Core
 open Chromely.Core.Configuration
+open Chromely.Core.Host
 open System
 open System.Web
 open System.IO
@@ -9,6 +10,10 @@ let startUI cliArgs url windowSize startMaximized =
     let config = DefaultConfiguration.CreateForRuntimePlatform()
     // config.WindowOptions.Title = "Title Window";
     config.WindowOptions.RelativePathToIconFile <- "icon.ico"
+    windowSize
+    |> Option.defaultValue (800, 600)
+    |> fun (width, height) -> config.WindowOptions.Size <- WindowSize(width, height)
+    config.WindowOptions.WindowState <- if startMaximized then WindowState.Maximize else WindowState.Normal
     config.StartUrl <- url
     config.CefDownloadOptions.DownloadSilently <- true
 #if DEBUG
