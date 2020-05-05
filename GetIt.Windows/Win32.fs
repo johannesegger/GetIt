@@ -142,3 +142,21 @@ module Win32 =
 
     [<DllImport("user32.dll", SetLastError=true)>]
     extern bool ClientToScreen(IntPtr hWnd, WinPoint& point)
+
+    [<DllImport("gdi32.dll")>]
+    extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr CreateCompatibleDC(IntPtr hDC)
+    [<DllImport("gdi32.dll")>]
+    extern bool DeleteDC(IntPtr hDC)
+    [<DllImport("gdi32.dll")>]
+    extern bool DeleteObject(IntPtr hObject)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject)
+
+    [<DllImport("user32.dll")>]
+    extern IntPtr GetWindowDC(IntPtr hWnd)
+    [<DllImport("user32.dll")>]
+    extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC)
