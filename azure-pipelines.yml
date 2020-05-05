@@ -43,7 +43,7 @@ steps:
 - task: CmdLine@2
   displayName: 'Build GetIt.UI'
   inputs:
-    script: 'yarn bundle'
+    script: 'yarn webpack'
     workingDirectory: 'GetIt.UI'
 - task: CmdLine@2
   displayName: 'Build NuGet package'
