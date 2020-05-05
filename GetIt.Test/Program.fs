@@ -38,7 +38,7 @@ let white = getColor Color.White
 let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 
 let tests =
-    testSequenced <| testList "Startup" [
+    testList "Startup" [
         test "Scene should be empty" {
             use state = UICommunication.showScene defaultWindowSize
             let image = getScreenshot state
