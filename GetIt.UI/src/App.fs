@@ -15,7 +15,7 @@ open Fable.Reaction
 open FSharp.Control
 open Thoth.Json
 
-importAll "../../sass/main.sass"
+importAll "../sass/main.sass"
 
 type PenLine =
     {
@@ -309,10 +309,12 @@ let drawLines canvas = List.iter (drawLine canvas)
 
 let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
     let msgChannel =
-        let communicationEndpoint =
-            let urlParams = createNew window?URLSearchParams (window.location.search)
-            urlParams?get("communicationEndpoint") |> Option.ofObj
+        let socketUrl =
+            let urlParams = createNew window?URLSearchParams window.location.search
+            urlParams?get("socketUrl") |> Option.ofObj
+            |> Option.map window?decodeURIComponent
             |> Option.defaultValue "ws://localhost/socket"
+        printfn "Socket url: %s" socketUrl
         let encode = Encode.channelMsg >> Encode.toString 0
         let decode =
             Decode.fromString Decode.channelMsg
@@ -322,7 +324,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
                     eprintfn "Deserializing message failed: %O" p
                     None
             )
-        AsyncRx.msgChannel communicationEndpoint encode decode
+        AsyncRx.msgChannel socketUrl encode decode
 
     let nodeCreated selector =
         AsyncRx.defer (fun () ->

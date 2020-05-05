@@ -13,6 +13,7 @@ open System.Diagnostics
 open System.IO
 open System.Reactive.Linq
 open System.Reactive.Disposables
+open System.Reflection
 open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
@@ -25,7 +26,7 @@ module internal UICommunication =
         UIWindowProcess: Process
     }
 
-    let private communicationEndpointPath = "/msgs"
+    let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             printfn "Client %s connected" connectionId
@@ -72,7 +73,7 @@ module internal UICommunication =
                                         eprintfn "Deserializing message failed: %s, Message: %s" p value
                                         None
                                 )
-                        RequestPath = communicationEndpointPath
+                        RequestPath = socketPath
                     }
                 )
                 |> ignore
@@ -101,37 +102,40 @@ module internal UICommunication =
         return (url, cancellation :> IDisposable)
     }
 
-    let private startUI windowSize communicationEndpoint =
-        let args =
+    let private startUI windowSize socketUrl =
+        let environmentVariables =
             [
                 match windowSize with
                 | SpecificSize windowSize ->
-                    "ELECTRON_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
+                    "GET_IT_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
                 | Maximized ->
-                    "ELECTRON_START_MAXIMIZED", "1"
-                "COMMUNICATION_ENDPOINT", communicationEndpoint
-            ]
+                    "GET_IT_START_MAXIMIZED", "1"
+                "GET_IT_SOCKET_URL", socketUrl
 #if DEBUG
-        // Ensure that `yarn webpack-dev-server` is running before starting this
-        let psi =
-            let psi = ProcessStartInfo("powershell.exe", Path.GetFullPath(Path.Combine("GetIt.UI", "dev.ps1")))
-            List.append [ "ELECTRON_WEBPACK_WDS_PORT", "8080" ] args
-            |> List.iter psi.EnvironmentVariables.Add
-            psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
-            psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
-            psi
+                // Ensure that `yarn webpack-dev-server` is running before starting this
+                "GET_IT_INDEX_URL", "http://localhost:8080"
 #else
-        let psi =
-            let path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "..", "..", "tools", "GetIt.UI", "GetIt.UI.exe")
-            let psi = ProcessStartInfo(path)
-            psi.Environment.Remove("ELECTRON_RUN_AS_NODE") |> ignore
-            psi.Environment.Remove("ELECTRON_NO_ATTACH_CONSOLE") |> ignore
-            args
-            |> List.iter psi.EnvironmentVariables.Add
-            psi
+                "GET_IT_INDEX_URL", "../../resources/UI/index.html"
 #endif
-        printfn "Starting UI with %s %s" psi.FileName psi.Arguments
-        let proc = Process.Start psi
+            ]
+
+        let startInfo =
+            let toOptionIfFileExists v = if File.Exists v then Some v else None
+            let uiContainerPath =
+                let fileName = "GetIt.UI.Container.exe"
+                let thisAssemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                Environment.GetEnvironmentVariable "GET_IT_UI_CONTAINER_DIRECTORY"
+                |> Option.ofObj
+                |> Option.map (fun d -> Path.Combine(d, fileName))
+                |> Option.orElse (Path.Combine(thisAssemblyDir, fileName) |> toOptionIfFileExists)
+                |> Option.orElse (Path.Combine(thisAssemblyDir, "..", "..", "GetIt.UI", fileName) |> toOptionIfFileExists)
+                |> Option.defaultValue fileName
+            let result = ProcessStartInfo(uiContainerPath)
+            environmentVariables
+            |> List.iter result.EnvironmentVariables.Add
+            result
+        printfn "Starting UI: %s %s" startInfo.FileName startInfo.Arguments
+        let proc = Process.Start startInfo
         proc.EnableRaisingEvents <- true
         let exitSubscription = proc.Exited.Subscribe (fun _ -> Environment.Exit 0)
 
@@ -140,8 +144,10 @@ module internal UICommunication =
                 proc.Kill() // TODO catch exceptions?
             )
 
-        exitSubscription
-        |> Disposable.compose killProcessDisposable
+        let d =
+            exitSubscription
+            |> Disposable.compose killProcessDisposable
+        (proc, d)
 
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
@@ -170,12 +176,12 @@ module internal UICommunication =
         let uiMsgs = new Reactive.Subjects.Subject<_>()
 
         let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs |> Async.RunSynchronously
-        let communicationEndpoint =
+        let socketUrl =
             let uriBuilder = UriBuilder(serviceUrl)
             uriBuilder.Scheme <- "ws"
-            uriBuilder.Path <- communicationEndpointPath
+            uriBuilder.Path <- socketPath
             uriBuilder.ToString()
-        let uiProcessDisposable = startUI windowSize communicationEndpoint
+        let (uiProcess, uiProcessDisposable) = startUI windowSize socketUrl
 
         printfn "Waiting for scene bounds"
 
@@ -186,40 +192,30 @@ module internal UICommunication =
 
         printfn "Setting up input events"
 
-        let processName =
-#if DEBUG
-            "electron"
-#else
-            "GetIt.UI"
-#endif
-        let uiWindowProcess =
-            Process.GetProcessesByName processName
-            |> Seq.tryFind (fun p -> p.MainWindowHandle <> nativeint 0)
-            |> function
-            | Some p -> p
-            | None -> raise (GetItException (sprintf "Can't find process \"%s\" with main window handle." processName))
+        if uiProcess.MainWindowHandle = nativeint 0
+        then raise (GetItException "UI doesn't have a window")
 
         let inputEventsSubscription =
             inputEvents
             |> Observable.subscribe (function
                 | MouseMove position as msg ->
                     try
-                        let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle position
+                        let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle position
                         Model.updateCurrent (fun model ->
                             let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
                             Other, { model with MouseState = { model.MouseState with Position = scenePosition } })
                     with
-                        | :? Win32Exception when uiWindowProcess.HasExited -> ()
+                        | :? Win32Exception when uiProcess.HasExited -> ()
                         | :? Win32Exception -> reraise ()
                 | MouseClick mouseClick as msg ->
                     try
-                        let clientPosition = Windows.DeviceEvents.screenToClient uiWindowProcess.MainWindowHandle mouseClick.VirtualScreenPosition
+                        let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle mouseClick.VirtualScreenPosition
                         Model.updateCurrent (fun model ->
                             let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
                             let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
                             ApplyMouseClick mouseClick, model)
                     with
-                        | :? Win32Exception when uiWindowProcess.HasExited -> ()
+                        | :? Win32Exception when uiProcess.HasExited -> ()
                         | :? Win32Exception -> reraise ()
                 | KeyDown key as msg ->
                     Model.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } })
@@ -236,7 +232,7 @@ module internal UICommunication =
                 |> Disposable.compose webServerDisposable
             CommandSubject = controllerMsgs
             ResponseSubject = uiMsgs
-            UIWindowProcess = uiWindowProcess
+            UIWindowProcess = uiProcess
         }
 
     let private sendMessage state message =

@@ -6,6 +6,7 @@ group Controller
 
     source https://api.nuget.org/v3/index.json
 
+    nuget Chromely
     nuget ColorCode.Html
     nuget FSharp.Control.AsyncRx
     nuget FSharp.Control.Reactive

@@ -54,5 +54,5 @@ let tests =
 
 [<EntryPoint>]
 let main args =
-    System.Environment.SetEnvironmentVariable("GET_IT_TEST", "1")
+    System.Environment.SetEnvironmentVariable("GET_IT_UI_CONTAINER_DIRECTORY", @".\GetIt.UI.Container\bin\Debug\netcoreapp3.1")
     runTestsWithCLIArgs [] args tests
