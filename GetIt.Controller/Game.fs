@@ -21,7 +21,7 @@ module internal Game =
     let disposeCommunicationState () =
         match communicationState with
         | Some state ->
-            state.Disposable.Dispose()
+            (state :> IDisposable).Dispose()
             showSceneCalled <- 0
             communicationState <- None
         | None -> ()
@@ -48,7 +48,6 @@ module internal Game =
     let startBatch () = doWithCommunicationState UICommunication.startBatch
     let applyBatch () = doWithCommunicationState UICommunication.applyBatch
     let makeScreenshot () = doWithCommunicationState (UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.FullWindow)
-    let captureWindowContent () = doWithCommunicationState (UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.WindowContent)
     let setPosition playerId position = doWithCommunicationState (UICommunication.setPosition playerId position)
     let changePosition playerId position = doWithCommunicationState (UICommunication.changePosition playerId position)
     let setDirection playerId angle = doWithCommunicationState (UICommunication.setDirection playerId angle)

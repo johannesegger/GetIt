@@ -19,12 +19,14 @@ open System.Threading
 open Thoth.Json.Net
 
 module internal UICommunication =
-    type CommunicationState = {
-        Disposable: IDisposable
-        CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
-        ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
-        UIWindowProcess: Process
-    }
+    type CommunicationState =
+        {
+            Disposable: IDisposable
+            CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
+            ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
+            UIWindowProcess: Process
+        }
+        interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
     let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {

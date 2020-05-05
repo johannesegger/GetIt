@@ -3,8 +3,8 @@ open GetIt
 open System.Drawing
 open System.IO
 
-let getScreenshot () =
-    let (PngImage imageData) = Game.captureWindowContent ()
+let private getScreenshot communicationState =
+    let (PngImage imageData) = UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.WindowContent communicationState
     use imageStream = new MemoryStream(imageData)
     // File.WriteAllBytes(System.DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".png", imageData)
     new Bitmap(imageStream)
@@ -35,18 +35,21 @@ let pixelsAt coordinates (image: Bitmap) =
 
 let white = getColor Color.White
 
+let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
+
 let tests =
     testSequenced <| testList "Startup" [
         test "Scene should be empty" {
-            use _ = Game.ShowScene ()
-            let image = getScreenshot ()
+            use state = UICommunication.showScene defaultWindowSize
+            let image = getScreenshot state
             let colors = pixelsAt Coordinates.fullScene image
             Expect.allEqual colors white "All scene pixels should be white"
         }
 
         test "Turtle should start at scene center" {
-            use _ = Game.ShowSceneAndAddTurtle ()
-            let image = getScreenshot ()
+            use state = UICommunication.showScene defaultWindowSize
+            let playerId = UICommunication.addPlayer PlayerData.Turtle state
+            let image = getScreenshot state
             let centerPixelColor = pixelAt Coordinates.sceneCenter image
             Expect.notEqual centerPixelColor white "Center pixel should not be white"
         }
