@@ -38,3 +38,10 @@ group UI
     nuget FSharp.Control.AsyncRx
     nuget FSharp.Core
     nuget Thoth.Json
+
+group Test
+    source https://api.nuget.org/v3/index.json
+
+    storage:none
+
+    nuget Expecto
