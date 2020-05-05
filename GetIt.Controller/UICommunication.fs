@@ -31,7 +31,6 @@ module internal UICommunication =
     let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
-            printfn "Client %s connected" connectionId
             let controllerMsgs =
                 AsyncRx.create (fun obs -> async {
                     return
@@ -79,8 +78,6 @@ module internal UICommunication =
                     }
                 )
                 |> ignore
-
-        printfn "Starting server"
 
         let cancellation = new CancellationDisposable()
 
@@ -142,10 +139,14 @@ module internal UICommunication =
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
             result
-        printfn "Starting UI: %s %s" startInfo.FileName startInfo.Arguments
         let proc = Process.Start startInfo
         proc.EnableRaisingEvents <- true
-        let exitSubscription = proc.Exited.Subscribe (fun _ -> printfn "UI process exited -> Exiting controller process."; exit 0)
+        let exitSubscription = proc.Exited.Subscribe (fun _ ->
+#if DEBUG
+            printfn "UI process exited -> Exiting controller process."
+#endif
+            exit 0
+        )
 
         let killProcessDisposable =
             Disposable.create (fun () ->
@@ -191,14 +192,10 @@ module internal UICommunication =
             uriBuilder.ToString()
         let (uiProcess, uiProcessDisposable) = startUI windowSize socketUrl
 
-        printfn "Waiting for scene bounds"
-
         Model.observable
         |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
         |> Observable.first
         |> Observable.wait
-
-        printfn "Setting up input events"
 
         if uiProcess.MainWindowHandle = IntPtr.Zero
         then raise (GetItException "UI doesn't have a window")
@@ -230,8 +227,6 @@ module internal UICommunication =
                 | KeyUp key as msg ->
                     Model.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } })
             )
-
-        printfn "Setup complete"
 
         {
             Disposable =
