@@ -324,6 +324,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
                     None
             )
         AsyncRx.msgChannel socketUrl encode decode
+        >> AsyncRx.``finally`` (fun () -> async { window.close() })
 
     let nodeCreated selector =
         AsyncRx.defer (fun () ->

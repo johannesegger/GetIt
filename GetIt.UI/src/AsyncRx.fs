@@ -73,6 +73,20 @@ let repeat (source: IAsyncObservable<_>) =
         return AsyncDisposable.Create(fun () -> subscription.DisposeAsync())
     })
 
+let ``finally`` fn (source: IAsyncObservable<_>) =
+    AsyncRx.create (fun observer -> async {
+        return! source.SubscribeAsync(fun notification -> async {
+            match notification with
+            | OnNext item -> do! observer.OnNextAsync item
+            | OnError e ->
+                do! observer.OnErrorAsync e
+                do! fn ()
+            | OnCompleted ->
+                do! observer.OnCompletedAsync()
+                do! fn ()
+        })
+    })
+
 let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
     AsyncRx.create (fun obs -> async {
         let onMutate mutations =
