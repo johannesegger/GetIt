@@ -1,14 +1,31 @@
 open Chromely
+open Chromely.CefGlue.Browser.EventParams
 open Chromely.Core
 open Chromely.Core.Configuration
+open Chromely.Core.Helpers
 open Chromely.Core.Host
 open System
 open System.Web
 open System.IO
 
+module Win32 =
+    open System.Runtime.InteropServices
+    [<DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)>]
+    extern bool SetWindowText(IntPtr hWnd, string lpString)
+
+type ChromelyApp() =
+    inherit ChromelyBasicApp()
+    override x.RegisterEvents(container: IChromelyContainer) =
+        let eventHandler =
+            ChromelyEventHandler<TitleChangedEventArgs>(
+                CefEventKey.TitleChanged,
+                fun sender e -> Win32.SetWindowText(x.Window.Handle, e.Title) |> ignore
+            )
+        container.RegisterInstance(typeof<CefEventHandlerTypes.ITitleChangedHandler>, eventHandler.Key, eventHandler)
+
 let startUI cliArgs url windowSize startMaximized =
     let config = DefaultConfiguration.CreateForRuntimePlatform()
-    // config.WindowOptions.Title = "Title Window";
+    config.WindowOptions.Title <- "Get It"
     config.WindowOptions.RelativePathToIconFile <- "icon.ico"
     windowSize
     |> Option.defaultValue (800, 600)
@@ -21,7 +38,7 @@ let startUI cliArgs url windowSize startMaximized =
 #endif
     AppBuilder
        .Create()
-       .UseApp<ChromelyBasicApp>()
+       .UseApp<ChromelyApp>()
        .UseConfiguration(config)
        .Build()
        .Run(cliArgs)
