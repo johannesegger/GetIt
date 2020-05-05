@@ -5,8 +5,8 @@ open System.IO
 
 let private getScreenshot communicationState =
     let (PngImage imageData) = UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.WindowContent communicationState
+    // File.WriteAllBytes(System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff") + ".png", imageData)
     use imageStream = new MemoryStream(imageData)
-    // File.WriteAllBytes(System.DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".png", imageData)
     new Bitmap(imageStream)
 
 let getColor (color: Color) = (color.R, color.G, color.B, color.A)
