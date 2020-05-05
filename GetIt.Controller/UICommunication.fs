@@ -132,6 +132,7 @@ module internal UICommunication =
                 |> Option.orElse (Path.Combine(thisAssemblyDir, fileName) |> toOptionIfFileExists)
                 |> Option.orElse (Path.Combine(thisAssemblyDir, "..", "..", "GetIt.UI", fileName) |> toOptionIfFileExists)
                 |> Option.defaultValue fileName
+                |> Path.GetFullPath
             let result = ProcessStartInfo(uiContainerPath)
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
