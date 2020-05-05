@@ -314,7 +314,6 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
             urlParams?get("socketUrl") |> Option.ofObj
             |> Option.map window?decodeURIComponent
             |> Option.defaultValue "ws://localhost/socket"
-        printfn "Socket url: %s" socketUrl
         let encode = Encode.channelMsg >> Encode.toString 0
         let decode =
             Decode.fromString Decode.channelMsg
