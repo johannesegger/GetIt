@@ -140,7 +140,7 @@ module internal UICommunication =
         printfn "Starting UI: %s %s" startInfo.FileName startInfo.Arguments
         let proc = Process.Start startInfo
         proc.EnableRaisingEvents <- true
-        let exitSubscription = proc.Exited.Subscribe (fun _ -> Environment.Exit 0)
+        let exitSubscription = proc.Exited.Subscribe (fun _ -> printfn "UI process exited -> Exiting controller process."; exit 0)
 
         let killProcessDisposable =
             Disposable.create (fun () ->
