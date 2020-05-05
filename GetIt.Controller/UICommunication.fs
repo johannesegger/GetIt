@@ -117,7 +117,7 @@ module internal UICommunication =
                 // Ensure that `yarn webpack-dev-server` is running before starting this
                 "GET_IT_INDEX_URL", "http://localhost:8080"
 #else
-                "GET_IT_INDEX_URL", "../../resources/UI/index.html"
+                "GET_IT_INDEX_URL", Path.Combine("..", "GetIt.UI", "index.html")
 #endif
             ]
 
@@ -125,15 +125,20 @@ module internal UICommunication =
             let toOptionIfFileExists v = if File.Exists v then Some v else None
             let uiContainerPath =
                 let fileName = "GetIt.UI.Container.exe"
-                let thisAssemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
                 Environment.GetEnvironmentVariable "GET_IT_UI_CONTAINER_DIRECTORY"
                 |> Option.ofObj
                 |> Option.map (fun d -> Path.Combine(d, fileName))
-                |> Option.orElse (Path.Combine(thisAssemblyDir, fileName) |> toOptionIfFileExists)
-                |> Option.orElse (Path.Combine(thisAssemblyDir, "..", "..", "GetIt.UI", fileName) |> toOptionIfFileExists)
+#if DEBUG
+                |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists)
+#else
+                |> Option.orElseWith (fun () ->
+                    let thisAssemblyDir = Path.GetDirectoryName(Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath)
+                    Path.Combine(thisAssemblyDir, "..", "..", "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
+                )
+#endif
                 |> Option.defaultValue fileName
                 |> Path.GetFullPath
-            let result = ProcessStartInfo(uiContainerPath)
+            let result = ProcessStartInfo(uiContainerPath, WorkingDirectory = Path.GetDirectoryName uiContainerPath)
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
             result

@@ -3,13 +3,16 @@ open Chromely.Core
 open Chromely.Core.Configuration
 open System
 open System.Web
+open System.IO
 
 let startUI cliArgs url windowSize startMaximized =
     let config = DefaultConfiguration.CreateForRuntimePlatform()
     // config.WindowOptions.Title = "Title Window";
     config.StartUrl <- url
     config.CefDownloadOptions.DownloadSilently <- true
+#if DEBUG
     config.DebuggingMode <- true
+#endif
     AppBuilder
        .Create()
        .UseApp<ChromelyBasicApp>()
@@ -34,6 +37,7 @@ let tryParseSize (text: string) =
 
 [<EntryPoint>]
 let main argv =
+    // System.Diagnostics.Debugger.Launch() |> ignore
     let windowSize = tryGetEnvVar "GET_IT_WINDOW_SIZE" |> Option.bind tryParseSize
     let startMaximized = tryGetEnvVar "GET_IT_START_MAXIMIZED" |> Option.isSome
     let socketUrl = tryGetEnvVar "GET_IT_SOCKET_URL"
@@ -41,7 +45,11 @@ let main argv =
     match socketUrl, indexUrl with
     | Some socketUrl, Some indexUrl ->
         let url =
-            let builder = UriBuilder(indexUrl)
+            let absoluteIndexUrl =
+                match Uri.TryCreate(indexUrl, UriKind.Relative) with
+                | (true, _) -> Path.GetFullPath indexUrl
+                | (false, _) -> indexUrl
+            let builder = UriBuilder(absoluteIndexUrl)
             let query = builder.Query |> HttpUtility.ParseQueryString
             query.Add("socketUrl", Uri.EscapeDataString socketUrl)
             builder.Query <- query.ToString()
