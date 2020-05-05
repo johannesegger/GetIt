@@ -195,7 +195,7 @@ module internal UICommunication =
 
         printfn "Setting up input events"
 
-        if uiProcess.MainWindowHandle = nativeint 0
+        if uiProcess.MainWindowHandle = IntPtr.Zero
         then raise (GetItException "UI doesn't have a window")
 
         let inputEventsSubscription =
