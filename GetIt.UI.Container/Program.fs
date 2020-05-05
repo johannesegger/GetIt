@@ -8,6 +8,7 @@ open System.IO
 let startUI cliArgs url windowSize startMaximized =
     let config = DefaultConfiguration.CreateForRuntimePlatform()
     // config.WindowOptions.Title = "Title Window";
+    config.WindowOptions.RelativePathToIconFile <- "icon.ico"
     config.StartUrl <- url
     config.CefDownloadOptions.DownloadSilently <- true
 #if DEBUG
