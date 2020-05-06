@@ -4,6 +4,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="PerfectScrollbar.fs" />
     <Compile Include="AsyncRx.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>

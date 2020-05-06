@@ -161,7 +161,6 @@ let update msg model =
         | x ->
             { model with BatchMessages = Some (x :: messages, level) }
 
-
 let view model dispatch =
     let players =
         model.Players
@@ -259,7 +258,7 @@ let view model dispatch =
             yield div [ Style [ Position PositionOptions.Absolute ] ] [ canvas [ Id "scene-pen-lines" ] [] ]
             yield! scenePlayersView |> List.map (List.singleton >> div [ Style [ Position PositionOptions.Absolute ] ])
         ]
-        div [ Id "info" ] [
+        PerfectScrollbar.perfectScrollbar [ PerfectScrollbar.Id "info" ] [
             div [ Id "inner-info" ] [
                 yield!
                     players
