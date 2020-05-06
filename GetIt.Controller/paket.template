@@ -7,8 +7,10 @@ licenseUrl http://opensource.org/licenses/MIT
 projectUrl https://github.com/johannesegger/GetIt
 requireLicenseAcceptance false
 description .NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.
+icon images\icon-128x128.png
 include-referenced-projects true
 files
   GetIt.targets ==> build
   ../GetIt.UI.Container/bin/Release/netcoreapp3.1 ==> tools/GetIt.UI.Container
   ../GetIt.UI/deploy ==> tools/GetIt.UI
+  ../assets/icon-128x128.png ==> images
