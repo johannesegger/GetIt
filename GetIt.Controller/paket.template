@@ -9,6 +9,7 @@ requireLicenseAcceptance false
 description .NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.
 icon images\icon-128x128.png
 include-referenced-projects true
+include-pdbs true
 files
   GetIt.targets ==> build
   ../GetIt.UI.Container/bin/Release/netcoreapp3.1 ==> tools/GetIt.UI.Container
