@@ -65,7 +65,7 @@ module ScreenCapture =
             then raise (Win32Exception("Deleting memory device context failed (DeleteDC returned false)"))
         )
 
-        let memoryBitmap = Win32.CreateCompatibleBitmap(windowDeviceContext, width, height);
+        let memoryBitmap = Win32.CreateCompatibleBitmap(windowDeviceContext, width, height)
         if memoryBitmap = IntPtr.Zero then raise (Win32Exception("Failed to create memory bitmap (CreateCompatibleBitmap returned null pointer)"))
 
         use __ = Disposable.create (fun () ->
