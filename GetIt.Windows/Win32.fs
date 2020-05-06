@@ -160,3 +160,6 @@ module Win32 =
     extern IntPtr GetWindowDC(IntPtr hWnd)
     [<DllImport("user32.dll")>]
     extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC)
+
+    [<DllImport("user32.dll")>]
+    extern bool SetProcessDpiAwarenessContext(int value)

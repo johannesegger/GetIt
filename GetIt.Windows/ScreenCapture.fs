@@ -36,6 +36,8 @@ module ScreenCapture =
         (srcLeft - refLeft, srcTop - refTop, srcWidth, srcHeight)
 
     let captureWindow handle region =
+        Win32.SetProcessDpiAwarenessContext(-4 (* DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 *)) |> ignore
+
         let windowDeviceContext = Win32.GetWindowDC(handle)
         if windowDeviceContext = IntPtr.Zero then raise (Win32Exception("Failed to get window device context (GetWindowDC returned null pointer)"))
 
