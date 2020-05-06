@@ -20,8 +20,8 @@ module ScreenCapture =
     let private tryGetOuterWindowRect handle =
         let mutable rect = Win32.Rect()
         let status = Win32.DwmGetWindowAttribute(handle, Win32.DWMWINDOWATTRIBUTE.ExtendedFrameBounds, &rect, Marshal.SizeOf<Win32.Rect>())
-        if status = 0 then None
-        else Some (rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top)
+        if status = 0 then Some (rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top)
+        else None
 
     let private getInnerWindowRect handle =
         let mutable rect = Win32.Rect()
