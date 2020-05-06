@@ -50,7 +50,7 @@ module ScreenCapture =
                 let fullWindowRect = getFullWindowRect handle
                 match tryGetOuterWindowRect handle with
                 | Some outerWindowRect -> outerWindowRect |> relativeTo fullWindowRect
-                | None -> fullWindowRect
+                | None -> let (_, _, width, height) = fullWindowRect in (0, 0, width, height)
             | WindowContent ->
                 let fullWindowRect = getFullWindowRect handle
                 getInnerWindowRect handle |> relativeTo fullWindowRect
