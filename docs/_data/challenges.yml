@@ -1,36 +1,36 @@
 - label: Get It Basics
   items:
     - name: Draw triangle
-      link: /challenges/draw-triangle.html
+      link: /challenges/basics/draw-triangle.html
     - name: Draw letter
-      link: /challenges/draw-letter.html
+      link: /challenges/basics/draw-letter.html
 - label: Variables and data types
   items:
     - name: Greeting
-      link: /challenges/greeting.html
+      link: /challenges/variables-and-data-types/greeting.html
     - name: Ask for position
-      link: /challenges/ask-for-position.html
+      link: /challenges/variables-and-data-types/ask-for-position.html
     - name: Calculator
-      link: /challenges/calculator.html
+      link: /challenges/variables-and-data-types/calculator.html
     - name: Comparisons
-      link: /challenges/comparisons.html
+      link: /challenges/variables-and-data-types/comparisons.html
 - label: Loops
   items:
     - name: Jump around
-      link: /challenges/jump-around.html
+      link: /challenges/loops/jump-around.html
     - name: Draw staircase
-      link: /challenges/draw-staircase.html
+      link: /challenges/loops/draw-staircase.html
     - name: Draw polygon
-      link: /challenges/draw-polygon.html
+      link: /challenges/loops/draw-polygon.html
     - name: Pyramid
-      link: /challenges/pyramid.html
+      link: /challenges/loops/pyramid.html
     - name: Draw patterns
-      link: /challenges/draw-patterns.html
+      link: /challenges/loops/draw-patterns.html
 - label: Branches
   items:
     - name: Rainbow drawing
-      link: /challenges/rainbow-drawing.html
+      link: /challenges/branches/rainbow-drawing.html
     - name: Steering wheel
-      link: /challenges/steering-wheel.html
+      link: /challenges/branches/steering-wheel.html
     - name: Feed the turtle - Part 1
-      link: /challenges/feed-the-turtle-part-1.html
+      link: /challenges/branches/feed-the-turtle-part-1.html
