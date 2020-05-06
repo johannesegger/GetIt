@@ -35,6 +35,8 @@ let startUI cliArgs url windowSize startMaximized =
     config.CefDownloadOptions.DownloadSilently <- true
 #if DEBUG
     config.DebuggingMode <- true
+#else
+    config.DebuggingMode <- false
 #endif
     AppBuilder
        .Create()
