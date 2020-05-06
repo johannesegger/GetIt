@@ -126,6 +126,7 @@ module internal UICommunication =
                 |> Option.ofObj
                 |> Option.map (fun d -> Path.Combine(d, fileName))
 #if DEBUG
+                // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
                 |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists)
 #else
                 |> Option.orElseWith (fun () ->
