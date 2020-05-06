@@ -53,6 +53,15 @@ let tests =
             let centerPixelColor = pixelAt Coordinates.sceneCenter image
             Expect.notEqual centerPixelColor white "Center pixel should not be white"
         }
+
+        test "Info height is constant" {
+            use state = UICommunication.showScene defaultWindowSize
+            for _ in [0..10] do
+                UICommunication.addPlayer (PlayerData.Turtle.WithVisibility(false)) state |> ignore
+            let image = getScreenshot state
+            let colors = pixelsAt Coordinates.fullScene image
+            Expect.allEqual colors white "All scene pixels should be white"
+        }
     ]
 
 [<EntryPoint>]
