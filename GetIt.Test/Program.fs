@@ -15,9 +15,9 @@ module Coordinates =
     let private infoHeight = 50
     let sceneCenter (image: Bitmap) =
         (image.Width / 2, (image.Height - infoHeight) / 2)
-    // let relativeToSceneCenter (xOffset, yOffset) image =
-    //     let (x, y) = sceneCenter image
-    //     (x + xOffset, y + yOffset)
+    let relativeToSceneCenter (xOffset, yOffset) image =
+        let (x, y) = sceneCenter image
+        (x + xOffset, y + yOffset)
     let fullScene (image: Bitmap) =
         [
             for x in [0 .. image.Width - 1] do
@@ -38,30 +38,45 @@ let white = getColor Color.White
 let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 
 let tests =
-    testList "Startup" [
-        test "Scene should be empty" {
-            use state = UICommunication.showScene defaultWindowSize
-            let image = getScreenshot state
-            let colors = pixelsAt Coordinates.fullScene image
-            Expect.allEqual colors white "All scene pixels should be white"
-        }
+    testSequenced <| testList "All" [
+        testList "Startup" [
+            test "Scene should be empty" {
+                use state = UICommunication.showScene defaultWindowSize
+                let image = getScreenshot state
+                let colors = pixelsAt Coordinates.fullScene image
+                Expect.allEqual colors white "All scene pixels should be white"
+            }
 
-        test "Turtle should start at scene center" {
-            use state = UICommunication.showScene defaultWindowSize
-            let playerId = UICommunication.addPlayer PlayerData.Turtle state
-            let image = getScreenshot state
-            let centerPixelColor = pixelAt Coordinates.sceneCenter image
-            Expect.notEqual centerPixelColor white "Center pixel should not be white"
-        }
+            test "Turtle should start at scene center" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer PlayerData.Turtle state
+                let image = getScreenshot state
+                let centerPixelColor = pixelAt Coordinates.sceneCenter image
+                Expect.notEqual centerPixelColor white "Center pixel should not be white"
+            }
 
-        test "Info height is constant" {
-            use state = UICommunication.showScene defaultWindowSize
-            for _ in [0..10] do
-                UICommunication.addPlayer (PlayerData.Turtle.WithVisibility(false)) state |> ignore
-            let image = getScreenshot state
-            let colors = pixelsAt Coordinates.fullScene image
-            Expect.allEqual colors white "All scene pixels should be white"
-        }
+            test "Info height is constant" {
+                use state = UICommunication.showScene defaultWindowSize
+                for _ in [0..10] do
+                    UICommunication.addPlayer (PlayerData.Turtle.WithVisibility(false)) state |> ignore
+                let image = getScreenshot state
+                let colors = pixelsAt Coordinates.fullScene image
+                Expect.allEqual colors white "All scene pixels should be white"
+            }
+        ]
+
+        testList "Movement" [
+            test "Move forward works" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer PlayerData.Turtle state
+                UICommunication.changePosition playerId { X = 100.; Y = 0. } state
+                let image = getScreenshot state
+                let centerPixelColor = pixelAt Coordinates.sceneCenter image
+                Expect.equal centerPixelColor white "Center pixel should be white"
+                let turtlePixelColor = pixelAt (Coordinates.relativeToSceneCenter (100, 0)) image
+                Expect.notEqual turtlePixelColor white "Turtle pixel should not be white"
+            }
+        ]
     ]
 
 [<EntryPoint>]
