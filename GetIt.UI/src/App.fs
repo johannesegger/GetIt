@@ -272,8 +272,9 @@ let view model dispatch =
                                     |> sprintf "data:image/svg+xml;base64,%s"
                                 )
                                 Style [
-                                    Width 30
-                                    Height 30
+                                    Width "30px"
+                                    Height "30px"
+                                    ObjectFit "contain"
                                     Transform (sprintf "rotate(%fdeg)" (360. - Degrees.value player.Direction))
                                     Opacity (if player.IsVisible then 1. else 0.5)
                                 ]
