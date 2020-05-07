@@ -127,16 +127,17 @@ let tests =
         ]
 
         testList "Movement" [
-            test "Move forward works" {
+            test "Change position" {
                 use state = UICommunication.showScene defaultWindowSize
                 let playerId = UICommunication.addPlayer rect state
-                UICommunication.changePosition playerId { X = 100.; Y = 50. } state
+                for _ in [1..10] do
+                    UICommunication.changePosition playerId { X = 13.; Y = 7. } state
                 let image = getScreenshot state
                 let actualColors = getPixelsAt Coordinates.fullScene image
                 let expectedColors =
                     createEmptyImage
                     |> setAllScenePixels white
-                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (100 - rectWidth / 2, -50 - rectHeight / 2)) (Coordinates.relativeToSceneCenter (100 + rectWidth / 2, -50 + rectHeight / 2))) rectColor
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (130 - rectWidth / 2, -70 - rectHeight / 2)) (Coordinates.relativeToSceneCenter (130 + rectWidth / 2, -70 + rectHeight / 2))) rectColor
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (100, 50) and everything else empty"
