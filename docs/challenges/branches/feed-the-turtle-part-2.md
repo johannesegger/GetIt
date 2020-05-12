@@ -42,4 +42,4 @@ For this challenge we'll use - for no particular reason - #1.
 
 1. Check if the food is below the scene bottom and if so, move it back to the top with another random x coordinate.
 
-That's it. In the next part we'll finish this series by adding points, lives and doing some polishing.
+That's it. In the next part we'll finish this series by adding a score, lives and doing some polishing.
