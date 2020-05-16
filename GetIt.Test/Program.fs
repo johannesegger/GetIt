@@ -142,6 +142,22 @@ let tests =
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (100, 50) and everything else empty"
             }
+
+            test "Rotate around center" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.setPosition playerId { X = 10.; Y = 30. } state
+                UICommunication.setDirection playerId (Degrees.op_Implicit 90.) state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (10 - rectHeight / 2, -30 - rectWidth / 2)) (Coordinates.relativeToSceneCenter (10 + rectHeight / 2, -30 + rectWidth / 2))) rectColor
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (10, 30) turned up and everything else empty"
+            }
         ]
     ]
 
