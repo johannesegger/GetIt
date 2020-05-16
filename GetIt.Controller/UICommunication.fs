@@ -13,7 +13,7 @@ open System.Diagnostics
 open System.IO
 open System.Reactive.Linq
 open System.Reactive.Disposables
-open System.Reflection
+open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
@@ -22,9 +22,10 @@ module internal UICommunication =
     type CommunicationState =
         {
             Disposable: IDisposable
-            CommandSubject: Reactive.Subjects.Subject<Guid * ControllerMsg>
-            ResponseSubject: Reactive.Subjects.Subject<ChannelMsg * ConnectionId>
+            CommandSubject: Subject<Guid * ControllerMsg>
+            ResponseSubject: Subject<ChannelMsg>
             UIWindowProcess: Process
+            MutableModel: MutableModel
         }
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
@@ -44,16 +45,13 @@ module internal UICommunication =
                 |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
 
             msgs
-            |> AsyncRx.tapOnNext uiMsgs.OnNext
+            |> AsyncRx.tapOnNext (fst >> uiMsgs.OnNext)
             |> AsyncRx.flatMap(fun (msg, connId) ->
                 match msg with
-                | ControllerMsg (msgId, msg) -> AsyncRx.empty () // confirmations
-                | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
-                    Model.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds })
-                    AsyncRx.single (msg, connId)
-                | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
-                | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
-                    Model.updateCurrent (fun model -> UIMsg uiMsg, model)
+                | ControllerMsg _ -> AsyncRx.empty () // confirmations
+                | ChannelMsg.UIMsg (SetSceneBounds _)
+                | ChannelMsg.UIMsg (AnswerStringQuestion _)
+                | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
                     AsyncRx.single (msg, connId)
             )
             |> AsyncRx.merge controllerMsgs
@@ -130,7 +128,7 @@ module internal UICommunication =
                 |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists)
 #else
                 |> Option.orElseWith (fun () ->
-                    let thisAssemblyDir = Path.GetDirectoryName(Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath)
+                    let thisAssemblyDir = Path.GetDirectoryName(Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath)
                     Path.Combine(thisAssemblyDir, "..", "..", "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
                 )
 #endif
@@ -182,8 +180,8 @@ module internal UICommunication =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
-        let controllerMsgs = new Reactive.Subjects.Subject<_>()
-        let uiMsgs = new Reactive.Subjects.Subject<_>()
+        let controllerMsgs = new Subject<_>()
+        let uiMsgs = new Subject<_>()
 
         let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs |> Async.RunSynchronously
         let socketUrl =
@@ -193,7 +191,20 @@ module internal UICommunication =
             uriBuilder.ToString()
         let (uiProcess, uiProcessDisposable) = startUI windowSize socketUrl
 
-        Model.observable
+        let mutableModel = MutableModel.create ()
+
+        let uiMsgsSubscription =
+            uiMsgs
+            |> Observable.subscribe (function
+                | ControllerMsg _ -> () // confirmations
+                | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+                    MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
+                | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
+                | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
+                    MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
+            )
+
+        mutableModel.Subject
         |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
         |> Observable.first
         |> Observable.wait
@@ -207,36 +218,38 @@ module internal UICommunication =
                 | MouseMove position as msg ->
                     try
                         let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle position
-                        Model.updateCurrent (fun model ->
+                        MutableModel.updateCurrent (fun model ->
                             let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                            Other, { model with MouseState = { model.MouseState with Position = scenePosition } })
+                            Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
                     with
                         | :? Win32Exception when uiProcess.HasExited -> ()
                         | :? Win32Exception -> reraise ()
                 | MouseClick mouseClick as msg ->
                     try
                         let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle mouseClick.VirtualScreenPosition
-                        Model.updateCurrent (fun model ->
+                        MutableModel.updateCurrent (fun model ->
                             let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
                             let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
-                            ApplyMouseClick mouseClick, model)
+                            ApplyMouseClick mouseClick, model) mutableModel
                     with
                         | :? Win32Exception when uiProcess.HasExited -> ()
                         | :? Win32Exception -> reraise ()
                 | KeyDown key as msg ->
-                    Model.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } })
+                    MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
                 | KeyUp key as msg ->
-                    Model.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } })
+                    MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }) mutableModel
             )
 
         {
             Disposable =
-                inputEventsSubscription
+                uiMsgsSubscription
+                |> Disposable.compose inputEventsSubscription
                 |> Disposable.compose uiProcessDisposable
                 |> Disposable.compose webServerDisposable
             CommandSubject = controllerMsgs
             ResponseSubject = uiMsgs
             UIWindowProcess = uiProcess
+            MutableModel = mutableModel
         }
 
     let private sendMessage state message =
@@ -244,7 +257,7 @@ module internal UICommunication =
         let messageId = Guid.NewGuid()
         use d =
             state.ResponseSubject
-            |> Observable.firstIf (fst >> fun r ->
+            |> Observable.firstIf (fun r ->
                 match r with
                 | ControllerMsg (msgId, msg) when msgId = messageId -> true
                 | _ -> false
@@ -259,7 +272,7 @@ module internal UICommunication =
         let mutable response = None
         use waitHandle = new ManualResetEventSlim()
         use d =
-            Model.observable
+            state.MutableModel.Subject
             |> Observable.choose responseFilter
             |> Observable.first
             |> Observable.subscribe (fun p ->
@@ -275,12 +288,12 @@ module internal UICommunication =
     let addPlayer playerData state =
         let playerId = PlayerId.create ()
         sendMessage state <| AddPlayer (playerId, playerData)
-        Model.updateCurrent (fun m -> Other, { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId })
+        MutableModel.updateCurrent (fun m -> Other, { m with Players = Map.add playerId playerData m.Players |> Player.sendToBack playerId }) state.MutableModel
         playerId
 
     let removePlayer playerId state =
         sendMessage state <| RemovePlayer playerId
-        Model.updateCurrent (fun m -> Other, { m with Players = Map.remove playerId m.Players })
+        MutableModel.updateCurrent (fun m -> Other, { m with Players = Map.remove playerId m.Players }) state.MutableModel
 
     let setWindowTitle title state =
         sendMessage state <| SetWindowTitle title
@@ -313,43 +326,43 @@ module internal UICommunication =
     let setPosition playerId position state =
         SetPosition (playerId, position)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Position = position })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Position = position }) state.MutableModel
 
     let changePosition playerId relativePosition state =
         ChangePosition (playerId, relativePosition)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Position = p.Position + relativePosition })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Position = p.Position + relativePosition }) state.MutableModel
 
     let setDirection playerId direction state =
         SetDirection (playerId, direction)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Direction = direction })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Direction = direction }) state.MutableModel
 
     let changeDirection playerId relativeDirection state =
         ChangeDirection (playerId, relativeDirection)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Direction = p.Direction + relativeDirection })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Direction = p.Direction + relativeDirection }) state.MutableModel
 
     let say playerId text state =
         SetSpeechBubble (playerId, Some (Say text))
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = Some (Say text) })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = Some (Say text) }) state.MutableModel
 
-    let private setTemporarySpeechBubble playerId speechBubble =
-        Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = Some speechBubble })
+    let private setTemporarySpeechBubble playerId speechBubble state =
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = Some speechBubble }) state.MutableModel
         Disposable.create (fun () ->
-            Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None })
+            MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
         )
 
     let askString playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskString text)
+        use d = setTemporarySpeechBubble playerId (AskString text) state
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskString text)))
             (fst >> function | UIMsg (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
     let askBool playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskBool text)
+        use d = setTemporarySpeechBubble playerId (AskBool text) state
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskBool text)))
@@ -358,69 +371,69 @@ module internal UICommunication =
     let shutUp playerId state =
         SetSpeechBubble (playerId, None)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
 
     let setPenState playerId isOn state =
         SetPenState (playerId, isOn)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = isOn } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = isOn } }) state.MutableModel
 
     let togglePenState playerId state =
         TogglePenState playerId
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with IsOn = not p.Pen.IsOn } }) state.MutableModel
 
     let setPenColor playerId color state =
         SetPenColor (playerId, color)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = color } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = color } }) state.MutableModel
 
     let shiftPenColor playerId angle state =
         ShiftPenColor (playerId, angle)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Color = Color.hueShift angle p.Pen.Color } }) state.MutableModel
 
     let setPenWeight playerId weight state =
         SetPenWeight (playerId, weight)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = weight } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = weight } }) state.MutableModel
 
     let changePenWeight playerId weight state =
         ChangePenWeight (playerId, weight)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with Pen = { p.Pen with Weight = p.Pen.Weight + weight } }) state.MutableModel
 
     let setSizeFactor playerId sizeFactor state =
         SetSizeFactor (playerId, sizeFactor)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with SizeFactor = sizeFactor })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SizeFactor = sizeFactor }) state.MutableModel
 
     let changeSizeFactor playerId sizeFactor state =
         ChangeSizeFactor (playerId, sizeFactor)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with SizeFactor = p.SizeFactor + sizeFactor })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SizeFactor = p.SizeFactor + sizeFactor }) state.MutableModel
 
     let setNextCostume playerId state =
         SetNextCostume playerId
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, Player.nextCostume p)
+        MutableModel.updatePlayer playerId (fun p -> Other, Player.nextCostume p) state.MutableModel
 
     let sendToBack playerId state =
         SendToBack playerId
         |> sendMessage state
-        Model.updateCurrent (fun m -> Other, { m with Players = Player.sendToBack playerId m.Players })
+        MutableModel.updateCurrent (fun m -> Other, { m with Players = Player.sendToBack playerId m.Players }) state.MutableModel
 
     let bringToFront playerId state =
         BringToFront playerId
         |> sendMessage state
-        Model.updateCurrent (fun m -> Other, { m with Players = Player.bringToFront playerId m.Players })
+        MutableModel.updateCurrent (fun m -> Other, { m with Players = Player.bringToFront playerId m.Players }) state.MutableModel
 
     let setVisibility playerId isVisible state =
         SetVisibility (playerId, isVisible)
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with IsVisible = isVisible })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with IsVisible = isVisible }) state.MutableModel
 
     let toggleVisibility playerId state =
         ToggleVisibility playerId
         |> sendMessage state
-        Model.updatePlayer playerId (fun p -> Other, { p with IsVisible = not p.IsVisible })
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with IsVisible = not p.IsVisible }) state.MutableModel

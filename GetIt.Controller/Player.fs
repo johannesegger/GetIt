@@ -4,11 +4,11 @@ open System
 open System.Threading
 
 /// A player that is added to the scene.
-type Player(playerId, remove) =
+type Player(playerId, getPlayer, remove) =
     let mutable isDisposed = 0
 
-    member internal x.PlayerId with get () = playerId
-    member private x.Player with get () = Map.find playerId (Model.getCurrent().Players)
+    member internal x.PlayerId with get () : PlayerId = playerId
+    member private x.Player with get () : PlayerData = getPlayer ()
 
     /// The actual size of the player.
     member x.Size with get () = x.Player.Size

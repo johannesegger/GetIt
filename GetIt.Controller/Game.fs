@@ -32,6 +32,9 @@ module internal Game =
         | None ->
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
 
+    let doWithMutableModel fn =
+        doWithCommunicationState (fun s -> fn s.MutableModel)
+
     let showScene windowSize =
         if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
             raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
@@ -70,6 +73,15 @@ module internal Game =
     let setVisibility playerId isVisible = doWithCommunicationState (UICommunication.setVisibility playerId isVisible)
     let toggleVisibility playerId = doWithCommunicationState (UICommunication.toggleVisibility playerId)
 
+    let onClickScene fn = doWithMutableModel (MutableModel.onClickScene fn)
+    let onKeyDown key fn = doWithMutableModel (MutableModel.onKeyDown key fn)
+    let onAnyKeyDown fn = doWithMutableModel (MutableModel.onAnyKeyDown fn)
+    let onEnterPlayer playerId fn = doWithMutableModel (MutableModel.onEnterPlayer playerId fn)
+    let onClickPlayer playerId fn = doWithMutableModel (MutableModel.onClickPlayer playerId fn)
+    let whileKeyDown key interval fn = doWithMutableModel (MutableModel.whileKeyDown key interval fn)
+    let whileAnyKeyDown interval fn = doWithMutableModel (MutableModel.whileAnyKeyDown interval fn)
+    let getCurrentModel () = doWithMutableModel MutableModel.getCurrent
+
 /// Defines methods to setup a game, add players, register global events and more.
 [<AbstractClass; Sealed>]
 type Game() =
@@ -94,7 +106,7 @@ type Game() =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
 
         let playerId = Game.addPlayer playerData
-        new Player(playerId, fun () -> Game.removePlayer playerId)
+        new Player(playerId, (fun () -> Map.find playerId (Game.getCurrentModel().Players)), (fun () -> Game.removePlayer playerId))
 
     /// <summary>
     /// Adds a player to the scene and calls a method to control the player.
@@ -250,7 +262,7 @@ type Game() =
         let fn ev =
             mouseClickEvent <- Some ev
             signal.Set()
-        use d = Model.onClickScene fn
+        use d = Game.onClickScene fn
         signal.Wait()
         Option.get mouseClickEvent
 
@@ -262,7 +274,7 @@ type Game() =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
 
         use signal = new ManualResetEventSlim()
-        use d = Model.onKeyDown key signal.Set
+        use d = Game.onKeyDown key signal.Set
         signal.Wait()
 
     /// <summary>
@@ -275,7 +287,7 @@ type Game() =
         let fn key =
             keyboardKey <- Some key
             signal.Set()
-        use d = Model.onAnyKeyDown fn
+        use d = Game.onAnyKeyDown fn
         signal.Wait()
         Option.get keyboardKey
 
@@ -287,7 +299,7 @@ type Game() =
     static member IsKeyDown key =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
 
-        Model.getCurrent().KeyboardState.KeysPressed
+        Game.getCurrentModel().KeyboardState.KeysPressed
         |> Set.contains key
 
     /// <summary>
@@ -296,7 +308,7 @@ type Game() =
     /// <returns>True, if any keyboard key is pressed, otherwise false.</returns>
     static member IsAnyKeyDown
         with get () =
-            Model.getCurrent().KeyboardState.KeysPressed
+            Game.getCurrentModel().KeyboardState.KeysPressed
             |> Set.isEmpty
             |> not
 
@@ -308,7 +320,7 @@ type Game() =
     static member OnAnyKeyDown (action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onAnyKeyDown action.Invoke
+        Game.onAnyKeyDown action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called once when a specific keyboard key is pressed.
@@ -320,7 +332,7 @@ type Game() =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onKeyDown key action.Invoke
+        Game.onKeyDown key action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called continuously when any keyboard key is pressed.
@@ -331,7 +343,7 @@ type Game() =
     static member OnAnyKeyDown (interval, action: Action<_, _>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.whileAnyKeyDown interval (curry action.Invoke)
+        Game.whileAnyKeyDown interval (curry action.Invoke)
 
     /// <summary>
     /// Registers an event handler that is called continuously when a specific keyboard key is pressed.
@@ -343,7 +355,7 @@ type Game() =
     static member OnKeyDown (key, interval, action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.whileKeyDown key interval action.Invoke
+        Game.whileKeyDown key interval action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called when the mouse is clicked anywhere on the scene.
@@ -353,13 +365,13 @@ type Game() =
     static member OnClickScene (action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onClickScene action.Invoke
+        Game.onClickScene action.Invoke
 
     /// The bounds of the scene.
     static member SceneBounds
-        with get () = Model.getCurrent().SceneBounds
+        with get () = Game.getCurrentModel().SceneBounds
 
     /// The current position of the mouse.
     static member MousePosition
-        with get () = Model.getCurrent().MouseState.Position
+        with get () = Game.getCurrentModel().MouseState.Position
 

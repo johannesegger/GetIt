@@ -7,10 +7,10 @@ module private Raw =
     let private rand = Random()
 
     let private touchesTopOrBottomEdge (player: GetIt.Player) =
-        player.Bounds.Top > Model.getCurrent().SceneBounds.Top || player.Bounds.Bottom < Model.getCurrent().SceneBounds.Bottom
+        player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom
 
     let private touchesLeftOrRightEdge (player: GetIt.Player) =
-        player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left
+        player.Bounds.Right > Game.getCurrentModel().SceneBounds.Right || player.Bounds.Left < Game.getCurrentModel().SceneBounds.Left
 
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
         Game.setPosition player.PlayerId position
@@ -44,8 +44,8 @@ module private Raw =
             (Math.Sin(directionRadians) * steps)
 
     let moveToRandomPosition (player: GetIt.Player) =
-        let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)
-        let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)
+        let x = rand.Next(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)
+        let y = rand.Next(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =
@@ -146,10 +146,10 @@ module private Raw =
         Game.bringToFront player.PlayerId
 
     let getDirectionToMouse (player: GetIt.Player) =
-        player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)
+        player.Position |> Position.angleTo (Game.getCurrentModel().MouseState.Position)
 
     let getDistanceToMouse (player: GetIt.Player) =
-        player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)
+        player.Position |> Position.distanceTo (Game.getCurrentModel().MouseState.Position)
 
     let getDirectionTo (player1: GetIt.Player) (player2: GetIt.Player) =
         player1.Position |> Position.angleTo player2.Position
@@ -167,22 +167,22 @@ module private Raw =
         Game.toggleVisibility player.PlayerId
 
     let onKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (action: System.Action<GetIt.Player>) =
-        Model.onKeyDown key (fun () -> action.Invoke player)
+        Game.onKeyDown key (fun () -> action.Invoke player)
 
     let onAnyKeyDown (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.KeyboardKey>) =
-        Model.onAnyKeyDown (fun key -> action.Invoke(player, key))
+        Game.onAnyKeyDown (fun key -> action.Invoke(player, key))
 
     let whileKeyDown (player: GetIt.Player) (key: GetIt.KeyboardKey) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, System.Int32>) =
-        Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))
+        Game.whileKeyDown key interval (fun i -> action.Invoke(player, i))
 
     let whileAnyKeyDown (player: GetIt.Player) (interval: System.TimeSpan) (action: System.Action<GetIt.Player, GetIt.KeyboardKey, System.Int32>) =
-        Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))
+        Game.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))
 
     let onMouseEnter (player: GetIt.Player) (action: System.Action<GetIt.Player>) =
-        Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))
+        Game.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))
 
     let onClick (player: GetIt.Player) (action: System.Action<GetIt.Player, GetIt.MouseClick>) =
-        Model.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))
+        Game.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))
 
 [<AbstractClass; Sealed>]
 type Turtle() =
