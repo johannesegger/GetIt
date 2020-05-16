@@ -93,7 +93,7 @@ let rect =
     PlayerData.Create(SvgImage.CreateRectangle({ Red = r; Green = g; Blue = b; Alpha = a }, { Width = float rectWidth; Height = float rectHeight; }))
 
 let tests =
-    testSequenced <| testList "All" [
+    testList "All" [
         testList "Startup" [
             test "Scene should be empty" {
                 use state = UICommunication.showScene defaultWindowSize
