@@ -8,18 +8,13 @@ open System
 open System.Web
 open System.IO
 
-module Win32 =
-    open System.Runtime.InteropServices
-    [<DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)>]
-    extern bool SetWindowText(IntPtr hWnd, string lpString)
-
 type ChromelyApp() =
     inherit ChromelyBasicApp()
     override x.RegisterEvents(container: IChromelyContainer) =
         let eventHandler =
             ChromelyEventHandler<TitleChangedEventArgs>(
                 CefEventKey.TitleChanged,
-                fun sender e -> Win32.SetWindowText(x.Window.Handle, e.Title) |> ignore
+                fun sender e -> x.Window.NativeHost.SetWindowTitle(e.Title) |> ignore
             )
         container.RegisterInstance(typeof<CefEventHandlerTypes.ITitleChangedHandler>, eventHandler.Key, eventHandler)
 

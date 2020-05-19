@@ -4,14 +4,14 @@ GROUP Controller
 STRATEGY: MIN
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    Chromely (5.0.77.3)
-      Chromely.CefGlue (>= 5.0.77.3) - restriction: >= netstandard2.0
-      Chromely.Core (>= 5.0.0.3) - restriction: >= netstandard2.0
-    Chromely.CefGlue (5.0.77.3) - restriction: >= netstandard2.0
-      Chromely.Core (>= 5.0.0.3) - restriction: >= netstandard2.0
+    Chromely (5.0.79)
+      Chromely.CefGlue (>= 5.0.79) - restriction: >= netstandard2.0
+      Chromely.Core (>= 5.0.0.4) - restriction: >= netstandard2.0
+    Chromely.CefGlue (5.0.79) - restriction: >= netstandard2.0
+      Chromely.Core (>= 5.0.0.4) - restriction: >= netstandard2.0
       System.Buffers (>= 4.5) - restriction: >= netstandard2.0
       System.Drawing.Common (>= 4.5.1) - restriction: >= netstandard2.0
-    Chromely.Core (5.0.0.3) - restriction: >= netstandard2.0
+    Chromely.Core (5.0.0.4) - restriction: >= netstandard2.0
       Microsoft.CSharp (>= 4.6) - restriction: >= netstandard2.0
       System.Text.Json (>= 4.6) - restriction: >= netstandard2.0
     ColorCode.Core (2.0.6) - restriction: >= netstandard1.4
