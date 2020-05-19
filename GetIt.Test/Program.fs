@@ -69,6 +69,7 @@ module Map =
         )
 
 let white = getColor Color.White
+let red = getColor Color.Red
 
 let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 
@@ -143,6 +144,23 @@ let tests =
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (10, 30) turned up and everything else empty"
+            }
+        ]
+
+        testList "Pen" [
+            test "Line position" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.red }; IsVisible = false } state
+                UICommunication.setPosition playerId { X = 100.; Y = 0. } state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (0, -25)) (Coordinates.relativeToSceneCenter (100, 25))) red
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
             }
         ]
     ]
