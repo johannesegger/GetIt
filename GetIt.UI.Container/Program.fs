@@ -29,6 +29,8 @@ let startUI cliArgs url windowSize startMaximized =
     config.StartUrl <- url
     config.CefDownloadOptions.DownloadSilently <- true
 #if DEBUG
+    config.CommandLineArgs <- Collections.Generic.Dictionary<_,_>()
+    config.CommandLineArgs.Add("--force-color-profile", "srgb") // Render accurate colors (necessary for test assertions)
     config.DebuggingMode <- true
 #else
     config.DebuggingMode <- false

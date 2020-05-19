@@ -9,21 +9,7 @@ let private getScreenshot communicationState =
     use imageStream = new MemoryStream(imageData)
     new Bitmap(imageStream)
 
-[<CustomEquality; NoComparison>]
-type BlurryColor =
-    BlurryColor of (byte * byte * byte * byte)
-        override x.Equals(y) =
-            let areNumbersEqual n1 n2 =
-                if n1 > n2 then n1 - n2 < 0xFuy
-                else n2 - n1 < 0xFuy
-            let isEqual (BlurryColor (r1, g1, b1, a1)) (BlurryColor (r2, g2, b2, a2)) =
-                areNumbersEqual r1 r2 && areNumbersEqual g1 g2 && areNumbersEqual b1 b2 && areNumbersEqual a1 a2
-            match y with
-            | :? BlurryColor as y -> isEqual x y
-            | _ -> false
-        override x.GetHashCode() = 0
-
-let getColor (color: Color) = BlurryColor (color.R, color.G, color.B, color.A)
+let getColor (color: Color) = (color.R, color.G, color.B, color.A)
 
 module Coordinates =
     let private infoHeight = 50
@@ -89,7 +75,7 @@ let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 let rectColor = getColor Color.Blue
 let (rectWidth, rectHeight) = (50, 20)
 let rect =
-    let (BlurryColor (r, g, b, a)) = rectColor
+    let (r, g, b, a) = rectColor
     PlayerData.Create(SvgImage.CreateRectangle({ Red = r; Green = g; Blue = b; Alpha = a }, { Width = float rectWidth; Height = float rectHeight; }))
 
 let tests =
