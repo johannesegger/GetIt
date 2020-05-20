@@ -218,6 +218,20 @@ let tests =
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have blue rectangular player at center"
             }
+
+            test "Size factor" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with SizeFactor = 2. } state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-rectWidth, -rectHeight)) (Coordinates.relativeToSceneCenter (rectWidth, rectHeight))) rectColor
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have blue rectangular player at center"
+            }
         ]
     ]
 
