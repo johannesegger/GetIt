@@ -307,6 +307,9 @@ let drawLine (canvas: HTMLCanvasElement) line =
 
 let drawLines canvas = List.iter (drawLine canvas)
 
+let clearScene (canvas: HTMLCanvasElement) =
+    canvas.getContext_2d().clearRect(0., 0., canvas.width, canvas.height)
+
 let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
     let msgChannel =
         let socketUrl =
@@ -367,9 +370,12 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
             |> AsyncRx.map (fun penLines -> canvas, penLines)
         )
         |> AsyncRx.tapOnNext (fun (canvas, (previousPenLines, nextPenLines)) ->
-            nextPenLines
-            |> List.take (nextPenLines.Length - previousPenLines.Length)
-            |> drawLines canvas
+            match nextPenLines.Length - previousPenLines.Length with
+            | x when x >= 0 ->
+                nextPenLines
+                |> List.take x
+                |> drawLines canvas
+            | _ -> clearScene canvas
 
         )
         |> AsyncRx.ignore
