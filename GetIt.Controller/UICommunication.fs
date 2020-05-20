@@ -147,14 +147,10 @@ module internal UICommunication =
             exit 0
         )
 
-        let stopProcessDisposable =
-            Disposable.create (fun () ->
-                proc.Close() // TODO catch exceptions?
-            )
-
+        // TODO stopping process on dispose results in logged exceptions (websocket connection must be closed gracefully)
         let d =
             exitSubscription
-            |> Disposable.compose stopProcessDisposable
+            |> Disposable.compose proc
         (proc, d)
 
     let inputEvents =
