@@ -39,7 +39,7 @@ type SvgImage =
 
             let pointString =
                 points
-                |> List.map (fun p -> sprintf "%f,%f" p.X (maxY - p.Y))
+                |> List.map ((fun p -> -minX + p.X, -minY + p.Y) >> (fun (x, y) -> x, (maxY - minY - y)) >> (uncurry (sprintf "%f,%f")))
                 |> String.concat " "
 
             let size = { Width = maxX - minX; Height = maxY - minY }

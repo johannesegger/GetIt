@@ -70,10 +70,11 @@ module Map =
 
 let white = getColor Color.White
 let red = getColor Color.Red
+let blue = getColor Color.Blue
 
 let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 
-let rectColor = getColor Color.Blue
+let rectColor = blue
 let (rectWidth, rectHeight) = (50, 20)
 let rect =
     let (r, g, b, a) = rectColor
@@ -231,6 +232,42 @@ let tests =
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have blue rectangular player at center"
+            }
+
+            test "Polygon costume" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerData =
+                    PlayerData.Create([
+                        SvgImage.CreatePolygon(
+                            RGBAColors.blue,
+                            [|
+                                { X = -15.; Y = 15. }
+                                { X = -15.; Y = 65. }
+                                { X = 15.; Y = 65. }
+                                { X = 15.; Y = 15. }
+                                { X = 45.; Y = 15. }
+                                { X = 45.; Y = -15. }
+                                { X = 15.; Y = -15. }
+                                { X = 15.; Y = -65. }
+                                { X = -15.; Y = -65. }
+                                { X = -15.; Y = -15. }
+                                { X = -45.; Y = -15. }
+                                { X = -45.; Y = 15. }
+                                { X = -15.; Y = 15. }
+                            |]
+                        )
+                    ])
+                let playerId = UICommunication.addPlayer playerData state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-15, -65)) (Coordinates.relativeToSceneCenter (15, 65))) blue
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-45, -15)) (Coordinates.relativeToSceneCenter (45, 15))) blue
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have blue plus-like player at center"
             }
         ]
     ]
