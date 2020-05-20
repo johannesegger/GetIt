@@ -176,6 +176,49 @@ let tests =
                 Expect.allEqual colors white "All scene pixels should be white"
             }
         ]
+
+        testList "Look" [
+            test "Next costume" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerData =
+                    PlayerData.Create([
+                        SvgImage.CreateRectangle(RGBAColors.blue, { Width = float rectWidth; Height = float rectHeight })
+                        SvgImage.CreateRectangle(RGBAColors.red, { Width = float rectWidth; Height = float rectHeight })
+                    ])
+                let playerId = UICommunication.addPlayer playerData state
+                UICommunication.setNextCostume playerId state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-rectWidth / 2, -rectHeight / 2)) (Coordinates.relativeToSceneCenter (rectWidth / 2, rectHeight / 2))) red
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have red rectangular player at center"
+            }
+
+            test "Next next costume" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerData =
+                    PlayerData.Create([
+                        SvgImage.CreateRectangle(RGBAColors.blue, { Width = float rectWidth; Height = float rectHeight })
+                        SvgImage.CreateRectangle(RGBAColors.red, { Width = float rectWidth; Height = float rectHeight })
+                    ])
+                let playerId = UICommunication.addPlayer playerData state
+                UICommunication.setNextCostume playerId state
+                UICommunication.setNextCostume playerId state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-rectWidth / 2, -rectHeight / 2)) (Coordinates.relativeToSceneCenter (rectWidth / 2, rectHeight / 2))) blue
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have blue rectangular player at center"
+            }
+        ]
     ]
 
 [<EntryPoint>]
