@@ -77,7 +77,7 @@ let rectColor = getColor Color.Blue
 let (rectWidth, rectHeight) = (50, 20)
 let rect =
     let (r, g, b, a) = rectColor
-    PlayerData.Create(SvgImage.CreateRectangle({ Red = r; Green = g; Blue = b; Alpha = a }, { Width = float rectWidth; Height = float rectHeight; }))
+    PlayerData.Create(SvgImage.CreateRectangle({ Red = r; Green = g; Blue = b; Alpha = a }, { Width = float rectWidth; Height = float rectHeight }))
 
 let tests =
     testSequenced <| testList "All" [
