@@ -162,6 +162,19 @@ let tests =
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
             }
+
+            test "Clear pen lines" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.red }; IsVisible = false } state
+                UICommunication.changePosition playerId { X = 100.; Y = 0. } state
+                UICommunication.changePosition playerId { X = -100.; Y = 100. } state
+                UICommunication.changePosition playerId { X = -100.; Y = -100. } state
+                UICommunication.changePosition playerId { X = 100.; Y = 0. } state
+                UICommunication.clearScene state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors white "All scene pixels should be white"
+            }
         ]
     ]
 
