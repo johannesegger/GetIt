@@ -20,6 +20,23 @@ module Utils =
     let flip fn a b = fn b a
 
 /// For internal use only.
+module Result =
+    let ofOption error = function
+        | Some o -> Result.Ok o
+        | None -> Result.Error error
+    let toOption = function
+        | Result.Ok o -> Some o 
+        | Result.Error _ -> None 
+
+/// For internal use only.
+module Async =
+    let map fn a = async {
+        let! p = a
+        return fn p
+    }
+
+#if !FABLE_COMPILER
+/// For internal use only.
 module Double =
     let tryParseCultureInvariant arg =
         match Double.TryParse(arg, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
@@ -51,7 +68,6 @@ module Svg =
         | Some width, Some height -> Some (width, height)
         | _ -> None
 
-#if !FABLE_COMPILER
     let getSizeFromSvgDocument content =
         use textReader = new StringReader(content)
         let readerSettings = XmlReaderSettings()
@@ -72,20 +88,3 @@ module Svg =
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 #endif
-
-/// For internal use only.
-module Result =
-    let ofOption error = function
-        | Some o -> Result.Ok o
-        | None -> Result.Error error
-    let toOption = function
-        | Result.Ok o -> Some o 
-        | Result.Error _ -> None 
-
-/// For internal use only.
-module Async =
-    let map fn a = async {
-        let! p = a
-        return fn p
-    }
-
