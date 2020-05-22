@@ -136,6 +136,19 @@ let requestAnimationFrameObservable =
     })
     |> repeat
 
+let beforeWindowUnloadObservable =
+    AsyncRx.create (fun observer -> async {
+        let listener e =
+            async {
+                do! observer.OnNextAsync ()
+                do! observer.OnCompletedAsync()
+            }
+            |> Async.StartImmediate
+
+        Browser.Dom.window.addEventListener ("beforeunload", listener) |> ignore
+        return AsyncDisposable.Create(fun () -> async { Browser.Dom.window.removeEventListener("beforeunload", listener) })
+    })
+
 let ignore source =
     source
     |> AsyncRx.flatMapLatest (ignore >> AsyncRx.empty)
