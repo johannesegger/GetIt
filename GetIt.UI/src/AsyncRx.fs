@@ -125,9 +125,13 @@ let observeElementSizeFromWindowResize selector =
 let requestAnimationFrameObservable =
     AsyncRx.create (fun observer -> async {
         Browser.Dom.window.requestAnimationFrame (fun timestamp ->
-            observer.OnNextAsync () |> Async.StartImmediate
-            observer.OnCompletedAsync() |> Async.StartImmediate
-        ) |> ignore
+            async {
+                do! observer.OnNextAsync ()
+                do! observer.OnCompletedAsync()
+            }
+            |> Async.StartImmediate
+        )
+        |> ignore
         return AsyncDisposable.Empty
     })
     |> repeat
