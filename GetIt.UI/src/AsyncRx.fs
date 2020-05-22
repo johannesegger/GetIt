@@ -5,14 +5,14 @@ open Fable.Core.JsInterop
 open FSharp.Control
 
 let private transformAsync mapNextAsync (source: IAsyncObservable<_>) =
-    let subscribeAsync (aobv : IAsyncObserver<'TResult>) : Async<IAsyncDisposable> =
+    let subscribeAsync (aobv : IAsyncObserver<'TResult>) =
         { new IAsyncObserver<'TSource> with
             member __.OnNextAsync x = mapNextAsync aobv.OnNextAsync x
             member __.OnErrorAsync err = aobv.OnErrorAsync err
             member __.OnCompletedAsync () = aobv.OnCompletedAsync ()
         }
         |> source.SubscribeAsync
-    { new IAsyncObservable<'TResult> with member __.SubscribeAsync o = subscribeAsync o }
+    AsyncRx.create subscribeAsync
 
 let skip n =
     let mutable remaining = n
