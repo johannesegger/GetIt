@@ -327,6 +327,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
                     None
             )
         AsyncRx.msgChannel socketUrl encode decode
+        >> AsyncRx.takeUntil AsyncRx.beforeWindowUnloadObservable
         >> AsyncRx.``finally`` (fun () -> async { window.close() })
 
     let nodeCreated selector =
@@ -423,7 +424,6 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         |> msgChannel
     ]
     |> AsyncRx.mergeSeq
-    |> AsyncRx.takeUntil AsyncRx.beforeWindowUnloadObservable
 
 Program.mkSimple init update (fun model dispatch -> view model (UIMsg >> dispatch))
 |> Program.withStream stream
