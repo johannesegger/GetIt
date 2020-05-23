@@ -138,20 +138,7 @@ module internal UICommunication =
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
             result
-        let proc = Process.Start startInfo
-        proc.EnableRaisingEvents <- true
-        let exitSubscription = proc.Exited.Subscribe (fun _ ->
-#if DEBUG
-            printfn "UI process exited -> Exiting controller process."
-#endif
-            exit 0
-        )
-
-        // TODO stopping process on dispose results in logged exceptions (websocket connection must be closed gracefully)
-        let d =
-            exitSubscription
-            |> Disposable.compose proc
-        (proc, d)
+        Process.Start startInfo
 
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
@@ -185,7 +172,14 @@ module internal UICommunication =
             uriBuilder.Scheme <- "ws"
             uriBuilder.Path <- socketPath
             uriBuilder.ToString()
-        let (uiProcess, uiProcessDisposable) = startUI windowSize socketUrl
+        let uiProcess = startUI windowSize socketUrl
+        uiProcess.EnableRaisingEvents <- true
+        let uiProcessExitSubscription = uiProcess.Exited.Subscribe (fun _ ->
+#if DEBUG
+            printfn "UI process exited -> Exiting controller process."
+#endif
+            exit 0
+        )
 
         let mutableModel = MutableModel.create ()
 
@@ -240,7 +234,8 @@ module internal UICommunication =
             Disposable =
                 uiMsgsSubscription
                 |> Disposable.compose inputEventsSubscription
-                |> Disposable.compose uiProcessDisposable
+                |> Disposable.compose uiProcessExitSubscription
+                |> Disposable.compose uiProcess
                 |> Disposable.compose webServerDisposable
             CommandSubject = controllerMsgs
             ResponseSubject = uiMsgs
