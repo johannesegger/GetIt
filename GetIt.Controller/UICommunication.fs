@@ -77,8 +77,6 @@ module internal UICommunication =
                 )
                 |> ignore
 
-        let cancellation = new CancellationDisposable()
-
         let webHost =
             WebHostBuilder()
                 .UseKestrel()
@@ -93,10 +91,16 @@ module internal UICommunication =
                 .UseUrls("http://[::1]:0")
                 .Build()
 
-        do! webHost.StartAsync(cancellation.Token) |> Async.AwaitTask
+        do! webHost.StartAsync() |> Async.AwaitTask
         let url = webHost.ServerFeatures.Get<IServerAddressesFeature>().Addresses |> Seq.head
 
-        return (url, cancellation :> IDisposable)
+        let serverDisposable =
+            Disposable.create (fun () ->
+                webHost.StopAsync()
+                |> Async.AwaitTask
+                |> Async.RunSynchronously
+            )
+        return (url, serverDisposable)
     }
 
     let private startUI windowSize socketUrl =
