@@ -44,7 +44,8 @@ namespace GetIt.Sample
             // Program34();
             // Program35();
             // Program36();
-            Program37();
+            // Program37();
+            Program38();
         }
 
         private static void Program1()
@@ -209,7 +210,7 @@ namespace GetIt.Sample
             Turtle.TurnOnPen();
             Turtle.MoveTo(100, -100);
             Turtle.Sleep(100);
-            
+
             Turtle.MoveTo(66, -66);
             Turtle.Sleep(100);
             Turtle.TurnOffPen();
@@ -700,7 +701,7 @@ namespace GetIt.Sample
 
             var turtle1 = Game.AddPlayer(PlayerData.Turtle.WithPosition(-10, 0));
             var turtle2 = Game.AddPlayer(PlayerData.Turtle.WithPosition(10, 0));
-            
+
             turtle2.Say("Press <Space> to send me to back.");
             Game.WaitForKeyDown(KeyboardKey.Space);
             turtle2.ShutUp();
@@ -917,6 +918,48 @@ namespace GetIt.Sample
                 player.SetDirection(Directions.Right);
                 player.Sleep(1000);
             }
+        }
+
+        private static void Program38()
+        {
+            Game.ShowSceneAndAddTurtle();
+            string text = "";
+            Turtle.OnAnyKeyDown(TimeSpan.FromMilliseconds(200), (p, key, i) =>
+            {
+                if (key == KeyboardKey.Left)
+                {
+                    Turtle.MoveLeft(10);
+                }
+                else if (key == KeyboardKey.Right)
+                {
+                    Turtle.MoveRight(10);
+                }
+                else if (key == KeyboardKey.Up)
+                {
+                    Turtle.MoveUp(10);
+                }
+                else if (key == KeyboardKey.Down)
+                {
+                    Turtle.MoveDown(10);
+                }
+                else if (key == KeyboardKey.Escape)
+                {
+                    text = text.Substring(0, Math.Max(text.Length - 1, 0));
+                }
+                else if (key == KeyboardKey.A)
+                {
+                    text += "A";
+                }
+                else if (key == KeyboardKey.S)
+                {
+                    text += new string('S', 10);
+                }
+                else if (key == KeyboardKey.Enter)
+                {
+                    text += Environment.NewLine;
+                }
+                Turtle.AskBool(text);
+            });
         }
     }
 }
