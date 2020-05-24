@@ -1,5 +1,6 @@
 module GetIt.UI
 
+open Browser
 open Browser.Dom
 open Browser.Types
 open Elmish
@@ -213,16 +214,20 @@ let view model dispatch =
                 [
                     Class "speech-bubble"
                     Style [
-                        let offsetLeft = -model.SceneBounds.Left + player.Bounds.Right - 30.
-                        let offsetTop = model.SceneBounds.Top - player.Bounds.Top - 20.
+                        let offsetLeft = -model.SceneBounds.Left + player.Bounds.Right
+                        let offsetTop = model.SceneBounds.Top - player.Bounds.Top
                         yield Transform (sprintf "translate(%fpx, %fpx) translate(0,-100%%)" offsetLeft offsetTop)
                     ]
                 ]
-                content
+                [
+                    canvas [ Class "border" ] []
+                    div [ Class "content" ] [ PerfectScrollbar.perfectScrollbar [] content ]
+                ]
             |> Some
 
         match player.SpeechBubble with
-        | None -> None
+        | None
+        | Some (Say "") -> None
         | Some (Say text) ->
             speechBubble [ span [] [ str text ] ]
         | Some (AskString text) ->
@@ -231,7 +236,7 @@ let view model dispatch =
                 input [
                     AutoFocus true
                     OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
-                    Style [ Width "100%"; MarginTop "5px" ]
+                    Style [ Width "100%"; MarginTop "5px"; BoxSizing BoxSizingOptions.BorderBox ]
                 ]
             ]
         | Some (AskBool text) ->
@@ -340,10 +345,10 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
             |> AsyncRx.startWith [ document.body ]
         )
         |> AsyncRx.choose (fun n -> n.querySelector(selector) :?> HTMLElement |> Option.ofObj)
-        |> AsyncRx.take 1
 
     let sceneSizeChanged =
         nodeCreated "#scene"
+        |> AsyncRx.take 1
         |> AsyncRx.flatMapLatest (fun sceneElement ->
             AsyncRx.observeElementSizeFromWindowResize "#scene"
             |> AsyncRx.map (fun sceneSize -> (sceneElement, sceneSize))
@@ -381,6 +386,43 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         )
         |> AsyncRx.ignore
 
+    let speechBubbles =
+        nodeCreated ".speech-bubble"
+        |> AsyncRx.flatMap (fun e ->
+            let border = e.querySelector(":scope > .border") :?> HTMLCanvasElement
+            let content = e.querySelector(":scope > .content") :?> HTMLElement
+            AsyncRx.observeSubTreeTextChanged content
+            |> AsyncRx.map ignore
+            |> AsyncRx.startWith [ () ]
+            |> AsyncRx.tapOnNext(fun () ->
+                let ctx = border.getContext_2d()
+
+                let width = content.offsetWidth
+                let height = content.offsetHeight
+                let scaleFactor = window.devicePixelRatio
+                border.style.width <- sprintf "%fpx" width
+                border.style.height <- sprintf "%fpx" height
+                border.width <- width * scaleFactor
+                border.height <- height * scaleFactor
+                ctx.scale(scaleFactor, scaleFactor)
+
+                ctx.strokeStyle <- U3.Case1 "black"
+                ctx.fillStyle <- U3.Case1 "#fff5ed"
+                ctx.lineWidth <- 2.
+                ctx.beginPath()
+                ctx.moveTo(10., 5.)
+                ctx.lineTo(width - 10., 5.)
+                ctx.bezierCurveTo(width, 5., width, height - 20., width - 10., height - 20.)
+                ctx.lineTo(40., height - 20.)
+                ctx.bezierCurveTo(40. - 20., height, 40. - 20. - 15., height, 40. - 15., height - 20.)
+                ctx.lineTo(10., height - 20.)
+                ctx.bezierCurveTo(0., height - 20., 0., 5., 10., 5.)
+                ctx.stroke()
+                ctx.fill()
+            )
+        )
+        |> AsyncRx.ignore
+
     let uiMsgs =
         [
             sceneSizeChanged
@@ -415,6 +457,7 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         |> AsyncRx.ignore
 
         penLines
+        speechBubbles
 
         [
             uiMsgs

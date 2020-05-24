@@ -87,15 +87,15 @@ let ``finally`` fn (source: IAsyncObservable<_>) =
         })
     })
 
-let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
+let observeSubtreeMutations (parent: Node) =
     AsyncRx.create (fun obs -> async {
         let onMutate mutations =
             mutations
-            |> Seq.collect (fun m -> m?addedNodes)
             |> Seq.iter (obs.OnNextAsync >> Async.StartImmediate)
         let mutationObserver = createNew Browser.Dom.window?MutationObserver (onMutate)
         let mutationObserverConfig = createObj [
             "childList" ==> true
+            "characterData" ==> true
             "subtree" ==> true
         ]
         mutationObserver?observe(parent, mutationObserverConfig)
@@ -103,6 +103,15 @@ let observeSubTreeAdditions (parent: Node) : IAsyncObservable<Node> =
             mutationObserver?disconnect()
         })
     })
+
+let observeSubTreeAdditions parent : IAsyncObservable<Node> =
+    observeSubtreeMutations parent
+    |> AsyncRx.flatMap (fun m -> m?addedNodes |> AsyncRx.ofSeq)
+
+let observeSubTreeTextChanged parent : IAsyncObservable<Text> =
+    observeSubtreeMutations parent
+    |> AsyncRx.filter (fun m -> m?``type`` = "characterData")
+    |> AsyncRx.map (fun m -> m?target)
 
 let observeElementSizeFromWindowResize selector =
     AsyncRx.create (fun obs -> async {

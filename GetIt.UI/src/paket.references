@@ -1,4 +1,5 @@
 group UI
+Fable.Browser.Css
 Fable.Core
 Fable.Elmish.Debugger
 Fable.Elmish.HMR

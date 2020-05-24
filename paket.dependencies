@@ -29,6 +29,7 @@ group UI
 
     storage:none
 
+    nuget Fable.Browser.Css
     nuget Fable.Core
     nuget Fable.Elmish.HMR
     nuget Fable.Elmish.Nile
