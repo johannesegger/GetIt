@@ -269,6 +269,25 @@ let tests =
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have blue plus-like player at center"
             }
+
+            test "Speech bubble shows" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
+                UICommunication.say playerId "Hi" state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.exists colors ((<>) white) "Scene should have non-white pixels"
+            }
+
+            test "Speech bubble hides" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
+                UICommunication.say playerId "Hi" state
+                UICommunication.shutUp playerId state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors white "All scene pixels should be white"
+            }
         ]
     ]
 
