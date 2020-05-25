@@ -83,7 +83,7 @@ module internal UICommunication =
                 .Configure(Action<IApplicationBuilder> configureApp)
                 .ConfigureLogging(fun hostingContext logging ->
                     logging
-                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l.Equals LogLevel.Error)
+                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l >= LogLevel.Error)
                         .AddConsole()
                         .AddDebug()
                     |> ignore
