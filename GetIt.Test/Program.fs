@@ -324,6 +324,15 @@ let tests =
                 Expect.allEqual colors white "All scene pixels should be white"
             }
         ]
+
+        test "Remove player" {
+            use state = UICommunication.showScene defaultWindowSize
+            let playerId = UICommunication.addPlayer rect state
+            UICommunication.removePlayer playerId state
+            let image = getScreenshot state
+            let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+            Expect.allEqual colors white "All scene pixels should be white"
+        }
     ]
 
 [<EntryPoint>]
