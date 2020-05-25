@@ -206,6 +206,14 @@ let tests =
         ]
 
         testList "Look" [
+            test "Hidden" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with IsVisible = false } state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors white "All scene pixels should be white"
+            }
+
             test "Next costume" {
                 use state = UICommunication.showScene defaultWindowSize
                 let playerData =
