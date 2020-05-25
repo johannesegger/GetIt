@@ -923,6 +923,7 @@ namespace GetIt.Sample
         private static void Program38()
         {
             Game.ShowSceneAndAddTurtle();
+            Game.AddPlayer(PlayerData.Ant.WithPosition(100, 100));
             string text = "";
             Turtle.OnAnyKeyDown(TimeSpan.FromMilliseconds(200), (p, key, i) =>
             {
@@ -958,7 +959,7 @@ namespace GetIt.Sample
                 {
                     text += Environment.NewLine;
                 }
-                Turtle.AskBool(text);
+                Turtle.Say(text);
             });
         }
     }
