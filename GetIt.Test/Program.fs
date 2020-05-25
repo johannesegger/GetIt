@@ -71,6 +71,7 @@ module Map =
 let white = getColor Color.White
 let red = getColor Color.Red
 let blue = getColor Color.Blue
+let black = getColor Color.Black
 
 let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
 
@@ -159,6 +160,32 @@ let tests =
                     createEmptyImage
                     |> setAllScenePixels white
                     |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (0, -25)) (Coordinates.relativeToSceneCenter (100, 25))) red
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
+            }
+
+            ftest "Toggle pen state" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with Pen = { rect.Pen with Weight = 2. }; IsVisible = false } state
+                UICommunication.setPosition playerId { X = -100.; Y = 0. } state
+                UICommunication.setPenState playerId true state
+                UICommunication.setPosition playerId { X = -100.; Y = 100. } state
+                UICommunication.setPosition playerId { X = 0.; Y = 100. } state
+                UICommunication.setPenState playerId false state
+                UICommunication.setPosition playerId { X = 0.; Y = 0. } state
+                UICommunication.setPenState playerId true state
+                UICommunication.setPosition playerId { X = 100.; Y = 0. } state
+                UICommunication.setPosition playerId { X = 100.; Y = 100. } state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-101, -100)) (Coordinates.relativeToSceneCenter (-99, 0))) black
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-100, -101)) (Coordinates.relativeToSceneCenter (0, -99))) black
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (0, -1)) (Coordinates.relativeToSceneCenter (100, 1))) black
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (99, 0)) (Coordinates.relativeToSceneCenter (101, -100))) black
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
