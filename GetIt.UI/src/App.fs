@@ -1,7 +1,6 @@
 module GetIt.UI
 
 open Browser
-open Browser.Dom
 open Browser.Types
 open Elmish
 open Elmish.Debug
@@ -26,25 +25,40 @@ type PenLine =
         Color: RGBAColor
     }
 
+type SpeechBubblePosition = Left | Right
+
 type Model =
     {
         SceneBounds: GetIt.Rectangle
         WindowTitle: string option
         Players: Map<PlayerId, PlayerData>
+        SpeechBubblePositions: Map<PlayerId, SpeechBubblePosition>
         PenLines: PenLine list
         Background: SvgImage
         BatchMessages: (ChannelMsg list * int) option
     }
+
+type LocalMsg = SetSpeechBubblePosition of PlayerId * SpeechBubblePosition
+
+type Msg =
+    | ChannelMsg of ChannelMsg
+    | LocalMsg of LocalMsg
 
 let init () =
     {
         SceneBounds = GetIt.Rectangle.zero
         WindowTitle = None
         Players = Map.empty
+        SpeechBubblePositions = Map.empty
         PenLines = []
         Background = Background.none
         BatchMessages = None
     }
+
+let private updateLocally msg model =
+    match msg with
+    | SetSpeechBubblePosition (playerId, position) ->
+        { model with SpeechBubblePositions = Map.add playerId position model.SpeechBubblePositions }
 
 let rec private updateDirectly msg model =
     let updatePlayer playerId fn =
@@ -133,6 +147,7 @@ let rec private updateDirectly msg model =
     | ControllerMsg (msgId, RemovePlayer playerId) ->
         { model with
             Players = Map.remove playerId model.Players
+            SpeechBubblePositions = Map.remove playerId model.SpeechBubblePositions
         }
     | ControllerMsg (msgId, SetWindowTitle title) ->
         { model with WindowTitle = title }
@@ -147,10 +162,11 @@ let rec private updateDirectly msg model =
         model
 
 let update msg model =
-    match model.BatchMessages with
-    | None ->
+    match msg, model.BatchMessages with
+    | LocalMsg msg, _ -> updateLocally msg model
+    | ChannelMsg msg, None ->
         updateDirectly msg model
-    | Some (messages, level) ->
+    | ChannelMsg msg, Some (messages, level) ->
         match msg with
         | ControllerMsg (msgId, StartBatch) ->
             { model with BatchMessages = Some (messages, level + 1) }
@@ -161,6 +177,50 @@ let update msg model =
             ||> List.foldBack updateDirectly
         | x ->
             { model with BatchMessages = Some (x :: messages, level) }
+
+let private initSpeechBubble (sceneBounds: Rectangle) (playerBounds: Rectangle) position (element: HTMLElement) =
+    let border = element.querySelector(":scope > .border") :?> HTMLCanvasElement
+    let content = element.querySelector(":scope > .content") :?> HTMLElement
+
+    let ctx = border.getContext_2d()
+
+    let width = content.offsetWidth
+    let height = content.offsetHeight
+    let scaleFactor = window.devicePixelRatio
+    border.style.width <- sprintf "%fpx" width
+    border.style.height <- sprintf "%fpx" height
+    border.width <- width * scaleFactor
+    border.height <- height * scaleFactor
+    ctx.scale(scaleFactor, scaleFactor)
+
+    ctx.strokeStyle <- U3.Case1 "#00000033"
+    ctx.fillStyle <- U3.Case1 "#8B451310"
+    ctx.lineWidth <- 2.
+    ctx.beginPath()
+    ctx.moveTo(10., 5.)
+    ctx.lineTo(width - 10., 5.)
+    ctx.bezierCurveTo(width, 5., width, height - 20., width - 10., height - 20.)
+    ctx.lineTo(40., height - 20.)
+    ctx.bezierCurveTo(40. - 20., height, 40. - 20. - 15., height, 40. - 15., height - 20.)
+    ctx.lineTo(10., height - 20.)
+    ctx.bezierCurveTo(0., height - 20., 0., 5., 10., 5.)
+    ctx.stroke()
+    ctx.fill()
+
+    element.style.transform <-
+        match position with
+        | Left -> sprintf "translate(%fpx, %fpx) translate(-100%%, -100%%)" (-sceneBounds.Left + playerBounds.Left) (sceneBounds.Top - playerBounds.Top)
+        | Right -> sprintf "translate(%fpx, %fpx) translate(0,-100%%)" (-sceneBounds.Left + playerBounds.Right) (sceneBounds.Top - playerBounds.Top)
+
+    match element.getBoundingClientRect().top with
+    | top when top < 0. -> element.style.transform <- sprintf "%s translate(0, %fpx)" element.style.transform -top
+    | _ -> ()
+
+    match position, element.getBoundingClientRect() with
+    | Right, bounds when bounds.right > sceneBounds.Size.Width -> Some Left
+    | Right, _ -> None
+    | Left, bounds when bounds.left < 0. -> Some Right
+    | Left, _ -> None
 
 let view model dispatch =
     let players =
@@ -208,19 +268,27 @@ let view model dispatch =
             ]
         ]
 
-    let speechBubbleView playerId (player: PlayerData) =
+    let speechBubbleView playerId (player: PlayerData) position =
         let speechBubble content =
             div
                 [
                     Class "speech-bubble"
-                    Style [
-                        let offsetLeft = -model.SceneBounds.Left + player.Bounds.Right
-                        let offsetTop = model.SceneBounds.Top - player.Bounds.Top
-                        yield Transform (sprintf "translate(%fpx, %fpx) translate(0,-100%%)" offsetLeft offsetTop)
-                    ]
+                    Ref (fun e ->
+                        if not <| isNull e then
+                            match initSpeechBubble model.SceneBounds player.Bounds position (e :?> HTMLElement) with
+                            | Some newPosition -> dispatch (LocalMsg (SetSpeechBubblePosition (playerId, newPosition)))
+                            | None -> ()
+                    )
                 ]
                 [
-                    canvas [ Class "border" ] []
+                    canvas
+                        [
+                            yield Class "border"
+                            match position with
+                            | Left -> yield Style [ Transform "Scale(-1, 1)" ]
+                            | Right -> ()
+                        ]
+                        []
                     div [ Class "content" ] [ PerfectScrollbar.perfectScrollbar [] content ]
                 ]
             |> Some
@@ -235,7 +303,7 @@ let view model dispatch =
                 span [] [ str text ]
                 input [
                     AutoFocus true
-                    OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (AnswerStringQuestion (playerId, ev.Value)))
+                    OnKeyPress (fun ev -> if ev.charCode = 13. then dispatch (ChannelMsg (UIMsg (AnswerStringQuestion (playerId, ev.Value)))))
                     Style [ Width "100%"; MarginTop "5px"; BoxSizing BoxSizingOptions.BorderBox ]
                 ]
             ]
@@ -243,8 +311,8 @@ let view model dispatch =
             speechBubble [
                 span [] [ str text ]
                 div [ Class "askbool-answers" ] [
-                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, true))) ] [ str "✔️" ]
-                    button [ OnClick (fun ev -> dispatch (AnswerBoolQuestion (playerId, false))) ] [ str "❌" ]
+                    button [ OnClick (fun ev -> dispatch (ChannelMsg (UIMsg (AnswerBoolQuestion (playerId, true))))) ] [ str "✔️" ]
+                    button [ OnClick (fun ev -> dispatch (ChannelMsg (UIMsg (AnswerBoolQuestion (playerId, false))))) ] [ str "❌" ]
                 ]
             ]
 
@@ -253,7 +321,10 @@ let view model dispatch =
         |> List.collect (fun (playerId, player) ->
             [
                 yield scenePlayerView player
-                yield! speechBubbleView playerId player |> Option.toList
+                let speechBubbleSettings =
+                    Map.tryFind playerId model.SpeechBubblePositions
+                    |> Option.defaultValue Right
+                yield! speechBubbleView playerId player speechBubbleSettings |> Option.toList
             ]
         )
 
@@ -315,7 +386,7 @@ let drawLines canvas = List.iter (drawLine canvas)
 let clearScene (canvas: HTMLCanvasElement) =
     canvas.getContext_2d().clearRect(0., 0., canvas.width, canvas.height)
 
-let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncObservable<ChannelMsg>) =
+let stream (states: IAsyncObservable<Msg option * Model> ) (msgs: IAsyncObservable<Msg>) =
     let msgChannel =
         let socketUrl =
             let urlParams = createNew window?URLSearchParams window.location.search
@@ -386,43 +457,6 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         )
         |> AsyncRx.ignore
 
-    let speechBubbles =
-        nodeCreated ".speech-bubble"
-        |> AsyncRx.flatMap (fun e ->
-            let border = e.querySelector(":scope > .border") :?> HTMLCanvasElement
-            let content = e.querySelector(":scope > .content") :?> HTMLElement
-            AsyncRx.observeSubTreeTextChanged content
-            |> AsyncRx.map ignore
-            |> AsyncRx.startWith [ () ]
-            |> AsyncRx.tapOnNext(fun () ->
-                let ctx = border.getContext_2d()
-
-                let width = content.offsetWidth
-                let height = content.offsetHeight
-                let scaleFactor = window.devicePixelRatio
-                border.style.width <- sprintf "%fpx" width
-                border.style.height <- sprintf "%fpx" height
-                border.width <- width * scaleFactor
-                border.height <- height * scaleFactor
-                ctx.scale(scaleFactor, scaleFactor)
-
-                ctx.strokeStyle <- U3.Case1 "black"
-                ctx.fillStyle <- U3.Case1 "#fff5ed"
-                ctx.lineWidth <- 2.
-                ctx.beginPath()
-                ctx.moveTo(10., 5.)
-                ctx.lineTo(width - 10., 5.)
-                ctx.bezierCurveTo(width, 5., width, height - 20., width - 10., height - 20.)
-                ctx.lineTo(40., height - 20.)
-                ctx.bezierCurveTo(40. - 20., height, 40. - 20. - 15., height, 40. - 15., height - 20.)
-                ctx.lineTo(10., height - 20.)
-                ctx.bezierCurveTo(0., height - 20., 0., 5., 10., 5.)
-                ctx.stroke()
-                ctx.fill()
-            )
-        )
-        |> AsyncRx.ignore
-
     let uiMsgs =
         [
             sceneSizeChanged
@@ -434,17 +468,20 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
 
             msgs
             |> AsyncRx.choose (function
-                | UIMsg (AnswerStringQuestion _)
-                | UIMsg (AnswerBoolQuestion _) as msg -> Some msg
+                | ChannelMsg (UIMsg (AnswerStringQuestion _) as msg)
+                | ChannelMsg (UIMsg (AnswerBoolQuestion _) as msg) -> Some msg
                 | _ -> None
             )
         ]
         |> AsyncRx.mergeSeq
 
     let controllerMsgs =
-        states |> AsyncRx.choose (fst >> function | Some (ControllerMsg _ as msg) -> Some msg | _ -> None)
+        states |> AsyncRx.choose (fst >> function | Some (ChannelMsg (ControllerMsg _ as msg)) -> Some msg | _ -> None)
 
     [
+        msgs
+        |> AsyncRx.filter (function LocalMsg _ -> true | _ -> false)
+
         states
         |> AsyncRx.map (snd >> fun model -> model.WindowTitle)
         |> AsyncRx.distinctUntilChanged
@@ -457,7 +494,6 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         |> AsyncRx.ignore
 
         penLines
-        speechBubbles
 
         [
             uiMsgs
@@ -465,10 +501,11 @@ let stream (states: IAsyncObservable<ChannelMsg option * Model> ) (msgs: IAsyncO
         ]
         |> AsyncRx.mergeSeq
         |> msgChannel
+        |> AsyncRx.map ChannelMsg
     ]
     |> AsyncRx.mergeSeq
 
-Program.mkSimple init update (fun model dispatch -> view model (UIMsg >> dispatch))
+Program.mkSimple init update view
 |> Program.withStream stream
 // #if DEBUG
 // |> Program.withDebugger
