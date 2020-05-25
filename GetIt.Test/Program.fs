@@ -165,7 +165,7 @@ let tests =
                 Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
             }
 
-            ftest "Toggle pen state" {
+            test "Toggle pen state" {
                 use state = UICommunication.showScene defaultWindowSize
                 let playerId = UICommunication.addPlayer { rect with Pen = { rect.Pen with Weight = 2. }; IsVisible = false } state
                 UICommunication.setPosition playerId { X = -100.; Y = 0. } state
@@ -185,10 +185,10 @@ let tests =
                     |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-101, -100)) (Coordinates.relativeToSceneCenter (-99, 0))) black
                     |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-100, -101)) (Coordinates.relativeToSceneCenter (0, -99))) black
                     |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (0, -1)) (Coordinates.relativeToSceneCenter (100, 1))) black
-                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (99, 0)) (Coordinates.relativeToSceneCenter (101, -100))) black
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (99, -100)) (Coordinates.relativeToSceneCenter (101, 0))) black
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
-                Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100)"
+                Expect.isTrue valueDiff.IsEmpty "Scene should have 2px wide line like ┍ ┙"
             }
 
             test "Clear pen lines" {
