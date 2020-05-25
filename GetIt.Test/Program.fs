@@ -27,6 +27,8 @@ module Coordinates =
         ]
     let fullScene (image: Bitmap) =
         range (fun image -> (0, 0)) (fun image -> (image.Width, image.Height - infoHeight)) image
+    let infoSection (image: Bitmap) =
+        range (fun image -> (0, image.Height - infoHeight + 1)) (fun image -> (image.Width, image.Height)) image
 
 let getPixelAt coordinates (image: Bitmap) =
     coordinates image
@@ -332,6 +334,8 @@ let tests =
             let image = getScreenshot state
             let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
             Expect.allEqual colors white "All scene pixels should be white"
+            let colors = getPixelsAt Coordinates.infoSection image |> Map.toList |> List.distinctBy snd
+            Expect.hasLength colors 1 "All info section pixels should have same color"
         }
     ]
 
