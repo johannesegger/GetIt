@@ -414,6 +414,52 @@ let tests =
                 Expect.exists colors ((<>) red) "Scene should have non-red pixels"
             }
         ]
+
+        testList "Batching" [
+            test "Changes during batch" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.startBatch state
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.setPenState playerId true state
+                UICommunication.setDirection playerId (Degrees.op_Implicit 90.) state
+                UICommunication.setPosition playerId { X = 100.; Y = 100. } state
+                UICommunication.say playerId "Hi!" state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors white "Scene should still be empty"
+            }
+            test "Apply batch" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.startBatch state
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.setPenState playerId true state
+                UICommunication.setDirection playerId (Degrees.op_Implicit 90.) state
+                UICommunication.setPosition playerId { X = 100.; Y = 100. } state
+                UICommunication.say playerId "Hi!" state
+                UICommunication.applyBatch state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.exists colors ((<>) white) "Scene should have non-white pixels"
+            }
+            test "Relative changes during batch" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.startBatch state
+                let playerId = UICommunication.addPlayer rect state
+                for _ in [1..10] do
+                    let player = (MutableModel.getCurrent state.MutableModel).Players |> Map.toList |> List.map snd |> List.head
+                    UICommunication.setPosition playerId (player.Position + { X = 13.; Y = 7. }) state
+                UICommunication.applyBatch state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (130 - rectWidth / 2, -70 - rectHeight / 2)) (Coordinates.relativeToSceneCenter (130 + rectWidth / 2, -70 + rectHeight / 2))) rectColor
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (130, 70) and everything else empty"
+            }
+        ]
     ]
 
 [<EntryPoint>]
