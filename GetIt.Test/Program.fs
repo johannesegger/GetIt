@@ -312,6 +312,20 @@ let tests =
                 Expect.isTrue valueDiff.IsEmpty "Scene should have blue plus-like player at center"
             }
 
+            test "Costume from file" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.Load (__SOURCE_DIRECTORY__ + "\\data\\rect-costume.svg"))) state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-25, -10)) (Coordinates.relativeToSceneCenter (25, 10))) blue
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have blue rectangle at center"
+            }
+
             test "Speech bubble shows" {
                 use state = UICommunication.showScene defaultWindowSize
                 let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
