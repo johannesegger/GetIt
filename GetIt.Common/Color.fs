@@ -26,7 +26,7 @@ type RGBAColor =
         static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
             Randomly.selectOneOf colors
 
-module RGBAColor =
+module internal RGBAColor =
     let rgbHexNotation v =
         sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
     let rgbaHexNotation v =
@@ -115,9 +115,7 @@ module private HSLA =
                 Alpha = alpha
             }
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Color =
+module internal Color =
     let hueShift angle color =
         let hslaColor = HSLA.fromRGBA color
         let shiftedValue = hslaColor.Hue + (Degrees.value angle / 360.)

@@ -48,14 +48,12 @@ type KeyboardKey =
     | Digit8
     | Digit9
 
-/// For internal use only.
-type KeyboardState =
+type internal KeyboardState =
     {
         KeysPressed: Set<KeyboardKey>
     }
 
-/// For internal use only.
-module KeyboardState =
+module internal KeyboardState =
     let empty = { KeysPressed = Set.empty }
 
 /// Defines some common mouse button.
@@ -70,28 +68,24 @@ type MouseClick =
         Position: Position
     }
 
-/// For internal use only.
-type VirtualScreenMouseClick =
+type internal VirtualScreenMouseClick =
     {
         Button: MouseButton
         VirtualScreenPosition: Position
     }
 
-/// For internal use only.
-type MouseState =
+type internal MouseState =
     {
         Position: Position
     }
 
-/// For internal use only.
-module MouseState =
+module internal MouseState =
     let empty =
         {
             Position = Position.zero
         }
 
-/// For internal use only.
-type InputEvent =
+type internal InputEvent =
     | KeyDown of KeyboardKey
     | KeyUp of KeyboardKey
     | MouseMove of virtualScreenPosition: Position

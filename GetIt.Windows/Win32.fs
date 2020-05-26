@@ -3,7 +3,7 @@ namespace GetIt.Windows
 open System
 open System.Runtime.InteropServices
 
-module Win32 =
+module internal Win32 =
     [<Struct; StructLayout(LayoutKind.Sequential)>]
     type WinPoint =
         val mutable x: int

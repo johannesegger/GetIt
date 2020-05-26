@@ -12,7 +12,7 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
-type ModelChangeEvent =
+type internal ModelChangeEvent =
     | ApplyMouseClick of MouseClick
     | UIMsg of UIMsg
     | Other

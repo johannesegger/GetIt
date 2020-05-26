@@ -1,4 +1,4 @@
-module GetIt.UI
+module internal GetIt.UI
 
 open Browser
 open Browser.Types

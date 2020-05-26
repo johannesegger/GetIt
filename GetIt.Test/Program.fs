@@ -1,4 +1,6 @@
-﻿open Expecto
+﻿module internal Program
+
+open Expecto
 open GetIt
 open System.Drawing
 open System.IO

@@ -9,9 +9,9 @@ open System.Drawing.Imaging
 open System.Runtime.InteropServices
 open System.IO
 
-type CaptureRegion = FullWindow | WindowContent
+type internal CaptureRegion = FullWindow | WindowContent
 
-module ScreenCapture =
+module internal ScreenCapture =
     let private getFullWindowRect handle =
         let mutable rect = Win32.Rect()
         if not <| Win32.GetWindowRect(handle, &rect) then raise (Win32Exception("Failed to get window size (GetWindowRect returned false)"))

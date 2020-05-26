@@ -12,39 +12,34 @@ type GetItException =
     new (message: string) = { inherit Exception(message) }
     new (message: string, innerException: exn) = { inherit Exception (message, innerException) }
 
-/// For internal use only.
 [<AutoOpen>]
-module Utils =
+module internal Utils =
     let curry fn a b = fn (a, b)
     let uncurry fn (a, b) = fn a b
     let flip fn a b = fn b a
 
-/// For internal use only.
-module Result =
+module internal Result =
     let ofOption error = function
-        | Some o -> Result.Ok o
-        | None -> Result.Error error
+        | Some o -> Ok o
+        | None -> Error error
     let toOption = function
-        | Result.Ok o -> Some o 
-        | Result.Error _ -> None 
+        | Ok o -> Some o
+        | Error _ -> None
 
-/// For internal use only.
-module Async =
+module internal Async =
     let map fn a = async {
         let! p = a
         return fn p
     }
 
 #if !FABLE_COMPILER
-/// For internal use only.
-module Double =
+module internal Double =
     let tryParseCultureInvariant arg =
         match Double.TryParse(arg, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
         | (true, v) -> Some v
         | (false, _) -> None
 
-/// For internal use only.
-module Svg =
+module internal Svg =
     let parseViewBox (text: string) =
         let parts =
             text.Split ' '

@@ -4,7 +4,7 @@ open System
 open System.Threading
 
 /// A player that is added to the scene.
-type Player(playerId, getPlayer, remove) =
+type Player internal (playerId, getPlayer, remove) =
     let mutable isDisposed = 0
 
     member internal x.PlayerId with get () : PlayerId = playerId

@@ -7,7 +7,7 @@ open Thoth.Json
 open Thoth.Json.Net
 #endif
 
-type ControllerMsg =
+type internal ControllerMsg =
     | AddPlayer of PlayerId * PlayerData
     | RemovePlayer of PlayerId
     | SetWindowTitle of string option
@@ -34,16 +34,16 @@ type ControllerMsg =
     | StartBatch
     | ApplyBatch
 
-type UIMsg =
+type internal UIMsg =
     | SetSceneBounds of Rectangle
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
 
-type ChannelMsg =
+type internal ChannelMsg =
     | UIMsg of UIMsg
     | ControllerMsg of Guid * ControllerMsg
 
-module Decode =
+module internal Decode =
     let position : Decoder<_> =
         Decode.object (fun get ->
             {
@@ -194,7 +194,7 @@ module Decode =
 
         Decode.oneOf decoders
 
-module Encode =
+module internal Encode =
     let playerId (PlayerId p) = Encode.guid p
 
     let position p =
