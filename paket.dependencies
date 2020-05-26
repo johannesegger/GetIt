@@ -17,6 +17,7 @@ group Controller
     nuget Microsoft.AspNetCore.Server.Kestrel
     nuget Microsoft.AspNetCore.WebSockets
     nuget Microsoft.Extensions.Logging
+    nuget Microsoft.Extensions.Logging.Configuration # only because of version
     nuget Polly
     nuget Reaction.AspNetCore.Middleware
     nuget SharpLibWin32
