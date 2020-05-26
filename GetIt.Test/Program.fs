@@ -346,6 +346,97 @@ let tests =
             }
         ]
 
+        testList "Layer" [
+            yield!
+                [
+                    "Initial player layer", (fun _ _ -> ())
+                    "Bring player at top layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player1Id
+                    "Mix bring to front with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
+                        UICommunication.bringToFront player1Id state
+                        UICommunication.bringToFront player2Id state
+                        UICommunication.bringToFront player3Id state
+                        UICommunication.bringToFront player3Id state
+                        UICommunication.bringToFront player3Id state
+                        UICommunication.bringToFront player3Id state
+                        UICommunication.bringToFront player2Id state
+                        UICommunication.bringToFront player1Id state
+                    "Send player at bottom layer to back", fun (player1Id, player2Id, player3Id) -> UICommunication.sendToBack player3Id
+                    "Mix send to back with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
+                        UICommunication.sendToBack player3Id state
+                        UICommunication.sendToBack player2Id state
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player2Id state
+                        UICommunication.sendToBack player3Id state
+                ]
+                |> List.map (fun (title, fn) ->
+                    test title {
+                        use state = UICommunication.showScene defaultWindowSize
+                        let player1Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.red, { Width = 50.; Height = 20. })).WithPosition({ X = -10.; Y = 0. })) state
+                        let player2Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = 50.; Height = 20. })).WithPosition({ X = 0.; Y = 0. })) state
+                        let player3Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, { Width = 50.; Height = 20. })).WithPosition({ X = 10.; Y = 0. })) state
+                        fn (player1Id, player2Id, player3Id) state
+                        let image = getScreenshot state
+                        let actualColors = getPixelsAt Coordinates.fullScene image
+                        let expectedColors =
+                            createEmptyImage
+                            |> setAllScenePixels white
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-35, -10)) (Coordinates.relativeToSceneCenter (15, 10))) red
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (15, -10)) (Coordinates.relativeToSceneCenter (25, 10))) blue
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (25, -10)) (Coordinates.relativeToSceneCenter (35, 10))) black
+                            |> doCreateImage image
+                        let valueDiff = Map.valueDiff actualColors expectedColors
+                        Expect.isTrue valueDiff.IsEmpty "Scene should have red player in front of blue player and blue player in front of black player"
+                    }
+                )
+
+            yield!
+                [
+                    "Bring player at bottom layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player3Id
+                    "Send players at higher layer to back", fun (player1Id, player2Id, player3Id) state ->
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player2Id state
+                    "Mix bring to front with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
+                        UICommunication.bringToFront player3Id state
+                        UICommunication.bringToFront player2Id state
+                        UICommunication.bringToFront player1Id state
+                        UICommunication.bringToFront player1Id state
+                        UICommunication.bringToFront player1Id state
+                        UICommunication.bringToFront player2Id state
+                        UICommunication.bringToFront player1Id state
+                        UICommunication.bringToFront player3Id state
+                    "Mix send to back with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player2Id state
+                        UICommunication.sendToBack player3Id state
+                        UICommunication.sendToBack player3Id state
+                        UICommunication.sendToBack player3Id state
+                        UICommunication.sendToBack player3Id state
+                        UICommunication.sendToBack player1Id state
+                        UICommunication.sendToBack player2Id state
+                ]
+                |> List.map (fun (title, fn) ->
+                    test title {
+                        use state = UICommunication.showScene defaultWindowSize
+                        let player1Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.red, { Width = 50.; Height = 20. })).WithPosition({ X = -10.; Y = 0. })) state
+                        let player2Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = 50.; Height = 20. })).WithPosition({ X = 0.; Y = 0. })) state
+                        let player3Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, { Width = 50.; Height = 20. })).WithPosition({ X = 10.; Y = 0. })) state
+                        fn (player1Id, player2Id, player3Id) state
+                        let image = getScreenshot state
+                        let actualColors = getPixelsAt Coordinates.fullScene image
+                        let expectedColors =
+                            createEmptyImage
+                            |> setAllScenePixels white
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-35, -10)) (Coordinates.relativeToSceneCenter (-15, 10))) red
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-15, -10)) (Coordinates.relativeToSceneCenter (35, 10))) black
+                            |> doCreateImage image
+                        let valueDiff = Map.valueDiff actualColors expectedColors
+                        Expect.isTrue valueDiff.IsEmpty "Scene should have black player in front of red player and red player in front of blue player"
+                    }
+                )
+        ]
+
         test "Remove player" {
             use state = UICommunication.showScene defaultWindowSize
             let playerId = UICommunication.addPlayer rect state
