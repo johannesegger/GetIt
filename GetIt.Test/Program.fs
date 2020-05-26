@@ -459,6 +459,36 @@ let tests =
                 let valueDiff = Map.valueDiff actualColors expectedColors
                 Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (130, 70) and everything else empty"
             }
+            test "Apply nested batch" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.startBatch state
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.startBatch state
+                UICommunication.setPosition playerId { X = 100.; Y = 100. } state
+                UICommunication.applyBatch state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors white "Scene should still be empty"
+            }
+            test "Apply root batch" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.startBatch state
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.startBatch state
+                UICommunication.setPosition playerId { X = 100.; Y = 100. } state
+                UICommunication.applyBatch state
+                UICommunication.setPosition playerId { X = 200.; Y = 100. } state
+                UICommunication.applyBatch state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (200 - rectWidth / 2, -100 - rectHeight / 2)) (Coordinates.relativeToSceneCenter (200 + rectWidth / 2, -100 + rectHeight / 2))) rectColor
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (200, 100) and everything else empty"
+            }
         ]
     ]
 
