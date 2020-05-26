@@ -258,6 +258,7 @@ let view model dispatch =
             Style [
                 Width player.Size.Width
                 Height player.Size.Height
+                VerticalAlign "top"
                 Transform (
                     [
                         sprintf "translate(%fpx,%fpx)" left top
@@ -330,9 +331,9 @@ let view model dispatch =
 
     div [ Id "main" ] [
         div [ Id "scene" ] [
-            yield div [ Style [ Position PositionOptions.Absolute; Width "100%"; Height "100%" ] ] [ background ]
-            yield div [ Style [ Position PositionOptions.Absolute ] ] [ canvas [ Id "scene-pen-lines" ] [] ]
-            yield! scenePlayersView |> List.map (List.singleton >> div [ Style [ Position PositionOptions.Absolute ] ])
+            yield div [ Class "scene-container" ] [ background ]
+            yield div [ Class "scene-container" ] [ canvas [ Id "scene-pen-lines" ] [] ]
+            yield! scenePlayersView |> List.map (List.singleton >> div [ Class "scene-container" ])
         ]
         PerfectScrollbar.perfectScrollbar [ PerfectScrollbar.Id "info" ] [
             div [ Id "inner-info" ] [

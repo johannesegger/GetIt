@@ -93,19 +93,24 @@ let tests =
                 Expect.allEqual colors white "All scene pixels should be white"
             }
 
-            test "Player should start at scene center" {
-                use state = UICommunication.showScene defaultWindowSize
-                let playerId = UICommunication.addPlayer rect state
-                let image = getScreenshot state
-                let actualColors = getPixelsAt Coordinates.fullScene image
-                let expectedColors =
-                    createEmptyImage
-                    |> setAllScenePixels white
-                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-rectWidth / 2, -rectHeight / 2)) (Coordinates.relativeToSceneCenter (rectWidth / 2, rectHeight / 2))) rectColor
-                    |> doCreateImage image
-                let valueDiff = Map.valueDiff actualColors expectedColors
-                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at the center and everything else empty"
-            }
+            yield!
+                [(50, 20); (10, 10); (2, 100); (100, 2)]
+                |> List.map (fun (width, height) ->
+                    test (sprintf "Player (%d x %d) should start at scene center" width height) {
+                        use state = UICommunication.showScene defaultWindowSize
+                        let playerData = PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = float width; Height = float height }))
+                        let playerId = UICommunication.addPlayer playerData state
+                        let image = getScreenshot state
+                        let actualColors = getPixelsAt Coordinates.fullScene image
+                        let expectedColors =
+                            createEmptyImage
+                            |> setAllScenePixels white
+                            |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-width / 2, -height / 2)) (Coordinates.relativeToSceneCenter (width / 2, height / 2))) blue
+                            |> doCreateImage image
+                        let valueDiff = Map.valueDiff actualColors expectedColors
+                        Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at the center and everything else empty"
+                    }
+                )
 
             test "Info height is constant" {
                 use state = UICommunication.showScene defaultWindowSize
