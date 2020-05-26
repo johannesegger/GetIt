@@ -359,13 +359,56 @@ let tests =
             }
         ]
 
-        test "Background is stretching" {
-            use state = UICommunication.showScene defaultWindowSize
-            UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
-            let image = getScreenshot state
-            let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
-            Expect.allEqual colors red "All scene pixels should be red"
-        }
+        testList "Background" [
+            test "Background is stretching" {
+                use state = UICommunication.showScene defaultWindowSize
+                UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.allEqual colors red "All scene pixels should be red"
+            }
+
+            test "Player is in front of background" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer rect state
+                UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels red
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-rectWidth / 2, -rectHeight / 2)) (Coordinates.relativeToSceneCenter (rectWidth / 2, rectHeight / 2))) rectColor
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at the center and everything else should be background"
+            }
+
+            test "Pen line is in front of background" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.black }; IsVisible = false } state
+                UICommunication.setPosition playerId { X = 100.; Y = 0. } state
+                UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels red
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (0, -25)) (Coordinates.relativeToSceneCenter (100, 25))) black
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Scene should have 50px wide line from (0, 0) to (0, 100) and everything else should be background"
+            }
+
+            test "Speech bubble is in front of background" {
+                use state = UICommunication.showScene defaultWindowSize
+                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
+                UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
+                UICommunication.say playerId "Hi" state
+                let image = getScreenshot state
+                let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+                Expect.exists colors ((<>) red) "Scene should have non-red pixels"
+            }
+        ]
     ]
 
 [<EntryPoint>]
