@@ -358,6 +358,14 @@ let tests =
                 Expect.isTrue (result.ShowCmd.HasFlag(Windows.Win32.WindowPlacementShowCommand.SW_MAXIMIZE)) "Window should be maximized"
             }
         ]
+
+        test "Background is stretching" {
+            use state = UICommunication.showScene defaultWindowSize
+            UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
+            let image = getScreenshot state
+            let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
+            Expect.allEqual colors red "All scene pixels should be red"
+        }
     ]
 
 [<EntryPoint>]
