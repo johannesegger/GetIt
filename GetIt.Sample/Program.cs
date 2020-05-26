@@ -8,47 +8,34 @@ namespace GetIt.Sample
     {
         static void Main(string[] args)
         {
-            // Program1();
-            // Program2();
-            // Program3();
-            // Program4();
-            // Program5();
-            // Program6();
-            // Program7();
-            // Program8();
-            // Program9();
-            // Program10();
-            // Program11();
-            // Program12();
-            // Program13();
-            // Program14();
-            // Program15();
-            // Program16();
-            // Program17();
-            // Program18();
-            // Program19();
-            // Program20();
-            // Program21();
-            // Program22();
-            // Program23();
-            // Program24();
-            // Program25();
-            // Program26();
-            // Program27();
-            // Program28();
-            // Program29();
-            // Program30();
-            // Program31();
-            // Program32();
-            // Program33();
-            // Program34();
-            // Program35();
-            // Program36();
-            // Program37();
-            Program38();
+            TurtleGraphics();
+            // TemporaryKeyboardEventHandlers();
+            // MouseEnterHandlers();
+            // MouseClickHandler();
+            // SpeechBubbleWithUnicodeCharactersAndDynamicSize();
+            // MouseDistanceAndDirection();
+            // PingPong();
+            // AskString();
+            // WaitForMouseClick();
+            // WaitForKeyDown();
+            // MultipleKeysDown();
+            // PredefinedPlayers();
+            // KeyDownWhileSpeechBubble();
+            // SnakeLight();
+            // CostumeFromFile();
+            // MousePosition();
+            // SelectRandomColor();
+            // WindowTitle();
+            // PressedKeys();
+            // PlayerLayer();
+            // Snake();
+            // DistanceAndDirectionToOtherPlayer();
+            // AskBool();
+            // PenLinesPerformance();
+            // SpeechBubbleAlignment();
         }
 
-        private static void Program1()
+        private static void TurtleGraphics()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -69,74 +56,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program2()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.MoveTo(0, 0);
-            for (int i = 0; i < 36; i++)
-            {
-                Turtle.RotateClockwise(10);
-                Turtle.MoveInDirection(10);
-                Turtle.Sleep(50);
-            }
-        }
-
-        private static void Program3()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.MoveTo(0, 0);
-            Turtle.Say("Let's do it", 2);
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(10);
-                Turtle.Sleep(50);
-            }
-            Turtle.Say("Nice one");
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(-10);
-                Turtle.Sleep(50);
-            }
-            Turtle.ShutUp();
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(10);
-                Turtle.Sleep(50);
-            }
-            Turtle.Say("Done");
-        }
-
-        private static void Program4()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.MoveTo(0, 0);
-            Turtle.SetPenWeight(1.5);
-            Turtle.SetPenColor(RGBAColors.Cyan);
-            Turtle.TurnOnPen();
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(10);
-                Turtle.Sleep(50);
-            }
-            Game.ClearScene();
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(-10);
-                Turtle.Sleep(50);
-            }
-            Game.ClearScene();
-            for (var i = 0; i < 10; i++)
-            {
-                Turtle.MoveInDirection(10);
-                Turtle.Sleep(50);
-            }
-            Game.ClearScene();
-        }
-
-        private static void Program5()
+        private static void TemporaryKeyboardEventHandlers()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -155,7 +75,7 @@ namespace GetIt.Sample
             Turtle.Say("Game over");
         }
 
-        private static void Program6()
+        private static void MouseEnterHandlers()
         {
             Game.ShowSceneAndAddTurtle();
             Turtle.Say("Try and catch me");
@@ -163,7 +83,7 @@ namespace GetIt.Sample
             Turtle.OnMouseEnter(player => player.MoveToRandomPosition());
         }
 
-        private static void Program7()
+        private static void MouseClickHandler()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -171,7 +91,7 @@ namespace GetIt.Sample
             Turtle.OnClick((player, mouseButton) => player.Say("Ouch, that hurts!", 2));
         }
 
-        private static void Program8()
+        private static void SpeechBubbleWithUnicodeCharactersAndDynamicSize()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -186,44 +106,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program9()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.SetPenWeight(5);
-
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(33, 33);
-            Turtle.Sleep(100);
-            Turtle.TurnOffPen();
-            Turtle.MoveTo(66, 66);
-            Turtle.Sleep(100);
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(100, 100);
-            Turtle.Sleep(100);
-
-            Turtle.MoveTo(100, 33);
-            Turtle.Sleep(100);
-            Turtle.TurnOffPen();
-            Turtle.MoveTo(100, -33);
-            Turtle.Sleep(100);
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(100, -100);
-            Turtle.Sleep(100);
-
-            Turtle.MoveTo(66, -66);
-            Turtle.Sleep(100);
-            Turtle.TurnOffPen();
-            Turtle.MoveTo(33, -33);
-            Turtle.Sleep(100);
-            Turtle.TurnOnPen();
-            Turtle.MoveToCenter();
-
-            Turtle.TurnOffPen();
-            Turtle.MoveLeft(100);
-        }
-
-        private static void Program10()
+        private static void MouseDistanceAndDirection()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -241,29 +124,7 @@ namespace GetIt.Sample
             Turtle.Say("Geschnappt :-)");
         }
 
-        private static void Program11()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.TurnOnPen();
-            Turtle.SetPenWeight(50);
-            Turtle.MoveInDirection(100);
-            Turtle.Sleep(1000);
-            Turtle.MoveToCenter();
-        }
-
-        private static void Program12()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.OnKeyDown(KeyboardKey.Down, player => player.ChangeSizeFactor(-0.1));
-            Turtle.OnKeyDown(KeyboardKey.Up, player => player.ChangeSizeFactor(0.1));
-            Turtle.OnKeyDown(KeyboardKey.Left, player => player.RotateCounterClockwise(5));
-            Turtle.OnKeyDown(KeyboardKey.Right, player => player.RotateClockwise(5));
-            Turtle.OnKeyDown(KeyboardKey.Space, player => player.NextCostume());
-        }
-
-        private static void Program13()
+        private static void PingPong()
         {
             Game.ShowScene();
 
@@ -349,7 +210,7 @@ namespace GetIt.Sample
                 controlBall);
         }
 
-        private static void Program14()
+        private static void AskString()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -363,7 +224,7 @@ namespace GetIt.Sample
             Turtle.Say($"{age}? You're looking good for your age!");
         }
 
-        private static void Program15()
+        private static void WaitForMouseClick()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -372,7 +233,7 @@ namespace GetIt.Sample
             Turtle.Say($"You clicked with mouse button {clickEvent.Button} at {clickEvent.Position}");
         }
 
-        private static void Program16()
+        private static void WaitForKeyDown()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -383,7 +244,7 @@ namespace GetIt.Sample
             Turtle.Say("Game over.");
         }
 
-        private static void Program17()
+        private static void MultipleKeysDown()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -435,27 +296,7 @@ namespace GetIt.Sample
             Turtle.Say("Game over.");
         }
 
-        private static void Program18()
-        {
-            Game.ShowScene();
-
-            Game.AddPlayer(
-                PlayerData.Create(
-                    SvgImage.CreatePolygon(
-                        RGBAColors.Pink,
-                        new Position(50, 0),
-                        new Position(150, 50),
-                        new Position(250, 0),
-                        new Position(200, 100),
-                        new Position(300, 150),
-                        new Position(200, 150),
-                        new Position(150, 250),
-                        new Position(100, 150),
-                        new Position(0, 150),
-                        new Position(100, 100))));
-        }
-
-        private static void Program19()
+        private static void PredefinedPlayers()
         {
             Game.ShowScene();
 
@@ -474,7 +315,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program20()
+        private static void KeyDownWhileSpeechBubble()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -488,7 +329,7 @@ namespace GetIt.Sample
             Turtle.Say($"Hi, {name}");
         }
 
-        private static void Program21()
+        private static void SnakeLight()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -545,24 +386,13 @@ namespace GetIt.Sample
             Turtle.Say($"Game over. Score: {score}");
         }
 
-        private static void Program22()
-        {
-            Game.ShowScene();
-
-            using (var food = Game.AddPlayer(PlayerData.Bug))
-            {
-                food.Say("I'm just here for 5 seconds");
-                Game.Sleep(5000);
-            }
-        }
-
-        private static void Program23()
+        private static void CostumeFromFile()
         {
             Game.ShowScene();
             Game.AddPlayer(PlayerData.Create(SvgImage.Load(@"assets\Turtle2.svg")));
         }
 
-        private static void Program24()
+        private static void MousePosition()
         {
             Game.ShowSceneAndAddTurtle();
             while (true)
@@ -572,27 +402,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program25()
-        {
-            // Game.ShowScene(1000, 350);
-            // Game.ShowMaximizedScene();
-            // Game.ShowSceneAndAddTurtle(1000, 350);
-            Game.ShowMaximizedSceneAndAddTurtle();
-        }
-
-        private static void Program26()
-        {
-            Game.ShowSceneAndAddTurtle(Background.Baseball1.Size.Width * 2, Background.Baseball1.Size.Height * 2);
-            Game.SetBackground(Background.Baseball1);
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(50, 100);
-            Turtle.Say("Press <Enter> to reset the background.");
-            Game.WaitForKeyDown(KeyboardKey.Enter);
-            Turtle.ShutUp();
-            Game.SetBackground(Background.None);
-        }
-
-        private static void Program27()
+        private static void SelectRandomColor()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -604,51 +414,7 @@ namespace GetIt.Sample
             Turtle.MoveRight(100);
         }
 
-        private static void Program28()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            Turtle.SetPenWeight(5);
-
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(33, 33);
-            Turtle.Sleep(1000);
-            Turtle.TurnOffPen();
-            Turtle.MoveTo(66, 66);
-            Turtle.Sleep(1000);
-            Turtle.TurnOnPen();
-            Turtle.MoveTo(100, 100);
-            Turtle.Sleep(1000);
-
-            using (Game.BatchCommands())
-            {
-                Turtle.MoveTo(100, 33);
-                Turtle.Sleep(1000);
-                Turtle.TurnOffPen();
-                using (Game.BatchCommands())
-                {
-                    Turtle.MoveTo(100, -33);
-                }
-                Turtle.Sleep(1000);
-                Turtle.TurnOnPen();
-                Turtle.MoveTo(100, -100);
-                Turtle.Sleep(1000);
-            }
-
-            Turtle.MoveTo(66, -66);
-            Turtle.Sleep(1000);
-            Turtle.TurnOffPen();
-            Turtle.MoveTo(33, -33);
-            Turtle.Sleep(1000);
-            Turtle.TurnOnPen();
-            Turtle.MoveToCenter();
-
-            Turtle.TurnOffPen();
-            Turtle.MoveLeft(100);
-            Turtle.Say("Awesome");
-        }
-
-        private static void Program29()
+        private static void WindowTitle()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -666,7 +432,7 @@ namespace GetIt.Sample
             Game.SetWindowTitle(null);
         }
 
-        private static void Program30()
+        private static void PressedKeys()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -679,23 +445,7 @@ namespace GetIt.Sample
             player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
         }
 
-        private static void Program31()
-        {
-            Game.ShowScene();
-
-            var turtleData = PlayerData.Turtle
-                .WithSizeFactor(2)
-                .WithPosition(-50, 100)
-                .WithDirection(135)
-                .WithPenOn()
-                .WithPenWeight(5)
-                .WithPenColor(RGBAColors.SteelBlue);
-            var turtle = Game.AddPlayer(turtleData);
-            turtle.MoveInDirection(-200);
-            turtle.MoveInDirection(200);
-        }
-
-        private static void Program32()
+        private static void PlayerLayer()
         {
             Game.ShowScene();
 
@@ -728,7 +478,7 @@ namespace GetIt.Sample
             turtle1.BringToFront();
         }
 
-        private static void Program33()
+        private static void Snake()
         {
             Game.ShowScene();
 
@@ -833,25 +583,7 @@ namespace GetIt.Sample
             snakeHead.Say("Game over.");
         }
 
-        private static void Program34()
-        {
-            Game.ShowSceneAndAddTurtle();
-
-            var player = Game.AddPlayer(PlayerData.Ant.WithPosition(100, 0));
-            Turtle.Say("Press <Space> to hide player");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            Turtle.ShutUp();
-            Turtle.Hide();
-            player.Hide();
-            Turtle.Say("You won't see that message.", 2);
-            Turtle.Show();
-            Turtle.Say("Press <Space> to show player.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            player.Show();
-            Turtle.Say("Done.");
-        }
-
-        private static void Program35()
+        private static void DistanceAndDirectionToOtherPlayer()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -867,7 +599,7 @@ namespace GetIt.Sample
             player.ShutUp();
         }
 
-        private static void Program36()
+        private static void AskBool()
         {
             Game.ShowSceneAndAddTurtle();
 
@@ -884,7 +616,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program37()
+        private static void PenLinesPerformance()
         {
             Game.ShowScene();
             Player player = Game.AddPlayer(PlayerData.Ant);
@@ -892,7 +624,6 @@ namespace GetIt.Sample
 
             while (true)
             {
-                // Game.ClearScene();
                 player.MoveToRandomPosition();
                 player.TurnOnPen();
                 player.SetPenColor(RGBAColors.Red);
@@ -920,7 +651,7 @@ namespace GetIt.Sample
             }
         }
 
-        private static void Program38()
+        private static void SpeechBubbleAlignment()
         {
             Game.ShowSceneAndAddTurtle();
             Game.AddPlayer(PlayerData.Ant.WithPosition(100, 100));
