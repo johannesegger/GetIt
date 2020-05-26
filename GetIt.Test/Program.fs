@@ -136,7 +136,7 @@ let tests =
                     |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (130 - rectWidth / 2, -70 - rectHeight / 2)) (Coordinates.relativeToSceneCenter (130 + rectWidth / 2, -70 + rectHeight / 2))) rectColor
                     |> doCreateImage image
                 let valueDiff = Map.valueDiff actualColors expectedColors
-                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (100, 50) and everything else empty"
+                Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (130, 70) and everything else empty"
             }
 
             test "Rotate around center" {
