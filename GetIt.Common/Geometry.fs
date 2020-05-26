@@ -95,7 +95,6 @@ type Position =
             X = -p.X
             Y = -p.Y
         }
-    /// Returns the position in a readable format.
     override this.ToString() = sprintf "(%.2f, %.2f)" this.X this.Y
 
 module internal Position =
