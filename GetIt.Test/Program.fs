@@ -337,6 +337,27 @@ let tests =
             let colors = getPixelsAt Coordinates.infoSection image |> Map.toList |> List.distinctBy snd
             Expect.hasLength colors 1 "All info section pixels should have same color"
         }
+
+        testList "Window size" [
+            yield!
+                [ (150., 200.); (200., 100.); (500., 500.) ]
+                |> List.map (fun (width, height) ->
+                    test (sprintf "Specific size (%f, %f)" width height) {
+                        use state = UICommunication.showScene (SpecificSize { Width = width; Height = height })
+                        let image = getScreenshot state
+                        Expect.equal (float image.Width, float image.Height) (width, height) "Actual scene size should match desired size"
+                    }
+                )
+
+            test "Maximized" {
+                use state = UICommunication.showScene Maximized
+                let mutable result = Windows.Win32.WINDOWPLACEMENT()
+                result.Length <- uint32 <| System.Runtime.InteropServices.Marshal.SizeOf(result)
+                if not <| Windows.Win32.GetWindowPlacement(state.UIWindowProcess.MainWindowHandle, &result)
+                then raise (System.ComponentModel.Win32Exception("Failed to get window placement (GetWindowPlacement returned false)"))
+                Expect.isTrue (result.ShowCmd.HasFlag(Windows.Win32.WindowPlacementShowCommand.SW_MAXIMIZE)) "Window should be maximized"
+            }
+        ]
     ]
 
 [<EntryPoint>]

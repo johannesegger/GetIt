@@ -163,3 +163,34 @@ module Win32 =
 
     [<DllImport("user32.dll")>]
     extern bool SetProcessDpiAwarenessContext(int value)
+
+    type WindowPlacementFlags =
+        | WPF_ASYNCWINDOWPLACEMENT = 0x04u
+        | WPF_RESTORETOMAXIMIZED = 0x02u
+        | WPF_SETMINPOSITION = 0x01u
+
+    type WindowPlacementShowCommand =
+        | SW_HIDE = 0u
+        | SW_MAXIMIZE = 3u
+        | SW_MINIMIZE = 6u
+        | SW_RESTORE = 9u
+        | SW_SHOW = 5u
+        | SW_SHOWMAXIMIZED = 3u
+        | SW_SHOWMINIMIZED = 2u
+        | SW_SHOWMINNOACTIVE = 7u
+        | SW_SHOWNA = 8u
+        | SW_SHOWNOACTIVATE = 4u
+        | SW_SHOWNORMAL = 1u
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type WINDOWPLACEMENT =
+        val mutable Length: uint32
+        val mutable Flags: WindowPlacementFlags
+        val mutable ShowCmd: WindowPlacementShowCommand
+        val mutable PtMinPosition: WinPoint
+        val mutable PtMaxPosition: WinPoint
+        val mutable RcNormalPosition: Rect
+        val mutable RcDevice: Rect
+
+    [<DllImport("user32.dll", SetLastError = true)>]
+    extern bool GetWindowPlacement(IntPtr hWnd, WINDOWPLACEMENT& lpwndpl)
