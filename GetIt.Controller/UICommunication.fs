@@ -6,6 +6,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Hosting.Server.Features
 open Microsoft.Extensions.Logging
+open Microsoft.Extensions.Hosting
 open Reaction.AspNetCore.Middleware
 open System
 open System.ComponentModel
@@ -182,12 +183,12 @@ module internal UICommunication =
             uriBuilder.ToString()
         let uiProcess = startUI windowSize socketUrl
         uiProcess.EnableRaisingEvents <- true
-        let uiProcessExitSubscription = uiProcess.Exited.Subscribe (fun _ ->
+        let uiProcessExitSubscription =
 #if DEBUG
-            printfn "UI process exited -> Exiting controller process."
+            Disposable.Empty
+#else
+            uiProcess.Exited.Subscribe (fun _ -> exit 0)
 #endif
-            exit 0
-        )
 
         let mutableModel = MutableModel.create ()
 
