@@ -22,7 +22,6 @@ namespace GetIt.Sample
             // PredefinedPlayers();
             // KeyDownWhileSpeechBubble();
             // SnakeLight();
-            // CostumeFromFile();
             // MousePosition();
             // SelectRandomColor();
             // WindowTitle();
@@ -384,12 +383,6 @@ namespace GetIt.Sample
             }
             Turtle.MoveToCenter();
             Turtle.Say($"Game over. Score: {score}");
-        }
-
-        private static void CostumeFromFile()
-        {
-            Game.ShowScene();
-            Game.AddPlayer(PlayerData.Create(SvgImage.Load(@"assets\Turtle2.svg")));
         }
 
         private static void MousePosition()
