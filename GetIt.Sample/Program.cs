@@ -26,7 +26,6 @@ namespace GetIt.Sample
             // SelectRandomColor();
             // WindowTitle();
             // PressedKeys();
-            // PlayerLayer();
             // Snake();
             // DistanceAndDirectionToOtherPlayer();
             // AskBool();
@@ -436,39 +435,6 @@ namespace GetIt.Sample
             var player = Game.AddPlayer(PlayerData.Turtle.WithPosition(-100, 0));
             player.Say("Press and hold any key.");
             player.OnAnyKeyDown(TimeSpan.FromSeconds(1), (p, key, i) => p.Say($"Event handler called {i} time(s) with key {key}."));
-        }
-
-        private static void PlayerLayer()
-        {
-            Game.ShowScene();
-
-            var turtle1 = Game.AddPlayer(PlayerData.Turtle.WithPosition(-10, 0));
-            var turtle2 = Game.AddPlayer(PlayerData.Turtle.WithPosition(10, 0));
-
-            turtle2.Say("Press <Space> to send me to back.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            turtle2.ShutUp();
-            turtle2.SendToBack();
-
-            turtle2.Say("Press <Space> to send me to back again.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            turtle2.ShutUp();
-            turtle2.SendToBack();
-
-            turtle2.Say("Press <Space> to send me to front.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            turtle2.ShutUp();
-            turtle2.BringToFront();
-
-            turtle1.Say("Press <Space> to send me to back.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            turtle1.ShutUp();
-            turtle1.SendToBack();
-
-            turtle1.Say("Press <Space> to send me to front.");
-            Game.WaitForKeyDown(KeyboardKey.Space);
-            turtle1.ShutUp();
-            turtle1.BringToFront();
         }
 
         private static void Snake()
