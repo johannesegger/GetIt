@@ -508,9 +508,9 @@ let stream (states: IAsyncObservable<Msg option * Model> ) (msgs: IAsyncObservab
 
 Program.mkSimple init update view
 |> Program.withStream stream
-// #if DEBUG
-// |> Program.withDebugger
-// |> Program.withConsoleTrace
-// #endif
+#if DEBUG
+|> Program.withDebugger
+|> Program.withConsoleTrace
+#endif
 |> Program.withReactBatched "elmish-app"
 |> Program.run
