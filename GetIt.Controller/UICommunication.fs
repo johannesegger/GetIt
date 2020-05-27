@@ -70,7 +70,9 @@ module internal UICommunication =
                                 |> (function
                                     | Ok p -> Some p
                                     | Error p ->
+#if DEBUG
                                         eprintfn "Deserializing message failed: %s, Message: %s" p value
+#endif
                                         None
                                 )
                         RequestPath = socketPath
