@@ -7,7 +7,7 @@ open System.IO
 
 let private getScreenshot communicationState =
     let (PngImage imageData) = UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.WindowContent communicationState
-    // File.WriteAllBytes(System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff") + ".png", imageData)
+    // File.WriteAllBytes(sprintf "%d-%s.png" communicationState.UIWindowProcess.Id (System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff")), imageData)
     use imageStream = new MemoryStream(imageData)
     new Bitmap(imageStream)
 
