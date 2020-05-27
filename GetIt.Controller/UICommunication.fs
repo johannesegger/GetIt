@@ -34,28 +34,22 @@ module internal UICommunication =
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
         let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
             let controllerMsgs =
-                AsyncRx.create (fun obs -> async {
-                    return
-                        controllerMsgs
-                        |> Observable.subscribeWithCallbacks
-                            (obs.OnNextAsync >> Async.StartImmediate)
-                            (obs.OnErrorAsync >> Async.StartImmediate)
-                            (obs.OnCompletedAsync >> Async.StartImmediate)
-                        |> fun d -> AsyncDisposable.Create (fun () -> async { d.Dispose() })
-                })
-                |> AsyncRx.map (fun msg -> ControllerMsg msg, "")
+                controllerMsgs
+                |> Observable.map (fun msg -> ControllerMsg msg, "")
 
             msgs
-            |> AsyncRx.tapOnNext (fst >> uiMsgs.OnNext)
-            |> AsyncRx.flatMap(fun (msg, connId) ->
+            |> AsyncRx.toObservable
+            |> Observable.perform (fst >> uiMsgs.OnNext)
+            |> Observable.bind (fun (msg, connId) ->
                 match msg with
-                | ControllerMsg _ -> AsyncRx.empty () // confirmations
+                | ControllerMsg _ -> Observable.empty // confirmations
                 | ChannelMsg.UIMsg (SetSceneBounds _)
                 | ChannelMsg.UIMsg (AnswerStringQuestion _)
                 | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
-                    AsyncRx.single (msg, connId)
+                    Observable.result (msg, connId)
             )
-            |> AsyncRx.merge controllerMsgs
+            |> Observable.merge controllerMsgs
+            |> fun o -> o.ToAsyncObservable()
 
         let configureApp (app: IApplicationBuilder) =
             app
