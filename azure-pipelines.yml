@@ -61,21 +61,3 @@ steps:
     packagesToPush: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
-- task: GitHubRelease@0
-  displayName: 'Tag git commit'
-  inputs:
-    gitHubConnection: johannesegger
-    repositoryName: '$(Build.Repository.Name)'
-    action: 'create'
-    target: '$(Build.SourceVersion)'
-    tagSource: 'manual'
-    tag: '$(Build.BuildNumber)'
-    title: ''
-    releaseNotesSource: 'input'
-    releaseNotesFile: ''
-    releaseNotes: ''
-    assets: ''
-    assetUploadMode: 'delete'
-    isDraft: false
-    isPreRelease: false
-    addChangeLog: true
