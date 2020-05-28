@@ -13,17 +13,14 @@ group Controller
     nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
-    nuget Microsoft.AspNetCore
-    nuget Microsoft.AspNetCore.Server.Kestrel
-    nuget Microsoft.AspNetCore.WebSockets
-    nuget Microsoft.Extensions.Hosting.Abstractions # only because of version
-    nuget Microsoft.Extensions.Logging
     nuget Polly
     nuget Reaction.AspNetCore.Middleware
     nuget SharpLibWin32
-    nuget SharpZipLib
     nuget System.Drawing.Common
     nuget Thoth.Json.Net
+
+    nuget Microsoft.Extensions.Hosting.Abstractions >= 3.1.4
+    nuget Microsoft.Extensions.Logging.Abstractions >= 3.1.4
 
 group UI
     source https://api.nuget.org/v3/index.json

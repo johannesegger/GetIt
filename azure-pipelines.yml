@@ -49,6 +49,11 @@ steps:
   displayName: 'Build NuGet package'
   inputs:
     script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) GetIt.Controller
+- task: PowerShell@2
+  displayName: 'Fix NuGet package'
+  inputs:
+    filePath: 'fix-nupkg.ps1'
+    arguments: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
