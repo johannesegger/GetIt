@@ -24,16 +24,16 @@ $metadata = $nuspec.SelectSingleNode("/x:package/x:metadata", $namespaceManager)
 
 $dependencies = $metadata.SelectSingleNode("x:dependencies", $namespaceManager)
 $dependencyGroup = $nuspec.CreateElement("group", $namespace)
-$dependencyGroup.SetAttribute("targetFramework", ".NETCoreApp3.0")
+$dependencyGroup.SetAttribute("targetFramework", ".NETCoreApp3.0") | Out-Null
 while ($dependencies.FirstChild) {
     $dependencyGroup.AppendChild($dependencies.FirstChild) | Out-Null
 }
 $dependencies.AppendChild($dependencyGroup) | Out-Null
 
 $frameworkReference = $nuspec.CreateElement("frameworkReference", $namespace)
-$frameworkReference.SetAttribute("name", "Microsoft.AspNetCore.App")
+$frameworkReference.SetAttribute("name", "Microsoft.AspNetCore.App") | Out-Null
 $frameworkReferenceGroup = $nuspec.CreateElement("group", $namespace)
-$frameworkReferenceGroup.SetAttribute("targetFramework", ".NETCoreApp3.0")
+$frameworkReferenceGroup.SetAttribute("targetFramework", ".NETCoreApp3.0") | Out-Null
 $frameworkReferenceGroup.AppendChild($frameworkReference)
 $frameworkReferences = $nuspec.CreateElement("frameworkReferences", $namespace)
 $frameworkReferences.AppendChild($frameworkReferenceGroup) | Out-Null
