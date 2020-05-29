@@ -34,11 +34,15 @@ let startUI cliArgs url windowSize startMaximized =
     config.DebuggingMode <- true
 #else
     config.DebuggingMode <- false
+    config.CustomSettings.["logSeverity"] <- "disable" // Configure chrome logging
 #endif
     AppBuilder
        .Create()
        .UseApp<ChromelyApp>()
        .UseConfiguration(config)
+#if !DEBUG
+       .UseLogger(Logging.SimpleLogger(null, false)) // Configure chromely logging
+#endif
        .Build()
        .Run(cliArgs)
 
