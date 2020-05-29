@@ -1,6 +1,7 @@
 namespace GetIt
 
 open System
+open System.Runtime.CompilerServices
 
 /// Defines a color.
 type RGBAColor =
@@ -15,10 +16,6 @@ type RGBAColor =
         Alpha: byte
     }
     with
-        /// Creates a new color based on an existing one with a different alpha value.
-        member this.WithAlpha(alpha: byte) =
-            { this with Alpha = alpha }
-
         override this.ToString() =
             sprintf "rgba(%d, %d, %d, %d)" this.Red this.Green this.Blue this.Alpha
 
@@ -26,7 +23,7 @@ type RGBAColor =
         static member SelectRandom([<ParamArray>] colors : RGBAColor array) =
             Randomly.selectOneOf colors
 
-module RGBAColor =
+module internal RGBAColor =
     let rgbHexNotation v =
         sprintf "#%02x%02x%02x" v.Red v.Green v.Blue
     let rgbaHexNotation v =
@@ -115,14 +112,32 @@ module private HSLA =
                 Alpha = alpha
             }
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Color =
+module internal Color =
     let hueShift angle color =
         let hslaColor = HSLA.fromRGBA color
         let shiftedValue = hslaColor.Hue + (Degrees.value angle / 360.)
         { hslaColor with Hue = shiftedValue }
         |> HSLA.toRGBA
+
+[<Extension>]
+type RGBAColorExtensions() =
+    /// <summary>Creates a new color based on an existing one with a different alpha value.</summary>
+    /// <param name="color">The base color.</param>
+    /// <param name="alpha">The alpha value of the new color.</param>
+    [<Extension>]
+    static member WithAlpha(color: RGBAColor, alpha: byte) =
+        if obj.ReferenceEquals(color, null) then raise (ArgumentNullException "color")
+        { color with Alpha = alpha }
+
+    /// <summary>Creates a new color by shifting the hue value of a color around the color wheel.</summary>
+    /// <param name="color">The base color.</param>
+    /// <param name="angle">The shift around the color wheel.</param>
+    /// <returns></returns>
+    [<Extension>]
+    static member WithHueShift(color: RGBAColor, angle: Degrees) =
+        if obj.ReferenceEquals(color, null) then raise (ArgumentNullException "color")
+        if obj.ReferenceEquals(angle, null) then raise (ArgumentNullException "angle")
+        Color.hueShift angle color
 
 /// Defines some common colors.
 module RGBAColors =

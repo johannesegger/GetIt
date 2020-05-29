@@ -52,7 +52,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setPosition player.PlayerId position" ]
+            Body = [ "Game.setPosition player.PlayerId position" ]
         }
 
         {
@@ -120,7 +120,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.changePosition player.PlayerId { X = deltaX; Y = deltaY }" ]
+            Body = [ "Game.changePosition player.PlayerId { X = deltaX; Y = deltaY }" ]
         }
 
         {
@@ -250,8 +250,8 @@ let commands =
             Result = { Type = typeof<unit>; Description = "" }
             Body =
                 [
-                    "let x = rand.Next(int (Model.getCurrent().SceneBounds.Left), int (Model.getCurrent().SceneBounds.Right) + 1)"
-                    "let y = rand.Next(int (Model.getCurrent().SceneBounds.Bottom), int (Model.getCurrent().SceneBounds.Top) + 1)"
+                    "let x = rand.Next(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)"
+                    "let y = rand.Next(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)"
                     "moveToXY player (float x) (float y)"
                 ]
             }
@@ -274,7 +274,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setDirection player.PlayerId angle" ]
+            Body = [ "Game.setDirection player.PlayerId angle" ]
         }
 
         {
@@ -359,7 +359,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.changeDirection player.PlayerId -angle" ]
+            Body = [ "Game.changeDirection player.PlayerId -angle" ]
         }
 
         {
@@ -507,7 +507,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.say player.PlayerId text" ]
+            Body = [ "Game.say player.PlayerId text" ]
         }
 
         {
@@ -523,7 +523,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.shutUp player.PlayerId" ]
+            Body = [ "Game.shutUp player.PlayerId" ]
         }
 
         {
@@ -601,7 +601,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<string>; Description = "The text the user typed in." }
-            Body = [ "UICommunication.askString player.PlayerId question" ]
+            Body = [ "Game.askString player.PlayerId question" ]
         }
 
         {
@@ -622,7 +622,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the user pressed the \"confirm\" button, false otherwise." }
-            Body = [ "UICommunication.askBool player.PlayerId question" ]
+            Body = [ "Game.askBool player.PlayerId question" ]
         }
 
         {
@@ -638,7 +638,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setPenState player.PlayerId true" ]
+            Body = [ "Game.setPenState player.PlayerId true" ]
         }
 
         {
@@ -654,7 +654,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setPenState player.PlayerId false" ]
+            Body = [ "Game.setPenState player.PlayerId false" ]
         }
 
         {
@@ -670,7 +670,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.togglePenState player.PlayerId" ]
+            Body = [ "Game.togglePenState player.PlayerId" ]
         }
 
         {
@@ -691,7 +691,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setPenColor player.PlayerId color" ]
+            Body = [ "Game.setPenColor player.PlayerId color" ]
         }
 
         {
@@ -712,7 +712,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.shiftPenColor player.PlayerId angle" ]
+            Body = [ "Game.shiftPenColor player.PlayerId angle" ]
         }
 
         {
@@ -733,7 +733,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setPenWeight player.PlayerId weight" ]
+            Body = [ "Game.setPenWeight player.PlayerId weight" ]
         }
 
         {
@@ -754,7 +754,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.changePenWeight player.PlayerId weight" ]
+            Body = [ "Game.changePenWeight player.PlayerId weight" ]
         }
 
         {
@@ -775,7 +775,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setSizeFactor player.PlayerId sizeFactor" ]
+            Body = [ "Game.setSizeFactor player.PlayerId sizeFactor" ]
         }
 
         {
@@ -796,7 +796,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.changeSizeFactor player.PlayerId change" ]
+            Body = [ "Game.changeSizeFactor player.PlayerId change" ]
         }
 
         {
@@ -812,7 +812,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setNextCostume player.PlayerId" ]
+            Body = [ "Game.setNextCostume player.PlayerId" ]
         }
 
         {
@@ -828,7 +828,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.sendToBack player.PlayerId" ]
+            Body = [ "Game.sendToBack player.PlayerId" ]
         }
 
         {
@@ -844,7 +844,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.bringToFront player.PlayerId" ]
+            Body = [ "Game.bringToFront player.PlayerId" ]
         }
 
         {
@@ -860,7 +860,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to the mouse pointer." }
-            Body = [ "player.Position |> Position.angleTo (Model.getCurrent().MouseState.Position)" ]
+            Body = [ "player.Position |> Position.angleTo (Game.getCurrentModel().MouseState.Position)" ]
         }
 
         {
@@ -876,7 +876,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<float>; Description = "The distance from the player to the mouse pointer." }
-            Body = [ "player.Position |> Position.distanceTo (Model.getCurrent().MouseState.Position)" ]
+            Body = [ "player.Position |> Position.distanceTo (Game.getCurrentModel().MouseState.Position)" ]
         }
 
         {
@@ -936,7 +936,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setVisibility player.PlayerId true" ]
+            Body = [ "Game.setVisibility player.PlayerId true" ]
         }
 
         {
@@ -952,7 +952,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.setVisibility player.PlayerId false" ]
+            Body = [ "Game.setVisibility player.PlayerId false" ]
         }
 
         {
@@ -968,7 +968,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "UICommunication.toggleVisibility player.PlayerId" ]
+            Body = [ "Game.toggleVisibility player.PlayerId" ]
         }
 
         {
@@ -994,7 +994,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.onKeyDown key (fun () -> action.Invoke player)" ]
+            Body = [ "Game.onKeyDown key (fun () -> action.Invoke player)" ]
         }
 
         {
@@ -1015,7 +1015,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.onAnyKeyDown (fun key -> action.Invoke(player, key))" ]
+            Body = [ "Game.onAnyKeyDown (fun key -> action.Invoke(player, key))" ]
         }
 
         {
@@ -1046,7 +1046,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.whileKeyDown key interval (fun i -> action.Invoke(player, i))" ]
+            Body = [ "Game.whileKeyDown key interval (fun i -> action.Invoke(player, i))" ]
         }
 
         {
@@ -1072,7 +1072,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))" ]
+            Body = [ "Game.whileAnyKeyDown interval (fun key i -> action.Invoke(player, key, i))" ]
         }
 
         {
@@ -1093,7 +1093,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))" ]
+            Body = [ "Game.onEnterPlayer player.PlayerId (fun () -> action.Invoke(player))" ]
         }
 
         {
@@ -1114,7 +1114,7 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
-            Body = [ "Model.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))" ]
+            Body = [ "Game.onClickPlayer player.PlayerId (fun mouseClick -> action.Invoke(player, mouseClick))" ]
         }
     ]
 
@@ -1157,10 +1157,10 @@ let main _argv =
               "    let private rand = Random()"
               ""
               "    let private touchesTopOrBottomEdge (player: GetIt.Player) ="
-              "        player.Bounds.Top > Model.getCurrent().SceneBounds.Top || player.Bounds.Bottom < Model.getCurrent().SceneBounds.Bottom"
+              "        player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom"
               ""
               "    let private touchesLeftOrRightEdge (player: GetIt.Player) ="
-              "        player.Bounds.Right > Model.getCurrent().SceneBounds.Right || player.Bounds.Left < Model.getCurrent().SceneBounds.Left"
+              "        player.Bounds.Right > Game.getCurrentModel().SceneBounds.Right || player.Bounds.Left < Game.getCurrentModel().SceneBounds.Left"
               "" ]
 
     let defaultTurtleFuncs =

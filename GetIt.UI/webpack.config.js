@@ -15,8 +15,8 @@ var MiniCssExtractPlugin = require("mini-css-extract-plugin");
 var CONFIG = {
     // The tags to include the generated JS and CSS will be automatically injected in the HTML template
     // See https://github.com/jantimon/html-webpack-plugin
-    indexHtmlTemplate: "./src/renderer/index.html",
-    fsharpEntry: "./src/renderer/GetIt.UI.fsproj",
+    indexHtmlTemplate: "./src/index.html",
+    fsharpEntry: "./src/GetIt.UI.fsproj",
     cssEntry: "./sass/main.sass",
     outputDir: "./deploy",
     assetsDir: "./public",
@@ -32,7 +32,8 @@ var CONFIG = {
                 // See https://babeljs.io/docs/en/babel-preset-env#usebuiltins
                 "useBuiltIns": "entry",
                 "corejs": "3.1.4",
-            }]
+            }],
+            "@babel/react"
         ],
     }
 }
@@ -50,137 +51,106 @@ var commonPlugins = [
     })
 ];
 
-module.exports = [
-    {
-        name: "renderer",
-        target: "electron-renderer",
-        // In development, bundle styles together with the code so they can also
-        // trigger hot reloads. In production, put them in a separate CSS file.
-        entry: isProduction ? {
-            app: [resolve(CONFIG.fsharpEntry), resolve(CONFIG.cssEntry)]
-        } : {
-                app: [resolve(CONFIG.fsharpEntry)],
-                style: [resolve(CONFIG.cssEntry)]
-            },
-        // Add a hash to the output file name in production
-        // to prevent browser caching if code changes
-        output: {
-            path: resolve(CONFIG.outputDir),
-            filename: isProduction ? '[name].[hash].js' : '[name].js'
+module.exports = {
+    // In development, bundle styles together with the code so they can also
+    // trigger hot reloads. In production, put them in a separate CSS file.
+    entry: isProduction ? {
+        app: [resolve(CONFIG.fsharpEntry), resolve(CONFIG.cssEntry)]
+    } : {
+            app: [resolve(CONFIG.fsharpEntry)],
+            style: [resolve(CONFIG.cssEntry)]
         },
-        mode: isProduction ? "production" : "development",
-        devtool: isProduction ? "source-map" : "eval-source-map",
-        optimization: {
-            // Split the code coming from npm packages into a different file.
-            // 3rd party dependencies change less often, let the browser cache them.
-            splitChunks: {
-                cacheGroups: {
-                    commons: {
-                        test: /node_modules/,
-                        name: "vendors",
-                        chunks: "all"
-                    }
-                }
-            },
-        },
-        // Besides the HtmlPlugin, we use the following plugins:
-        // PRODUCTION
-        //      - MiniCssExtractPlugin: Extracts CSS from bundle to a different file
-        //          To minify CSS, see https://github.com/webpack-contrib/mini-css-extract-plugin#minimizing-for-production
-        //      - CopyWebpackPlugin: Copies static assets to output directory
-        // DEVELOPMENT
-        //      - HotModuleReplacementPlugin: Enables hot reloading when code changes without refreshing
-        plugins: isProduction ?
-            commonPlugins.concat([
-                new MiniCssExtractPlugin({ filename: 'style.css' }),
-                new CopyWebpackPlugin([{ from: resolve(CONFIG.assetsDir) }]),
-            ])
-            : commonPlugins.concat([
-                new webpack.HotModuleReplacementPlugin(),
-            ]),
-        resolve: {
-            // See https://github.com/fable-compiler/Fable/issues/1490
-            symlinks: false
-        },
-        // Configuration for webpack-dev-server
-        devServer: {
-            publicPath: "/",
-            contentBase: resolve(CONFIG.assetsDir),
-            port: CONFIG.devServerPort,
-            proxy: CONFIG.devServerProxy,
-            hot: true,
-            inline: true
-        },
-        // - fable-loader: transforms F# into JS
-        // - babel-loader: transforms JS to old syntax (compatible with old browsers)
-        // - sass-loaders: transforms SASS/SCSS into JS
-        // - file-loader: Moves files referenced in the code (fonts, images) into output folder
-        module: {
-            rules: [
-                {
-                    test: /\.fs(x|proj)?$/,
-                    use: {
-                        loader: "fable-loader",
-                        options: {
-                            babel: CONFIG.babel
-                        }
-                    }
-                },
-                {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
-                    use: {
-                        loader: 'babel-loader',
-                        options: CONFIG.babel
-                    },
-                },
-                {
-                    test: /\.(sass|scss|css)$/,
-                    use: [
-                        isProduction
-                            ? MiniCssExtractPlugin.loader
-                            : 'style-loader',
-                        'css-loader',
-                        {
-                        loader: 'sass-loader',
-                        options: { implementation: require("sass") }
-                        }
-                    ],
-                },
-                {
-                    test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)(\?.*)?$/,
-                    use: ["file-loader"]
-                }
-            ]
-        }
+    // Add a hash to the output file name in production
+    // to prevent browser caching if code changes
+    output: {
+        path: resolve(CONFIG.outputDir),
+        filename: isProduction ? '[name].[hash].js' : '[name].js'
     },
-    {
-        name: "main",
-        target: "electron-main",
-        entry: { main: "./src/main/main.js" },
-        output: {
-            path: resolve(CONFIG.outputDir),
-            filename: '[name].js'
-        },
-        mode: isProduction ? "production" : "development",
-        devtool: isProduction ? "source-map" : "eval-source-map",
-        module: {
-            rules: [
-                {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
-                    use: {
-                        loader: 'babel-loader',
-                        options: CONFIG.babel
-                    },
+    mode: isProduction ? "production" : "development",
+    devtool: isProduction ? "source-map" : "eval-source-map",
+    optimization: {
+        // Split the code coming from npm packages into a different file.
+        // 3rd party dependencies change less often, let the browser cache them.
+        splitChunks: {
+            cacheGroups: {
+                commons: {
+                    test: /node_modules/,
+                    name: "vendors",
+                    chunks: "all"
                 }
-            ]
+            }
         },
-        resolve: {
-            symlinks: false
-        }
-      }
-];
+    },
+    // Besides the HtmlPlugin, we use the following plugins:
+    // PRODUCTION
+    //      - MiniCssExtractPlugin: Extracts CSS from bundle to a different file
+    //          To minify CSS, see https://github.com/webpack-contrib/mini-css-extract-plugin#minimizing-for-production
+    //      - CopyWebpackPlugin: Copies static assets to output directory
+    // DEVELOPMENT
+    //      - HotModuleReplacementPlugin: Enables hot reloading when code changes without refreshing
+    plugins: isProduction ?
+        commonPlugins.concat([
+            new MiniCssExtractPlugin({ filename: 'style.css' }),
+            new CopyWebpackPlugin({ patterns: [{ from: resolve(CONFIG.assetsDir) }] }),
+        ])
+        : commonPlugins.concat([
+            new webpack.HotModuleReplacementPlugin(),
+        ]),
+    resolve: {
+        // See https://github.com/fable-compiler/Fable/issues/1490
+        symlinks: false
+    },
+    // Configuration for webpack-dev-server
+    devServer: {
+        publicPath: "/",
+        contentBase: resolve(CONFIG.assetsDir),
+        port: CONFIG.devServerPort,
+        hot: true,
+        inline: true
+    },
+    // - fable-loader: transforms F# into JS
+    // - babel-loader: transforms JS to old syntax (compatible with old browsers)
+    // - sass-loaders: transforms SASS/SCSS into JS
+    // - file-loader: Moves files referenced in the code (fonts, images) into output folder
+    module: {
+        rules: [
+            {
+                test: /\.fs(x|proj)?$/,
+                use: {
+                    loader: "fable-loader",
+                    options: {
+                        babel: CONFIG.babel
+                    }
+                }
+            },
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: CONFIG.babel
+                },
+            },
+            {
+                test: /\.(sass|scss|css)$/,
+                use: [
+                    isProduction
+                        ? MiniCssExtractPlugin.loader
+                        : 'style-loader',
+                    'css-loader',
+                    {
+                    loader: 'sass-loader',
+                    options: { implementation: require("sass") }
+                    }
+                ],
+            },
+            {
+                test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)(\?.*)?$/,
+                use: ["file-loader"]
+            }
+        ]
+    }
+}
 
 function resolve(filePath) {
     return path.isAbsolute(filePath) ? filePath : path.join(__dirname, filePath);

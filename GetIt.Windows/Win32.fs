@@ -3,7 +3,7 @@ namespace GetIt.Windows
 open System
 open System.Runtime.InteropServices
 
-module Win32 =
+module internal Win32 =
     [<Struct; StructLayout(LayoutKind.Sequential)>]
     type WinPoint =
         val mutable x: int
@@ -136,3 +136,61 @@ module Win32 =
 
     [<DllImport("dwmapi.dll")>]
     extern int DwmGetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, Rect& pvAttribute, int cbAttribute)
+
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool GetClientRect(IntPtr hWnd, Rect& rect)
+
+    [<DllImport("user32.dll", SetLastError=true)>]
+    extern bool ClientToScreen(IntPtr hWnd, WinPoint& point)
+
+    [<DllImport("gdi32.dll")>]
+    extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr CreateCompatibleDC(IntPtr hDC)
+    [<DllImport("gdi32.dll")>]
+    extern bool DeleteDC(IntPtr hDC)
+    [<DllImport("gdi32.dll")>]
+    extern bool DeleteObject(IntPtr hObject)
+    [<DllImport("gdi32.dll")>]
+    extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject)
+
+    [<DllImport("user32.dll")>]
+    extern IntPtr GetWindowDC(IntPtr hWnd)
+    [<DllImport("user32.dll")>]
+    extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC)
+
+    [<DllImport("user32.dll")>]
+    extern bool SetProcessDpiAwarenessContext(int value)
+
+    type WindowPlacementFlags =
+        | WPF_ASYNCWINDOWPLACEMENT = 0x04u
+        | WPF_RESTORETOMAXIMIZED = 0x02u
+        | WPF_SETMINPOSITION = 0x01u
+
+    type WindowPlacementShowCommand =
+        | SW_HIDE = 0u
+        | SW_MAXIMIZE = 3u
+        | SW_MINIMIZE = 6u
+        | SW_RESTORE = 9u
+        | SW_SHOW = 5u
+        | SW_SHOWMAXIMIZED = 3u
+        | SW_SHOWMINIMIZED = 2u
+        | SW_SHOWMINNOACTIVE = 7u
+        | SW_SHOWNA = 8u
+        | SW_SHOWNOACTIVATE = 4u
+        | SW_SHOWNORMAL = 1u
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type WINDOWPLACEMENT =
+        val mutable Length: uint32
+        val mutable Flags: WindowPlacementFlags
+        val mutable ShowCmd: WindowPlacementShowCommand
+        val mutable PtMinPosition: WinPoint
+        val mutable PtMaxPosition: WinPoint
+        val mutable RcNormalPosition: Rect
+        val mutable RcDevice: Rect
+
+    [<DllImport("user32.dll", SetLastError = true)>]
+    extern bool GetWindowPlacement(IntPtr hWnd, WINDOWPLACEMENT& lpwndpl)

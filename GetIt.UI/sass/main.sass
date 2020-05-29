@@ -1,65 +1,48 @@
-$fa-font-path: "./../node_modules/@fortawesome/fontawesome-free/webfonts/"
-@import './../node_modules/@fortawesome/fontawesome-free/scss/fontawesome'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/regular'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/solid'
-@import './../node_modules/@fortawesome/fontawesome-free/scss/brands'
-
-@import '../node_modules/bulma/bulma'
+@import "../node_modules/perfect-scrollbar/css/perfect-scrollbar.css"
 
 html
   overflow-y: auto
   font-size: 0.8em
 html, body, #elmish-app, #main
   height: 100%
+body
+  font-family: "Segoe UI"
+  margin: 0
 #main
   display: flex
   flex-direction: column
 #scene
   flex: auto
   width: 100%
+  position: relative
+  overflow: hidden
+  .scene-container
+    position: absolute
+    width: 100%
+    height: 100%
   .speech-bubble
     position: relative
-    width: max-content
     max-width: 200px
-    display: inline-block
-    padding: 10px 15px
-    color: #000
-    border-radius: 15px
-    border: 3px solid #aaa
-    background: whitesmoke
-    transform: translate(0, -100%)
-    word-break: break-word
-    white-space: pre-wrap
-  .speech-bubble:before
-    content: ""
-    position: absolute
-    bottom: -23px
-    left: 20%
-    border-width: 20px 20px 0 0
-    border-style: solid
-    border-color: #aaa transparent
-    display: block
-    width: 0
-  .speech-bubble:after
-    content: ""
-    position: absolute
-    bottom: -16px
-    left: calc(20% + 3px)
-    border-width: 16px 16px 0 0
-    border-style: solid
-    border-color: whitesmoke transparent
-    display: block
-    width: 0
-  .askbool-answers
-    display: flex
-    flex-direction: row
-    margin-top: 5px
-    > *
-      flex: 1
-    :first-child
-      margin-right: 10px
+    .border
+      position: absolute
+    .content
+      position: relative
+      padding: 15px 15px 30px 15px
+      word-break: break-word
+      white-space: pre-wrap
+      min-width: 100px
+      .scrollbar-container
+        position: relative
+        max-height: 200px
+        overflow: hidden
+      .askbool-answers
+        display: flex
+        margin-top: 5px
+        > *
+          flex-grow: 1
 #info
-  overflow-x: auto
+  overflow: hidden
+  position: relative
   background: lightgray
   padding: 10px 20px
   #inner-info

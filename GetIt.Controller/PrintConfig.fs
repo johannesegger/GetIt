@@ -3,6 +3,7 @@ namespace GetIt
 open System
 open Thoth.Json.Net
 
+/// Configuration when printing screenshots
 type PrintConfig =
     {
         TemplatePath: string

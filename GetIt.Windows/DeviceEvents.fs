@@ -9,7 +9,7 @@ open System.Threading
 open FSharp.Control.Reactive
 open GetIt
 
-module DeviceEvents =
+module internal DeviceEvents =
     type private WndProc = delegate of (* hWnd *)IntPtr * (* msg *)uint32 * (* wParam *)IntPtr * (* lParam *)IntPtr -> IntPtr
 
     let private getRawInputData (rawInputHandle: IntPtr) =

@@ -1,8 +1,6 @@
 namespace GetIt
 
-open System
 open System.Reactive.Concurrency
-open System.Reactive.Linq
 open System.Reactive.Subjects
 open FSharp.Control.Reactive
 
@@ -14,31 +12,37 @@ type internal Model =
         KeyboardState: KeyboardState
     }
 
-type ModelChangeEvent =
+type internal ModelChangeEvent =
     | ApplyMouseClick of MouseClick
     | UIMsg of UIMsg
     | Other
 
-module internal Model =
-    let private gate = Object()
+type internal MutableModel =
+    {
+        Subject: BehaviorSubject<ModelChangeEvent * Model>
+        LockGate: obj
+    }
 
-    let initial =
+module internal MutableModel =
+    let create () =
         {
-            SceneBounds = Rectangle.zero
-            Players = Map.empty
-            MouseState = MouseState.empty
-            KeyboardState = KeyboardState.empty
+            Subject =
+                new BehaviorSubject<_>(
+                    Other,
+                    {
+                        SceneBounds = Rectangle.zero
+                        Players = Map.empty
+                        MouseState = MouseState.empty
+                        KeyboardState = KeyboardState.empty
+                    }
+                )
+            LockGate = obj()
         }
 
-    let mutable private subject =
-        new BehaviorSubject<_>(Other, initial)
+    let getCurrent x = snd x.Subject.Value
 
-    let observable = subject.AsObservable()
-
-    let getCurrent () = snd subject.Value
-
-    let updateCurrent fn =
-        lock gate (fun () -> subject.OnNext(fn <| snd subject.Value))
+    let updateCurrent fn x =
+        lock x.LockGate (fun () -> x.Subject.OnNext(fn <| snd x.Subject.Value))
 
     let updatePlayer playerId fn =
         updateCurrent (fun m ->
@@ -46,8 +50,8 @@ module internal Model =
             evt, { m with Players = Map.add playerId player m.Players }
         )
 
-    let private keyDownFilter filter =
-        observable
+    let private keyDownFilter filter x =
+        x.Subject
         |> Observable.map (snd >> fun model ->
             let hasActiveTextInput =
                 model.Players
@@ -69,8 +73,8 @@ module internal Model =
 
     let private onKeyDownFilter filter handler =
         keyDownFilter filter
-        |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.subscribe handler
+        >> Observable.observeOn ThreadPoolScheduler.Instance
+        >> Observable.subscribe handler
 
     let onKeyDown key =
         onKeyDownFilter (Set.contains key >> function true -> Some () | false -> None)
@@ -78,11 +82,11 @@ module internal Model =
     let onAnyKeyDown =
         onKeyDownFilter (Set.toSeq >> Seq.tryHead)
 
-    let private whileKeyDownFilter filter interval handler =
-        keyDownFilter filter
+    let private whileKeyDownFilter filter interval handler x =
+        keyDownFilter filter x
         |> Observable.switchMap (fun key ->
             let keyUpObservable =
-                observable
+                x.Subject
                 |> Observable.choose (snd >> fun model ->
                     if Set.contains key model.KeyboardState.KeysPressed then None
                     else Some ()
@@ -104,8 +108,8 @@ module internal Model =
     let whileAnyKeyDown interval handler =
         whileKeyDownFilter (Set.toSeq >> Seq.tryHead) interval (uncurry handler)
 
-    let onClickScene fn =
-        observable
+    let onClickScene fn x =
+        x.Subject
         |> Observable.choose (fun (evt, model) ->
             match evt with
             | ApplyMouseClick mouseClick when Rectangle.contains mouseClick.Position model.SceneBounds ->
@@ -115,8 +119,8 @@ module internal Model =
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe fn
 
-    let onClickPlayer playerId fn =
-        observable
+    let onClickPlayer playerId fn x =
+        x.Subject
         |> Observable.choose (fun (evt, model) ->
             match evt, Map.tryFind playerId model.Players with
             | ApplyMouseClick mouseClick, Some player when Rectangle.contains mouseClick.Position player.Bounds ->
@@ -126,8 +130,8 @@ module internal Model =
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.subscribe fn
 
-    let onEnterPlayer playerId fn =
-        observable
+    let onEnterPlayer playerId fn x =
+        x.Subject
         |> Observable.map (snd >> fun model -> Map.tryFind playerId model.Players, model.MouseState.Position)
         |> Observable.pairwise
         |> Observable.choose (function

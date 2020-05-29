@@ -1,9 +1,10 @@
 group UI
+Fable.Browser.Css
 Fable.Core
 Fable.Elmish.Debugger
 Fable.Elmish.HMR
 Fable.Elmish.Nile
 Fable.Elmish.React
-Fable.Elmish.Streams
+Fable.Reaction
 FSharp.Core
 Thoth.Json

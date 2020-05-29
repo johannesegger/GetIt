@@ -34,15 +34,26 @@ steps:
     command: 'build'
     projects: 'GetIt.Controller'
     arguments: '-c Release'
+- task: DotNetCoreCLI@2
+  displayName: 'Build GetIt.UI.Container'
+  inputs:
+    command: 'build'
+    projects: 'GetIt.UI.Container'
+    arguments: '-c Release'
 - task: CmdLine@2
   displayName: 'Build GetIt.UI'
   inputs:
-    script: 'yarn bundle'
+    script: 'yarn webpack'
     workingDirectory: 'GetIt.UI'
 - task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
     script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) GetIt.Controller
+- task: PowerShell@2
+  displayName: 'Fix NuGet package'
+  inputs:
+    filePath: 'fix-nupkg.ps1'
+    arguments: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
   inputs:
@@ -55,21 +66,3 @@ steps:
     packagesToPush: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
     nuGetFeedType: 'internal'
     publishVstsFeed: 'GetIt'
-- task: GitHubRelease@0
-  displayName: 'Tag git commit'
-  inputs:
-    gitHubConnection: johannesegger
-    repositoryName: '$(Build.Repository.Name)' 
-    action: 'create'
-    target: '$(Build.SourceVersion)'
-    tagSource: 'manual'
-    tag: '$(Build.BuildNumber)'
-    title: ''
-    releaseNotesSource: 'input'
-    releaseNotesFile: ''
-    releaseNotes: ''
-    assets: ''
-    assetUploadMode: 'delete'
-    isDraft: false
-    isPreRelease: false
-    addChangeLog: true

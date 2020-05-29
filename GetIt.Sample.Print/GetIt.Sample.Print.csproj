@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +10,4 @@
 
   <!-- Remove this when NuGet package is referenced -->
   <Import Project="..\GetIt.Controller\GetIt.targets" />
-
-  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

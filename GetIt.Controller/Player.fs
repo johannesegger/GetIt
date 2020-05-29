@@ -4,11 +4,11 @@ open System
 open System.Threading
 
 /// A player that is added to the scene.
-type Player(playerId) =
+type Player internal (playerId, getPlayer, remove) =
     let mutable isDisposed = 0
 
-    member internal x.PlayerId with get () = playerId
-    member private x.Player with get () = Map.find playerId (Model.getCurrent().Players)
+    member internal x.PlayerId with get () : PlayerId = playerId
+    member private x.Player with get () : PlayerData = getPlayer ()
 
     /// The actual size of the player.
     member x.Size with get () = x.Player.Size
@@ -39,7 +39,7 @@ type Player(playerId) =
     abstract member Dispose: unit -> unit
     default x.Dispose () =
         if Interlocked.Exchange (&isDisposed, 1) = 0 then
-            UICommunication.removePlayer playerId
+            remove ()
 
     interface IDisposable with
         member x.Dispose () = x.Dispose ()

@@ -36,6 +36,9 @@ module String =
         Regex.Replace(name, @"\s", "")
         |> fun s -> Regex.Replace(s, @"-(?<c>.)", fun m -> m.Groups.["c"].Value.ToUpper())
 
+    let toPascalCase =
+        toCamelCase >> firstToUpper
+
     let removeNewLines (text: string) =
         text.Replace("\r", "").Replace("\n", "")
 

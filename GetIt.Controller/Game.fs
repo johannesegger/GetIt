@@ -15,20 +15,87 @@ open System.Threading
 module internal Game =
     let mutable defaultTurtle = None
 
+    let mutable private showSceneCalled = 0
+    let mutable private communicationState : UICommunication.CommunicationState option = None
+
+    let disposeCommunicationState () =
+        match communicationState with
+        | Some state ->
+            (state :> IDisposable).Dispose()
+            showSceneCalled <- 0
+            communicationState <- None
+        | None -> ()
+
+    let doWithCommunicationState fn =
+        match communicationState with
+        | Some state -> fn state
+        | None ->
+            raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
+
+    let doWithMutableModel fn =
+        doWithCommunicationState (fun s -> fn s.MutableModel)
+
+    let showScene windowSize =
+        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
+            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
+
+        let state = UICommunication.showScene windowSize
+        communicationState <- Some state
+        Disposable.create disposeCommunicationState
+
+    let addPlayer playerData = doWithCommunicationState (UICommunication.addPlayer playerData)
+    let removePlayer playerId = doWithCommunicationState (UICommunication.removePlayer playerId)
+    let setWindowTitle title = doWithCommunicationState (UICommunication.setWindowTitle title)
+    let setBackground background = doWithCommunicationState (UICommunication.setBackground background)
+    let clearScene () =  doWithCommunicationState UICommunication.clearScene
+    let startBatch () = doWithCommunicationState UICommunication.startBatch
+    let applyBatch () = doWithCommunicationState UICommunication.applyBatch
+    let makeScreenshot () = doWithCommunicationState (UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.FullWindow)
+    let setPosition playerId position = doWithCommunicationState (UICommunication.setPosition playerId position)
+    let changePosition playerId position = doWithCommunicationState (UICommunication.changePosition playerId position)
+    let setDirection playerId angle = doWithCommunicationState (UICommunication.setDirection playerId angle)
+    let changeDirection playerId angle = doWithCommunicationState (UICommunication.changeDirection playerId angle)
+    let say playerId text = doWithCommunicationState (UICommunication.say playerId text)
+    let shutUp playerId = doWithCommunicationState (UICommunication.shutUp playerId)
+    let askString playerId question = doWithCommunicationState (UICommunication.askString playerId question)
+    let askBool playerId question = doWithCommunicationState (UICommunication.askBool playerId question)
+    let setPenState playerId isOn = doWithCommunicationState (UICommunication.setPenState playerId isOn)
+    let togglePenState playerId = doWithCommunicationState (UICommunication.togglePenState playerId)
+    let setPenColor playerId color = doWithCommunicationState (UICommunication.setPenColor playerId color)
+    let shiftPenColor playerId angle = doWithCommunicationState (UICommunication.shiftPenColor playerId angle)
+    let setPenWeight playerId weight = doWithCommunicationState (UICommunication.setPenWeight playerId weight)
+    let changePenWeight playerId weight = doWithCommunicationState (UICommunication.changePenWeight playerId weight)
+    let setSizeFactor playerId sizeFactor = doWithCommunicationState (UICommunication.setSizeFactor playerId sizeFactor)
+    let changeSizeFactor playerId sizeFactor = doWithCommunicationState (UICommunication.changeSizeFactor playerId sizeFactor)
+    let setNextCostume playerId = doWithCommunicationState (UICommunication.setNextCostume playerId)
+    let sendToBack playerId = doWithCommunicationState (UICommunication.sendToBack playerId)
+    let bringToFront playerId = doWithCommunicationState (UICommunication.bringToFront playerId)
+    let setVisibility playerId isVisible = doWithCommunicationState (UICommunication.setVisibility playerId isVisible)
+    let toggleVisibility playerId = doWithCommunicationState (UICommunication.toggleVisibility playerId)
+
+    let onClickScene fn = doWithMutableModel (MutableModel.onClickScene fn)
+    let onKeyDown key fn = doWithMutableModel (MutableModel.onKeyDown key fn)
+    let onAnyKeyDown fn = doWithMutableModel (MutableModel.onAnyKeyDown fn)
+    let onEnterPlayer playerId fn = doWithMutableModel (MutableModel.onEnterPlayer playerId fn)
+    let onClickPlayer playerId fn = doWithMutableModel (MutableModel.onClickPlayer playerId fn)
+    let whileKeyDown key interval fn = doWithMutableModel (MutableModel.whileKeyDown key interval fn)
+    let whileAnyKeyDown interval fn = doWithMutableModel (MutableModel.whileAnyKeyDown interval fn)
+    let getCurrentModel () = doWithMutableModel MutableModel.getCurrent
+
 /// Defines methods to setup a game, add players, register global events and more.
 [<AbstractClass; Sealed>]
 type Game() =
     /// Initializes and shows an empty scene with the default size and no players on it.
     static member ShowScene () =
-        UICommunication.showScene (SpecificSize { Width = 800.; Height = 600. })
+        Game.showScene (SpecificSize { Width = 800.; Height = 600. })
 
     /// Initializes and shows an empty scene with a specific size and no players on it.
     static member ShowScene (windowWidth, windowHeight) =
-        UICommunication.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
+        Game.showScene (SpecificSize { Width = windowWidth; Height = windowHeight })
 
     /// Initializes and shows an empty scene with maximized size and no players on it.
     static member ShowMaximizedScene () =
-        UICommunication.showScene Maximized
+        Game.showScene Maximized
 
     /// <summary>
     /// Adds a player to the scene.
@@ -38,8 +105,8 @@ type Game() =
     static member AddPlayer (playerData: PlayerData) =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
 
-        let playerId = UICommunication.addPlayer playerData
-        new Player(playerId)
+        let playerId = Game.addPlayer playerData
+        new Player(playerId, (fun () -> Map.find playerId (Game.getCurrentModel().Players)), (fun () -> Game.removePlayer playerId))
 
     /// <summary>
     /// Adds a player to the scene and calls a method to control the player.
@@ -61,33 +128,35 @@ type Game() =
 
     /// Initializes and shows an empty scene and adds the default player to it.
     static member ShowSceneAndAddTurtle () =
-        Game.ShowScene ()
+        let d = Game.ShowScene ()
         Game.AddTurtle ()
+        d
 
     /// Initializes and shows an empty scene with a specific size and adds the default player to it.
     static member ShowSceneAndAddTurtle (windowWidth, windowHeight) =
-        Game.ShowScene (windowWidth, windowHeight)
+        let d = Game.ShowScene (windowWidth, windowHeight)
         Game.AddTurtle ()
+        d
 
     /// Initializes and shows an empty scene with maximized size and adds the default player to it.
     static member ShowMaximizedSceneAndAddTurtle () =
-        Game.ShowMaximizedScene ()
+        let d = Game.ShowMaximizedScene ()
         Game.AddTurtle ()
+        d
 
     /// Sets the title of the window.
     static member SetWindowTitle text =
         let textOpt = if String.IsNullOrWhiteSpace text then None else Some text
-        UICommunication.setWindowTitle textOpt
+        Game.setWindowTitle textOpt
 
     /// Sets the scene background.
     static member SetBackground background =
         if obj.ReferenceEquals(background, null) then raise (ArgumentNullException "background")
-
-        UICommunication.setBackground background
+        Game.setBackground background
 
     /// Clears all drawings from the scene.
     static member ClearScene () =
-        UICommunication.clearScene ()
+        Game.clearScene ()
 
     /// <summary>
     /// Prints the scene. Note that `wkhtmltopdf` and `SumatraPDF` must be installed.
@@ -104,7 +173,7 @@ type Game() =
             |> Path.GetDirectoryName
 
         let base64ImageData =
-            UICommunication.makeScreenshot ()
+            Game.makeScreenshot ()
             |> PngImage.toBase64String
 
         let documentTemplate =
@@ -166,8 +235,8 @@ type Game() =
     /// Start batching multiple commands to skip drawing intermediate state.
     /// Note that commands from all threads are batched.
     static member BatchCommands () =
-        UICommunication.startBatch ()
-        Disposable.create (fun () -> UICommunication.applyBatch ())
+        Game.startBatch ()
+        Disposable.create Game.applyBatch
 
     /// <summary>
     /// Pauses execution of the current thread for a given time.
@@ -193,7 +262,7 @@ type Game() =
         let fn ev =
             mouseClickEvent <- Some ev
             signal.Set()
-        use d = Model.onClickScene fn
+        use d = Game.onClickScene fn
         signal.Wait()
         Option.get mouseClickEvent
 
@@ -205,7 +274,7 @@ type Game() =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
 
         use signal = new ManualResetEventSlim()
-        use d = Model.onKeyDown key signal.Set
+        use d = Game.onKeyDown key signal.Set
         signal.Wait()
 
     /// <summary>
@@ -218,7 +287,7 @@ type Game() =
         let fn key =
             keyboardKey <- Some key
             signal.Set()
-        use d = Model.onAnyKeyDown fn
+        use d = Game.onAnyKeyDown fn
         signal.Wait()
         Option.get keyboardKey
 
@@ -230,7 +299,7 @@ type Game() =
     static member IsKeyDown key =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
 
-        Model.getCurrent().KeyboardState.KeysPressed
+        Game.getCurrentModel().KeyboardState.KeysPressed
         |> Set.contains key
 
     /// <summary>
@@ -239,7 +308,7 @@ type Game() =
     /// <returns>True, if any keyboard key is pressed, otherwise false.</returns>
     static member IsAnyKeyDown
         with get () =
-            Model.getCurrent().KeyboardState.KeysPressed
+            Game.getCurrentModel().KeyboardState.KeysPressed
             |> Set.isEmpty
             |> not
 
@@ -251,7 +320,7 @@ type Game() =
     static member OnAnyKeyDown (action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onAnyKeyDown action.Invoke
+        Game.onAnyKeyDown action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called once when a specific keyboard key is pressed.
@@ -263,7 +332,7 @@ type Game() =
         if obj.ReferenceEquals(key, null) then raise (ArgumentNullException "key")
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onKeyDown key action.Invoke
+        Game.onKeyDown key action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called continuously when any keyboard key is pressed.
@@ -274,7 +343,7 @@ type Game() =
     static member OnAnyKeyDown (interval, action: Action<_, _>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.whileAnyKeyDown interval (curry action.Invoke)
+        Game.whileAnyKeyDown interval (curry action.Invoke)
 
     /// <summary>
     /// Registers an event handler that is called continuously when a specific keyboard key is pressed.
@@ -286,7 +355,7 @@ type Game() =
     static member OnKeyDown (key, interval, action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.whileKeyDown key interval action.Invoke
+        Game.whileKeyDown key interval action.Invoke
 
     /// <summary>
     /// Registers an event handler that is called when the mouse is clicked anywhere on the scene.
@@ -296,13 +365,13 @@ type Game() =
     static member OnClickScene (action: Action<_>) =
         if obj.ReferenceEquals(action, null) then raise (ArgumentNullException "action")
 
-        Model.onClickScene action.Invoke
+        Game.onClickScene action.Invoke
 
     /// The bounds of the scene.
     static member SceneBounds
-        with get () = Model.getCurrent().SceneBounds
+        with get () = Game.getCurrentModel().SceneBounds
 
     /// The current position of the mouse.
     static member MousePosition
-        with get () = Model.getCurrent().MouseState.Position
+        with get () = Game.getCurrentModel().MouseState.Position
 

@@ -12,22 +12,34 @@ type GetItException =
     new (message: string) = { inherit Exception(message) }
     new (message: string, innerException: exn) = { inherit Exception (message, innerException) }
 
-/// For internal use only.
 [<AutoOpen>]
-module Utils =
+module internal Utils =
     let curry fn a b = fn (a, b)
     let uncurry fn (a, b) = fn a b
     let flip fn a b = fn b a
 
-/// For internal use only.
-module Double =
+module internal Result =
+    let ofOption error = function
+        | Some o -> Ok o
+        | None -> Error error
+    let toOption = function
+        | Ok o -> Some o
+        | Error _ -> None
+
+module internal Async =
+    let map fn a = async {
+        let! p = a
+        return fn p
+    }
+
+#if !FABLE_COMPILER
+module internal Double =
     let tryParseCultureInvariant arg =
-        match Double.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture) with
+        match Double.TryParse(arg, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
         | (true, v) -> Some v
         | (false, _) -> None
 
-/// For internal use only.
-module Svg =
+module internal Svg =
     let parseViewBox (text: string) =
         let parts =
             text.Split ' '
@@ -51,7 +63,6 @@ module Svg =
         | Some width, Some height -> Some (width, height)
         | _ -> None
 
-#if !FABLE_COMPILER
     let getSizeFromSvgDocument content =
         use textReader = new StringReader(content)
         let readerSettings = XmlReaderSettings()
@@ -72,20 +83,3 @@ module Svg =
         | Some (width, height) -> width, height
         | None -> failwithf "Can't get size from svg data (Width = <%s>, Height = <%s>, ViewBox = <%s>)" widthText heightText viewBoxText
 #endif
-
-/// For internal use only.
-module Result =
-    let ofOption error = function
-        | Some o -> Result.Ok o
-        | None -> Result.Error error
-    let toOption = function
-        | Result.Ok o -> Some o 
-        | Result.Error _ -> None 
-
-/// For internal use only.
-module Async =
-    let map fn a = async {
-        let! p = a
-        return fn p
-    }
-

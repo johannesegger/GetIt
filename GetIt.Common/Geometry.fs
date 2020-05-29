@@ -39,9 +39,7 @@ type Degrees = private Degrees of float
             value.ToString(format, formatProvider)
 #endif
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Degrees =
+module internal Degrees =
     let zero = Degrees 0.
 
     let value (Degrees v) = v
@@ -68,38 +66,41 @@ type Position =
         /// The vertical coordinate of the position.
         Y: float
     }
-    override this.ToString() = sprintf "(%.2f, %.2f)" this.X this.Y
+    /// Calculates the angle to another position.
+    member x.AngleTo positionTo =
+        let dx = positionTo.X - x.X
+        let dy = positionTo.Y - x.Y
+        let atan2 = Math.Atan2(dy, dx) * 180. / Math.PI
+        Degrees.op_Implicit (if atan2 < 0. then atan2 + 360. else atan2)
+    /// Calculates the distance to another position.
+    member x.DistanceTo positionTo =
+        let dx = positionTo.X - x.X
+        let dy = positionTo.Y - x.Y
+        Math.Sqrt (dx * dx + dy * dy)
+    /// Adds two positions by adding their x and y coordinates.
     static member (+) (p1, p2) =
         {
             X = p1.X + p2.X
             Y = p1.Y + p2.Y
         }
+    /// Subtracts two positions by subtracting their x and y coordinates.
     static member (-) (p1, p2) =
         {
             X = p1.X - p2.X
             Y = p1.Y - p2.Y
         }
+    /// Negates a position by negating its x and y coordinate.
     static member (~-) (p) =
         {
             X = -p.X
             Y = -p.Y
         }
+    override this.ToString() = sprintf "(%.2f, %.2f)" this.X this.Y
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Position =
+module internal Position =
     let zero = { X = 0.; Y = 0. }
-
-    let angleTo positionTo positionFrom =
-        let dx = positionTo.X - positionFrom.X
-        let dy = positionTo.Y - positionFrom.Y
-        let atan2 = Math.Atan2(dy, dx) * 180. / Math.PI
-        Degrees.op_Implicit (if atan2 < 0. then atan2 + 360. else atan2)
-
-    let distanceTo positionTo positionFrom =
-        let dx = positionTo.X - positionFrom.X
-        let dy = positionTo.Y - positionFrom.Y
-        Math.Sqrt (dx * dx + dy * dy)
+    let angleTo positionTo (positionFrom: Position) = positionFrom.AngleTo(positionTo)
+    let distanceTo positionTo (positionFrom: Position) = positionFrom.DistanceTo(positionTo)
 
 /// Defines a two-dimensional size.
 type Size =
@@ -109,22 +110,21 @@ type Size =
         /// The vertical size.
         Height: float
     }
+    /// Multiplies the width and height of a size with a factor.
     static member (*) (size, factor) =
         {
             Width = size.Width * factor
             Height = size.Height * factor
         }
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Size =
+module internal Size =
     let zero =
         { Width = 0.; Height = 0. }
 
     let scale boxSize size =
-        let widthRatio = boxSize.Width / size.Width;
-        let heightRatio = boxSize.Height / size.Height;
-        let ratio = Math.Min(widthRatio, heightRatio);
+        let widthRatio = boxSize.Width / size.Width
+        let heightRatio = boxSize.Height / size.Height
+        let ratio = Math.Min(widthRatio, heightRatio)
         size * ratio
 
 /// Defines a rectangle in a two-dimensional coordinate system.
@@ -144,9 +144,7 @@ type Rectangle =
     /// The y-coordinate of the bottom edge.
     member this.Bottom with get() = this.Position.Y
 
-/// For internal use only.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Rectangle =
+module internal Rectangle =
     let zero =
         { Position = Position.zero; Size = Size.zero }
 
