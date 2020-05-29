@@ -27,6 +27,7 @@ module internal UICommunication =
             ResponseSubject: Subject<ChannelMsg>
             UIWindowProcess: Process
             MutableModel: MutableModel
+            CancellationToken: CancellationToken
         }
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
@@ -168,36 +169,41 @@ module internal UICommunication =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
+        let d = new SingleAssignmentDisposable()
+        let ds = new CompositeDisposable()
+        let cd = new CancellationDisposable()
+        ds.Add cd
+
         let controllerMsgs = new Subject<_>()
         let uiMsgs = new Subject<_>()
 
         let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs |> Async.RunSynchronously
+        ds.Add webServerDisposable
         let socketUrl =
             let uriBuilder = UriBuilder(serviceUrl)
             uriBuilder.Scheme <- "ws"
             uriBuilder.Path <- socketPath
             uriBuilder.ToString()
         let uiProcess = startUI windowSize socketUrl
+        ds.Add uiProcess
         uiProcess.EnableRaisingEvents <- true
-        let uiProcessExitSubscription =
-#if DEBUG
-            Disposable.Empty
-#else
-            uiProcess.Exited.Subscribe (fun _ -> exit 0)
-#endif
+        uiProcess.Exited.Subscribe (fun _ ->
+            d.Dispose()
+        )
+        |> ds.Add
 
         let mutableModel = MutableModel.create ()
 
-        let uiMsgsSubscription =
-            uiMsgs
-            |> Observable.subscribe (function
-                | ControllerMsg _ -> () // confirmations
-                | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
-                    MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
-                | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
-                | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
-                    MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
-            )
+        uiMsgs
+        |> Observable.subscribe (function
+            | ControllerMsg _ -> () // confirmations
+            | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+                MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
+            | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
+            | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
+                MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
+        )
+        |> ds.Add
 
         mutableModel.Subject
         |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
@@ -207,45 +213,42 @@ module internal UICommunication =
         if uiProcess.MainWindowHandle = IntPtr.Zero
         then raise (GetItException "UI doesn't have a window")
 
-        let inputEventsSubscription =
-            inputEvents
-            |> Observable.subscribe (function
-                | MouseMove position as msg ->
-                    try
-                        let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle position
-                        MutableModel.updateCurrent (fun model ->
-                            let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                            Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
-                    with
-                        | :? Win32Exception when uiProcess.HasExited -> ()
-                        | :? Win32Exception -> reraise ()
-                | MouseClick mouseClick as msg ->
-                    try
-                        let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle mouseClick.VirtualScreenPosition
-                        MutableModel.updateCurrent (fun model ->
-                            let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                            let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
-                            ApplyMouseClick mouseClick, model) mutableModel
-                    with
-                        | :? Win32Exception when uiProcess.HasExited -> ()
-                        | :? Win32Exception -> reraise ()
-                | KeyDown key as msg ->
-                    MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
-                | KeyUp key as msg ->
-                    MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }) mutableModel
-            )
+        inputEvents
+        |> Observable.subscribe (function
+            | MouseMove position as msg ->
+                try
+                    let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle position
+                    MutableModel.updateCurrent (fun model ->
+                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
+                        Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
+                with
+                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception -> reraise ()
+            | MouseClick mouseClick as msg ->
+                try
+                    let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle mouseClick.VirtualScreenPosition
+                    MutableModel.updateCurrent (fun model ->
+                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
+                        let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
+                        ApplyMouseClick mouseClick, model) mutableModel
+                with
+                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception -> reraise ()
+            | KeyDown key as msg ->
+                MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
+            | KeyUp key as msg ->
+                MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }) mutableModel
+        )
+        |> ds.Add
 
+        d.Disposable <- new CompositeDisposable(ds |> Seq.rev)
         {
-            Disposable =
-                uiMsgsSubscription
-                |> Disposable.compose inputEventsSubscription
-                |> Disposable.compose uiProcessExitSubscription
-                |> Disposable.compose uiProcess
-                |> Disposable.compose webServerDisposable
+            Disposable = d
             CommandSubject = controllerMsgs
             ResponseSubject = uiMsgs
             UIWindowProcess = uiProcess
             MutableModel = mutableModel
+            CancellationToken = cd.Token
         }
 
     let private sendMessage state message =
@@ -262,7 +265,7 @@ module internal UICommunication =
                 waitHandle.Set()
             )
         state.CommandSubject.OnNext (messageId, message)
-        waitHandle.Wait()
+        waitHandle.Wait(state.CancellationToken)
 
     let private sendMessageAndWaitForResponse state msg responseFilter =
         let mutable response = None
@@ -278,7 +281,7 @@ module internal UICommunication =
 
         sendMessage state msg
 
-        waitHandle.Wait()
+        waitHandle.Wait(state.CancellationToken)
         Option.get response
 
     let addPlayer playerData state =

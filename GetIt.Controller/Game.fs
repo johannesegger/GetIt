@@ -28,7 +28,10 @@ module internal Game =
 
     let doWithCommunicationState fn =
         match communicationState with
-        | Some state -> fn state
+        | Some state ->
+            try
+                fn state
+            with :? OperationCanceledException -> exit 0
         | None ->
             raise (GetItException "Connection to UI not set up. Consider calling `Game.ShowScene()` at the beginning.")
 
