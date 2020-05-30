@@ -404,8 +404,8 @@ let stream (states: IAsyncObservable<Msg option * Model> ) (msgs: IAsyncObservab
                     None
             )
         AsyncRx.msgChannel socketUrl encode decode
-        >> AsyncRx.takeUntil AsyncRx.beforeWindowUnloadObservable
-        >> AsyncRx.``finally`` (fun () -> async { window.close() })
+        >> AsyncRx.takeUntil AsyncRx.beforeWindowUnloadObservable // close WebSocket connection when window is closed
+        >> AsyncRx.``finally`` (fun () -> async { window.close() }) // close Window when WebSocket connection is closed
 
     let nodeCreated selector =
         AsyncRx.defer (fun () ->
