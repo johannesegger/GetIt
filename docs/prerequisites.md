@@ -2,8 +2,6 @@
 title: Prerequisites
 ---
 
-> Warning: The current version of *Get It* only supports Windows >= 7.
-
 Before you can start to create projects with *Get It* you need to setup a proper development environment, which basically means installing an advanced text editor and the tools to build and run your projects. To do so open Windows PowerShell and run the following script:
 
 ```powershell
