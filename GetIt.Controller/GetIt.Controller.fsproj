@@ -2,18 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <OutputType>dll</OutputType>
+    <OutputType>Library</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Assembly.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="UICommunication.fs" />
     <Compile Include="PrintConfig.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Game.fs" />
     <Compile Include="Player.generated.fs" />
-    <Compile Include="Assembly.fs" />
   </ItemGroup>
 
   <ItemGroup>
