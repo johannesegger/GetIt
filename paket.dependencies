@@ -15,7 +15,10 @@ group Controller
     nuget Fue
     nuget Polly
     nuget Reaction.AspNetCore.Middleware
+nuget ReactiveUI.Fody
+nuget ReactiveUI.WPF
     nuget SharpLibWin32
+nuget SharpVectors.Reloaded
     nuget System.Drawing.Common
     nuget Thoth.Json.Net
 

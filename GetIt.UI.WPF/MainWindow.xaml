@@ -1,0 +1,61 @@
+<Window x:Class="GetIt.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GetIt.UI"
+        mc:Ignorable="d"
+        d:DataContext="{x:Static local:DesignTimeData.Main}"
+        Title="{Binding Title}"
+        SizeToContent="WidthAndHeight"
+        Icon="pack://application:,,,/icon.ico">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Background="LightGray" Padding="20 10" Visibility="{Binding InfoBarVisibility}">
+            <ItemsControl ItemsSource="{Binding Players}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                            <Image Source="{Binding Image}" Width="30" Height="30" Margin="0 0 10 0" RenderTransformOrigin=".5,.5">
+                                <Image.RenderTransform>
+                                    <RotateTransform Angle="{Binding Rotation}" />
+                                </Image.RenderTransform>
+                            </Image>
+                            <TextBlock VerticalAlignment="Center" Text="{Binding InfoText}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <Border Width="{Binding SceneWidth}" Height="{Binding SceneHeight}">
+            <ItemsControl ItemsSource="{Binding SceneObjects}">
+                <ItemsControl.Resources>
+                    <DataTemplate DataType="{x:Type local:PlayerViewModel}">
+                        <Image Source="{Binding Image}" Width="{Binding Width}" Height="{Binding Height}" RenderTransformOrigin=".5,.5">
+                            <Image.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="{Binding ScaleFactor}" ScaleY="{Binding ScaleFactor}" />
+                                    <RotateTransform Angle="{Binding Rotation}" />
+                                    <TranslateTransform X="{Binding OffsetX}" Y="{Binding OffsetY}" />
+                                </TransformGroup>
+                            </Image.RenderTransform>
+                        </Image>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type local:PenLineViewModel}">
+                        <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
+                    </DataTemplate>
+                </ItemsControl.Resources>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </Border>
+    </DockPanel>
+</Window>
