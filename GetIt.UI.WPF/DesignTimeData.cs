@@ -41,7 +41,11 @@ namespace GetIt.UI
                         X = 100,
                         Y = 100,
                         ScaleFactor = 2.5,
-                        Angle = 225
+                        Angle = 225,
+                        SpeechBubble = new SaySpeechBubbleViewModel()
+                        {
+                            Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
+                        }
                     }
                 }
             };

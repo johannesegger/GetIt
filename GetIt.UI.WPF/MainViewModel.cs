@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reactive.Linq;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using DynamicData;
 using DynamicData.Binding;
@@ -81,6 +82,8 @@ namespace GetIt.UI
         public double ScaleFactor { get; set; }
         [Reactive]
         public double Angle { get; set; }
+        [Reactive]
+        public SpeechBubbleViewModel SpeechBubble { get; set; }
         private readonly ObservableAsPropertyHelper<double> offsetX;
         public double OffsetX => offsetX.Value;
         private readonly ObservableAsPropertyHelper<double> offsetY;
@@ -119,6 +122,42 @@ namespace GetIt.UI
                     (x, y, angle) => $"X: {x:F2} | Y: {y:F2} | ↻ {angle:F2}°")
                 .ToProperty(this, p => p.InfoText);
 
+        }
+    }
+
+    public abstract class SpeechBubbleViewModel : ReactiveObject
+    {
+        [Reactive]
+        public string Text { get; set; }
+        [Reactive]
+        public double ScaleX { get; set; } = 1;
+    }
+
+    public class SaySpeechBubbleViewModel : SpeechBubbleViewModel
+    {
+    }
+
+    public class AskBoolSpeechBubbleViewModel : SpeechBubbleViewModel
+    {
+        public ICommand TrueCommand { get; }
+        public ICommand FalseCommand { get; }
+
+        public AskBoolSpeechBubbleViewModel(Action<bool> answer)
+        {
+            TrueCommand = ReactiveCommand.Create(() => answer(true));
+            FalseCommand = ReactiveCommand.Create(() => answer(false));
+        }
+    }
+
+    public class AskTextSpeechBubbleViewModel : SpeechBubbleViewModel
+    {
+        [Reactive]
+        public string Answer { get; set; }
+        public ICommand ConfirmCommand { get; }
+
+        public AskTextSpeechBubbleViewModel(Action<string> answer)
+        {
+            ConfirmCommand = ReactiveCommand.Create(() => answer(Answer));
         }
     }
 }
