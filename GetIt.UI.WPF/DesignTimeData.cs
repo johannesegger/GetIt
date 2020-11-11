@@ -26,21 +26,23 @@ namespace GetIt.UI
                     new PlayerViewModel(sceneBoundsObservable)
                     {
                         Image = LoadTurtleImage(),
-                        OriginalWidth = 50,
-                        OriginalHeight = 50,
+                        Width = 50,
+                        Height = 50,
                         X = 0,
                         Y = 0,
-                        ScaleFactor = 1,
-                        Angle = 0
+                        Angle = 0,
+                        SpeechBubble = new SaySpeechBubbleViewModel()
+                        {
+                            Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
+                        }
                     },
                     new PlayerViewModel(sceneBoundsObservable)
                     {
                         Image = LoadTurtleImage(),
-                        OriginalWidth = 50,
-                        OriginalHeight = 50,
+                        Width = 125,
+                        Height = 125,
                         X = 100,
                         Y = 100,
-                        ScaleFactor = 2.5,
                         Angle = 225,
                         SpeechBubble = new SaySpeechBubbleViewModel()
                         {

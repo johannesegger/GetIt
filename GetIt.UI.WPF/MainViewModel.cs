@@ -71,15 +71,13 @@ namespace GetIt.UI
         [Reactive]
         public ImageSource Image { get; set; }
         [Reactive]
-        public double OriginalWidth { get; set; }
+        public double Width { get; set; }
         [Reactive]
-        public double OriginalHeight { get; set; }
+        public double Height { get; set; }
         [Reactive]
         public double X { get; set; }
         [Reactive]
         public double Y { get; set; }
-        [Reactive]
-        public double ScaleFactor { get; set; }
         [Reactive]
         public double Angle { get; set; }
         [Reactive]
@@ -99,17 +97,15 @@ namespace GetIt.UI
                 .CombineLatest(
                     sceneBoundsObservable,
                     this.WhenAnyValue(p => p.X),
-                    this.WhenAnyValue(p => p.OriginalWidth),
-                    this.WhenAnyValue(p => p.ScaleFactor),
-                    (sceneBounds, x, width, scaleFactor) => x - sceneBounds.Left - width * scaleFactor / 2)
+                    this.WhenAnyValue(p => p.Width),
+                    (sceneBounds, x, width) => x - sceneBounds.Left - width / 2)
                 .ToProperty(this, p => p.OffsetX);
             offsetY = Observable
                 .CombineLatest(
                     sceneBoundsObservable,
                     this.WhenAnyValue(p => p.Y),
-                    this.WhenAnyValue(p => p.OriginalHeight),
-                    this.WhenAnyValue(p => p.ScaleFactor),
-                    (sceneBounds, y, height, scaleFactor) => sceneBounds.Top - y + height * scaleFactor / 2)
+                    this.WhenAnyValue(p => p.Height),
+                    (sceneBounds, y, height) => sceneBounds.Top - y - height / 2)
                 .ToProperty(this, p => p.OffsetY);
             rotation = this
                 .WhenAnyValue(p => p.Angle, v => 360 - v)

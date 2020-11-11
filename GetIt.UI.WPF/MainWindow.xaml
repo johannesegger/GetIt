@@ -36,50 +36,7 @@
             <ItemsControl ItemsSource="{Binding SceneObjects}">
                 <ItemsControl.Resources>
                     <DataTemplate DataType="{x:Type local:PlayerViewModel}">
-                        <Canvas>
-                            <Canvas.RenderTransform>
-                                <TranslateTransform X="{Binding OffsetX}" Y="{Binding OffsetY}" />
-                            </Canvas.RenderTransform>
-                            <Image Source="{Binding Image}" Width="{Binding Width}" Height="{Binding Height}" RenderTransformOrigin=".5,.5">
-                                <Image.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleX="{Binding ScaleFactor}" ScaleY="{Binding ScaleFactor}" />
-                                        <RotateTransform Angle="{Binding Rotation}" />
-                                    </TransformGroup>
-                                </Image.RenderTransform>
-                            </Image>
-                            <Grid SizeChanged="SpeechBubble_SizeChanged">
-                                <Path Stroke="#33000000" Fill="#108B4513" StrokeThickness="2" RenderTransformOrigin=".5,.5">
-                                    <Path.RenderTransform>
-                                        <TransformGroup>
-                                            <ScaleTransform ScaleX="{Binding SpeechBubble.ScaleX}" />
-                                        </TransformGroup>
-                                    </Path.RenderTransform>
-                                </Path>
-                                <ContentControl Content="{Binding SpeechBubble}" Margin="10 10 10 25" MaxWidth="200">
-                                    <ContentControl.Resources>
-                                        <DataTemplate DataType="{x:Type local:SaySpeechBubbleViewModel}">
-                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                                        </DataTemplate>
-                                        <DataTemplate DataType="{x:Type local:AskTextSpeechBubbleViewModel}">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                                                <TextBox Text="{Binding Answer}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                        <DataTemplate DataType="{x:Type local:AskBoolSpeechBubbleViewModel}">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                                                <UniformGrid Rows="1">
-                                                    <Button Content="✔" Command="{Binding TrueCommand}" />
-                                                    <Button Content="❌" Command="{Binding FalseCommand}" />
-                                                </UniformGrid>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ContentControl.Resources>
-                                </ContentControl>
-                            </Grid>
-                        </Canvas>
+                        <local:ScenePlayer />
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type local:PenLineViewModel}">
                         <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
