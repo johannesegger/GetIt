@@ -26,10 +26,8 @@ namespace GetIt.UI
                     new PlayerViewModel(sceneBoundsObservable)
                     {
                         Image = LoadTurtleImage(),
-                        Width = 50,
-                        Height = 50,
-                        X = 0,
-                        Y = 0,
+                        Size = new Size(50, 50),
+                        Position = new Position(0, 0),
                         Angle = 0,
                         SpeechBubble = new SaySpeechBubbleViewModel()
                         {
@@ -39,10 +37,8 @@ namespace GetIt.UI
                     new PlayerViewModel(sceneBoundsObservable)
                     {
                         Image = LoadTurtleImage(),
-                        Width = 125,
-                        Height = 125,
-                        X = 100,
-                        Y = 100,
+                        Size = new Size(125, 125),
+                        Position = new Position(100, 100),
                         Angle = 225,
                         SpeechBubble = new SaySpeechBubbleViewModel()
                         {

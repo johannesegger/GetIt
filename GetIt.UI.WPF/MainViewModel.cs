@@ -37,7 +37,7 @@ namespace GetIt.UI
                 .ToObservableChangeSet()
                 .AsObservableList()
                 .CountChanged
-                .Select(count => count == 0 ? Visibility.Hidden : Visibility.Visible)
+                .Select(count => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                 .ToProperty(this, p => p.InfoBarVisibility);
         }
     }
@@ -71,21 +71,17 @@ namespace GetIt.UI
         [Reactive]
         public ImageSource Image { get; set; }
         [Reactive]
-        public double Width { get; set; }
+        public Size Size { get; set; } = new Size(0, 0);
         [Reactive]
-        public double Height { get; set; }
-        [Reactive]
-        public double X { get; set; }
-        [Reactive]
-        public double Y { get; set; }
+        public Position Position { get; set; } = new Position(0, 0);
         [Reactive]
         public double Angle { get; set; }
         [Reactive]
         public SpeechBubbleViewModel SpeechBubble { get; set; }
-        private readonly ObservableAsPropertyHelper<double> offsetX;
-        public double OffsetX => offsetX.Value;
-        private readonly ObservableAsPropertyHelper<double> offsetY;
-        public double OffsetY => offsetY.Value;
+        private readonly ObservableAsPropertyHelper<Visibility> speechBubbleVisibility;
+        public Visibility SpeechBubbleVisibility => speechBubbleVisibility.Value;
+        private readonly ObservableAsPropertyHelper<Position> offset;
+        public Position Offset => offset.Value;
         private readonly ObservableAsPropertyHelper<double> rotation;
         public double Rotation => rotation.Value;
         private readonly ObservableAsPropertyHelper<string> infoText;
@@ -93,31 +89,43 @@ namespace GetIt.UI
 
         public PlayerViewModel(IObservable<Rectangle> sceneBoundsObservable)
         {
-            offsetX = Observable
+            offset = Observable
                 .CombineLatest(
                     sceneBoundsObservable,
-                    this.WhenAnyValue(p => p.X),
-                    this.WhenAnyValue(p => p.Width),
-                    (sceneBounds, x, width) => x - sceneBounds.Left - width / 2)
-                .ToProperty(this, p => p.OffsetX);
-            offsetY = Observable
-                .CombineLatest(
-                    sceneBoundsObservable,
-                    this.WhenAnyValue(p => p.Y),
-                    this.WhenAnyValue(p => p.Height),
-                    (sceneBounds, y, height) => sceneBounds.Top - y - height / 2)
-                .ToProperty(this, p => p.OffsetY);
+                    this.WhenAnyValue(p => p.Position),
+                    this.WhenAnyValue(p => p.Size),
+                    (sceneBounds, position, size) => new Position(position.X - sceneBounds.Left - size.Width / 2, sceneBounds.Top - position.Y - size.Height / 2))
+                .ToProperty(this, p => p.Offset);
             rotation = this
                 .WhenAnyValue(p => p.Angle, v => 360 - v)
                 .ToProperty(this, p => p.Rotation);
             infoText = this
                 .WhenAnyValue(
-                    p => p.X,
-                    p => p.Y,
+                    p => p.Position,
                     p => p.Angle,
-                    (x, y, angle) => $"X: {x:F2} | Y: {y:F2} | ↻ {angle:F2}°")
+                    (position, angle) => $"X: {position.X:F2} | Y: {position.Y:F2} | ↻ {angle:F2}°")
                 .ToProperty(this, p => p.InfoText);
-
+            speechBubbleVisibility = this.WhenAnyValue(p => p.SpeechBubble)
+                .Select(p => p != null ? Visibility.Visible : Visibility.Collapsed)
+                .ToProperty(this, p => p.SpeechBubbleVisibility);
+            this.WhenAnyValue(p => p.SpeechBubble)
+                .Where(p => p != null)
+                .Select(speechBubble =>
+                    Observable
+                        .CombineLatest(
+                            sceneBoundsObservable,
+                            speechBubble.WhenAnyValue(p => p.Size),
+                            this.WhenAnyValue(p => p.Position),
+                            this.WhenAnyValue(p => p.Size),
+                            (sceneBounds, speechBubbleSize, position, size) => new Action(() =>
+                            {
+                                speechBubble.Offset = new Position(
+                                    position.X - sceneBounds.Left - size.Width / 2 + size.Width * 0.8,
+                                    Math.Max(0, sceneBounds.Top - position.Y - size.Height / 2 - speechBubbleSize.Height));
+                            }))
+                )
+                .Switch()
+                .Subscribe(action => action());
         }
     }
 
@@ -127,6 +135,23 @@ namespace GetIt.UI
         public string Text { get; set; }
         [Reactive]
         public double ScaleX { get; set; } = 1;
+        [Reactive]
+        public Position Offset { get; set; }
+        [Reactive]
+        public Size Size { get; set; } = new Size(0, 0);
+        private readonly ObservableAsPropertyHelper<string> geometry;
+        public string Geometry => geometry.Value;
+        public SpeechBubbleViewModel()
+        {
+            geometry = this.WhenAnyValue(p => p.Size)
+                .Select(size =>
+                {
+                    double bubbleWidth = size.Width - 2 * 10;
+                    double bubbleHeight = size.Height - 2 * 5 - 15;
+                    return $"M 10,5 h {bubbleWidth} c 10,0 10,{bubbleHeight} 0,{bubbleHeight} h -{bubbleWidth - 40} c 0,7 -5,13 -15,15 s 3,-6 0,-15 h -25 c -10,0 -10,-{bubbleHeight} 0,-{bubbleHeight}";
+                })
+                .ToProperty(this, p => p.Geometry);
+        }
     }
 
     public class SaySpeechBubbleViewModel : SpeechBubbleViewModel

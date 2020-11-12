@@ -7,20 +7,21 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Canvas>
-        <Canvas.RenderTransform>
-            <TranslateTransform X="{Binding OffsetX}" Y="{Binding OffsetY}" />
-        </Canvas.RenderTransform>
-        <Image Source="{Binding Image}" Width="{Binding Width}" Height="{Binding Height}" RenderTransformOrigin=".5,.5">
+        <Image Source="{Binding Image}" Width="{Binding Size.Width}" Height="{Binding Size.Height}" RenderTransformOrigin=".5,.5">
             <Image.RenderTransform>
-                <RotateTransform Angle="{Binding Rotation}" />
+                <TransformGroup>
+                    <RotateTransform Angle="{Binding Rotation}" />
+                    <TranslateTransform X="{Binding Offset.X}" Y="{Binding Offset.Y}" />
+                </TransformGroup>
             </Image.RenderTransform>
         </Image>
-        <Grid SizeChanged="SpeechBubble_SizeChanged">
-            <Path Stroke="#33000000" Fill="#108B4513" StrokeThickness="2" RenderTransformOrigin=".5,.5">
+        <Grid Visibility="{Binding SpeechBubbleVisibility}">
+            <Grid.RenderTransform>
+                <TranslateTransform X="{Binding SpeechBubble.Offset.X}" Y="{Binding SpeechBubble.Offset.Y}" />
+            </Grid.RenderTransform>
+            <Path Stroke="#33000000" Fill="#108B4513" StrokeThickness="2" RenderTransformOrigin=".5,.5" SizeChanged="Path_SizeChanged" Data="{Binding SpeechBubble.Geometry}">
                 <Path.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform ScaleX="{Binding SpeechBubble.ScaleX}" />
-                    </TransformGroup>
+                    <ScaleTransform ScaleX="{Binding SpeechBubble.ScaleX}" />
                 </Path.RenderTransform>
             </Path>
             <ContentControl Content="{Binding SpeechBubble}" Margin="10 10 10 25" MaxWidth="200">
