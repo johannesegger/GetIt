@@ -1,16 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>winexe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWpf>true</UseWpf>
   </PropertyGroup>
-
   <ItemGroup>
+    <Compile Include="MessageProcessing.fs" />
+    <Compile Include="ReactiveWebSocketClient.fs" />
     <Compile Include="Program.fs" />
-    <None Include="icon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
+    <ProjectReference Include="..\GetIt.UI.WPF\GetIt.UI.csproj" />
+  </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

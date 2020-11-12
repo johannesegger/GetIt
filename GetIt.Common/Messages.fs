@@ -93,11 +93,12 @@ module internal Decode =
             }
         )
 
-    let windowSize : Decoder<_> =
-        Decode.oneOf [
-            Decode.field "specificSize" size |> Decode.map SpecificSize
-            Decode.field "maximized" (Decode.nil Maximized)
-        ]
+    let oneOfMany itemDecoder : Decoder<_> =
+        Decode.object (fun get ->
+            OneOfMany.create
+                (get.Required.Field "items" (Decode.array itemDecoder))
+                (get.Required.Field "currentIndex" Decode.int)
+        )
 
     let svgImage : Decoder<_> =
         Decode.object (fun get ->
@@ -115,8 +116,7 @@ module internal Decode =
                 Direction = get.Required.Field "direction" degrees
                 Pen = get.Required.Field "pen" pen
                 SpeechBubble = get.Required.Field "speechBubble" optionalSpeechBubble
-                Costumes = get.Required.Field "costumes" (Decode.list svgImage)
-                CostumeIndex = get.Required.Field "costumeIndex" Decode.int
+                Costumes = get.Required.Field "costumes" (oneOfMany svgImage)
                 Layer = get.Required.Field "layer" Decode.int
                 IsVisible = get.Required.Field "isVisible" Decode.bool
             }
@@ -237,10 +237,11 @@ module internal Encode =
             ("height", Encode.float p.Height)
         ]
 
-    let windowSize p =
-        match p with
-        | SpecificSize p -> Encode.object [ ("specificSize", size p) ]
-        | Maximized -> Encode.object [ ("maximized", Encode.nil) ]
+    let oneOfMany encodeItem p =
+        Encode.object [
+            "currentIndex", Encode.int p.CurrentIndex
+            "items", Encode.array (Array.map encodeItem p.Items)
+        ]
 
     let svgImage p =
         Encode.object [
@@ -255,8 +256,7 @@ module internal Encode =
             ("direction", degrees p.Direction)
             ("pen", pen p.Pen)
             ("speechBubble", optionalSpeechBubble p.SpeechBubble)
-            ("costumes", Encode.list (List.map svgImage p.Costumes))
-            ("costumeIndex", Encode.int p.CostumeIndex)
+            ("costumes", oneOfMany svgImage p.Costumes)
             ("layer", Encode.int p.Layer)
             ("isVisible", Encode.bool p.IsVisible)
         ]
@@ -320,7 +320,7 @@ module internal Encode =
         | ApplyBatch ->
             Encode.object [ ("applyBatch", Encode.nil) ]
 
-    let uIMsg msg =
+    let uiMsg msg =
         match msg with
         | SetSceneBounds p ->
             Encode.object [ ("setSceneBounds", rectangle p) ]
@@ -334,4 +334,4 @@ module internal Encode =
         | ControllerMsg (msgId, msg) ->
             Encode.object [ ("controllerMsg", Encode.tuple2 Encode.guid controllerMsg (msgId, msg)) ]
         | UIMsg msg ->
-            Encode.object [ ("uiMsg", uIMsg msg) ]
+            Encode.object [ ("uiMsg", uiMsg msg) ]

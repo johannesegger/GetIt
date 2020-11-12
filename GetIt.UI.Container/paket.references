@@ -1,3 +1,2 @@
-group Controller
-Chromely
-FSharp.Core
+group controller
+FSharp.Control.Reactive

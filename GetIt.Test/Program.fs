@@ -77,7 +77,7 @@ let red = getColor Color.Red
 let blue = getColor Color.Blue
 let black = getColor Color.Black
 
-let defaultWindowSize = SpecificSize { Width = 600.; Height = 400. }
+let defaultSceneSize = SpecificSize { Width = 600.; Height = 400. }
 
 let rectColor = blue
 let (rectWidth, rectHeight) = (50, 20)
@@ -89,7 +89,7 @@ let tests =
     testList "All" [
         testList "Startup" [
             test "Scene should be empty" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let image = getScreenshot state
                 let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
                 Expect.allEqual colors white "All scene pixels should be white"
@@ -99,7 +99,7 @@ let tests =
                 [(50, 20); (10, 10); (2, 100); (100, 2)]
                 |> List.map (fun (width, height) ->
                     test (sprintf "Player (%d x %d) should start at scene center" width height) {
-                        use state = UICommunication.showScene defaultWindowSize
+                        use state = UICommunication.showScene defaultSceneSize
                         let playerData = PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = float width; Height = float height }))
                         let playerId = UICommunication.addPlayer playerData state
                         let image = getScreenshot state
@@ -114,8 +114,8 @@ let tests =
                     }
                 )
 
-            test "Info height is constant" {
-                use state = UICommunication.showScene defaultWindowSize
+            ptest "Info height is constant" {
+                use state = UICommunication.showScene defaultSceneSize
                 for _ in [0..10] do
                     UICommunication.addPlayer (PlayerData.Turtle.WithVisibility(false)) state |> ignore
                 let image = getScreenshot state
@@ -126,7 +126,7 @@ let tests =
 
         testList "Movement" [
             test "Change position" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer rect state
                 for _ in [1..10] do
                     UICommunication.changePosition playerId { X = 13.; Y = 7. } state
@@ -142,7 +142,7 @@ let tests =
             }
 
             test "Rotate around center" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.setPosition playerId { X = 10.; Y = 30. } state
                 UICommunication.setDirection playerId (Degrees.op_Implicit 90.) state
@@ -160,7 +160,7 @@ let tests =
 
         testList "Pen" [
             test "Line position" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.red }; IsVisible = false } state
                 UICommunication.setPosition playerId { X = 100.; Y = 0. } state
                 let image = getScreenshot state
@@ -175,7 +175,7 @@ let tests =
             }
 
             test "Toggle pen state" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with Pen = { rect.Pen with Weight = 2. }; IsVisible = false } state
                 UICommunication.setPosition playerId { X = -100.; Y = 0. } state
                 UICommunication.setPenState playerId true state
@@ -201,7 +201,7 @@ let tests =
             }
 
             test "Clear pen lines" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.red }; IsVisible = false } state
                 UICommunication.changePosition playerId { X = 100.; Y = 0. } state
                 UICommunication.changePosition playerId { X = -100.; Y = 100. } state
@@ -216,7 +216,7 @@ let tests =
 
         testList "Look" [
             test "Hidden" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with IsVisible = false } state
                 let image = getScreenshot state
                 let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
@@ -224,7 +224,7 @@ let tests =
             }
 
             test "Next costume" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerData =
                     PlayerData.Create([
                         SvgImage.CreateRectangle(RGBAColors.blue, { Width = float rectWidth; Height = float rectHeight })
@@ -244,7 +244,7 @@ let tests =
             }
 
             test "Next next costume" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerData =
                     PlayerData.Create([
                         SvgImage.CreateRectangle(RGBAColors.blue, { Width = float rectWidth; Height = float rectHeight })
@@ -265,7 +265,7 @@ let tests =
             }
 
             test "Size factor" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with SizeFactor = 2. } state
                 let image = getScreenshot state
                 let actualColors = getPixelsAt Coordinates.fullScene image
@@ -279,7 +279,7 @@ let tests =
             }
 
             test "Polygon costume" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerData =
                     PlayerData.Create([
                         SvgImage.CreatePolygon(
@@ -315,7 +315,7 @@ let tests =
             }
 
             test "Costume from file" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.Load (__SOURCE_DIRECTORY__ + "\\data\\rect-costume.svg"))) state
                 let image = getScreenshot state
                 let actualColors = getPixelsAt Coordinates.fullScene image
@@ -329,7 +329,7 @@ let tests =
             }
 
             test "Speech bubble shows" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
                 UICommunication.say playerId "Hi" state
                 let image = getScreenshot state
@@ -338,7 +338,7 @@ let tests =
             }
 
             test "Speech bubble hides" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
                 UICommunication.say playerId "Hi" state
                 UICommunication.shutUp playerId state
@@ -351,9 +351,9 @@ let tests =
         testList "Layer" [
             yield!
                 [
-                    "Initial player layer", (fun _ _ -> ())
-                    "Bring player at top layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player1Id
-                    "Mix bring to front with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
+                    test "Initial player layer", (fun _ _ -> ())
+                    test "Bring player at top layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player1Id
+                    test "Mix bring to front with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
                         UICommunication.bringToFront player1Id state
                         UICommunication.bringToFront player2Id state
                         UICommunication.bringToFront player3Id state
@@ -362,8 +362,8 @@ let tests =
                         UICommunication.bringToFront player3Id state
                         UICommunication.bringToFront player2Id state
                         UICommunication.bringToFront player1Id state
-                    "Send player at bottom layer to back", fun (player1Id, player2Id, player3Id) -> UICommunication.sendToBack player3Id
-                    "Mix send to back with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
+                    test "Send player at bottom layer to back", fun (player1Id, player2Id, player3Id) -> UICommunication.sendToBack player3Id
+                    test "Mix send to back with order 1,2,3", fun (player1Id, player2Id, player3Id) state ->
                         UICommunication.sendToBack player3Id state
                         UICommunication.sendToBack player2Id state
                         UICommunication.sendToBack player1Id state
@@ -372,9 +372,9 @@ let tests =
                         UICommunication.sendToBack player2Id state
                         UICommunication.sendToBack player3Id state
                 ]
-                |> List.map (fun (title, fn) ->
-                    test title {
-                        use state = UICommunication.showScene defaultWindowSize
+                |> List.map (fun (test, fn) ->
+                    test {
+                        use state = UICommunication.showScene defaultSceneSize
                         let player1Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.red, { Width = 50.; Height = 20. })).WithPosition({ X = -10.; Y = 0. })) state
                         let player2Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = 50.; Height = 20. })).WithPosition({ X = 0.; Y = 0. })) state
                         let player3Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, { Width = 50.; Height = 20. })).WithPosition({ X = 10.; Y = 0. })) state
@@ -395,11 +395,11 @@ let tests =
 
             yield!
                 [
-                    "Bring player at bottom layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player3Id
-                    "Send players at higher layer to back", fun (player1Id, player2Id, player3Id) state ->
+                    test "Bring player at bottom layer to front", fun (player1Id, player2Id, player3Id) -> UICommunication.bringToFront player3Id
+                    test "Send players at higher layer to back", fun (player1Id, player2Id, player3Id) state ->
                         UICommunication.sendToBack player1Id state
                         UICommunication.sendToBack player2Id state
-                    "Mix bring to front with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
+                    test "Mix bring to front with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
                         UICommunication.bringToFront player3Id state
                         UICommunication.bringToFront player2Id state
                         UICommunication.bringToFront player1Id state
@@ -408,7 +408,7 @@ let tests =
                         UICommunication.bringToFront player2Id state
                         UICommunication.bringToFront player1Id state
                         UICommunication.bringToFront player3Id state
-                    "Mix send to back with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
+                    test "Mix send to back with order 3,1,2", fun (player1Id, player2Id, player3Id) state ->
                         UICommunication.sendToBack player1Id state
                         UICommunication.sendToBack player2Id state
                         UICommunication.sendToBack player3Id state
@@ -418,9 +418,9 @@ let tests =
                         UICommunication.sendToBack player1Id state
                         UICommunication.sendToBack player2Id state
                 ]
-                |> List.map (fun (title, fn) ->
-                    test title {
-                        use state = UICommunication.showScene defaultWindowSize
+                |> List.map (fun (test, fn) ->
+                    test {
+                        use state = UICommunication.showScene defaultSceneSize
                         let player1Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.red, { Width = 50.; Height = 20. })).WithPosition({ X = -10.; Y = 0. })) state
                         let player2Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.blue, { Width = 50.; Height = 20. })).WithPosition({ X = 0.; Y = 0. })) state
                         let player3Id = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, { Width = 50.; Height = 20. })).WithPosition({ X = 10.; Y = 0. })) state
@@ -440,7 +440,7 @@ let tests =
         ]
 
         test "Remove player" {
-            use state = UICommunication.showScene defaultWindowSize
+            use state = UICommunication.showScene defaultSceneSize
             let playerId = UICommunication.addPlayer rect state
             UICommunication.removePlayer playerId state
             let image = getScreenshot state
@@ -473,7 +473,7 @@ let tests =
 
         testList "Background" [
             test "Background is stretching" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
                 let image = getScreenshot state
                 let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
@@ -481,7 +481,7 @@ let tests =
             }
 
             test "Player is in front of background" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
                 let image = getScreenshot state
@@ -496,7 +496,7 @@ let tests =
             }
 
             test "Pen line is in front of background" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer { rect with Pen = { IsOn = true; Weight = 50.; Color = RGBAColors.black }; IsVisible = false } state
                 UICommunication.setPosition playerId { X = 100.; Y = 0. } state
                 UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
@@ -512,7 +512,7 @@ let tests =
             }
 
             test "Speech bubble is in front of background" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.CreateRectangle(RGBAColors.black, Size.zero))) state
                 UICommunication.setBackground (SvgImage.CreateRectangle(RGBAColors.red, { Width = 1.; Height = 1. })) state
                 UICommunication.say playerId "Hi" state
@@ -522,9 +522,9 @@ let tests =
             }
         ]
 
-        testList "Batching" [
+        ptestList "Batching" [
             test "Changes during batch" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.setPenState playerId true state
@@ -536,7 +536,7 @@ let tests =
                 Expect.allEqual colors white "Scene should still be empty"
             }
             test "Apply batch" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.setPenState playerId true state
@@ -549,7 +549,7 @@ let tests =
                 Expect.exists colors ((<>) white) "Scene should have non-white pixels"
             }
             test "Relative changes during batch" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state
                 let playerId = UICommunication.addPlayer rect state
                 for _ in [1..10] do
@@ -567,7 +567,7 @@ let tests =
                 Expect.isTrue valueDiff.IsEmpty "Scene should have rectangle at (130, 70) and everything else empty"
             }
             test "Apply nested batch" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.startBatch state
@@ -578,7 +578,7 @@ let tests =
                 Expect.allEqual colors white "Scene should still be empty"
             }
             test "Apply root batch" {
-                use state = UICommunication.showScene defaultWindowSize
+                use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state
                 let playerId = UICommunication.addPlayer rect state
                 UICommunication.startBatch state

@@ -1,5 +1,5 @@
+using System;
 using System.IO;
-using System.Reactive.Linq;
 using System.Windows.Media;
 using SharpVectors.Converters;
 using SharpVectors.Renderers.Wpf;
@@ -10,43 +10,35 @@ namespace GetIt.UI
     {
         static DesignTimeData()
         {
-            var sceneBoundsObservable = Observable.Return(new Rectangle(new Position(-300, -240), new Size(600, 480)));
-            Main = new MainViewModel
-            {
-                Title = "Get It",
-                SceneWidth = 600,
-                SceneHeight = 480,
-                PenLines =
+            Main = new MainViewModel(new Size(600, 480), isMaximized: false);
+            Main.AddPenLine(new Position(0, 0), new Position(-100, 100), 1, Brushes.SteelBlue);
+            Main.AddPenLine(new Position(-100, 100), new Position(-200, 0), 5, Brushes.Crimson);
+            Main.AddPlayer(
+                new PlayerId(Guid.NewGuid()),
+                player =>
                 {
-                    new PenLineViewModel(sceneBoundsObservable, new Position(0, 0), new Position(-100, 100), 1, Brushes.SteelBlue),
-                    new PenLineViewModel(sceneBoundsObservable, new Position(-100, 100), new Position(-200, 0), 5, Brushes.Crimson)
-                },
-                Players =
+                    player.Image = LoadTurtleImage();
+                    player.Size = new Size(50, 50);
+                    player.Position = new Position(0, 0);
+                    player.Angle = 0;
+                    player.SpeechBubble = new SaySpeechBubbleViewModel()
+                    {
+                        Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
+                    };
+                });
+            Main.AddPlayer(
+                new PlayerId(Guid.NewGuid()),
+                player =>
                 {
-                    new PlayerViewModel(sceneBoundsObservable)
+                    player.Image = LoadTurtleImage();
+                    player.Size = new Size(125, 125);
+                    player.Position = new Position(100, 100);
+                    player.Angle = 225;
+                    player.SpeechBubble = new SaySpeechBubbleViewModel()
                     {
-                        Image = LoadTurtleImage(),
-                        Size = new Size(50, 50),
-                        Position = new Position(0, 0),
-                        Angle = 0,
-                        SpeechBubble = new SaySpeechBubbleViewModel()
-                        {
-                            Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
-                        }
-                    },
-                    new PlayerViewModel(sceneBoundsObservable)
-                    {
-                        Image = LoadTurtleImage(),
-                        Size = new Size(125, 125),
-                        Position = new Position(100, 100),
-                        Angle = 225,
-                        SpeechBubble = new SaySpeechBubbleViewModel()
-                        {
-                            Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
-                        }
-                    }
-                }
-            };
+                        Text = "Hey there! I'm Oscar, the turtle. Nice to meet you.",
+                    };
+                });
         }
 
         public static ImageSource LoadTurtleImage()

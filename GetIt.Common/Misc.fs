@@ -2,7 +2,7 @@ namespace GetIt
 
 open System
 
-type internal WindowSize =
+type internal SceneSize =
     | SpecificSize of Size
     | Maximized
 

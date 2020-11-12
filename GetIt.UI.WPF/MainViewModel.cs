@@ -1,9 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using DynamicData;
 using DynamicData.Binding;
@@ -12,14 +11,18 @@ using ReactiveUI.Fody.Helpers;
 
 namespace GetIt.UI
 {
-    public class MainViewModel : ReactiveObject
+    internal class MainViewModel : ReactiveObject
     {
         [Reactive]
-        public string Title { get; set; }
+        public string Title { get; set; } = "Get It";
         [Reactive]
-        public double SceneWidth { get; set; }
+        public Size SceneSize { get; set; }
+        private readonly ObservableAsPropertyHelper<Rectangle> sceneBounds;
+        public Rectangle SceneBounds => sceneBounds.Value;
         [Reactive]
-        public double SceneHeight { get; set; }
+        public WindowState WindowState { get; set; }
+        [Reactive]
+        public ImageSource BackgroundImage { get; set; }
         private readonly ObservableAsPropertyHelper<Visibility> infoBarVisibility;
         public Visibility InfoBarVisibility => infoBarVisibility.Value;
         public ObservableCollection<PlayerViewModel> Players { get; } = new ObservableCollection<PlayerViewModel>();
@@ -27,8 +30,13 @@ namespace GetIt.UI
         private readonly ReadOnlyObservableCollection<object> sceneObjects;
         public ReadOnlyObservableCollection<object> SceneObjects => sceneObjects;
 
-        public MainViewModel()
+        public MainViewModel(Size sceneSize, bool isMaximized)
         {
+            SceneSize = sceneSize;
+            sceneBounds = this.WhenAnyValue(p => p.SceneSize)
+                .Select(p => new Rectangle(new Position(-p.Width / 2, -p.Height / 2), p))
+                .ToProperty(this, p => p.SceneBounds);
+            WindowState = isMaximized ? WindowState.Maximized : WindowState.Normal;
             Players.ToObservableChangeSet().CastToObject()
                 .Or(PenLines.ToObservableChangeSet().CastToObject())
                 .Bind(out sceneObjects)
@@ -40,9 +48,22 @@ namespace GetIt.UI
                 .Select(count => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                 .ToProperty(this, p => p.InfoBarVisibility);
         }
+
+        public void AddPlayer(PlayerId playerId, Action<PlayerViewModel> initialize)
+        {
+            var player = new PlayerViewModel(this.WhenAnyValue(p => p.SceneBounds), playerId);
+            initialize(player);
+            Players.Add(player);
+        }
+
+        public void AddPenLine(Position from, Position to, double thickness, Brush brush)
+        {
+            var penLine = new PenLineViewModel(this.WhenAnyValue(p => p.SceneBounds), from, to, thickness, brush);
+            PenLines.Add(penLine);
+        }
     }
 
-    public class PenLineViewModel : ReactiveObject
+    internal class PenLineViewModel : ReactiveObject
     {
         private readonly ObservableAsPropertyHelper<double> x1;
         public double X1 => x1.Value;
@@ -54,6 +75,7 @@ namespace GetIt.UI
         public double Y2 => y2.Value;
         public double Thickness { get; }
         public Brush Brush { get; }
+        public int ZIndex => 0;
 
         public PenLineViewModel(IObservable<Rectangle> sceneBoundsObservable, Position from, Position to, double thickness, Brush brush)
         {
@@ -66,8 +88,9 @@ namespace GetIt.UI
         }
     }
 
-    public class PlayerViewModel : ReactiveObject
+    internal class PlayerViewModel : ReactiveObject
     {
+        public PlayerId Id { get; }
         [Reactive]
         public ImageSource Image { get; set; }
         [Reactive]
@@ -76,6 +99,10 @@ namespace GetIt.UI
         public Position Position { get; set; } = new Position(0, 0);
         [Reactive]
         public double Angle { get; set; }
+        [Reactive]
+        public int ZIndex { get; set; }
+        [Reactive]
+        public Visibility Visibility { get; set; }
         [Reactive]
         public SpeechBubbleViewModel SpeechBubble { get; set; }
         private readonly ObservableAsPropertyHelper<Visibility> speechBubbleVisibility;
@@ -87,8 +114,9 @@ namespace GetIt.UI
         private readonly ObservableAsPropertyHelper<string> infoText;
         public string InfoText => infoText.Value;
 
-        public PlayerViewModel(IObservable<Rectangle> sceneBoundsObservable)
+        public PlayerViewModel(IObservable<Rectangle> sceneBoundsObservable, PlayerId playerId)
         {
+            Id = playerId;
             offset = Observable
                 .CombineLatest(
                     sceneBoundsObservable,
@@ -129,7 +157,7 @@ namespace GetIt.UI
         }
     }
 
-    public abstract class SpeechBubbleViewModel : ReactiveObject
+    internal abstract class SpeechBubbleViewModel : ReactiveObject
     {
         [Reactive]
         public string Text { get; set; }
@@ -154,31 +182,29 @@ namespace GetIt.UI
         }
     }
 
-    public class SaySpeechBubbleViewModel : SpeechBubbleViewModel
+    internal class SaySpeechBubbleViewModel : SpeechBubbleViewModel
     {
     }
 
-    public class AskBoolSpeechBubbleViewModel : SpeechBubbleViewModel
+    internal class AskBoolSpeechBubbleViewModel : SpeechBubbleViewModel
     {
-        public ICommand TrueCommand { get; }
-        public ICommand FalseCommand { get; }
+        public ReactiveCommand<bool, bool> ConfirmCommand { get; }
 
-        public AskBoolSpeechBubbleViewModel(Action<bool> answer)
+        public AskBoolSpeechBubbleViewModel()
         {
-            TrueCommand = ReactiveCommand.Create(() => answer(true));
-            FalseCommand = ReactiveCommand.Create(() => answer(false));
+            ConfirmCommand = ReactiveCommand.Create<bool, bool>(answer => answer);
         }
     }
 
-    public class AskTextSpeechBubbleViewModel : SpeechBubbleViewModel
+    internal class AskTextSpeechBubbleViewModel : SpeechBubbleViewModel
     {
         [Reactive]
         public string Answer { get; set; }
-        public ICommand ConfirmCommand { get; }
+        public ReactiveCommand<Unit, string> ConfirmCommand { get; }
 
-        public AskTextSpeechBubbleViewModel(Action<string> answer)
+        public AskTextSpeechBubbleViewModel()
         {
-            ConfirmCommand = ReactiveCommand.Create(() => answer(Answer));
+            ConfirmCommand = ReactiveCommand.Create(() => Answer);
         }
     }
 }

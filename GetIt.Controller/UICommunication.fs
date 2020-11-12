@@ -1,4 +1,4 @@
-﻿namespace GetIt
+namespace GetIt
 
 open FSharp.Control
 open FSharp.Control.Reactive
@@ -101,21 +101,15 @@ module internal UICommunication =
         return (url, serverDisposable)
     }
 
-    let private startUI windowSize socketUrl =
+    let private startUI sceneSize socketUrl =
         let environmentVariables =
             [
-                match windowSize with
-                | SpecificSize windowSize ->
-                    "GET_IT_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
+                match sceneSize with
+                | SpecificSize sceneSize ->
+                    "GET_IT_SCENE_SIZE", sprintf "%dx%d" (int sceneSize.Width) (int sceneSize.Height)
                 | Maximized ->
                     "GET_IT_START_MAXIMIZED", "1"
                 "GET_IT_SOCKET_URL", socketUrl
-#if DEBUG
-                // Ensure that `yarn webpack-dev-server` is running before starting this
-                "GET_IT_INDEX_URL", "http://localhost:8080"
-#else
-                "GET_IT_INDEX_URL", Path.Combine("..", "GetIt.UI", "index.html")
-#endif
             ]
 
         let startInfo =
@@ -165,7 +159,7 @@ module internal UICommunication =
             |> Disposable.compose d2
         )
 
-    let showScene windowSize =
+    let showScene sceneSize =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
@@ -184,7 +178,7 @@ module internal UICommunication =
             uriBuilder.Scheme <- "ws"
             uriBuilder.Path <- socketPath
             uriBuilder.ToString()
-        let uiProcess = startUI windowSize socketUrl
+        let uiProcess = startUI sceneSize socketUrl
         ds.Add uiProcess
         uiProcess.EnableRaisingEvents <- true
         uiProcess.Exited.Subscribe (fun _ ->

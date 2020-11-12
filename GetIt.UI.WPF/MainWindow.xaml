@@ -8,7 +8,8 @@
         d:DataContext="{x:Static local:DesignTimeData.Main}"
         Title="{Binding Title}"
         SizeToContent="WidthAndHeight"
-        Icon="pack://application:,,,/icon.ico">
+        Icon="icon.ico"
+        WindowState="{Binding WindowState}">
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Background="LightGray" Padding="20 10" Visibility="{Binding InfoBarVisibility}">
             <ItemsControl ItemsSource="{Binding Players}">
@@ -32,19 +33,30 @@
             </ItemsControl>
         </Border>
 
-        <Border Width="{Binding SceneWidth}" Height="{Binding SceneHeight}">
+        <Border SizeChanged="Scene_SizeChanged">
             <ItemsControl ItemsSource="{Binding SceneObjects}">
                 <ItemsControl.Resources>
                     <DataTemplate DataType="{x:Type local:PlayerViewModel}">
-                        <local:ScenePlayer />
+                        <local:ScenePlayer Visibility="{Binding Visibility}" />
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type local:PenLineViewModel}">
                         <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
                     </DataTemplate>
                 </ItemsControl.Resources>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.ZIndex" Value="{Binding Path=ZIndex}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas />
+                        <Canvas ClipToBounds="True"
+                                Width="{Binding SceneBounds.Size.Width}"
+                                Height="{Binding SceneBounds.Size.Height}">
+                            <Canvas.Background>
+                                <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
+                            </Canvas.Background>
+                        </Canvas>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>

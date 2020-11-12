@@ -1,50 +1,10 @@
-open Chromely
-open Chromely.CefGlue.Browser.EventParams
-open Chromely.Core
-open Chromely.Core.Configuration
-open Chromely.Core.Helpers
-open Chromely.Core.Host
+open GetIt
+open GetIt.UI
 open System
-open System.Web
-open System.IO
-
-type ChromelyApp() =
-    inherit ChromelyBasicApp()
-    override x.RegisterEvents(container: IChromelyContainer) =
-        let eventHandler =
-            ChromelyEventHandler<TitleChangedEventArgs>(
-                CefEventKey.TitleChanged,
-                fun sender e -> x.Window.NativeHost.SetWindowTitle(e.Title) |> ignore
-            )
-        container.RegisterInstance(typeof<CefEventHandlerTypes.ITitleChangedHandler>, eventHandler.Key, eventHandler)
-
-let startUI cliArgs url windowSize startMaximized =
-    let config = DefaultConfiguration.CreateForRuntimePlatform()
-    config.WindowOptions.Title <- "Get It"
-    config.WindowOptions.RelativePathToIconFile <- "icon.ico"
-    windowSize
-    |> Option.defaultValue (800, 600)
-    |> fun (width, height) -> config.WindowOptions.Size <- WindowSize(width, height)
-    config.WindowOptions.WindowState <- if startMaximized then WindowState.Maximize else WindowState.Normal
-    config.StartUrl <- url
-    config.CefDownloadOptions.DownloadSilently <- true
-#if DEBUG
-    config.CommandLineArgs <- Collections.Generic.Dictionary<_,_>()
-    config.CommandLineArgs.Add("--force-color-profile", "srgb") // Render accurate colors (necessary for test assertions)
-    config.DebuggingMode <- true
-#else
-    config.DebuggingMode <- false
-    config.CustomSettings.["logSeverity"] <- "disable" // Configure chrome logging
-#endif
-    AppBuilder
-       .Create()
-       .UseApp<ChromelyApp>()
-       .UseConfiguration(config)
-#if !DEBUG
-       .UseLogger(Logging.SimpleLogger(null, false)) // Configure chromely logging
-#endif
-       .Build()
-       .Run(cliArgs)
+open System.Reactive.Linq
+open System.Windows
+open Thoth.Json.Net
+open System.Reactive.Concurrency
 
 let tryGetEnvVar = Environment.GetEnvironmentVariable >> Option.ofObj
 
@@ -61,27 +21,31 @@ let tryParseSize (text: string) =
     | Some width, Some height -> Some (width, height)
     | _ -> None
 
+let tryParseUrl (text: string) =
+    match Uri.TryCreate(text, UriKind.Absolute) with
+    | (true, v) -> Some v
+    | _ -> None
+
 [<EntryPoint>]
+[<STAThread>]
 let main argv =
-    // System.Diagnostics.Debugger.Launch() |> ignore
-    let windowSize = tryGetEnvVar "GET_IT_WINDOW_SIZE" |> Option.bind tryParseSize
+    let (sceneWidth, sceneHeight) = tryGetEnvVar "GET_IT_SCENE_SIZE" |> Option.bind tryParseSize |> Option.defaultValue (800, 600)
     let startMaximized = tryGetEnvVar "GET_IT_START_MAXIMIZED" |> Option.isSome
-    let socketUrl = tryGetEnvVar "GET_IT_SOCKET_URL"
-    let indexUrl = tryGetEnvVar "GET_IT_INDEX_URL"
-    match socketUrl, indexUrl with
-    | Some socketUrl, Some indexUrl ->
-        let url =
-            let absoluteIndexUrl =
-                match Uri.TryCreate(indexUrl, UriKind.Relative) with
-                | (true, _) -> Path.GetFullPath indexUrl
-                | (false, _) -> indexUrl
-            let builder = UriBuilder(absoluteIndexUrl)
-            let query = builder.Query |> HttpUtility.ParseQueryString
-            query.Add("socketUrl", Uri.EscapeDataString socketUrl)
-            builder.Query <- query.ToString()
-            builder.ToString()
-        startUI argv url windowSize startMaximized
+    let socketUrl = tryGetEnvVar "GET_IT_SOCKET_URL" |> Option.bind tryParseUrl
+    match socketUrl with
+    | Some socketUrl ->
+        let mainViewModel = MainViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
+        let app = Application(MainWindow = MainWindow(DataContext = mainViewModel))
+        app.MainWindow.Show()
+
+        let (wsConnection, wsSubject) = ReactiveWebSocketClient.connect socketUrl |> Async.RunSynchronously
+        use __ = wsConnection
+        let uiScheduler = DispatcherScheduler(app.Dispatcher)
+        use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject
+
+        app.Run() |> ignore
+        printfn "UI exited."
         0
     | _ ->
-        eprintfn "Missing environment variable \"GET_IT_SOCKET_URL\" and/or \"GET_IT_INDEX_URL\"."
+        eprintfn "Missing or invalid environment variable \"GET_IT_SOCKET_URL\"."
         1
