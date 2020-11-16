@@ -212,6 +212,27 @@ let tests =
                 let colors = getPixelsAt Coordinates.fullScene image |> Map.toList |> List.map snd
                 Expect.allEqual colors white "All scene pixels should be white"
             }
+
+            test "Line order" {
+                use state = UICommunication.showScene defaultSceneSize
+                let playerId = UICommunication.addPlayer { rect with Position = { X = -50.; Y = 0. }; Pen = { IsOn = true; Weight = 2.; Color = RGBAColors.red }; IsVisible = false } state
+                UICommunication.changePosition playerId { X = 100.; Y = 0. } state
+                UICommunication.setPenState playerId false state
+                UICommunication.changePosition playerId { X = -50.; Y = 50. } state
+                UICommunication.setPenState playerId true state
+                UICommunication.setPenColor playerId RGBAColors.blue state
+                UICommunication.changePosition playerId { X = 0.; Y = -100. } state
+                let image = getScreenshot state
+                let actualColors = getPixelsAt Coordinates.fullScene image
+                let expectedColors =
+                    createEmptyImage
+                    |> setAllScenePixels white
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-50, -1)) (Coordinates.relativeToSceneCenter (50, 1))) red
+                    |> setPixelsBetween (Coordinates.range (Coordinates.relativeToSceneCenter (-1, -50)) (Coordinates.relativeToSceneCenter (1, 50))) blue
+                    |> doCreateImage image
+                let valueDiff = Map.valueDiff actualColors expectedColors
+                Expect.isTrue valueDiff.IsEmpty "Blue vertical line should be above red horizontal line"
+            }
         ]
 
         testList "Look" [
