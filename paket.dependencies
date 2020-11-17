@@ -13,12 +13,13 @@ group Controller
     nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
+    nuget ModernWpfUI = 0.9.1 # build error in 0.9.2
     nuget Polly
     nuget Reaction.AspNetCore.Middleware
-nuget ReactiveUI.Fody
-nuget ReactiveUI.WPF
+    nuget ReactiveUI.Fody
+    nuget ReactiveUI.WPF
     nuget SharpLibWin32
-nuget SharpVectors.Reloaded
+    nuget SharpVectors.Reloaded
     nuget System.Drawing.Common
     nuget Thoth.Json.Net
 

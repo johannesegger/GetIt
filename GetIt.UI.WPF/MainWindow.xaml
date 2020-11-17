@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:GetIt.UI"
         mc:Ignorable="d"
         d:DataContext="{x:Static local:DesignTimeData.Main}"
@@ -10,28 +12,39 @@
         SizeToContent="WidthAndHeight"
         Icon="icon.ico"
         WindowState="{Binding WindowState}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemeResources />
+                <ui:XamlControlsResources />
+            </ResourceDictionary.MergedDictionaries>
+            <sys:Boolean x:Key="AutoHideScrollBars">True</sys:Boolean>
+        </ResourceDictionary>
+    </Window.Resources>
     <DockPanel>
-        <Border DockPanel.Dock="Bottom" Background="LightGray" Padding="20 10" Visibility="{Binding InfoBarVisibility}">
-            <ItemsControl ItemsSource="{Binding Players}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
-                            <Image Source="{Binding Image}" Width="30" Height="30" Margin="0 0 10 0" RenderTransformOrigin=".5,.5">
-                                <Image.RenderTransform>
-                                    <RotateTransform Angle="{Binding Rotation}" />
-                                </Image.RenderTransform>
-                            </Image>
-                            <TextBlock VerticalAlignment="Center" Text="{Binding InfoText}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Border>
+        <ScrollViewer DockPanel.Dock="Bottom" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Width="{Binding SceneBounds.Size.Width}">
+            <Border Background="LightGray" Padding="20 10" Visibility="{Binding InfoBarVisibility}">
+                <ItemsControl ItemsSource="{Binding Players}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                                <Image Source="{Binding Image}" Width="30" Height="30" Margin="0 0 10 0" RenderTransformOrigin=".5,.5">
+                                    <Image.RenderTransform>
+                                        <RotateTransform Angle="{Binding Rotation}" />
+                                    </Image.RenderTransform>
+                                </Image>
+                                <TextBlock VerticalAlignment="Center" Text="{Binding InfoText}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </ScrollViewer>
 
         <Border SizeChanged="Scene_SizeChanged">
             <ItemsControl ItemsSource="{Binding SceneObjects}">

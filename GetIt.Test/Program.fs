@@ -114,7 +114,7 @@ let tests =
                     }
                 )
 
-            ptest "Info height is constant" {
+            test "Info height is constant" {
                 use state = UICommunication.showScene defaultSceneSize
                 for _ in [0..10] do
                     UICommunication.addPlayer (PlayerData.Turtle.WithVisibility(false)) state |> ignore
