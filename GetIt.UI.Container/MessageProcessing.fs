@@ -78,7 +78,7 @@ let private processControllerMessage (mainViewModel: MainViewModel) model msg =
         |> Option.iter (fun p -> p.ZIndex <- playerLayer)
         players
         |> Seq.sortBy (fun p -> p.ZIndex)
-        |> Seq.iteri (fun idx p -> p.ZIndex <- idx)
+        |> Seq.iteri (fun idx p -> p.ZIndex <- idx + 1)
     let sendToBack playerId players =
         setLayer (Seq.min >> fun l -> l - 1) playerId players
     let bringToFront playerId players =
