@@ -543,7 +543,7 @@ let tests =
             }
         ]
 
-        ptestList "Batching" [
+        testList "Batching" [
             test "Changes during batch" {
                 use state = UICommunication.showScene defaultSceneSize
                 UICommunication.startBatch state

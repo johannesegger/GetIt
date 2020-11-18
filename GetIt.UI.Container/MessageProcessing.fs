@@ -20,9 +20,23 @@ type PlayerData = {
     Pen: GetIt.Pen
 }
 
+type Batching = {
+    Level: int
+    Messages: ControllerMsg list
+}
+module Batching =
+    let zero = { Level = 0; Messages = [] }
+
 type Model = {
     Players: Map<PlayerId, PlayerData>
+    Batching: Batching
 }
+module Model =
+    let zero =
+        {
+            Players = Map.empty
+            Batching = Batching.zero
+        }
 
 let private convertSvgImage image =
     let svgConverterSettings = WpfDrawingSettings(IncludeRuntime = true, TextAsGeometry = false)
@@ -31,7 +45,7 @@ let private convertSvgImage image =
     let costume = converter.Read(svgReader)
     DrawingImage(costume)
 
-let private processControllerMessage (mainViewModel: MainViewModel) model msg =
+let rec private processControllerMessageDirectly (mainViewModel: MainViewModel) msg model =
     let updatePlayer playerId fn =
         mainViewModel.Players
         |> Seq.filter (fun p -> p.Id = playerId)
@@ -165,9 +179,25 @@ let private processControllerMessage (mainViewModel: MainViewModel) model msg =
         updatePlayer playerId (fun p -> p.Visibility <- if isVisible then Visibility.Visible else Visibility.Collapsed)
     | ToggleVisibility playerId ->
         updatePlayer playerId (fun p -> p.Visibility <- if p.Visibility = Visibility.Visible then Visibility.Collapsed else Visibility.Visible)
-    // | StartBatch
-    // | ApplyBatch
-    | msg -> model
+    | StartBatch ->
+        { model with Batching = { model.Batching with Level = model.Batching.Level + 1 } }
+    | ApplyBatch when model.Batching.Level > 1 ->
+        { model with Batching = { model.Batching with Level = model.Batching.Level - 1 } }
+    | ApplyBatch ->
+        printfn "Applying messages: %A" model.Batching.Messages
+        (model.Batching.Messages, { model with Batching = Batching.zero })
+        ||> List.foldBack (processControllerMessageDirectly mainViewModel)
+
+let private processControllerMessage (mainViewModel: MainViewModel) model msg =
+    match msg with
+    | StartBatch
+    | ApplyBatch ->
+        processControllerMessageDirectly mainViewModel msg model
+    | msg ->
+        if model.Batching.Level = 0 then
+            processControllerMessageDirectly mainViewModel msg model
+        else
+            { model with Batching = { model.Batching with Messages = msg :: model.Batching.Messages } }
 
 let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>) =
     [
@@ -201,7 +231,7 @@ let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>
                 None
         )
         |> Observable.observeOn scheduler
-        |> Observable.scanInit ({ Players = Map.empty }, None) (fun (model, _) msg ->
+        |> Observable.scanInit (Model.zero, None) (fun (model, _) msg ->
             match msg with
             | ControllerMsg (_, controllerMessage) as msg ->
                 let model = processControllerMessage mainViewModel model controllerMessage
