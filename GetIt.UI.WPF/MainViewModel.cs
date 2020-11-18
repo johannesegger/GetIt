@@ -143,13 +143,47 @@ namespace GetIt.UI
                         .CombineLatest(
                             sceneBoundsObservable,
                             speechBubble.WhenAnyValue(p => p.Size),
+                            speechBubble.WhenAnyValue(p => p.Position),
                             this.WhenAnyValue(p => p.Position),
                             this.WhenAnyValue(p => p.Size),
-                            (sceneBounds, speechBubbleSize, position, size) => new Action(() =>
+                            (sceneBounds, speechBubbleSize, speechBubblePosition, position, size) => new Action(() =>
                             {
-                                speechBubble.Offset = new Position(
-                                    position.X - sceneBounds.Left - size.Width / 2 + size.Width * 0.8,
-                                    Math.Max(0, sceneBounds.Top - position.Y - size.Height / 2 - speechBubbleSize.Height));
+                                var playerLeft = position.X - sceneBounds.Left - size.Width / 2;
+                                var offsetXRight = playerLeft + size.Width * 0.8;
+                                var offsetXLeft = playerLeft - speechBubbleSize.Width + size.Width * 0.2;
+                                double offsetX;
+                                SpeechBubblePosition newSpeechBubblePosition;
+                                var canBeAtRightSide = offsetXRight + speechBubbleSize.Width <= sceneBounds.Size.Width;
+                                var canBeAtLeftSide = offsetXLeft >= 0;
+                                if (speechBubblePosition == SpeechBubblePosition.Right)
+                                {
+                                    if (!canBeAtRightSide && canBeAtLeftSide)
+                                    {
+                                        offsetX = offsetXLeft;
+                                        newSpeechBubblePosition = SpeechBubblePosition.Left;
+                                    }
+                                    else
+                                    {
+                                        offsetX = offsetXRight;
+                                        newSpeechBubblePosition = SpeechBubblePosition.Right;
+                                    }
+                                }
+                                else
+                                {
+                                    if (!canBeAtLeftSide && canBeAtRightSide)
+                                    {
+                                        offsetX = offsetXRight;
+                                        newSpeechBubblePosition = SpeechBubblePosition.Right;
+                                    }
+                                    else
+                                    {
+                                        offsetX = offsetXLeft;
+                                        newSpeechBubblePosition = SpeechBubblePosition.Left;
+                                    }
+                                }
+                                var offsetY = Math.Max(0, sceneBounds.Top - position.Y - size.Height / 2 - speechBubbleSize.Height);
+                                speechBubble.Offset = new Position(offsetX, offsetY);
+                                speechBubble.Position = newSpeechBubblePosition;
                             }))
                 )
                 .Switch()
@@ -157,12 +191,20 @@ namespace GetIt.UI
         }
     }
 
+    public enum SpeechBubblePosition
+    {
+        Left,
+        Right
+    }
+
     internal abstract class SpeechBubbleViewModel : ReactiveObject
     {
         [Reactive]
         public string Text { get; set; }
         [Reactive]
-        public double ScaleX { get; set; } = 1;
+        public SpeechBubblePosition Position { get; set; } = SpeechBubblePosition.Right;
+        private readonly ObservableAsPropertyHelper<double> scaleX;
+        public double ScaleX => scaleX.Value;
         [Reactive]
         public Position Offset { get; set; }
         [Reactive]
@@ -179,6 +221,9 @@ namespace GetIt.UI
                     return $"M 10,5 h {bubbleWidth} c 10,0 10,{bubbleHeight} 0,{bubbleHeight} h -{bubbleWidth - 40} c 0,7 -5,13 -15,15 s 3,-6 0,-15 h -25 c -10,0 -10,-{bubbleHeight} 0,-{bubbleHeight}";
                 })
                 .ToProperty(this, p => p.Geometry);
+            scaleX = this.WhenAnyValue(p => p.Position)
+                .Select(p => p == SpeechBubblePosition.Right ? 1.0 : -1.0)
+                .ToProperty(this, p => p.ScaleX);
         }
     }
 
