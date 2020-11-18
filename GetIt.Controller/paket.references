@@ -1,10 +1,5 @@
 group Controller
 ColorCode.Html
-FSharp.Control.AsyncRx
 FSharp.Control.Reactive
 FSharp.Core
 Fue
-Reaction.AspNetCore.Middleware
-
-Microsoft.Extensions.Hosting.Abstractions
-Microsoft.Extensions.Logging.Abstractions

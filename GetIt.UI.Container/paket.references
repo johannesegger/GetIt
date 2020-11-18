@@ -1,3 +1,1 @@
-group controller
-FSharp.Control.Reactive
-ModernWpfUI
+group WpfUI

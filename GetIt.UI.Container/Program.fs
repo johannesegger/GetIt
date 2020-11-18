@@ -1,10 +1,10 @@
 open GetIt
 open GetIt.UI
 open System
-open System.Reactive.Linq
-open System.Windows
-open Thoth.Json.Net
+open System.Net.WebSockets
 open System.Reactive.Concurrency
+open System.Threading
+open System.Windows
 
 let tryGetEnvVar = Environment.GetEnvironmentVariable >> Option.ofObj
 
@@ -38,7 +38,9 @@ let main argv =
         let app = Application(MainWindow = MainWindow(DataContext = mainViewModel))
         app.MainWindow.Show()
 
-        let (wsConnection, wsSubject) = ReactiveWebSocketClient.connect socketUrl |> Async.RunSynchronously
+        let connection = new ClientWebSocket()
+        connection.ConnectAsync(socketUrl, CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
+        let (wsConnection, wsSubject) = ReactiveWebSocket.setup connection |> Async.RunSynchronously
         use __ = wsConnection
         let uiScheduler = DispatcherScheduler(app.Dispatcher)
         use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject

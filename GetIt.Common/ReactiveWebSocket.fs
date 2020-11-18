@@ -1,4 +1,4 @@
-module ReactiveWebSocketClient
+module ReactiveWebSocket
 
 open FSharp.Control.Reactive
 open System
@@ -9,7 +9,7 @@ open System.Text
 open System.Threading
 open System.Threading.Tasks
 
-let private receiveMessage (connection: ClientWebSocket) =
+let private receiveMessage (connection: WebSocket) =
     let rec fn messages = async {
         let buffer = ArraySegment<_>(Array.zeroCreate 4096)
         // Don't use cancellation token because WebSocket connection goes into 'Aborted' state and is not gracefully closed when cancellation is requested
@@ -28,7 +28,7 @@ let private receiveMessage (connection: ClientWebSocket) =
     }
     fn []
 
-let private getReceiveObservable (connection: ClientWebSocket) =
+let private getReceiveObservable (connection: WebSocket) =
     let rec fn (observer: IObserver<string>) = async {
         let! message = receiveMessage connection
         match message with
@@ -41,11 +41,7 @@ let private getReceiveObservable (connection: ClientWebSocket) =
         Async.StartAsTask(fn observer, cancellationToken = ct) :> Task
     )
 
-let connect socketUrl = async {
-    let connection = new ClientWebSocket()
-    let! ct = Async.CancellationToken
-    do! connection.ConnectAsync(socketUrl, ct) |> Async.AwaitTask
-
+let setup (connection: WebSocket) = async {
     let sendSubject = new Subject<_>()
     let sendSubscription =
         sendSubject
@@ -65,7 +61,7 @@ let connect socketUrl = async {
         |> Observable.refCount
     let d = Disposable.create (fun () ->
         sendSubscription.Dispose()
-        connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing UI process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
+        connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
         connection.Dispose()
     )
     return d, Subject.Create<_, _>(sendSubject, receiveObservable)

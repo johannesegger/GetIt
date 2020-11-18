@@ -1,4 +1,4 @@
-group controller
+group WpfUI
 ReactiveUI.Fody
 ReactiveUI.WPF
 SharpVectors.Reloaded

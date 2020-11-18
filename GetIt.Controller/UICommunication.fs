@@ -7,7 +7,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Hosting.Server.Features
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Hosting
-open Reaction.AspNetCore.Middleware
 open System
 open System.ComponentModel
 open System.Diagnostics
@@ -18,6 +17,8 @@ open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
 open Thoth.Json.Net
+open Microsoft.AspNetCore.Http
+open System.Threading.Tasks
 
 module internal UICommunication =
     type CommunicationState =
@@ -33,45 +34,45 @@ module internal UICommunication =
 
     let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
-        let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
-            let controllerMsgs =
-                controllerMsgs
-                |> Observable.map (fun msg -> ControllerMsg msg, "")
-
-            msgs
-            |> AsyncRx.toObservable
-            |> Observable.perform (fst >> uiMsgs.OnNext)
-            |> Observable.bind (fun (msg, connId) ->
-                match msg with
-                | ControllerMsg _ -> Observable.empty // confirmations
-                | ChannelMsg.UIMsg (SetSceneBounds _)
-                | ChannelMsg.UIMsg (AnswerStringQuestion _)
-                | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
-                    Observable.result (msg, connId)
-            )
-            |> Observable.merge controllerMsgs
-            |> fun o -> o.ToAsyncObservable()
-
         let configureApp (app: IApplicationBuilder) =
             app
                 .UseWebSockets()
-                .UseStream(fun options ->
-                    { options with
-                        Stream = stream
-                        Encode = Encode.channelMsg >> Encode.toString 0
-                        Decode =
-                            fun value ->
-                                Decode.fromString Decode.channelMsg value
-                                |> (function
-                                    | Ok p -> Some p
-                                    | Error p ->
-#if DEBUG
-                                        eprintfn "Deserializing message failed: %s, Message: %s" p value
-#endif
-                                        None
-                                )
-                        RequestPath = socketPath
+                .Use(fun (context: HttpContext) (next: Func<Task>) ->
+                    async {
+                        if context.Request.Path = PathString socketPath then
+                            if context.WebSockets.IsWebSocketRequest then
+                                use! webSocket = context.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
+                                let! (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
+                                use __ = wsConnection
+                                use __ =
+                                    controllerMsgs
+                                    |> Observable.map (ControllerMsg >> Encode.channelMsg >> Encode.toString 0)
+                                    |> Observable.subscribeObserver wsSubject
+                                do!
+                                    wsSubject.ForEachAsync(fun text ->
+                                        match Decode.fromString Decode.channelMsg text with
+                                        | Ok msg ->
+                                            uiMsgs.OnNext msg
+                                            match msg with
+                                            | ControllerMsg _ -> () // confirmations
+                                            | ChannelMsg.UIMsg (SetSceneBounds _)
+                                            | ChannelMsg.UIMsg (AnswerStringQuestion _)
+                                            | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
+                                                wsSubject.OnNext text
+                                        | Error error ->
+                                            #if DEBUG
+                                            eprintfn "Deserializing message failed: %s, Message: %s" error text
+                                            #endif
+                                            ()
+                                    )
+                                    |> Async.AwaitTask
+                            else
+                                context.Response.StatusCode <- 400
+                        else
+                            do! next.Invoke() |> Async.AwaitTask
+
                     }
+                    |> Async.StartAsTask :> Task
                 )
                 |> ignore
 

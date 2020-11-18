@@ -7,7 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MessageProcessing.fs" />
-    <Compile Include="ReactiveWebSocketClient.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
