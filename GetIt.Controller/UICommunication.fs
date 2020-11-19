@@ -52,17 +52,12 @@ module internal UICommunication =
                                     controllerMsgs
                                     |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
                                     |> Observable.subscribeObserver wsSubject
-                                let! ct = Async.CancellationToken
-
                                 use __ =
                                     wsSubject
                                     |> Observable.choose (Decode.fromString decoder >> function | Ok msg -> Some msg | Error e -> None)
                                     |> Observable.subscribeObserver uiMsgs
+                                let! ct = Async.CancellationToken
                                 ct.WaitHandle.WaitOne() |> ignore
-                                try
-                                    if webSocket.State <> WebSocketState.Closed && webSocket.State <> WebSocketState.Aborted then
-                                        do! webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask
-                                with _ -> ()
                             else
                                 context.Response.StatusCode <- 400
                         else
