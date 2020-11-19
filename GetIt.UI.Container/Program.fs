@@ -45,9 +45,7 @@ let main argv =
         let uiScheduler = DispatcherScheduler(app.Dispatcher)
         use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject
 
-        app.Run() |> ignore
-        printfn "UI exited."
-        0
+        app.Run()
     | _ ->
         eprintfn "Missing or invalid environment variable \"GET_IT_SOCKET_URL\"."
         1
