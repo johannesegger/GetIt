@@ -13,7 +13,8 @@ let private receiveMessage (connection: WebSocket) =
     let rec fn messages = async {
         let buffer = ArraySegment<_>(Array.zeroCreate 4096)
         // Don't use cancellation token because WebSocket connection goes into 'Aborted' state and is not gracefully closed when cancellation is requested
-        let! result = connection.ReceiveAsync(buffer, CancellationToken.None) |> Async.AwaitTask
+        let! ct = Async.CancellationToken
+        let! result = connection.ReceiveAsync(buffer, ct) |> Async.AwaitTask
         if result.MessageType = WebSocketMessageType.Close then
             return Choice2Of2 result.CloseStatus.Value
         elif result.EndOfMessage then
@@ -41,7 +42,7 @@ let private getReceiveObservable (connection: WebSocket) =
         Async.StartAsTask(fn observer, cancellationToken = ct) :> Task
     )
 
-let setup (connection: WebSocket) = async {
+let setup (connection: WebSocket) =
     let sendSubject = new Subject<_>()
     let sendSubscription =
         sendSubject
@@ -49,7 +50,8 @@ let setup (connection: WebSocket) = async {
             Observable.ofAsync(async {
                 let buffer = Encoding.UTF8.GetBytes message |> ArraySegment<_>
                 // Don't use cancellation token because WebSocket connection goes into 'Aborted' state and is not gracefully closed when cancellation is requested
-                do! connection.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None) |> Async.AwaitTask
+                let! ct = Async.CancellationToken
+                do! connection.SendAsync(buffer, WebSocketMessageType.Text, true, ct) |> Async.AwaitTask
             })
         )
         |> Observable.concatInner
@@ -59,10 +61,4 @@ let setup (connection: WebSocket) = async {
         getReceiveObservable connection
         |> Observable.publish
         |> Observable.refCount
-    let d = Disposable.create (fun () ->
-        sendSubscription.Dispose()
-        connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
-        connection.Dispose()
-    )
-    return d, Subject.Create<_, _>(sendSubject, receiveObservable)
-}
+    (sendSubscription, Subject.Create<_, _>(sendSubject, receiveObservable))

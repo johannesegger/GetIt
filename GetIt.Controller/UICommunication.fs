@@ -5,27 +5,29 @@ open FSharp.Control.Reactive
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Hosting.Server.Features
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Hosting
 open System
 open System.ComponentModel
 open System.Diagnostics
 open System.IO
+open System.Net.WebSockets
 open System.Reactive.Linq
 open System.Reactive.Disposables
 open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
-open Thoth.Json.Net
-open Microsoft.AspNetCore.Http
 open System.Threading.Tasks
+open Thoth.Json.Net
 
 module internal UICommunication =
     type CommunicationState =
         {
             Disposable: IDisposable
             CommandSubject: Subject<Guid * ControllerMsg>
-            ResponseSubject: Subject<ChannelMsg>
+            ResponseSubject: Subject<UIToControllerMsg>
             UIWindowProcess: Process
             MutableModel: MutableModel
             CancellationToken: CancellationToken
@@ -35,6 +37,8 @@ module internal UICommunication =
     let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
         let configureApp (app: IApplicationBuilder) =
+            let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+            let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
             app
                 .UseWebSockets()
                 .Use(fun (context: HttpContext) (next: Func<Task>) ->
@@ -42,37 +46,30 @@ module internal UICommunication =
                         if context.Request.Path = PathString socketPath then
                             if context.WebSockets.IsWebSocketRequest then
                                 use! webSocket = context.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
-                                let! (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
+                                let (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
                                 use __ = wsConnection
                                 use __ =
                                     controllerMsgs
-                                    |> Observable.map (ControllerMsg >> Encode.channelMsg >> Encode.toString 0)
+                                    |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
                                     |> Observable.subscribeObserver wsSubject
-                                do!
-                                    wsSubject.ForEachAsync(fun text ->
-                                        match Decode.fromString Decode.channelMsg text with
-                                        | Ok msg ->
-                                            uiMsgs.OnNext msg
-                                            match msg with
-                                            | ControllerMsg _ -> () // confirmations
-                                            | ChannelMsg.UIMsg (SetSceneBounds _)
-                                            | ChannelMsg.UIMsg (AnswerStringQuestion _)
-                                            | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
-                                                wsSubject.OnNext text
-                                        | Error error ->
-                                            #if DEBUG
-                                            eprintfn "Deserializing message failed: %s, Message: %s" error text
-                                            #endif
-                                            ()
-                                    )
-                                    |> Async.AwaitTask
+                                let! ct = Async.CancellationToken
+
+                                use __ =
+                                    wsSubject
+                                    |> Observable.choose (Decode.fromString decoder >> function | Ok msg -> Some msg | Error e -> None)
+                                    |> Observable.subscribeObserver uiMsgs
+                                ct.WaitHandle.WaitOne() |> ignore
+                                try
+                                    if webSocket.State <> WebSocketState.Closed && webSocket.State <> WebSocketState.Aborted then
+                                        do! webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask
+                                with _ -> ()
                             else
                                 context.Response.StatusCode <- 400
                         else
                             do! next.Invoke() |> Async.AwaitTask
 
                     }
-                    |> Async.StartAsTask :> Task
+                    |> fun wf -> Async.StartAsTask(wf, cancellationToken = appLifetime.ApplicationStopping) :> Task
                 )
                 |> ignore
 
@@ -191,11 +188,11 @@ module internal UICommunication =
 
         uiMsgs
         |> Observable.subscribe (function
-            | ControllerMsg _ -> () // confirmations
-            | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+            | ControllerMsgConfirmation _ -> ()
+            | UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
-            | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
-            | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
+            | UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
+            | UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
         )
         |> ds.Add
@@ -249,11 +246,11 @@ module internal UICommunication =
     let private sendMessage state message =
         use waitHandle = new ManualResetEventSlim()
         let messageId = Guid.NewGuid()
-        use d =
+        use __ =
             state.ResponseSubject
             |> Observable.firstIf (fun r ->
                 match r with
-                | ControllerMsg (msgId, msg) when msgId = messageId -> true
+                | ControllerMsgConfirmation msgId when msgId = messageId -> true
                 | _ -> false
             )
             |> Observable.subscribe (fun p ->

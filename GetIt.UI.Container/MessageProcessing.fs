@@ -200,6 +200,7 @@ let private processControllerMessage (mainViewModel: MainViewModel) model msg =
             { model with Batching = { model.Batching with Messages = msg :: model.Batching.Messages } }
 
 let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>) =
+    let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
     [
         mainViewModel.WhenAnyValue(fun p -> p.SceneSize)
         |> Observable.map(fun v -> UIMsg (SetSceneBounds({ Position = { X = -v.Width / 2.; Y = -v.Height / 2. }; Size = v })))
@@ -222,7 +223,7 @@ let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>
 
         messageSubject
         |> Observable.choose (fun message ->
-            match Decode.fromString Decode.channelMsg message with
+            match Decode.fromString decoder message with
             | Ok message -> Some message
             | Error p ->
                 #if DEBUG
@@ -233,13 +234,12 @@ let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>
         |> Observable.observeOn scheduler
         |> Observable.scanInit (Model.zero, None) (fun (model, _) msg ->
             match msg with
-            | ControllerMsg (_, controllerMessage) as msg ->
+            | ControllerMsg (msgId, controllerMessage) ->
                 let model = processControllerMessage mainViewModel model controllerMessage
-                model, Some msg
-            | UIMsg _ -> model, None
+                model, Some (ControllerMsgConfirmation msgId)
         )
         |> Observable.choose snd
     ]
     |> Observable.mergeSeq
-    |> Observable.map (Encode.channelMsg >> Encode.toString 0)
+    |> Observable.map (encode >> Encode.toString 0)
     |> Observable.subscribeObserver messageSubject

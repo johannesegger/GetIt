@@ -38,14 +38,17 @@ let main argv =
         let app = Application(MainWindow = MainWindow(DataContext = mainViewModel))
         app.MainWindow.Show()
 
-        let connection = new ClientWebSocket()
+        use connection = new ClientWebSocket()
         connection.ConnectAsync(socketUrl, CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
-        let (wsConnection, wsSubject) = ReactiveWebSocket.setup connection |> Async.RunSynchronously
-        use __ = wsConnection
-        let uiScheduler = DispatcherScheduler(app.Dispatcher)
-        use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject
+        try
+            let (wsConnection, wsSubject) = ReactiveWebSocket.setup connection
+            use __ = wsConnection
+            let uiScheduler = DispatcherScheduler(app.Dispatcher)
+            use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject
 
-        app.Run()
+            app.Run()
+        finally
+            connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
     | _ ->
         eprintfn "Missing or invalid environment variable \"GET_IT_SOCKET_URL\"."
         1
