@@ -242,4 +242,4 @@ let run scheduler (mainViewModel: MainViewModel) (messageSubject: ISubject<_, _>
     ]
     |> Observable.mergeSeq
     |> Observable.map (Encode.channelMsg >> Encode.toString 0)
-    |> fun o -> o.Subscribe(messageSubject)
+    |> Observable.subscribeObserver messageSubject
