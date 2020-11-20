@@ -27,8 +27,6 @@ namespace GetIt.UI
         public Visibility InfoBarVisibility => infoBarVisibility.Value;
         public ObservableCollection<PlayerViewModel> Players { get; } = new ObservableCollection<PlayerViewModel>();
         public ObservableCollection<PenLineViewModel> PenLines { get; } = new ObservableCollection<PenLineViewModel>();
-        private readonly ReadOnlyObservableCollection<object> sceneObjects;
-        public ReadOnlyObservableCollection<object> SceneObjects => sceneObjects;
 
         public MainViewModel(Size sceneSize, bool isMaximized)
         {
@@ -37,10 +35,6 @@ namespace GetIt.UI
                 .Select(p => new Rectangle(new Position(-p.Width / 2, -p.Height / 2), p))
                 .ToProperty(this, p => p.SceneBounds);
             WindowState = isMaximized ? WindowState.Maximized : WindowState.Normal;
-            Players.ToObservableChangeSet().CastToObject()
-                .Or(PenLines.ToObservableChangeSet().CastToObject())
-                .Bind(out sceneObjects)
-                .Subscribe();
             infoBarVisibility = Players
                 .ToObservableChangeSet()
                 .AsObservableList()

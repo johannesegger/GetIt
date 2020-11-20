@@ -15,7 +15,10 @@ namespace GetIt.UI
 
         private void Scene_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            ((MainViewModel)((FrameworkElement)sender).DataContext).SceneSize = new Size(e.NewSize.Width, e.NewSize.Height);
+            if (IsLoaded && sender is FrameworkElement element && element.DataContext is MainViewModel mainViewModel)
+            {
+                mainViewModel.SceneSize = new Size(e.NewSize.Width, e.NewSize.Height);
+            }
         }
     }
 }

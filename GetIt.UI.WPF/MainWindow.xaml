@@ -22,7 +22,7 @@
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
-        <ScrollViewer DockPanel.Dock="Bottom" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Width="{Binding SceneBounds.Size.Width}">
+        <ScrollViewer DockPanel.Dock="Bottom" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Width="{Binding SceneSize.Width}">
             <Border Background="LightGray" Padding="20 10" Visibility="{Binding InfoBarVisibility}">
                 <ItemsControl ItemsSource="{Binding Players}">
                     <ItemsControl.ItemsPanel>
@@ -47,32 +47,28 @@
         </ScrollViewer>
 
         <Border SizeChanged="Scene_SizeChanged">
-            <ItemsControl ItemsSource="{Binding SceneObjects}">
-                <ItemsControl.Resources>
-                    <DataTemplate DataType="{x:Type local:PlayerViewModel}">
-                        <local:ScenePlayer Visibility="{Binding Visibility}" />
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type local:PenLineViewModel}">
-                        <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
-                    </DataTemplate>
-                </ItemsControl.Resources>
-                <ItemsControl.ItemContainerStyle>
-                    <Style TargetType="ContentPresenter">
-                        <Setter Property="Canvas.ZIndex" Value="{Binding Path=ZIndex}" />
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <Canvas ClipToBounds="True"
-                                Width="{Binding SceneBounds.Size.Width}"
-                                Height="{Binding SceneBounds.Size.Height}">
-                            <Canvas.Background>
-                                <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
-                            </Canvas.Background>
-                        </Canvas>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <Canvas ClipToBounds="True"
+                    Width="{Binding SceneSize.Width}"
+                    Height="{Binding SceneSize.Height}">
+                <local:PenLines ItemsSource="{Binding PenLines}" />
+                <Canvas>
+                    <Canvas.Background>
+                        <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
+                    </Canvas.Background>
+                    <ItemsControl ItemsSource="{Binding Players}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:ScenePlayer Visibility="{Binding Visibility}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.ZIndex" Value="{Binding Path=ZIndex}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+                </Canvas>
+            </Canvas>
         </Border>
     </DockPanel>
 </Window>
