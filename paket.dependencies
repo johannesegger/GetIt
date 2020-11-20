@@ -17,9 +17,6 @@ group Controller
     nuget System.Drawing.Common
     nuget Thoth.Json.Net
 
-    #nuget Microsoft.Extensions.Hosting.Abstractions >= 3.1.4
-    #nuget Microsoft.Extensions.Logging.Abstractions >= 3.1.4
-
 group WpfUI
     source https://api.nuget.org/v3/index.json
 
