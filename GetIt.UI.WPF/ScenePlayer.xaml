@@ -53,12 +53,20 @@
                         <StackPanel>
                             <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
                             <UniformGrid Rows="1">
-                                <Button Content="✔" Command="{Binding ConfirmCommand}">
+                                <Button Content="✔"
+                                        Command="{Binding ConfirmCommand}"
+                                        Foreground="PaleGreen"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0 0 5 0">
                                     <Button.CommandParameter>
                                         <s:Boolean>True</s:Boolean>
                                     </Button.CommandParameter>
                                 </Button>
-                                <Button Content="❌" Command="{Binding ConfirmCommand}">
+                                <Button Content="❌"
+                                        Command="{Binding ConfirmCommand}"
+                                        Foreground="Tomato"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="5 0 0 0">
                                     <Button.CommandParameter>
                                         <s:Boolean>False</s:Boolean>
                                     </Button.CommandParameter>
