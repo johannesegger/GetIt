@@ -120,10 +120,10 @@ let rec private processControllerMessageDirectly (mainViewModel: MainViewModel) 
         |> mainViewModel.Players.RemoveMany
         { model with Players = Map.remove playerId model.Players }
     | SetWindowTitle None ->
-        mainViewModel.Title <- "GetIt"
+        mainViewModel.Title <- "Get It"
         model
     | SetWindowTitle (Some title) ->
-        mainViewModel.Title <- sprintf "GetIt - %s" title
+        mainViewModel.Title <- sprintf "Get It - %s" title
         model
     | SetBackground image ->
         mainViewModel.BackgroundImage <- convertSvgImage image
