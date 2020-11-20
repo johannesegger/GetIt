@@ -50,7 +50,7 @@
             <Canvas ClipToBounds="True"
                     Width="{Binding SceneSize.Width}"
                     Height="{Binding SceneSize.Height}">
-                <local:PenLines ItemsSource="{Binding PenLines}" />
+                <Image Source="{Binding PenLineBitmap}" />
                 <Canvas>
                     <Canvas.Background>
                         <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />

@@ -1,9 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using DynamicData;
 using DynamicData.Binding;
 using ReactiveUI;
@@ -27,6 +30,8 @@ namespace GetIt.UI
         public Visibility InfoBarVisibility => infoBarVisibility.Value;
         public ObservableCollection<PlayerViewModel> Players { get; } = new ObservableCollection<PlayerViewModel>();
         public ObservableCollection<PenLineViewModel> PenLines { get; } = new ObservableCollection<PenLineViewModel>();
+        private readonly ObservableAsPropertyHelper<ImageSource> penLineBitmap;
+        public ImageSource PenLineBitmap => penLineBitmap.Value;
 
         public MainViewModel(Size sceneSize, bool isMaximized)
         {
@@ -41,6 +46,57 @@ namespace GetIt.UI
                 .CountChanged
                 .Select(count => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                 .ToProperty(this, p => p.InfoBarVisibility);
+            var drawPenLinesObservable = PenLines
+                .ObserveCollectionChanges()
+                .Select(ev =>
+                {
+                    if (ev.EventArgs.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        return new Action<WriteableBitmap>(bitmap =>
+                        {
+                            foreach (var penLine in ev.EventArgs.NewItems.OfType<PenLineViewModel>())
+                            {
+                                var thickness = (int)Math.Round(penLine.Thickness);
+                                var pen = BitmapFactory.New(thickness, thickness);
+                                pen.Clear(System.Windows.Media.Color.FromArgb(penLine.Color.Alpha, penLine.Color.Red, penLine.Color.Green, penLine.Color.Blue));
+                                bitmap.DrawLinePenned(
+                                    (int)Math.Round(penLine.X1),
+                                    (int)Math.Round(penLine.Y1),
+                                    (int)Math.Round(penLine.X2),
+                                    (int)Math.Round(penLine.Y2),
+                                    pen
+                                );
+                            }
+                        });
+                    }
+                    else if (ev.EventArgs.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        return (WriteableBitmap bitmap) => bitmap.Clear();
+                    }
+                    return (WriteableBitmap bitmap) => {};
+                })
+                .StartWith((bitmap) =>
+                {
+                    foreach (var penLine in PenLines)
+                    {
+                        bitmap.DrawLineAa(
+                            (int)penLine.X1,
+                            (int)penLine.Y1,
+                            (int)penLine.X2,
+                            (int)penLine.Y2,
+                            System.Windows.Media.Color.FromArgb(penLine.Color.Alpha, penLine.Color.Red, penLine.Color.Green, penLine.Color.Blue),
+                            (int)penLine.Thickness
+                        );
+                    }
+                });
+            penLineBitmap = this.WhenAnyValue(p => p.SceneSize)
+                .Select(size =>
+                {
+                    var seed = BitmapFactory.New((int)size.Width, (int)size.Height);
+                    return drawPenLinesObservable.Scan(seed, (bitmap, fn) => { fn(bitmap); return bitmap; });
+                })
+                .Switch()
+                .ToProperty(this, p => p.PenLineBitmap);
         }
 
         public void AddPlayer(PlayerId playerId, Action<PlayerViewModel> initialize)
@@ -67,7 +123,8 @@ namespace GetIt.UI
         public double X2 => x2.Value;
         private readonly ObservableAsPropertyHelper<double> y2;
         public double Y2 => y2.Value;
-        public System.Windows.Media.Pen Pen { get; }
+        public double Thickness { get; }
+        public RGBAColor Color { get; }
         public int ZIndex => 0;
 
         public PenLineViewModel(IObservable<Rectangle> sceneBoundsObservable, Position from, Position to, double thickness, RGBAColor color)
@@ -76,8 +133,8 @@ namespace GetIt.UI
             y1 = sceneBoundsObservable.Select(p => p.Top - from.Y).ToProperty(this, p => p.Y1);
             x2 = sceneBoundsObservable.Select(p => to.X - p.Left).ToProperty(this, p => p.X2);
             y2 = sceneBoundsObservable.Select(p => p.Top - to.Y).ToProperty(this, p => p.Y2);
-            Pen = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue)), thickness);
-            Pen.Freeze();
+            Thickness = thickness;
+            Color = color;
         }
     }
 
