@@ -48,7 +48,8 @@ let main argv =
 
             app.Run()
         finally
-            connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
+            if connection.State = WebSocketState.Open then
+                connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
     | _ ->
         eprintfn "Missing or invalid environment variable \"GET_IT_SOCKET_URL\"."
         1
