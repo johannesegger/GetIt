@@ -40,7 +40,13 @@
                     <DataTemplate DataType="{x:Type local:AskTextSpeechBubbleViewModel}">
                         <StackPanel>
                             <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
-                            <TextBox Text="{Binding Answer}" />
+                            <TextBox Text="{Binding Answer, UpdateSourceTrigger=PropertyChanged}"
+                                     Loaded="SpeechBubbleTextAnswer_Loaded"
+                                     DataContextChanged="SpeechBubbleTextAnswer_DataContextChanged">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Command="{Binding ConfirmCommand}" Key="Enter" />
+                                </TextBox.InputBindings>
+                            </TextBox>
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type local:AskBoolSpeechBubbleViewModel}">
