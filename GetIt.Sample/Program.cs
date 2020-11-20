@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace GetIt.Sample
@@ -583,6 +584,7 @@ namespace GetIt.Sample
 
             while (true)
             {
+                var watch = Stopwatch.StartNew();
                 player.MoveToRandomPosition();
                 player.TurnOnPen();
                 player.SetPenColor(RGBAColors.Red);
@@ -606,7 +608,7 @@ namespace GetIt.Sample
                 }
                 player.TurnOffPen();
                 player.SetDirection(Directions.Right);
-                player.Sleep(1000);
+                player.Say(watch.Elapsed.ToString(), 1);
             }
         }
 
