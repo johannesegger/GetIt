@@ -39,5 +39,15 @@ namespace GetIt.UI
                 speechBubble.Size = new Size(element.ActualWidth, element.ActualHeight);
             }
         }
+
+        private void SpeechBubbleTextAnswer_Loaded(object sender, RoutedEventArgs e)
+        {
+            ((UIElement)sender).Focus();
+        }
+
+        private void SpeechBubbleTextAnswer_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((UIElement)sender).Focus();
+        }
     }
 }
