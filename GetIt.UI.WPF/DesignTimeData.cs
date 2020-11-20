@@ -11,8 +11,8 @@ namespace GetIt.UI
         static DesignTimeData()
         {
             Main = new MainViewModel(new Size(600, 480), isMaximized: false);
-            Main.AddPenLine(new Position(0, 0), new Position(-100, 100), 1, Brushes.SteelBlue);
-            Main.AddPenLine(new Position(-100, 100), new Position(-200, 0), 5, Brushes.Crimson);
+            Main.AddPenLine(new Position(0, 0), new Position(-100, 100), 1, RGBAColors.SteelBlue);
+            Main.AddPenLine(new Position(-100, 100), new Position(-200, 0), 5, RGBAColors.Crimson);
             Main.AddPlayer(
                 new PlayerId(Guid.NewGuid()),
                 player =>

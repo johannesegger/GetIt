@@ -50,9 +50,9 @@ namespace GetIt.UI
             Players.Add(player);
         }
 
-        public void AddPenLine(Position from, Position to, double thickness, Brush brush)
+        public void AddPenLine(Position from, Position to, double thickness, RGBAColor color)
         {
-            var penLine = new PenLineViewModel(this.WhenAnyValue(p => p.SceneBounds), from, to, thickness, brush);
+            var penLine = new PenLineViewModel(this.WhenAnyValue(p => p.SceneBounds), from, to, thickness, color);
             PenLines.Add(penLine);
         }
     }
@@ -67,18 +67,17 @@ namespace GetIt.UI
         public double X2 => x2.Value;
         private readonly ObservableAsPropertyHelper<double> y2;
         public double Y2 => y2.Value;
-        public double Thickness { get; }
-        public Brush Brush { get; }
+        public System.Windows.Media.Pen Pen { get; }
         public int ZIndex => 0;
 
-        public PenLineViewModel(IObservable<Rectangle> sceneBoundsObservable, Position from, Position to, double thickness, Brush brush)
+        public PenLineViewModel(IObservable<Rectangle> sceneBoundsObservable, Position from, Position to, double thickness, RGBAColor color)
         {
             x1 = sceneBoundsObservable.Select(p => from.X - p.Left).ToProperty(this, p => p.X1);
             y1 = sceneBoundsObservable.Select(p => p.Top - from.Y).ToProperty(this, p => p.Y1);
             x2 = sceneBoundsObservable.Select(p => to.X - p.Left).ToProperty(this, p => p.X2);
             y2 = sceneBoundsObservable.Select(p => p.Top - to.Y).ToProperty(this, p => p.Y2);
-            Thickness = thickness;
-            Brush = brush;
+            Pen = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue)), thickness);
+            Pen.Freeze();
         }
     }
 

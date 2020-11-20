@@ -57,7 +57,7 @@ let rec private processControllerMessageDirectly (mainViewModel: MainViewModel) 
             let pen = model.Players |> Map.tryFind playerId |> Option.map (fun p -> p.Pen)
             match pen with
             | Some pen when pen.IsOn ->
-                mainViewModel.AddPenLine(p.Position, newPosition, pen.Weight, SolidColorBrush(Color.FromArgb(pen.Color.Alpha, pen.Color.Red, pen.Color.Green, pen.Color.Blue)))
+                mainViewModel.AddPenLine(p.Position, newPosition, pen.Weight, pen.Color)
             | _ -> ()
             p.Position <- newPosition
         )

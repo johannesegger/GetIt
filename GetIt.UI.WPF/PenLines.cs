@@ -45,11 +45,6 @@ namespace GetIt.UI
             InvalidateVisual();
         }
 
-        private static readonly System.Windows.Media.Pen pen = new System.Windows.Media.Pen(Brushes.YellowGreen, 2);
-        static PenLines()
-        {
-            pen.Freeze();
-        }
         protected override void OnRender(DrawingContext dc)
         {
             if (ItemsSource == null)
@@ -59,7 +54,7 @@ namespace GetIt.UI
             foreach (PenLineViewModel penLine in ItemsSource)
             {
                 dc.DrawLine(
-                    pen,
+                    penLine.Pen,
                     new Point(penLine.X1, penLine.Y1),
                     new Point(penLine.X2, penLine.Y2)
                 );
