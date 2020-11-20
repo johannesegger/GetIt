@@ -340,24 +340,26 @@ module internal UICommunication =
             MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
         )
 
+    let shutUp playerId state =
+        SetSpeechBubble (playerId, None)
+        |> sendMessage state
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
+
     let askString playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskString text) state
+        use __ = setTemporarySpeechBubble playerId (AskString text) state
+        use __ = Disposable.create (fun () -> shutUp playerId state)
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskString text)))
             (fst >> function | UIMsg (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
     let askBool playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskBool text) state
+        use __ = setTemporarySpeechBubble playerId (AskBool text) state
+        use __ = Disposable.create (fun () -> shutUp playerId state)
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskBool text)))
             (fst >> function | UIMsg (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
-
-    let shutUp playerId state =
-        SetSpeechBubble (playerId, None)
-        |> sendMessage state
-        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
 
     let setPenState playerId isOn state =
         SetPenState (playerId, isOn)
