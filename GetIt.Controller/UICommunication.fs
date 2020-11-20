@@ -209,7 +209,7 @@ module internal UICommunication =
                         let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
                         Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
                 with
-                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
                     | :? Win32Exception -> reraise ()
             | MouseClick mouseClick as msg ->
                 try
@@ -219,7 +219,7 @@ module internal UICommunication =
                         let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
                         ApplyMouseClick mouseClick, model) mutableModel
                 with
-                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
                     | :? Win32Exception -> reraise ()
             | KeyDown key as msg ->
                 MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
