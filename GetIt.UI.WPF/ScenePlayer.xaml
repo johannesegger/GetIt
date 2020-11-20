@@ -32,7 +32,7 @@
                     <ScaleTransform ScaleX="{Binding ScaleX}" />
                 </Path.RenderTransform>
             </Path>
-            <ContentControl Content="{Binding SpeechBubble}" Margin="10 10 10 25" MinWidth="50" MaxWidth="200">
+            <ContentControl Content="{Binding SpeechBubble}" Margin="15 15 15 30" MinWidth="50" MaxWidth="200">
                 <ContentControl.Resources>
                     <DataTemplate DataType="{x:Type local:SaySpeechBubbleViewModel}">
                         <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
