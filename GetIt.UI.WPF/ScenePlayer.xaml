@@ -20,9 +20,16 @@
             <Grid.RenderTransform>
                 <TranslateTransform X="{Binding SpeechBubble.Offset.X}" Y="{Binding SpeechBubble.Offset.Y}" />
             </Grid.RenderTransform>
-            <Path Stroke="#33000000" Fill="#108B4513" StrokeThickness="2" RenderTransformOrigin=".5,.5" SizeChanged="Path_SizeChanged" Data="{Binding SpeechBubble.Geometry}">
+            <Path DataContext="{Binding SpeechBubble}"
+                  SizeChanged="SpeechBubbleBorder_SizeChanged"
+                  DataContextChanged="SpeechBubbleBorder_DataContextChanged"
+                  Data="{Binding Geometry}"
+                  Stroke="#33000000"
+                  Fill="#108B4513"
+                  StrokeThickness="2"
+                  RenderTransformOrigin=".5,.5">
                 <Path.RenderTransform>
-                    <ScaleTransform ScaleX="{Binding SpeechBubble.ScaleX}" />
+                    <ScaleTransform ScaleX="{Binding ScaleX}" />
                 </Path.RenderTransform>
             </Path>
             <ContentControl Content="{Binding SpeechBubble}" Margin="10 10 10 25" MaxWidth="200">

@@ -23,12 +23,20 @@ namespace GetIt.UI
             InitializeComponent();
         }
 
-        private void Path_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void SpeechBubbleBorder_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            var speechBubble = ((PlayerViewModel)((Path)sender).DataContext).SpeechBubble;
-            if (speechBubble != null)
+            if (sender is FrameworkElement element && element.DataContext is SpeechBubbleViewModel speechBubble)
             {
                 speechBubble.Size = new Size(e.NewSize.Width, e.NewSize.Height);
+            }
+        }
+
+        private void SpeechBubbleBorder_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is SpeechBubbleViewModel speechBubble)
+            {
+                var element = (Path)sender;
+                speechBubble.Size = new Size(element.ActualWidth, element.ActualHeight);
             }
         }
     }
