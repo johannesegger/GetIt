@@ -30,8 +30,6 @@ namespace GetIt.UI
         public Visibility InfoBarVisibility => infoBarVisibility.Value;
         public ObservableCollection<PlayerViewModel> Players { get; } = new ObservableCollection<PlayerViewModel>();
         public ObservableCollection<PenLineViewModel> PenLines { get; } = new ObservableCollection<PenLineViewModel>();
-        private readonly ObservableAsPropertyHelper<ImageSource> penLineBitmap;
-        public ImageSource PenLineBitmap => penLineBitmap.Value;
 
         public MainViewModel(Size sceneSize, bool isMaximized)
         {
@@ -46,41 +44,6 @@ namespace GetIt.UI
                 .CountChanged
                 .Select(count => count > 0 ? Visibility.Visible : Visibility.Collapsed)
                 .ToProperty(this, p => p.InfoBarVisibility);
-            var drawPenLinesObservable = PenLines
-                .ObserveCollectionChanges()
-                .Select(ev =>
-                {
-                    if (ev.EventArgs.Action == NotifyCollectionChangedAction.Add)
-                    {
-                        return new Action<WriteableBitmap>(bitmap =>
-                        {
-                            foreach (var penLine in ev.EventArgs.NewItems.OfType<PenLineViewModel>())
-                            {
-                                penLine.Draw(bitmap);;
-                            }
-                        });
-                    }
-                    else if (ev.EventArgs.Action == NotifyCollectionChangedAction.Reset)
-                    {
-                        return (WriteableBitmap bitmap) => bitmap.Clear();
-                    }
-                    return (WriteableBitmap bitmap) => {};
-                })
-                .StartWith((bitmap) =>
-                {
-                    foreach (var penLine in PenLines)
-                    {
-                        penLine.Draw(bitmap);
-                    }
-                });
-            penLineBitmap = this.WhenAnyValue(p => p.SceneSize)
-                .Select(size =>
-                {
-                    var seed = BitmapFactory.New((int)size.Width, (int)size.Height);
-                    return drawPenLinesObservable.Scan(seed, (bitmap, fn) => { fn(bitmap); return bitmap; });
-                })
-                .Switch()
-                .ToProperty(this, p => p.PenLineBitmap);
         }
 
         public void AddPlayer(PlayerId playerId, Action<PlayerViewModel> initialize)
@@ -108,7 +71,8 @@ namespace GetIt.UI
         private readonly ObservableAsPropertyHelper<double> y2;
         public double Y2 => y2.Value;
         public double Thickness { get; }
-        public RGBAColor Color { get; }
+        public System.Windows.Media.Color Color { get; }
+        public Brush Brush { get; }
         public int ZIndex => 0;
 
         public PenLineViewModel(IObservable<Rectangle> sceneBoundsObservable, Position from, Position to, double thickness, RGBAColor color)
@@ -118,22 +82,9 @@ namespace GetIt.UI
             x2 = sceneBoundsObservable.Select(p => to.X - p.Left).ToProperty(this, p => p.X2);
             y2 = sceneBoundsObservable.Select(p => p.Top - to.Y).ToProperty(this, p => p.Y2);
             Thickness = thickness;
-            Color = color;
-        }
-
-        public void Draw(WriteableBitmap bitmap)
-        {
-            var thickness = (int)Math.Round(Thickness);
-            var pen = BitmapFactory.New(thickness, thickness);
-            pen.Clear(System.Windows.Media.Color.FromArgb(Color.Alpha, Color.Red, Color.Green, Color.Blue));
-            pen.Freeze();
-            bitmap.DrawLinePenned(
-                (int)Math.Round(X1),
-                (int)Math.Round(Y1),
-                (int)Math.Round(X2),
-                (int)Math.Round(Y2),
-                pen
-            );
+            Color = System.Windows.Media.Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue);
+            Brush = new SolidColorBrush(Color);
+            Brush.Freeze();
         }
     }
 

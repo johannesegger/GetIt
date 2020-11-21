@@ -29,7 +29,6 @@ group WpfUI
     nuget ReactiveUI.Fody
     nuget ReactiveUI.WPF
     nuget SharpVectors.Reloaded
-    nuget WriteableBitmapEx
 
 group Test
     source https://api.nuget.org/v3/index.json

@@ -53,7 +53,18 @@
                 <Canvas.Background>
                     <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
                 </Canvas.Background>
-                <Image Source="{Binding PenLineBitmap}" />
+                <ItemsControl ItemsSource="{Binding PenLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" Visibility="{Binding Visibility}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas></Canvas>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
                 <ItemsControl ItemsSource="{Binding Players}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
