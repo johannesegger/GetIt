@@ -34,7 +34,7 @@ $frameworkReference = $nuspec.CreateElement("frameworkReference", $namespace)
 $frameworkReference.SetAttribute("name", "Microsoft.AspNetCore.App") | Out-Null
 $frameworkReferenceGroup = $nuspec.CreateElement("group", $namespace)
 $frameworkReferenceGroup.SetAttribute("targetFramework", ".NETCoreApp3.0") | Out-Null
-$frameworkReferenceGroup.AppendChild($frameworkReference)
+$frameworkReferenceGroup.AppendChild($frameworkReference) | Out-Null
 $frameworkReferences = $nuspec.CreateElement("frameworkReferences", $namespace)
 $frameworkReferences.AppendChild($frameworkReferenceGroup) | Out-Null
 $metadata.AppendChild($frameworkReferences) | Out-Null
