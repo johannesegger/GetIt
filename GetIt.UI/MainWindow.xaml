@@ -50,24 +50,22 @@
             <Canvas ClipToBounds="True"
                     Width="{Binding SceneSize.Width}"
                     Height="{Binding SceneSize.Height}">
+                <Canvas.Background>
+                    <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
+                </Canvas.Background>
                 <Image Source="{Binding PenLineBitmap}" />
-                <Canvas>
-                    <Canvas.Background>
-                        <ImageBrush ImageSource="{Binding BackgroundImage}" Stretch="UniformToFill" />
-                    </Canvas.Background>
-                    <ItemsControl ItemsSource="{Binding Players}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <local:ScenePlayer Visibility="{Binding Visibility}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="ContentPresenter">
-                                <Setter Property="Canvas.ZIndex" Value="{Binding Path=ZIndex}" />
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                    </ItemsControl>
-                </Canvas>
+                <ItemsControl ItemsSource="{Binding Players}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:ScenePlayer Visibility="{Binding Visibility}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.ZIndex" Value="{Binding Path=ZIndex}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
             </Canvas>
         </Border>
     </DockPanel>
