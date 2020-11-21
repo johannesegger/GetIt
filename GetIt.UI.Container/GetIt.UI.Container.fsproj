@@ -11,7 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
-    <ProjectReference Include="..\GetIt.UI.WPF\GetIt.UI.csproj" />
+    <ProjectReference Include="..\GetIt.UI\GetIt.UI.csproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
