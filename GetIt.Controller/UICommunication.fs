@@ -1,22 +1,25 @@
-﻿namespace GetIt
+namespace GetIt
 
 open FSharp.Control
 open FSharp.Control.Reactive
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Hosting.Server.Features
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Hosting
-open Reaction.AspNetCore.Middleware
 open System
 open System.ComponentModel
 open System.Diagnostics
 open System.IO
+open System.Net.WebSockets
 open System.Reactive.Linq
 open System.Reactive.Disposables
 open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
+open System.Threading.Tasks
 open Thoth.Json.Net
 
 module internal UICommunication =
@@ -24,7 +27,7 @@ module internal UICommunication =
         {
             Disposable: IDisposable
             CommandSubject: Subject<Guid * ControllerMsg>
-            ResponseSubject: Subject<ChannelMsg>
+            ResponseSubject: Subject<UIToControllerMsg>
             UIWindowProcess: Process
             MutableModel: MutableModel
             CancellationToken: CancellationToken
@@ -33,45 +36,35 @@ module internal UICommunication =
 
     let private socketPath = "/msgs"
     let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
-        let stream (connectionId: ConnectionId) (msgs: IAsyncObservable<ChannelMsg * ConnectionId>) : IAsyncObservable<ChannelMsg * ConnectionId> =
-            let controllerMsgs =
-                controllerMsgs
-                |> Observable.map (fun msg -> ControllerMsg msg, "")
-
-            msgs
-            |> AsyncRx.toObservable
-            |> Observable.perform (fst >> uiMsgs.OnNext)
-            |> Observable.bind (fun (msg, connId) ->
-                match msg with
-                | ControllerMsg _ -> Observable.empty // confirmations
-                | ChannelMsg.UIMsg (SetSceneBounds _)
-                | ChannelMsg.UIMsg (AnswerStringQuestion _)
-                | ChannelMsg.UIMsg (AnswerBoolQuestion _) ->
-                    Observable.result (msg, connId)
-            )
-            |> Observable.merge controllerMsgs
-            |> fun o -> o.ToAsyncObservable()
-
         let configureApp (app: IApplicationBuilder) =
+            let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+            let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
             app
                 .UseWebSockets()
-                .UseStream(fun options ->
-                    { options with
-                        Stream = stream
-                        Encode = Encode.channelMsg >> Encode.toString 0
-                        Decode =
-                            fun value ->
-                                Decode.fromString Decode.channelMsg value
-                                |> (function
-                                    | Ok p -> Some p
-                                    | Error p ->
-#if DEBUG
-                                        eprintfn "Deserializing message failed: %s, Message: %s" p value
-#endif
-                                        None
-                                )
-                        RequestPath = socketPath
+                .Use(fun (context: HttpContext) (next: Func<Task>) ->
+                    async {
+                        if context.Request.Path = PathString socketPath then
+                            if context.WebSockets.IsWebSocketRequest then
+                                use! webSocket = context.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
+                                let (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
+                                use __ = wsConnection
+                                use __ =
+                                    controllerMsgs
+                                    |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
+                                    |> Observable.subscribeObserver wsSubject
+                                use __ =
+                                    wsSubject
+                                    |> Observable.choose (Decode.fromString decoder >> function | Ok msg -> Some msg | Error e -> None)
+                                    |> Observable.subscribeObserver uiMsgs
+                                let! ct = Async.CancellationToken
+                                ct.WaitHandle.WaitOne() |> ignore
+                            else
+                                context.Response.StatusCode <- 400
+                        else
+                            do! next.Invoke() |> Async.AwaitTask
+
                     }
+                    |> fun wf -> Async.StartAsTask(wf, cancellationToken = appLifetime.ApplicationStopping) :> Task
                 )
                 |> ignore
 
@@ -101,21 +94,15 @@ module internal UICommunication =
         return (url, serverDisposable)
     }
 
-    let private startUI windowSize socketUrl =
+    let private startUI sceneSize socketUrl =
         let environmentVariables =
             [
-                match windowSize with
-                | SpecificSize windowSize ->
-                    "GET_IT_WINDOW_SIZE", sprintf "%dx%d" (int windowSize.Width) (int windowSize.Height)
+                match sceneSize with
+                | SpecificSize sceneSize ->
+                    "GET_IT_SCENE_SIZE", sprintf "%dx%d" (int sceneSize.Width) (int sceneSize.Height)
                 | Maximized ->
                     "GET_IT_START_MAXIMIZED", "1"
                 "GET_IT_SOCKET_URL", socketUrl
-#if DEBUG
-                // Ensure that `yarn webpack-dev-server` is running before starting this
-                "GET_IT_INDEX_URL", "http://localhost:8080"
-#else
-                "GET_IT_INDEX_URL", Path.Combine("..", "GetIt.UI", "index.html")
-#endif
             ]
 
         let startInfo =
@@ -165,7 +152,7 @@ module internal UICommunication =
             |> Disposable.compose d2
         )
 
-    let showScene windowSize =
+    let showScene sceneSize =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
@@ -184,7 +171,7 @@ module internal UICommunication =
             uriBuilder.Scheme <- "ws"
             uriBuilder.Path <- socketPath
             uriBuilder.ToString()
-        let uiProcess = startUI windowSize socketUrl
+        let uiProcess = startUI sceneSize socketUrl
         ds.Add uiProcess
         uiProcess.EnableRaisingEvents <- true
         uiProcess.Exited.Subscribe (fun _ ->
@@ -196,11 +183,11 @@ module internal UICommunication =
 
         uiMsgs
         |> Observable.subscribe (function
-            | ControllerMsg _ -> () // confirmations
-            | ChannelMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+            | ControllerMsgConfirmation _ -> ()
+            | UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
-            | ChannelMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
-            | ChannelMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
+            | UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
+            | UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
         )
         |> ds.Add
@@ -222,7 +209,7 @@ module internal UICommunication =
                         let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
                         Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
                 with
-                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
                     | :? Win32Exception -> reraise ()
             | MouseClick mouseClick as msg ->
                 try
@@ -232,7 +219,7 @@ module internal UICommunication =
                         let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
                         ApplyMouseClick mouseClick, model) mutableModel
                 with
-                    | :? Win32Exception when uiProcess.HasExited -> ()
+                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
                     | :? Win32Exception -> reraise ()
             | KeyDown key as msg ->
                 MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
@@ -254,11 +241,11 @@ module internal UICommunication =
     let private sendMessage state message =
         use waitHandle = new ManualResetEventSlim()
         let messageId = Guid.NewGuid()
-        use d =
+        use __ =
             state.ResponseSubject
             |> Observable.firstIf (fun r ->
                 match r with
-                | ControllerMsg (msgId, msg) when msgId = messageId -> true
+                | ControllerMsgConfirmation msgId when msgId = messageId -> true
                 | _ -> false
             )
             |> Observable.subscribe (fun p ->
@@ -353,24 +340,26 @@ module internal UICommunication =
             MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
         )
 
+    let shutUp playerId state =
+        SetSpeechBubble (playerId, None)
+        |> sendMessage state
+        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
+
     let askString playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskString text) state
+        use __ = setTemporarySpeechBubble playerId (AskString text) state
+        use __ = Disposable.create (fun () -> shutUp playerId state)
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskString text)))
             (fst >> function | UIMsg (AnswerStringQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
 
     let askBool playerId text state =
-        use d = setTemporarySpeechBubble playerId (AskBool text) state
+        use __ = setTemporarySpeechBubble playerId (AskBool text) state
+        use __ = Disposable.create (fun () -> shutUp playerId state)
         sendMessageAndWaitForResponse
             state
             (SetSpeechBubble (playerId, Some (AskBool text)))
             (fst >> function | UIMsg (AnswerBoolQuestion (pId, answer)) when pId = playerId -> Some answer | _ -> None)
-
-    let shutUp playerId state =
-        SetSpeechBubble (playerId, None)
-        |> sendMessage state
-        MutableModel.updatePlayer playerId (fun p -> Other, { p with SpeechBubble = None }) state.MutableModel
 
     let setPenState playerId isOn state =
         SetPenState (playerId, isOn)

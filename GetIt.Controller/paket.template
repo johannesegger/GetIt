@@ -12,6 +12,5 @@ include-referenced-projects true
 include-pdbs true
 files
   GetIt.targets ==> build
-  ../GetIt.UI.Container/bin/Release/netcoreapp3.1 ==> tools/GetIt.UI.Container
-  ../GetIt.UI/deploy ==> tools/GetIt.UI
+  ../GetIt.UI.Container/bin/Release/netcoreapp3.1/win10-x86 ==> tools/GetIt.UI.Container
   ../assets/icon-128x128.png ==> images

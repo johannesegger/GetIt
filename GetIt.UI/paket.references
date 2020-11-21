@@ -1,0 +1,6 @@
+group WpfUI
+FSharp.Core
+ReactiveUI.Fody
+ReactiveUI.WPF
+SharpVectors.Reloaded
+ModernWpfUI

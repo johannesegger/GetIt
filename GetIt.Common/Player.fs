@@ -26,6 +26,20 @@ type SpeechBubble =
     | AskString of string
     | AskBool of string
 
+type OneOfMany<'a> = private {
+    CurrentIndex: int
+    Items: 'a array
+}
+module internal OneOfMany =
+    let create items currentIndex =
+        if currentIndex < 0 || currentIndex > Array.length items then
+            failwithf "`currentIndex` (%d) is not a valid index of the array (%A)" currentIndex items
+        { CurrentIndex = currentIndex; Items = items }
+    let current v = Array.item v.CurrentIndex v.Items
+    let next v =
+        { v with CurrentIndex = (v.CurrentIndex + 1) % v.Items.Length }
+
+
 /// Defines a player.
 /// The player doesn't necessarily have been added to the scene.
 type PlayerData =
@@ -41,16 +55,14 @@ type PlayerData =
         /// The current speech bubble that belongs to the player.
         SpeechBubble: SpeechBubble option
         /// The costumes of the player.
-        Costumes: SvgImage list
-        /// The index of the current costume.
-        CostumeIndex: int
+        Costumes: OneOfMany<SvgImage>
         /// The layer on which the player is drawn.
         Layer: int
         /// True, if the player should be drawn, otherwise false.
         IsVisible: bool
     }
     /// The current costume of the player.
-    member this.Costume with get() = this.Costumes |> List.item this.CostumeIndex
+    member this.Costume with get() = OneOfMany.current this.Costumes
 
     /// The actual size of the player.
     member this.Size with get() = this.Costume.Size * this.SizeFactor
@@ -132,8 +144,7 @@ type PlayerData =
             Direction = Degrees.zero
             Pen = Pen.``default``
             SpeechBubble = None
-            Costumes = Seq.toList costumes
-            CostumeIndex = 0
+            Costumes = OneOfMany.create (Seq.toArray costumes) 0
             Layer = 0
             IsVisible = true
         }
@@ -153,7 +164,7 @@ type PlayerData =
 
 module internal Player =
     let nextCostume player =
-        { player with CostumeIndex = (player.CostumeIndex + 1) % player.Costumes.Length }
+        { player with Costumes = OneOfMany.next player.Costumes }
 
     let private normalizeLayers players =
         players

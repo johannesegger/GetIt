@@ -1,47 +1,39 @@
 source https://api.nuget.org/v3/index.json
 
 group Controller
+    source https://api.nuget.org/v3/index.json
+
     # use NuGet-like strategy because this package will be used preferrably from projects that use NuGet
     strategy: min
 
-    source https://api.nuget.org/v3/index.json
+    storage: none
 
-    nuget Chromely
     nuget ColorCode.Html
-    nuget FSharp.Control.AsyncRx
     nuget FSharp.Control.Reactive
     nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
-    nuget Polly
-    nuget Reaction.AspNetCore.Middleware
     nuget SharpLibWin32
     nuget System.Drawing.Common
     nuget Thoth.Json.Net
 
-    nuget Microsoft.Extensions.Hosting.Abstractions >= 3.1.4
-    nuget Microsoft.Extensions.Logging.Abstractions >= 3.1.4
-
-group UI
+group WpfUI
     source https://api.nuget.org/v3/index.json
 
-    storage:none
+    storage: none
 
-    nuget Fable.Browser.Css
-    nuget Fable.Core
-    nuget Fable.Elmish.HMR
-    nuget Fable.Elmish.Nile
-    nuget Fable.Elmish.React
-    nuget Fable.Elmish.Debugger
-    nuget Fable.Reaction
-    nuget FSharp.Control.AsyncRx
+    nuget Chromely
+    nuget FSharp.Control.Reactive
     nuget FSharp.Core
-    nuget Thoth.Json
+    nuget ModernWpfUI = 0.9.1 # build error in 0.9.2
+    nuget ReactiveUI.Fody
+    nuget ReactiveUI.WPF
+    nuget SharpVectors.Reloaded
 
 group Test
     source https://api.nuget.org/v3/index.json
 
-    storage:none
+    storage: none
 
     nuget Expecto
     nuget FSharp.Core

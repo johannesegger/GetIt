@@ -38,11 +38,11 @@ module internal Game =
     let doWithMutableModel fn =
         doWithCommunicationState (fun s -> fn s.MutableModel)
 
-    let showScene windowSize =
+    let showScene sceneSize =
         if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
             raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
 
-        let state = UICommunication.showScene windowSize
+        let state = UICommunication.showScene sceneSize
         communicationState <- Some state
         Disposable.create disposeCommunicationState
 

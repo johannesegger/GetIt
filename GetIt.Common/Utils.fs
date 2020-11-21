@@ -34,8 +34,8 @@ module internal Async =
 
 #if !FABLE_COMPILER
 module internal Double =
-    let tryParseCultureInvariant arg =
-        match Double.TryParse(arg, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
+    let tryParseCultureInvariant (text: string) =
+        match Double.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
         | (true, v) -> Some v
         | (false, _) -> None
 

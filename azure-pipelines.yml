@@ -20,11 +20,6 @@ steps:
   inputs:
     preferBundledVersion: false
 - task: CmdLine@2
-  displayName: 'Restore yarn packages'
-  inputs:
-    script: 'yarn install --frozen-lockfile'
-    workingDirectory: 'GetIt.UI'
-- task: CmdLine@2
   displayName: 'Restore packages'
   inputs:
     script: 'dotnet restore'
@@ -37,22 +32,18 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Build GetIt.UI.Container'
   inputs:
-    command: 'build'
+    command: 'publish'
     projects: 'GetIt.UI.Container'
-    arguments: '-c Release'
-- task: CmdLine@2
-  displayName: 'Build GetIt.UI'
-  inputs:
-    script: 'yarn webpack'
-    workingDirectory: 'GetIt.UI'
+    arguments: '-r win10-x86 -c Release --self-contained false -p:PublishSingleFile=True -p:DebugType=None'
+    publishWebProjects: false
 - task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
-    script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) GetIt.Controller
+    script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) .\GetIt.Controller
 - task: PowerShell@2
-  displayName: 'Fix NuGet package'
+  displayName: 'Add reference to ASP.NET Core packages'
   inputs:
-    filePath: 'fix-nupkg.ps1'
+    filePath: 'add-aspnetcore-reference.ps1'
     arguments: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
 - task: PublishPipelineArtifact@0
   displayName: 'Publish NuGet package as pipeline artifact'
