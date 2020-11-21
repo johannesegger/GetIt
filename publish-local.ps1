@@ -1,9 +1,7 @@
-﻿$version = "3.1.4"
-dotnet build -c Release .\GetIt.Controller\
-dotnet build -c Release .\GetIt.UI.Container\
-# Push-Location .\GetIt.UI
-# yarn webpack
-# Pop-Location
-.\.paket\paket.exe pack --minimum-from-lock-file --version $version GetIt.Controller
-Move-Item .\GetIt.Controller\GetIt.$version.nupkg .\nuget\
-dotnet add $project package GetIt -s "$pwd\nuget" -v $version
+﻿$version = "3.1.5"
+dotnet publish -r win10-x86 -c Release --self-contained false -p:PublishSingleFile=True -p:DebugType=None .\GetIt.UI.Container
+.\.paket\paket.exe pack --minimum-from-lock-file --version $version .\GetIt.Controller
+mkdir .\nuget -Force | Out-Null
+Move-Item .\GetIt.Controller\GetIt.$version.nupkg .\nuget\ -Force
+.\fix-nupkg.ps1 .\nuget\GetIt.$version.nupkg
+dotnet add .\GetIt.Sample package GetIt -s "$pwd\nuget" -v $version
