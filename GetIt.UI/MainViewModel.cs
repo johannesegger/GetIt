@@ -56,16 +56,7 @@ namespace GetIt.UI
                         {
                             foreach (var penLine in ev.EventArgs.NewItems.OfType<PenLineViewModel>())
                             {
-                                var thickness = (int)Math.Round(penLine.Thickness);
-                                var pen = BitmapFactory.New(thickness, thickness);
-                                pen.Clear(System.Windows.Media.Color.FromArgb(penLine.Color.Alpha, penLine.Color.Red, penLine.Color.Green, penLine.Color.Blue));
-                                bitmap.DrawLinePenned(
-                                    (int)Math.Round(penLine.X1),
-                                    (int)Math.Round(penLine.Y1),
-                                    (int)Math.Round(penLine.X2),
-                                    (int)Math.Round(penLine.Y2),
-                                    pen
-                                );
+                                penLine.Draw(bitmap);;
                             }
                         });
                     }
@@ -79,14 +70,7 @@ namespace GetIt.UI
                 {
                     foreach (var penLine in PenLines)
                     {
-                        bitmap.DrawLineAa(
-                            (int)penLine.X1,
-                            (int)penLine.Y1,
-                            (int)penLine.X2,
-                            (int)penLine.Y2,
-                            System.Windows.Media.Color.FromArgb(penLine.Color.Alpha, penLine.Color.Red, penLine.Color.Green, penLine.Color.Blue),
-                            (int)penLine.Thickness
-                        );
+                        penLine.Draw(bitmap);
                     }
                 });
             penLineBitmap = this.WhenAnyValue(p => p.SceneSize)
@@ -135,6 +119,21 @@ namespace GetIt.UI
             y2 = sceneBoundsObservable.Select(p => p.Top - to.Y).ToProperty(this, p => p.Y2);
             Thickness = thickness;
             Color = color;
+        }
+
+        public void Draw(WriteableBitmap bitmap)
+        {
+            var thickness = (int)Math.Round(Thickness);
+            var pen = BitmapFactory.New(thickness, thickness);
+            pen.Clear(System.Windows.Media.Color.FromArgb(Color.Alpha, Color.Red, Color.Green, Color.Blue));
+            pen.Freeze();
+            bitmap.DrawLinePenned(
+                (int)Math.Round(X1),
+                (int)Math.Round(Y1),
+                (int)Math.Round(X2),
+                (int)Math.Round(Y2),
+                pen
+            );
         }
     }
 
