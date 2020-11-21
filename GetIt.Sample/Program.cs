@@ -32,6 +32,7 @@ namespace GetIt.Sample
             // AskBool();
             // PenLinesPerformance();
             // SpeechBubbleAlignment();
+            // PlayerPerformanceTest();
         }
 
         private static void TurtleGraphics()
@@ -653,6 +654,115 @@ namespace GetIt.Sample
                 }
                 Turtle.Say(text);
             });
+        }
+
+        private static void PlayerPerformanceTest()
+        {
+            Game.ShowSceneAndAddTurtle();
+            Turtle.Say("Press <Space> to start");
+            Game.WaitForKeyDown(KeyboardKey.Space);
+            Turtle.ShutUp();
+            Turtle.MoveTo(0, Game.SceneBounds.Top - 20);
+            Turtle.TurnDown();
+            var generator = new Random();
+
+            var lives = 3;
+            var score = 0;
+
+            var enemyCount = 20;
+            var enemies = Enumerable.Range(1, enemyCount)
+                .Select(i =>
+                {
+                    int getRangeY(int i) => (int)(Game.SceneBounds.Size.Height / enemyCount * i + Game.SceneBounds.Bottom);
+                    double generateYPosition() => generator.Next(getRangeY(i), getRangeY(i + 1));
+
+                    var speed = generator.Next(5, 15);
+
+                    if (i % 2 == 0)
+                    {
+                        var enemyData = PlayerData.Ant
+                            .WithPosition(Game.SceneBounds.Left, generateYPosition())
+                            .WithDirection(Directions.Right);
+                        var enemy = Game.AddPlayer(enemyData);
+                        return new {
+                            Player = enemy,
+                            Move = new Action(() =>
+                            {
+                                enemy.MoveInDirection(speed + score);
+                                if (enemy.Position.X > Game.SceneBounds.Right)
+                                {
+                                    enemy.MoveTo(Game.SceneBounds.Left, generateYPosition());
+                                }
+                            })
+                        };
+                    }
+                    else
+                    {
+                        var enemyData = PlayerData.Ant
+                            .WithPosition(Game.SceneBounds.Right, generateYPosition())
+                            .WithDirection(Directions.Left);
+                        var enemy = Game.AddPlayer(enemyData);
+                        return new {
+                            Player = enemy,
+                            Move = new Action(() =>
+                            {
+                                enemy.MoveInDirection(speed);
+                                if (enemy.Position.X < Game.SceneBounds.Left)
+                                {
+                                    enemy.MoveTo(Game.SceneBounds.Right, generateYPosition());
+                                }
+                            })
+                        };
+                    }
+                })
+                .ToList();
+
+            while (lives > 0)
+            {
+                Turtle.Say($"Score: {score}\nLives: {lives}");
+                
+                using var __ = Game.BatchCommands();
+                foreach (var enemy in enemies)
+                {
+                    enemy.Move();
+                }
+
+                if (Game.IsKeyDown(KeyboardKey.W))
+                {
+                    Turtle.TurnUp();
+                    Turtle.MoveInDirection(10 + score);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.S))
+                {
+                    Turtle.TurnDown();
+                    Turtle.MoveInDirection(10 + score);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.A))
+                {
+                    Turtle.TurnLeft();
+                    Turtle.MoveInDirection(10 + score);
+                }
+                else if (Game.IsKeyDown(KeyboardKey.D))
+                {
+                    Turtle.TurnRight();
+                    Turtle.MoveInDirection(10 + score);
+                }
+
+                if (Turtle.Position.Y <= Game.SceneBounds.Bottom)
+                {
+                    Turtle.MoveTo(Turtle.Position.X, (Game.SceneBounds.Top - 20));
+                    score++;
+                }
+
+                if (enemies.Any(p => Turtle.TouchesPlayer(p.Player)))
+                {
+                    lives--;
+                    Turtle.MoveTo(0, Game.SceneBounds.Top - 20);
+                }
+            }
+
+            Turtle.ShutUp();
+            Turtle.Say($"Game Over.\nScore: {score}");
         }
     }
 }
