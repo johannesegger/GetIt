@@ -62,8 +62,8 @@ module internal UICommunication =
                                 context.Response.StatusCode <- 400
                         else
                             do! next.Invoke() |> Async.AwaitTask
-
                     }
+                    |> fun wf -> Async.HandleCancellation(wf, fun e cont econt ccont -> cont ())
                     |> fun wf -> Async.StartAsTask(wf, cancellationToken = appLifetime.ApplicationStopping) :> Task
                 )
                 |> ignore

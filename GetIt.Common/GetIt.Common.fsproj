@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Assembly.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="Async.fs" />
     <Compile Include="Randomly.fs" />
     <Compile Include="Geometry.fs" />
     <Compile Include="Color.fs" />
