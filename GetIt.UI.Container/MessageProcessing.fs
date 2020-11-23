@@ -184,7 +184,6 @@ let rec private processControllerMessageDirectly (mainViewModel: MainViewModel) 
     | ApplyBatch when model.Batching.Level > 1 ->
         { model with Batching = { model.Batching with Level = model.Batching.Level - 1 } }
     | ApplyBatch ->
-        printfn "Applying messages: %A" model.Batching.Messages
         (model.Batching.Messages, { model with Batching = Batching.zero })
         ||> List.foldBack (processControllerMessageDirectly mainViewModel)
 
