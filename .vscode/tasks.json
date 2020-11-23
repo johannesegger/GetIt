@@ -22,6 +22,16 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "build-tsp-sample",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/GetIt.Sample.TSP/GetIt.Sample.TSP.fsproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "build-test",
             "command": "dotnet",
             "type": "process",

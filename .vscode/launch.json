@@ -33,6 +33,20 @@
             },
         },
         {
+            "name": "Launch GetIt.Sample.TSP",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-tsp-sample",
+            "program": "${workspaceFolder}/GetIt.Sample.TSP/bin/Debug/netcoreapp3.1/GetIt.Sample.TSP.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+        },
+        {
             "name": "Launch GetIt.Test",
             "type": "coreclr",
             "request": "launch",
