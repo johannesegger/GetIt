@@ -50,10 +50,3 @@ steps:
   inputs:
     artifactName: 'GetIt.nupkg'
     targetPath: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
-- task: DotNetCoreCLI@2
-  displayName: 'Push NuGet package to internal feed'
-  inputs:
-    command: 'push'
-    packagesToPush: 'GetIt.Controller/GetIt.$(GitVersion.NuGetVersion).nupkg'
-    nuGetFeedType: 'internal'
-    publishVstsFeed: 'GetIt'
