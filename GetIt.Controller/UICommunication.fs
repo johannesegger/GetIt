@@ -56,14 +56,13 @@ module internal UICommunication =
                                     wsSubject
                                     |> Observable.choose (Decode.fromString decoder >> function | Ok msg -> Some msg | Error e -> None)
                                     |> Observable.subscribeObserver uiMsgs
-                                let! ct = Async.CancellationToken
-                                ct.WaitHandle.WaitOne() |> ignore
+                                do! Async.Sleep Int32.MaxValue
                             else
                                 context.Response.StatusCode <- 400
                         else
                             do! next.Invoke() |> Async.AwaitTask
                     }
-                    |> fun wf -> Async.HandleCancellation(wf, fun e cont econt ccont -> cont ())
+                    |> fun wf -> Async.HandleCancellation(wf, (fun e cont econt ccont -> cont ()), appLifetime.ApplicationStopping)
                     |> fun wf -> Async.StartAsTask(wf, cancellationToken = appLifetime.ApplicationStopping) :> Task
                 )
                 |> ignore
