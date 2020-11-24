@@ -149,7 +149,7 @@ module internal DeviceEvents =
                             processMessage lParam
                             |> Seq.iter obs.OnNext
                         with e ->
-                            printfn "Error while processing message: %O" e
+                            eprintfn "Error while processing message: %O" e
                         IntPtr.Zero
                     else
                         Win32.DefWindowProc(hWnd, msg, wParam, lParam)
