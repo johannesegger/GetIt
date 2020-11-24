@@ -3,7 +3,6 @@ namespace GetIt.Windows
 open System
 open System.ComponentModel
 open System.Reactive.Linq
-open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
 open FSharp.Control.Reactive
@@ -152,12 +151,6 @@ module internal DeviceEvents =
                         with e ->
                             printfn "Error while processing message: %O" e
                         IntPtr.Zero
-                        // case WM_DESTROY:
-                        //     DestroyWindow(hWnd);
-
-                        //     //If you want to shutdown the application, call the next function instead of DestroyWindow
-                        //     //PostQuitMessage(0);
-                        //     break;
                     else
                         Win32.DefWindowProc(hWnd, msg, wParam, lParam)
                 )
