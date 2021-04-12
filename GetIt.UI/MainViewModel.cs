@@ -216,9 +216,9 @@ namespace GetIt.UI
             geometry = this.WhenAnyValue(p => p.Size)
                 .Select(size =>
                 {
-                    double bubbleWidth = size.Width - 2 * 10;
-                    double bubbleHeight = size.Height - 2 * 5 - 15;
-                    return $"M 10,5 h {bubbleWidth} c 10,0 10,{bubbleHeight} 0,{bubbleHeight} h -{bubbleWidth - 40} c 0,7 -5,13 -15,15 s 3,-6 0,-15 h -25 c -10,0 -10,-{bubbleHeight} 0,-{bubbleHeight}";
+                    var bubbleWidth = size.Width - 2 * 10;
+                    var bubbleHeight = size.Height - 2 * 5 - 15;
+                    return FormattableString.Invariant($"M 10,5 h {bubbleWidth} c 10,0 10,{bubbleHeight} 0,{bubbleHeight} h -{bubbleWidth - 40} c 0,7 -5,13 -15,15 s 3,-6 0,-15 h -25 c -10,0 -10,-{bubbleHeight} 0,-{bubbleHeight}");
                 })
                 .ToProperty(this, p => p.Geometry);
             scaleX = this.WhenAnyValue(p => p.Position)
