@@ -6,7 +6,8 @@ Before you can start to create projects with *Get It* you need to setup a proper
 
 ```powershell
 # 1
-iex (New-Object Net.WebClient).DownloadString('https://get.scoop.sh')
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 scoop install git
 scoop bucket add extras
 
