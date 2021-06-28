@@ -103,7 +103,7 @@ type Game() =
     /// <summary>
     /// Adds a player to the scene.
     /// </summary>
-    /// <param name="player">The definition of the player that should be added.</param>
+    /// <param name="playerData">The definition of the player that should be added.</param>
     /// <returns>The added player.</returns>
     static member AddPlayer (playerData: PlayerData) =
         if obj.ReferenceEquals(playerData, null) then raise (ArgumentNullException "playerData")
@@ -115,7 +115,7 @@ type Game() =
     /// Adds a player to the scene and calls a method to control the player.
     /// The method runs on a thread pool thread so that multiple players can be controlled in parallel.
     /// </summary>
-    /// <param name="player">The definition of the player that should be added.</param>
+    /// <param name="playerData">The definition of the player that should be added.</param>
     /// <param name="run">The method that is used to control the player.</param>
     /// <returns>The added player.</returns>
     static member AddPlayer (playerData, run: Action<_>) =
