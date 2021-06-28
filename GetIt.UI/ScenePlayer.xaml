@@ -25,7 +25,7 @@
                   DataContextChanged="SpeechBubbleBorder_DataContextChanged"
                   Data="{Binding Geometry}"
                   Stroke="#33000000"
-                  Fill="#108B4513"
+                  Fill="#ccf0f0f0"
                   StrokeThickness="2"
                   RenderTransformOrigin=".5,.5">
                 <Path.RenderTransform>
