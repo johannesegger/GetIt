@@ -25,6 +25,8 @@ namespace GetIt.UI
         [Reactive]
         public WindowState WindowState { get; set; }
         [Reactive]
+        public SizeToContent SizeToContent { get; set; }
+        [Reactive]
         public ImageSource BackgroundImage { get; set; }
         private readonly ObservableAsPropertyHelper<Visibility> infoBarVisibility;
         public Visibility InfoBarVisibility => infoBarVisibility.Value;
@@ -38,6 +40,7 @@ namespace GetIt.UI
                 .Select(p => new Rectangle(new Position(-p.Width / 2, -p.Height / 2), p))
                 .ToProperty(this, p => p.SceneBounds);
             WindowState = isMaximized ? WindowState.Maximized : WindowState.Normal;
+            SizeToContent = isMaximized ? SizeToContent.Manual : SizeToContent.WidthAndHeight;
             infoBarVisibility = Players
                 .ToObservableChangeSet()
                 .AsObservableList()

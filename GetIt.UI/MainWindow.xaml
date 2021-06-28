@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         d:DataContext="{x:Static local:DesignTimeData.Main}"
         Title="{Binding Title}"
-        SizeToContent="WidthAndHeight"
+        SizeToContent="{Binding SizeToContent}"
         Icon="icon.ico"
         WindowState="{Binding WindowState}">
     <Window.Resources>
