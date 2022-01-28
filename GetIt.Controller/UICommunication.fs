@@ -120,7 +120,7 @@ module internal UICommunication =
                 )
 #else
                 |> Option.orElseWith (fun () ->
-                    let thisAssemblyDir = Path.GetDirectoryName(Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath)
+                    let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                     Path.Combine(thisAssemblyDir, "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
                 )
 #endif
