@@ -15,10 +15,8 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: GitVersion@5
+- task: gitversion/execute@0
   displayName: 'Run GitVersion'
-  inputs:
-    preferBundledVersion: false
 - task: CmdLine@2
   displayName: 'Restore packages'
   inputs:
