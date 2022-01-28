@@ -15,6 +15,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: gitversion/setup@0
+  inputs:
+    versionSpec: '*'
 - task: gitversion/execute@0
   displayName: 'Run GitVersion'
 - task: CmdLine@2
