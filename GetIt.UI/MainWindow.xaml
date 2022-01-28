@@ -15,7 +15,6 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemeResources />
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
             <sys:Boolean x:Key="AutoHideScrollBars">True</sys:Boolean>

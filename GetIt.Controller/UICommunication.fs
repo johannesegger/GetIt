@@ -113,10 +113,10 @@ module internal UICommunication =
                 |> Option.map (fun d -> Path.Combine(d, fileName))
 #if DEBUG
                 // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
-                |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists)
+                |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists)
                 |> Option.orElseWith (fun () ->
                     let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                    Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists
+                    Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists
                 )
 #else
                 |> Option.orElseWith (fun () ->

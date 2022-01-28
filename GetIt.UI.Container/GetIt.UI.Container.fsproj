@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>winexe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041</TargetFramework>
     <UseWpf>true</UseWpf>
   </PropertyGroup>
   <ItemGroup>
