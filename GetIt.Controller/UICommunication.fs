@@ -115,13 +115,13 @@ module internal UICommunication =
                 // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
                 |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists)
                 |> Option.orElseWith (fun () ->
-                    let thisAssemblyDir = Path.GetDirectoryName(Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath)
+                    let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                     Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "netcoreapp3.1", fileName) |> toOptionIfFileExists
                 )
 #else
                 |> Option.orElseWith (fun () ->
                     let thisAssemblyDir = Path.GetDirectoryName(Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath)
-                    Path.Combine(thisAssemblyDir, "..", "..", "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
+                    Path.Combine(thisAssemblyDir, "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
                 )
 #endif
                 |> Option.defaultValue fileName
