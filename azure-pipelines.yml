@@ -35,7 +35,7 @@ steps:
   inputs:
     command: 'publish'
     projects: 'GetIt.UI.Container'
-    arguments: '-r win10-x64 -c Release --no-self-contained -p:PublishSingleFile=True -p:DebugType=None'
+    arguments: '-r win10-x64 -c Release --no-self-contained -p:DebugType=None'
     publishWebProjects: false
 - task: CmdLine@2
   displayName: 'Build NuGet package'
