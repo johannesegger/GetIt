@@ -15,6 +15,10 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    arguments: '--version'
 - task: gitversion/setup@0
   inputs:
     versionSpec: '*'
