@@ -12,5 +12,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </None>
+    <Using Include="GetIt" />
   </ItemGroup>
 </Project>
