@@ -35,12 +35,12 @@ steps:
   inputs:
     command: 'publish'
     projects: 'GetIt.UI.Container'
-    arguments: '-r win10-x86 -c Release --self-contained false -p:PublishSingleFile=True -p:DebugType=None'
+    arguments: '-r win10-x64 -c Release --no-self-contained -p:PublishSingleFile=True -p:DebugType=None'
     publishWebProjects: false
 - task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
-    script: .paket\paket.exe pack --minimum-from-lock-file --version $(GitVersion.NuGetVersion) .\GetIt.Controller
+    script: .paket\paket.exe pack --build-config Release --minimum-from-lock-file --version $(GitVersion.NuGetVersion) .\GetIt.Controller
 - task: PowerShell@2
   displayName: 'Add reference to ASP.NET Core packages'
   inputs:
