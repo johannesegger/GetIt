@@ -38,9 +38,11 @@ steps:
   displayName: 'Build GetIt.UI.Container'
   inputs:
     command: 'publish'
+    publishWebProjects: false
     projects: 'GetIt.UI.Container'
     arguments: '-r win10-x64 -c Release --no-self-contained -p:DebugType=None'
-    publishWebProjects: false
+    zipAfterPublish: false
+    modifyOutputPath: false
 - task: CmdLine@2
   displayName: 'Build NuGet package'
   inputs:
