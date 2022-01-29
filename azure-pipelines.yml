@@ -15,10 +15,10 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: DotNetCoreCLI@2
+- task: CmdLine@2
+  displayName: 'Print dotnet version'
   inputs:
-    command: 'custom'
-    arguments: '--version'
+    script: 'dotnet --version'
 - task: gitversion/setup@0
   inputs:
     versionSpec: '*'
