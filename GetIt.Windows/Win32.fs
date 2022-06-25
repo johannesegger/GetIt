@@ -48,6 +48,9 @@ module internal Win32 =
     [<DllImport("user32.dll")>]
     extern bool ScreenToClient(IntPtr hWnd, WinPoint& lpPoint)
 
+    [<DllImport("user32.dll")>]
+    extern bool IsWindow(IntPtr hWnd);
+
     [<DllImport("user32.dll", SetLastError=true)>]
     extern IntPtr CreateWindowEx(
         uint32 dwExStyle,

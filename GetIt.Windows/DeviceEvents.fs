@@ -265,6 +265,6 @@ module internal DeviceEvents =
 
     let screenToClient hWnd position =
         let mutable point = Win32.WinPoint(x = int position.X, y = int position.Y)
-        if not <| Win32.ScreenToClient(hWnd, &point) then
+        if not <| Win32.ScreenToClient(hWnd, &point) && Win32.IsWindow(hWnd) then
             raise (Win32Exception "ScreenToClient failed")
         { X = float point.x; Y = float point.y }
