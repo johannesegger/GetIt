@@ -1,4 +1,4 @@
-﻿module GetIt.Sample.TSP.Main
+module GetIt.Sample.TSP.Main
 
 open System
 open System.Threading
@@ -18,14 +18,14 @@ type Individual =
 
 [<EntryPoint>]
 let main argv =
-    use __ = Game.ShowSceneAndAddTurtle()
-
-    Turtle.Say ("TSP solver", 1.)
+    let __ = Game.ShowSceneAndAddTurtle()
 
     use cts = new CancellationTokenSource()
-    use __ = Game.OnKeyDown(KeyboardKey.Space, fun _ -> cts.Cancel())
+    use __ = Game.OnKeyDown(KeyboardKey.Escape, fun _ -> cts.Cancel())
 
-    let problem = GetIt.Sample.TSP.Samples.ulysses16
+    let problem = GetIt.Sample.TSP.Samples.berlin52
+    Turtle.Say ($"Trying to solve %s{problem.Name} with %d{problem.Coordinates.Length} cities.\nPress <Space> to start.");
+    Game.WaitForKeyDown(KeyboardKey.Space);
 
     let rand = Random()
 
@@ -181,7 +181,7 @@ let main argv =
     let globalOptimum = calculateFitness optimalTour
 
     let populationSize = 500
-    let iterations = 1000
+    let iterations = 100
     let mutationProbability = 0.05
 
     let initialPopulation =

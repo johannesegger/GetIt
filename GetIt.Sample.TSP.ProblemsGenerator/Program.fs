@@ -31,7 +31,7 @@ let readOptimalTour (contents: byte[]) =
 [<EntryPoint>]
 let main argv =
     async {
-        let url = "https://wwwproxy.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/tsp/ALL_tsp.tar.gz"
+        let url = "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/ALL_tsp.tar.gz"
         use httpClient = new HttpClient()
         let! entries = async {
             use! stream = httpClient.GetStreamAsync(url) |> Async.AwaitTask
@@ -67,20 +67,20 @@ let main argv =
                     let coordinatesString =
                         coords
                         |> List.map (sprintf "%A")
-                        |> String.concat "; "
-                        |> sprintf "[ %s ]"
+                        |> fun v -> List.append v [ "[]" ]
+                        |> String.concat " :: "
                     let optimalTourString =
                         readOptimalTour optimalTourContents
                         |> List.map string
-                        |> String.concat "; "
-                        |> sprintf "[ %s ]"
-                    sprintf "let %s = { Coordinates = %s; OptimalTour = %s }" problemName coordinatesString optimalTourString
+                        |> fun v -> List.append v [ "[]" ]
+                        |> String.concat " :: "
+                    sprintf "let %s = { Name = \"%s\"; Coordinates = %s; OptimalTour = %s }" problemName problemName coordinatesString optimalTourString
                     |> Some
             )
         )
         |> Seq.append [ "module GetIt.Sample.TSP.Samples"; "" ]
         |> fun lines -> File.WriteAllLines("GetIt.Sample.TSP\\Samples.generated.fs", lines)
-        
+
         return ()
     }
     |> Async.RunSynchronously
