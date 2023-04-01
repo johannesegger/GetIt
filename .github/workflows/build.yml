@@ -1,0 +1,73 @@
+name: Build NuGet package
+
+on:
+  push:
+    branches: [ "master" ]
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v3
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0
+      with:
+        useConfigFile: true
+
+    - name: Restore packages
+      run: dotnet restore
+
+    - name: Build GetIt.Controller
+      run: dotnet build .\GetIt.Controller -c Release
+
+    - name: Build GetIt.UI.Container
+      run: dotnet publish .\GetIt.UI.Container -r win10-x64 -c Release --no-self-contained -p:DebugType=None
+
+# Tests don't work (because it starts a UI?)
+#    - name: Run tests
+#      run: dotnet run --project GetIt.Test
+#      env:
+#        GET_IT_UI_CONTAINER_DIRECTORY: .\GetIt.UI.Container\bin\Release\net6.0-windows10.0.19041\win10-x64\publish
+            
+    - name: Build NuGet package
+      run: .paket\paket.exe pack --build-config Release --minimum-from-lock-file --version ${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
+      
+    - name: Add reference to ASP.NET Core packages
+      run: .\add-aspnetcore-reference.ps1 GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
+
+    - name: Create environment variables for dependent workflows
+      run: |
+        echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
+        echo "package_name=GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg" >> .env
+        (Get-Content .\.env) -join "`n" | Set-Content -NoNewline .\.env # fix line ending
+
+    - name: Publish NuGet package as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: nuget-package
+        path: GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
+
+    - name: Publish .env file as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: shared-env
+        path: .env

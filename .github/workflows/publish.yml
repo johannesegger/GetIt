@@ -1,0 +1,49 @@
+name: Deploy NuGet package
+
+on: workflow_dispatch
+
+jobs:
+
+  set-env:
+    runs-on: ubuntu-latest
+
+    outputs:
+      app_version: ${{ steps.read_shared_env.outputs.app_version }}
+      package_name: ${{ steps.read_shared_env.outputs.package_name }}
+
+    steps:
+      - name: Download .env file from build workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          name: shared-env
+
+      - name: Read .env file
+        id: read_shared_env
+        run: cat .env >> $GITHUB_OUTPUT
+
+  nuget-publish:
+    needs: set-env
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          name: nuget-package
+
+      - name: Publish to NuGet
+        run: dotnet nuget push ./${{ needs.set-env.outputs.package_name }} --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+
+  create-git-tag:
+    needs: [ set-env, nuget-publish ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create git tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ needs.set-env.outputs.app_version }}
