@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Hosting.Server.Features
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.DependencyInjection.Extensions
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Hosting
 open System
@@ -35,7 +36,7 @@ module internal UICommunication =
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
     let private socketPath = "/msgs"
-    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) = async {
+    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) (loggerFactory: ILoggerFactory) = async {
         let configureApp (app: IApplicationBuilder) =
             let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
             let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
@@ -70,14 +71,11 @@ module internal UICommunication =
         let webHost =
             WebHostBuilder()
                 .UseKestrel()
-                .Configure(Action<IApplicationBuilder> configureApp)
-                .ConfigureLogging(fun hostingContext logging ->
-                    logging
-                        .AddFilter(fun l -> hostingContext.HostingEnvironment.IsDevelopment() || l >= LogLevel.Error)
-                        .AddConsole()
-                        .AddDebug()
+                .ConfigureServices(fun services ->
+                    services.Replace(ServiceDescriptor(typeof<ILoggerFactory>, loggerFactory))
                     |> ignore
                 )
+                .Configure(configureApp)
                 .UseUrls("http://[::1]:0")
                 .Build()
 
@@ -126,7 +124,13 @@ module internal UICommunication =
 #endif
                 |> Option.defaultValue fileName
                 |> Path.GetFullPath
-            let result = ProcessStartInfo(uiContainerPath, WorkingDirectory = Path.GetDirectoryName uiContainerPath)
+            let result =
+                ProcessStartInfo(
+                    uiContainerPath,
+                    WorkingDirectory = Path.GetDirectoryName uiContainerPath,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                )
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
             result
@@ -151,7 +155,7 @@ module internal UICommunication =
             |> Disposable.compose d2
         )
 
-    let showScene sceneSize =
+    let showScene (sceneSize: SceneSize) =
         if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
             raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
 
@@ -163,7 +167,26 @@ module internal UICommunication =
         let controllerMsgs = new Subject<_>()
         let uiMsgs = new Subject<_>()
 
-        let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs |> Async.RunSynchronously
+        let loggerFactory =
+            let serviceCollection = ServiceCollection()
+            serviceCollection.AddLogging(fun config ->
+                config
+#if DEBUG
+                    .AddFilter(fun _ -> true)
+#else
+                    .AddFilter(fun level -> level >= LogLevel.Error)
+#endif
+                    .AddConsole()
+                    // .AddDebug()
+                |> ignore
+            ) |> ignore
+            serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
+        ds.Add loggerFactory
+
+        let logger = loggerFactory.CreateLogger("UICommunication")
+        logger.LogInformation("Show scene with size {sceneSize}", sceneSize)
+
+        let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs loggerFactory |> Async.RunSynchronously
         ds.Add webServerDisposable
         let socketUrl =
             let uriBuilder = UriBuilder(serviceUrl)
@@ -172,6 +195,19 @@ module internal UICommunication =
             uriBuilder.ToString()
         let uiProcess = startUI sceneSize socketUrl
         ds.Add uiProcess
+
+        let uiLogger = loggerFactory.CreateLogger("UI process")
+        uiProcess.OutputDataReceived.Subscribe(fun v ->
+            uiLogger.LogInformation(v.Data)
+        )
+        |> ds.Add
+        uiProcess.BeginOutputReadLine()
+        uiProcess.ErrorDataReceived.Subscribe(fun v ->
+            uiLogger.LogError(v.Data)
+        )
+        |> ds.Add
+        uiProcess.BeginErrorReadLine()
+
         uiProcess.EnableRaisingEvents <- true
         uiProcess.Exited.Subscribe (fun _ ->
             d.Dispose()
