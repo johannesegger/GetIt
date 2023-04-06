@@ -14,7 +14,7 @@ open System
 open System.ComponentModel
 open System.Diagnostics
 open System.IO
-open System.Net.WebSockets
+open System.Reactive
 open System.Reactive.Linq
 open System.Reactive.Disposables
 open System.Reactive.Subjects
@@ -28,70 +28,95 @@ module internal UICommunication =
         {
             Disposable: IDisposable
             CommandSubject: Subject<Guid * ControllerMsg>
-            ResponseSubject: Subject<UIToControllerMsg>
+            ResponseSubject: Subject<Result<UIToControllerMsg, string>>
             UIWindowProcess: Process
             MutableModel: MutableModel
             CancellationToken: CancellationToken
         }
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
-    let private socketPath = "/msgs"
-    let private startWebServer controllerMsgs (uiMsgs: IObserver<_>) (loggerFactory: ILoggerFactory) = async {
-        let configureApp (app: IApplicationBuilder) =
-            let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
-            let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
-            app
-                .UseWebSockets()
-                .Use(fun (context: HttpContext) (next: Func<Task>) ->
-                    async {
-                        if context.Request.Path = PathString socketPath then
-                            if context.WebSockets.IsWebSocketRequest then
-                                use! webSocket = context.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
-                                let (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
-                                use __ = wsConnection
-                                use __ =
-                                    controllerMsgs
-                                    |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
-                                    |> Observable.subscribeObserver wsSubject
-                                use __ =
-                                    wsSubject
-                                    |> Observable.choose (Decode.fromString decoder >> function | Ok msg -> Some msg | Error e -> None)
-                                    |> Observable.subscribeObserver uiMsgs
-                                do! Async.Sleep Int32.MaxValue
-                            else
-                                context.Response.StatusCode <- 400
+    module private WebSocketServer =
+        let private handleWebSocketRequest socketPath (messageSubject: ISubject<_, _>) appStoppingCt =
+            fun (httpContext: HttpContext) (next: Func<Task>) ->
+                async {
+                    if httpContext.Request.Path = PathString socketPath then
+                        if httpContext.WebSockets.IsWebSocketRequest then
+                            use! webSocket = httpContext.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
+                            let (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
+                            use __ = wsConnection
+                            use __ =
+                                messageSubject
+                                |> Observable.subscribeObserver wsSubject
+                            use __ =
+                                wsSubject
+                                |> Observable.subscribeObserver messageSubject
+                            do! Async.Sleep Int32.MaxValue
                         else
-                            do! next.Invoke() |> Async.AwaitTask
-                    }
-                    |> fun wf -> Async.HandleCancellation(wf, (fun e cont econt ccont -> cont ()), appLifetime.ApplicationStopping)
-                    |> fun wf -> Async.StartAsTask(wf, cancellationToken = appLifetime.ApplicationStopping) :> Task
+                            httpContext.Response.StatusCode <- 400
+                    else
+                        do! next.Invoke() |> Async.AwaitTask
+                }
+                |> fun wf -> Async.HandleCancellation(wf, (fun e cont econt ccont -> cont ()), appStoppingCt)
+                |> fun wf -> Async.StartAsTask(wf, cancellationToken = appStoppingCt) :> Task
+
+        let start messageSubject (loggerFactory: ILoggerFactory) = async {
+            let socketPath = "/msgs"
+
+            let webHost =
+                WebHostBuilder()
+                    .UseKestrel()
+                    .ConfigureServices(fun services ->
+                        services.Replace(ServiceDescriptor(typeof<ILoggerFactory>, loggerFactory))
+                        |> ignore
+                    )
+                    .Configure(fun  (app: IApplicationBuilder) ->
+                        let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
+                        app
+                            .UseWebSockets()
+                            .Use(handleWebSocketRequest socketPath messageSubject appLifetime.ApplicationStopping)
+                            |> ignore
+                    )
+                    .UseUrls("http://[::1]:0")
+                    .Build()
+
+            do! webHost.StartAsync() |> Async.AwaitTask
+
+            let socketUrl =
+                let serverUrl = webHost.ServerFeatures.Get<IServerAddressesFeature>().Addresses |> Seq.head
+                let uriBuilder = UriBuilder(serverUrl)
+                uriBuilder.Scheme <- "ws"
+                uriBuilder.Path <- socketPath
+                uriBuilder.ToString()
+
+            let serverDisposable =
+                Disposable.create (fun () ->
+                    webHost.StopAsync()
+                    |> Async.AwaitTask
+                    |> Async.RunSynchronously
                 )
-                |> ignore
+            return (socketUrl, serverDisposable)
+        }
 
-        let webHost =
-            WebHostBuilder()
-                .UseKestrel()
-                .ConfigureServices(fun services ->
-                    services.Replace(ServiceDescriptor(typeof<ILoggerFactory>, loggerFactory))
-                    |> ignore
+    let getLoggerFactory () =
+        let serviceCollection = ServiceCollection()
+        serviceCollection.AddLogging(fun config ->
+            config
+#if DEBUG
+                .AddFilter(fun _ -> true)
+#else
+                .AddFilter(fun level -> level >= LogLevel.Error)
+#endif
+                .AddSimpleConsole(fun options ->
+                    options.SingleLine <- true
+                    options.IncludeScopes <- true
+                    options.TimestampFormat <- "[HH:mm:ss] "
                 )
-                .Configure(configureApp)
-                .UseUrls("http://[::1]:0")
-                .Build()
+                // .AddDebug()
+            |> ignore
+        ) |> ignore
+        serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
 
-        do! webHost.StartAsync() |> Async.AwaitTask
-        let url = webHost.ServerFeatures.Get<IServerAddressesFeature>().Addresses |> Seq.head
-
-        let serverDisposable =
-            Disposable.create (fun () ->
-                webHost.StopAsync()
-                |> Async.AwaitTask
-                |> Async.RunSynchronously
-            )
-        return (url, serverDisposable)
-    }
-
-    let private startUI sceneSize socketUrl =
+    let private startUI (logger: ILogger) onExit sceneSize socketUrl =
         let environmentVariables =
             [
                 match sceneSize with
@@ -134,7 +159,31 @@ module internal UICommunication =
             environmentVariables
             |> List.iter result.EnvironmentVariables.Add
             result
-        Process.Start startInfo
+
+        let proc = Process.Start startInfo // TODO wrap exceptions?
+
+        let d = new CompositeDisposable()
+        proc.OutputDataReceived.Subscribe(fun v ->
+            if not <| isNull v.Data then logger.LogInformation(v.Data)
+        )
+        |> d.Add
+        proc.BeginOutputReadLine()
+        proc.ErrorDataReceived.Subscribe(fun v ->
+            if not <| isNull v.Data then logger.LogError(v.Data)
+        )
+        |> d.Add
+        proc.BeginErrorReadLine()
+
+        proc.EnableRaisingEvents <- true
+        proc.Exited.Subscribe (fun _ ->
+            logger.LogInformation("UI process exited with code {exitCode}", proc.ExitCode)
+            onExit ()
+        )
+        |> d.Add
+
+        d.Add proc
+
+        (proc, d :> IDisposable)
 
     let inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
@@ -166,71 +215,47 @@ module internal UICommunication =
 
         let controllerMsgs = new Subject<_>()
         let uiMsgs = new Subject<_>()
+        let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+        let messages = Subject.Create<_, _>(
+            Observer.Create(Decode.fromString decoder >> uiMsgs.OnNext),
+            controllerMsgs |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
+        )
 
-        let loggerFactory =
-            let serviceCollection = ServiceCollection()
-            serviceCollection.AddLogging(fun config ->
-                config
-#if DEBUG
-                    .AddFilter(fun _ -> true)
-#else
-                    .AddFilter(fun level -> level >= LogLevel.Error)
-#endif
-                    .AddConsole()
-                    // .AddDebug()
-                |> ignore
-            ) |> ignore
-            serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
+        let loggerFactory = getLoggerFactory ()
         ds.Add loggerFactory
 
         let logger = loggerFactory.CreateLogger("UICommunication")
-        logger.LogInformation("Show scene with size {sceneSize}", sceneSize)
 
-        let (serviceUrl, webServerDisposable) = startWebServer controllerMsgs uiMsgs loggerFactory |> Async.RunSynchronously
-        ds.Add webServerDisposable
-        let socketUrl =
-            let uriBuilder = UriBuilder(serviceUrl)
-            uriBuilder.Scheme <- "ws"
-            uriBuilder.Path <- socketPath
-            uriBuilder.ToString()
-        let uiProcess = startUI sceneSize socketUrl
-        ds.Add uiProcess
+        let (socketUrl, serverDisposable) = WebSocketServer.start messages loggerFactory |> Async.RunSynchronously
+        ds.Add serverDisposable
 
         let uiLogger = loggerFactory.CreateLogger("UI process")
-        uiProcess.OutputDataReceived.Subscribe(fun v ->
-            uiLogger.LogInformation(v.Data)
-        )
-        |> ds.Add
-        uiProcess.BeginOutputReadLine()
-        uiProcess.ErrorDataReceived.Subscribe(fun v ->
-            uiLogger.LogError(v.Data)
-        )
-        |> ds.Add
-        uiProcess.BeginErrorReadLine()
-
-        uiProcess.EnableRaisingEvents <- true
-        uiProcess.Exited.Subscribe (fun _ ->
-            d.Dispose()
-        )
-        |> ds.Add
+        let (uiProcess, uiProcessDisposables) = startUI uiLogger (fun () -> d.Dispose()) sceneSize socketUrl
+        ds.Add uiProcessDisposables
 
         let mutableModel = MutableModel.create ()
 
         uiMsgs
         |> Observable.subscribe (function
-            | ControllerMsgConfirmation _ -> ()
-            | UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg) ->
+            | Ok (ControllerMsgConfirmation _) -> ()
+            | Ok (UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg)) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
-            | UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg)
-            | UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg) ->
+            | Ok (UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg))
+            | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg)) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
+            | Error e ->
+                logger.LogError("Can't deserialize UI response: {error}", e)
         )
         |> ds.Add
+
+        logger.LogDebug("Waiting for UI process to submit scene bounds.")
 
         mutableModel.Subject
         |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
         |> Observable.first
         |> Observable.wait
+
+        logger.LogDebug("UI process submitted scene bounds.")
 
         if uiProcess.MainWindowHandle = IntPtr.Zero
         then raise (GetItException "UI doesn't have a window")
@@ -280,7 +305,7 @@ module internal UICommunication =
             state.ResponseSubject
             |> Observable.firstIf (fun r ->
                 match r with
-                | ControllerMsgConfirmation msgId when msgId = messageId -> true
+                | Ok (ControllerMsgConfirmation msgId) when msgId = messageId -> true
                 | _ -> false
             )
             |> Observable.subscribe (fun p ->
