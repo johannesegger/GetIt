@@ -2,14 +2,8 @@ namespace GetIt
 
 open FSharp.Control
 open FSharp.Control.Reactive
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Hosting.Server.Features
-open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.DependencyInjection.Extensions
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.Hosting
 open System
 open System.ComponentModel
 open System.Diagnostics
@@ -20,7 +14,6 @@ open System.Reactive.Disposables
 open System.Reactive.Subjects
 open System.Runtime.InteropServices
 open System.Threading
-open System.Threading.Tasks
 open Thoth.Json.Net
 
 module internal UICommunication =
@@ -35,69 +28,7 @@ module internal UICommunication =
         }
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
-    module private WebSocketServer =
-        let private handleWebSocketRequest socketPath (messageSubject: ISubject<_, _>) appStoppingCt =
-            fun (httpContext: HttpContext) (next: Func<Task>) ->
-                async {
-                    if httpContext.Request.Path = PathString socketPath then
-                        if httpContext.WebSockets.IsWebSocketRequest then
-                            use! webSocket = httpContext.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
-                            let (wsConnection, wsSubject) = ReactiveWebSocket.setup webSocket
-                            use __ = wsConnection
-                            use __ =
-                                messageSubject
-                                |> Observable.subscribeObserver wsSubject
-                            use __ =
-                                wsSubject
-                                |> Observable.subscribeObserver messageSubject
-                            do! Async.Sleep Int32.MaxValue
-                        else
-                            httpContext.Response.StatusCode <- 400
-                    else
-                        do! next.Invoke() |> Async.AwaitTask
-                }
-                |> fun wf -> Async.HandleCancellation(wf, (fun e cont econt ccont -> cont ()), appStoppingCt)
-                |> fun wf -> Async.StartAsTask(wf, cancellationToken = appStoppingCt) :> Task
-
-        let start messageSubject (loggerFactory: ILoggerFactory) = async {
-            let socketPath = "/msgs"
-
-            let webHost =
-                WebHostBuilder()
-                    .UseKestrel()
-                    .ConfigureServices(fun services ->
-                        services.Replace(ServiceDescriptor(typeof<ILoggerFactory>, loggerFactory))
-                        |> ignore
-                    )
-                    .Configure(fun  (app: IApplicationBuilder) ->
-                        let appLifetime = app.ApplicationServices.GetService<IHostApplicationLifetime> ()
-                        app
-                            .UseWebSockets()
-                            .Use(handleWebSocketRequest socketPath messageSubject appLifetime.ApplicationStopping)
-                            |> ignore
-                    )
-                    .UseUrls("http://[::1]:0")
-                    .Build()
-
-            do! webHost.StartAsync() |> Async.AwaitTask
-
-            let socketUrl =
-                let serverUrl = webHost.ServerFeatures.Get<IServerAddressesFeature>().Addresses |> Seq.head
-                let uriBuilder = UriBuilder(serverUrl)
-                uriBuilder.Scheme <- "ws"
-                uriBuilder.Path <- socketPath
-                uriBuilder.ToString()
-
-            let serverDisposable =
-                Disposable.create (fun () ->
-                    webHost.StopAsync()
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-                )
-            return (socketUrl, serverDisposable)
-        }
-
-    let getLoggerFactory () =
+    let private getLoggerFactory () =
         let serviceCollection = ServiceCollection()
         serviceCollection.AddLogging(fun config ->
             config
@@ -116,48 +47,43 @@ module internal UICommunication =
         serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
 
     let private startUI (logger: ILogger) onExit sceneSize socketUrl =
-        let environmentVariables =
-            [
-                match sceneSize with
-                | SpecificSize sceneSize ->
-                    "GET_IT_SCENE_SIZE", sprintf "%dx%d" (int sceneSize.Width) (int sceneSize.Height)
-                | Maximized ->
-                    "GET_IT_START_MAXIMIZED", "1"
-                "GET_IT_SOCKET_URL", socketUrl
-            ]
-
-        let startInfo =
+        let uiContainerPath =
             let toOptionIfFileExists v = if File.Exists v then Some v else None
-            let uiContainerPath =
-                let fileName = "GetIt.UI.Container.exe"
-                Environment.GetEnvironmentVariable "GET_IT_UI_CONTAINER_DIRECTORY"
-                |> Option.ofObj
-                |> Option.map (fun d -> Path.Combine(d, fileName))
+            let fileName = "GetIt.UI.Container.exe"
+            Environment.GetEnvironmentVariable "GET_IT_UI_CONTAINER_DIRECTORY"
+            |> Option.ofObj
+            |> Option.map (fun d -> Path.Combine(d, fileName))
 #if DEBUG
-                // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
-                |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists)
-                |> Option.orElseWith (fun () ->
-                    let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                    Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists
-                )
+            // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
+            |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists)
+            |> Option.orElseWith (fun () ->
+                let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists
+            )
 #else
-                |> Option.orElseWith (fun () ->
-                    let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                    Path.Combine(thisAssemblyDir, "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
-                )
+            |> Option.orElseWith (fun () ->
+                let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                Path.Combine(thisAssemblyDir, "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
+            )
 #endif
-                |> Option.defaultValue fileName
-                |> Path.GetFullPath
-            let result =
-                ProcessStartInfo(
-                    uiContainerPath,
-                    WorkingDirectory = Path.GetDirectoryName uiContainerPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                )
-            environmentVariables
-            |> List.iter result.EnvironmentVariables.Add
-            result
+            |> Option.defaultValue fileName
+            |> Path.GetFullPath
+        let startInfo =
+            ProcessStartInfo(
+                uiContainerPath,
+                WorkingDirectory = Path.GetDirectoryName uiContainerPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            )
+        [
+            match sceneSize with
+            | SpecificSize sceneSize ->
+                "GET_IT_SCENE_SIZE", sprintf "%dx%d" (int sceneSize.Width) (int sceneSize.Height)
+            | Maximized ->
+                "GET_IT_START_MAXIMIZED", "1"
+            "GET_IT_SOCKET_URL", socketUrl
+        ]
+        |> List.iter startInfo.EnvironmentVariables.Add
 
         let proc = Process.Start startInfo // TODO wrap exceptions?
 
@@ -184,7 +110,7 @@ module internal UICommunication =
 
         (proc, d :> IDisposable)
 
-    let inputEvents =
+    let private inputEvents =
         Observable.Create (fun (obs: IObserver<InputEvent>) ->
             let observable = Windows.DeviceEvents.observable
 

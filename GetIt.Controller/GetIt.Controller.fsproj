@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Assembly.fs" />
     <Compile Include="Model.fs" />
+    <Compile Include="WebSocketServer.fs" />
     <Compile Include="UICommunication.fs" />
     <Compile Include="PrintConfig.fs" />
     <Compile Include="Player.fs" />
