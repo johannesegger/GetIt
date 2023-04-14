@@ -36,7 +36,7 @@ This challenge is all about [*arithmetic*](https://en.wikipedia.org/wiki/Arithme
 
 As you probably know from maths there is an infinite number of integer values and an [even larger number](https://en.wikipedia.org/wiki/Uncountable_set){:target="_blank"} of real numbers. But in C# we only have four bytes to represent an `int` and eight bytes for a `double`, so the number of different values is limited. Let's explore those limits and see what happens when we exceed them.
 
-1. Let the turtle tell us the minimum and maximum value for `int` using `Turtle.Say($"Minimum int: {int.MinValue}\r\nMaximum int: {int.MaxValue}");`.
+1. Let the turtle tell us the minimum and maximum value for `int` using `Turtle.Say($"Minimum int: {int.MinValue}", "Maximum int: {int.MaxValue}");`.
     > You can think of `int.MinValue` and `int.MaxValue` as variables except that you can't store another value in them. They are *constant*.
 1. If `int.MaxValue` is the maximum number that we can respresent with four bytes, what happens when we increase it by 1? Try `Turtle.Say($"Maximum int + 1: {int.MaxValue + 1}");`?
     > C# apparently is smart enough to detect an *overflow* and prevents us from running the program. We can tell C# to ignore overflows by using `Turtle.Say($"Maximum int + 1: {unchecked(int.MaxValue + 1)}");`. While very useful for demonstration purposes it's very unlikely that you'll ever need the `unchecked` operator. If you look at the *binary representation* of an `int` value in C# -- which we are not going to do because this challenge is already complicated enough -- it's very obvious why `int.MaxValue + 1` equals `int.MinValue`.

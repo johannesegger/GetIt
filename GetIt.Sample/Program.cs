@@ -69,7 +69,7 @@ namespace GetIt.Sample
                 Turtle.MoveInDirection(RandomNumberGenerator.GetInt32(5, 15));
                 if (Turtle.TouchesEdge())
                 {
-                    Turtle.Say("Ouch", 0.5);
+                    Turtle.Say(0.5, "Ouch");
                 }
                 Turtle.BounceOffWall();
                 Turtle.NextCostume();
@@ -81,7 +81,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Close the window and check if the controller process shuts down.", 2);
+            Turtle.Say(2, "Close the window and check if the controller process shuts down.");
 
             while (true)
             {
@@ -105,7 +105,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Move me with arrow keys. Press <Space> to quit.");
+            Turtle.Say("Move me with arrow keys.", "Press <Space> to quit.");
             using (Turtle.OnKeyDown(KeyboardKey.Up, player => player.ShutUp()))
             using (Turtle.OnKeyDown(KeyboardKey.Down, player => player.ShutUp()))
             using (Turtle.OnKeyDown(KeyboardKey.Left, player => player.ShutUp()))
@@ -132,8 +132,8 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Try and hit me, sucker!", 2);
-            Turtle.OnClick((player, mouseButton) => player.Say("Ouch, that hurts!", 2));
+            Turtle.Say(2, "Try and hit me, sucker!");
+            Turtle.OnClick((player, mouseButton) => player.Say(2, "Ouch, that hurts!"));
         }
 
         private static void SpeechBubbleWithUnicodeCharactersAndDynamicSize()
@@ -142,7 +142,7 @@ namespace GetIt.Sample
 
             Turtle.Sleep(1000);
 
-            Turtle.Say("🎉✔👍👋👍🏽", 2);
+            Turtle.Say(2, "🎉✔👍👋👍🏽");
 
             for (int i = 0; i < 500; i++)
             {
@@ -291,7 +291,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Move me with arrow keys", 2);
+            Turtle.Say(2, "Move me with arrow keys");
             while (!Game.IsKeyDown(KeyboardKey.Space))
             {
                 if (Game.IsKeyDown(KeyboardKey.Left) && Game.IsKeyDown(KeyboardKey.Up))
@@ -377,7 +377,7 @@ namespace GetIt.Sample
             Game.ShowSceneAndAddTurtle();
 
             Turtle.SetDirection(Directions.Right);
-            Turtle.Say("Try to eat some ants", 1);
+            Turtle.Say(1, "Try to eat some ants");
 
             void updateDirection(Player p, KeyboardKey key)
             {
@@ -455,7 +455,7 @@ namespace GetIt.Sample
         {
             Game.ShowSceneAndAddTurtle();
 
-            Turtle.Say("Window title is changing.", 1);
+            Turtle.Say(1, "Window title is changing.");
             Game.SetWindowTitle("1");
             Turtle.Sleep(1000);
             Game.SetWindowTitle(" ");
@@ -595,7 +595,7 @@ namespace GetIt.Sample
             for (int i = 0; i < 7; i++)
             {
                 player.MoveLeft(100);
-                Turtle.Say($"Distance: {Turtle.GetDistanceTo(player):F2}\r\nAngle: {Turtle.GetDirectionTo(player):F2}");
+                Turtle.Say($"Distance: {Turtle.GetDistanceTo(player):F2}", "Angle: {Turtle.GetDirectionTo(player):F2}");
                 player.Say("Press <Space> to continue.");
                 Game.WaitForKeyDown(KeyboardKey.Space);
             }
@@ -652,7 +652,7 @@ namespace GetIt.Sample
                 }
                 player.TurnOffPen();
                 player.SetDirection(Directions.Right);
-                player.Say(watch.Elapsed.ToString(), 1);
+                player.Say(1, watch.Elapsed.ToString());
             }
         }
 
@@ -761,7 +761,7 @@ namespace GetIt.Sample
 
             while (lives > 0)
             {
-                Turtle.Say($"Score: {score}\nLives: {lives}");
+                Turtle.Say($"Score: {score}", "Lives: {lives}");
 
                 using var __ = Game.BatchCommands();
                 foreach (var enemy in enemies)
@@ -806,7 +806,7 @@ namespace GetIt.Sample
             }
 
             Turtle.ShutUp();
-            Turtle.Say($"Game Over.\nScore: {score}");
+            Turtle.Say($"Game Over.", "Score: {score}");
         }
     }
 }

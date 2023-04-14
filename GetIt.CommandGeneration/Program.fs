@@ -14,6 +14,7 @@ type Parameter =
         Name: string
         Type: Type
         Description: string
+        Attributes: string option
     }
 
 type Result =
@@ -44,11 +45,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "position"
                         Type = typeof<GetIt.Position>
                         Description = "The absolute destination position."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -65,16 +68,19 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "x"
                         Type = typeof<float>
                         Description = "The absolute x coordinate of the destination position."
+                        Attributes = None
                     }
                     {
                         Name = "y"
                         Type = typeof<float>
                         Description = "The absolute y coordinate of the destination position."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -91,6 +97,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -107,16 +114,19 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "deltaX"
                         Type = typeof<float>
                         Description = "The change of the x coordinate."
+                        Attributes = None
                     }
                     {
                         Name = "deltaY"
                         Type = typeof<float>
                         Description = "The change of the y coordinate."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -133,11 +143,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "steps"
                         Type = typeof<float>
                         Description = "The number of steps."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -154,11 +166,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "steps"
                         Type = typeof<float>
                         Description = "The number of steps."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -175,11 +189,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "steps"
                         Type = typeof<float>
                         Description = "The number of steps."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -196,11 +212,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "steps"
                         Type = typeof<float>
                         Description = "The number of steps."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -217,11 +235,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                     {
                         Name = "steps"
                         Type = typeof<float>
                         Description = "The number of steps."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -245,6 +265,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be moved."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -266,11 +287,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                     {
                         Name = "angle"
                         Type = typeof<GetIt.Degrees>
                         Description = "The absolute angle."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -287,6 +310,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -303,6 +327,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -319,6 +344,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -335,6 +361,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -351,11 +378,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                     {
                         Name = "angle"
                         Type = typeof<GetIt.Degrees>
                         Description = "The relative angle."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -372,11 +401,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should be rotated."
+                        Attributes = None
                     }
                     {
                         Name = "angle"
                         Type = typeof<GetIt.Degrees>
                         Description = "The relative angle."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -393,6 +424,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that might touch an edge of the scene."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the player touches an edge, otherwise false." }
@@ -412,11 +444,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The first player that might be touched."
+                        Attributes = None
                     }
                     {
                         Name = "other"
                         Type = typeof<GetIt.Player>
                         Description = "The second player that might be touched."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the two players touch each other, otherwise false." }
@@ -440,6 +474,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should bounce off the wall."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -460,11 +495,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that pauses execution."
+                        Attributes = None
                     }
                     {
                         Name = "duration"
                         Type = typeof<TimeSpan>
                         Description = "The length of the pause."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -481,11 +518,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that pauses execution."
+                        Attributes = None
                     }
                     {
                         Name = "durationInMilliseconds"
                         Type = typeof<float>
                         Description = "The length of the pause in milliseconds."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -502,15 +541,17 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
+                        Attributes = None
                     }
                     {
                         Name = "text"
-                        Type = typeof<string>
+                        Type = typeof<string[]>
                         Description = "The content of the speech bubble."
+                        Attributes = Some "[<ParamArray>]"
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "Game.say player.PlayerId text" ]
+            Body = [ "Game.say player.PlayerId (String.concat Environment.NewLine text)" ]
         }
 
         {
@@ -523,6 +564,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -539,16 +581,19 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
-                    }
-                    {
-                        Name = "text"
-                        Type = typeof<string>
-                        Description = "The content of the speech bubble."
+                        Attributes = None
                     }
                     {
                         Name = "duration"
                         Type = typeof<TimeSpan>
                         Description = "The time span how long the speech bubble should be visible."
+                        Attributes = None
+                    }
+                    {
+                        Name = "text"
+                        Type = typeof<string[]>
+                        Description = "The content of the speech bubble."
+                        Attributes = Some "[<ParamArray>]"
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -570,20 +615,23 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
-                    }
-                    {
-                        Name = "text"
-                        Type = typeof<string>
-                        Description = "The content of the speech bubble."
+                        Attributes = None
                     }
                     {
                         Name = "durationInSeconds"
                         Type = typeof<float>
                         Description = "The number of seconds how long the speech bubble should be visible."
+                        Attributes = None
+                    }
+                    {
+                        Name = "text"
+                        Type = typeof<string[]>
+                        Description = "The content of the speech bubble."
+                        Attributes = Some "[<ParamArray>]"
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
-            Body = [ "sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)" ]
+            Body = [ "sayWithDuration player (TimeSpan.FromSeconds durationInSeconds) text" ]
         }
 
         {
@@ -596,11 +644,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
+                        Attributes = None
                     }
                     {
                         Name = "question"
                         Type = typeof<string>
                         Description = "The content of the speech bubble."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<string>; Description = "The text the user typed in." }
@@ -617,11 +667,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that the speech bubble belongs to."
+                        Attributes = None
                     }
                     {
                         Name = "question"
                         Type = typeof<string>
                         Description = "The content of the speech bubble."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the user pressed the \"confirm\" button, false otherwise." }
@@ -638,6 +690,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its pen turned on."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -654,6 +707,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its pen turned off."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -670,6 +724,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its pen toggled."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -686,11 +741,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its pen color set."
+                        Attributes = None
                     }
                     {
                         Name = "color"
                         Type = typeof<GetIt.RGBAColor>
                         Description = "The new color of the pen."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -707,11 +764,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its pen color shifted."
+                        Attributes = None
                     }
                     {
                         Name = "angle"
                         Type = typeof<GetIt.Degrees>
                         Description = "The angle that the HUE value should be shifted by."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -728,11 +787,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets its pen weight set."
+                        Attributes = None
                     }
                     {
                         Name = "weight"
                         Type = typeof<float>
                         Description = "The new weight of the pen."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -749,11 +810,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets its pen weight changed."
+                        Attributes = None
                     }
                     {
                         Name = "weight"
                         Type = typeof<float>
                         Description = "The change of the pen weight."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -770,11 +833,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets its size changed."
+                        Attributes = None
                     }
                     {
                         Name = "sizeFactor"
                         Type = typeof<float>
                         Description = "The factor the original size should be multiplied by."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -791,11 +856,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets its size changed."
+                        Attributes = None
                     }
                     {
                         Name = "change"
                         Type = typeof<float>
                         Description = "The change of the size factor."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -812,6 +879,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets its costume changed."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -828,6 +896,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that is sent to the back."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -844,6 +913,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that is sent to the front."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -860,6 +930,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to the mouse pointer." }
@@ -876,6 +947,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<float>; Description = "The distance from the player to the mouse pointer." }
@@ -892,12 +964,14 @@ let commands =
                         Name = "player1"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
 
                     {
                         Name = "player2"
                         Type = typeof<GetIt.Player>
                         Description = "The other player."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<GetIt.Degrees>; Description = "The direction from the player to another player." }
@@ -914,12 +988,14 @@ let commands =
                         Name = "player1"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
 
                     {
                         Name = "player2"
                         Type = typeof<GetIt.Player>
                         Description = "The other player."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<float>; Description = "The distance from the player to another player." }
@@ -936,6 +1012,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player to show."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -952,6 +1029,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player to hide."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -968,6 +1046,7 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that should get its visibility toggled."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<unit>; Description = "" }
@@ -984,16 +1063,19 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets passed to the event handler."
+                        Attributes = None
                     }
                     {
                         Name = "key"
                         Type = typeof<GetIt.KeyboardKey>
                         Description = "The keyboard key that should be listened to."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1010,11 +1092,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets passed to the event handler."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1031,21 +1115,25 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets passed to the event handler."
+                        Attributes = None
                     }
                     {
                         Name = "key"
                         Type = typeof<GetIt.KeyboardKey>
                         Description = "The keyboard key that should be listened to."
+                        Attributes = None
                     }
                     {
                         Name = "interval"
                         Type = typeof<TimeSpan>
                         Description = "How often the event handler should be called."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player, int>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1062,16 +1150,19 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player that gets passed to the event handler."
+                        Attributes = None
                     }
                     {
                         Name = "interval"
                         Type = typeof<TimeSpan>
                         Description = "How often the event handler should be called."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player, GetIt.KeyboardKey, int>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1088,11 +1179,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1109,11 +1202,13 @@ let commands =
                         Name = "player"
                         Type = typeof<GetIt.Player>
                         Description = "The player."
+                        Attributes = None
                     }
                     {
                         Name = "action"
                         Type = typeof<Action<GetIt.Player, GetIt.MouseClick>>
                         Description = "The event handler that should be called."
+                        Attributes = None
                     }
                 ]
             Result = { Type = typeof<IDisposable>; Description = "The disposable subscription." }
@@ -1174,7 +1269,10 @@ let main _argv =
                 yield sprintf "/// <returns>%s</returns>" command.Result.Description
                 let parameterListWithTypes =
                     parameters
-                    |> List.map (fun p -> sprintf "%s: %s" p.Name (getFullName p.Type))
+                    |> List.map (fun p ->
+                        let attributesText = p.Attributes |> Option.map (sprintf "%s ") |> Option.defaultValue ""
+                        sprintf "%s%s: %s" attributesText p.Name (getFullName p.Type)
+                    )
                     |> String.concat ", "
                     |> sprintf "(%s)"
                 let parameterNames =
@@ -1246,7 +1344,10 @@ let main _argv =
                 yield sprintf "/// <returns>%s</returns>" command.Result.Description
                 let parameterListWithTypes =
                     command.Parameters
-                    |> List.map (fun p -> sprintf "%s: %s" p.Name (getFullName p.Type))
+                    |> List.map (fun p ->
+                        let attributesText = p.Attributes |> Option.map (sprintf "%s ") |> Option.defaultValue ""
+                        sprintf "%s%s: %s" attributesText p.Name (getFullName p.Type)
+                    )
                     |> String.concat ", "
                 let parameterNames =
                     command.Parameters
