@@ -25,7 +25,7 @@ Follow the steps below to create the rainbow drawing app:
 1. It's always good advice to first explain to the user of your program what is going to happen and what the user should do.
 
     ```csharp
-    Turtle.Say("Let's create a rainbow drawing. I'm following your mouse.\r\nPress <Space> to start.");
+    Turtle.Say("Let's create a rainbow drawing. I'm following your mouse.", "Press <Space> to start.");
     ```
 
 1. We tell the user to press <kbd>Space</kbd> to start, so our program should wait for the space key to be pressed.
