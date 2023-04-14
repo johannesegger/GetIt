@@ -111,7 +111,6 @@ module internal UICommunication =
                     options.IncludeScopes <- true
                     options.TimestampFormat <- "[HH:mm:ss] "
                 )
-                // .AddDebug()
             |> ignore
         ) |> ignore
         serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
