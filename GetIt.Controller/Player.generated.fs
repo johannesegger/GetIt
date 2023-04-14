@@ -84,19 +84,19 @@ module private Raw =
     let sleepMilliseconds (player: GetIt.Player) (durationInMilliseconds: System.Double) =
         sleep player (TimeSpan.FromMilliseconds durationInMilliseconds)
 
-    let say (player: GetIt.Player) (text: System.String) =
-        Game.say player.PlayerId text
+    let say (player: GetIt.Player) (text: System.String[]) =
+        Game.say player.PlayerId (String.concat Environment.NewLine text)
 
     let shutUp (player: GetIt.Player) =
         Game.shutUp player.PlayerId
 
-    let sayWithDuration (player: GetIt.Player) (text: System.String) (duration: System.TimeSpan) =
+    let sayWithDuration (player: GetIt.Player) (duration: System.TimeSpan) (text: System.String[]) =
         say player text
         sleep player duration
         shutUp player
 
-    let sayWithDurationInSeconds (player: GetIt.Player) (text: System.String) (durationInSeconds: System.Double) =
-        sayWithDuration player text (TimeSpan.FromSeconds durationInSeconds)
+    let sayWithDurationInSeconds (player: GetIt.Player) (durationInSeconds: System.Double) (text: System.String[]) =
+        sayWithDuration player (TimeSpan.FromSeconds durationInSeconds) text
 
     let ask (player: GetIt.Player) (question: System.String) =
         Game.askString player.PlayerId question
@@ -346,7 +346,7 @@ type Turtle() =
     /// <summary>Shows a speech bubble next to the player. You can remove the speech bubble with <see cref="ShutUp"/>.</summary>
     /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
-    static member Say (text: System.String) =
+    static member Say ([<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.say Turtle.Player text
 
@@ -356,20 +356,20 @@ type Turtle() =
         Raw.shutUp Turtle.Player
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
-    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="duration">The time span how long the speech bubble should be visible.</param>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
-    static member Say (text: System.String, duration: System.TimeSpan) =
+    static member Say (duration: System.TimeSpan, [<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDuration Turtle.Player text duration
+        Raw.sayWithDuration Turtle.Player duration text
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
-    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
-    static member Say (text: System.String, durationInSeconds: System.Double) =
+    static member Say (durationInSeconds: System.Double, [<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDurationInSeconds Turtle.Player text durationInSeconds
+        Raw.sayWithDurationInSeconds Turtle.Player durationInSeconds text
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
     /// <param name="question">The content of the speech bubble.</param>
@@ -746,7 +746,7 @@ type PlayerExtensions() =
     /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
     [<Extension>]
-    static member Say(player: GetIt.Player, text: System.String) =
+    static member Say(player: GetIt.Player, [<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
         Raw.say player text
@@ -761,25 +761,25 @@ type PlayerExtensions() =
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>
-    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="duration">The time span how long the speech bubble should be visible.</param>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
     [<Extension>]
-    static member Say(player: GetIt.Player, text: System.String, duration: System.TimeSpan) =
+    static member Say(player: GetIt.Player, duration: System.TimeSpan, [<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDuration player text duration
+        Raw.sayWithDuration player duration text
 
     /// <summary>Shows a speech bubble next to the player for a specific time.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>
-    /// <param name="text">The content of the speech bubble.</param>
     /// <param name="durationInSeconds">The number of seconds how long the speech bubble should be visible.</param>
+    /// <param name="text">The content of the speech bubble.</param>
     /// <returns></returns>
     [<Extension>]
-    static member Say(player: GetIt.Player, text: System.String, durationInSeconds: System.Double) =
+    static member Say(player: GetIt.Player, durationInSeconds: System.Double, [<ParamArray>] text: System.String[]) =
         if obj.ReferenceEquals(player, null) then raise (ArgumentNullException "player")
         if obj.ReferenceEquals(text, null) then raise (ArgumentNullException "text")
-        Raw.sayWithDurationInSeconds player text durationInSeconds
+        Raw.sayWithDurationInSeconds player durationInSeconds text
 
     /// <summary>Shows a speech bubble with a text box next to the player and waits for the user to fill in the text box.</summary>
     /// <param name="player">The player that the speech bubble belongs to.</param>
