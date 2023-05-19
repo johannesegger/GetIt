@@ -8,7 +8,6 @@
     <Compile Include="Assembly.fs" />
     <Compile Include="Win32.fs" />
     <Compile Include="DeviceEvents.fs" />
-    <Compile Include="ScreenCapture.fs" />
   </ItemGroup>
 
   <ItemGroup>

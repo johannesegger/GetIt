@@ -1,13 +1,15 @@
-﻿module internal Program
+module internal Program
 
 open Expecto
 open GetIt
 open System.Drawing
 open System.IO
+open System
 
 let private getScreenshot communicationState =
-    let (PngImage imageData) = UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.WindowContent communicationState
-    // File.WriteAllBytes(sprintf "%d-%s.png" communicationState.UIWindowProcess.Id (System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff")), imageData)
+    System.Threading.Thread.Sleep(2000) // TODO this shouldn't be necessary
+    let (PngImage imageData) = UICommunication.makeScreenshot communicationState
+    // File.WriteAllBytes(sprintf "%s-%d.png" (System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff")) communicationState.UIWindowProcess.Id, imageData)
     use imageStream = new MemoryStream(imageData)
     new Bitmap(imageStream)
 
@@ -622,4 +624,7 @@ let tests =
 
 [<EntryPoint>]
 let main args =
-    runTestsWithCLIArgs [] args tests
+    match Environment.GetEnvironmentVariable "GET_IT_SOCKET_URL" |> Option.ofObj with
+    | Some socketUrl ->
+        GetIt.UI.Container.Program.main [||]
+    | None -> runTestsWithCLIArgs [] args tests

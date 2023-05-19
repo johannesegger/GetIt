@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>winexe</OutputType>
-    <TargetFramework>net6.0-windows10.0.19041</TargetFramework>
-    <UseWpf>true</UseWpf>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MessageProcessing.fs" />
@@ -11,7 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
-    <ProjectReference Include="..\GetIt.UI\GetIt.UI.csproj" />
+    <ProjectReference Include="..\GetIt.UIV2\GetIt.UIV2.csproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -1,5 +1,7 @@
 source https://api.nuget.org/v3/index.json
 
+nuget FSharp.Core
+
 group Controller
     source https://api.nuget.org/v3/index.json
 
@@ -10,7 +12,6 @@ group Controller
 
     nuget ColorCode.Html
     nuget FSharp.Control.Reactive
-    nuget FSharp.Core
     nuget FSharp.Data
     nuget Fue
     nuget SharpLibWin32
@@ -24,11 +25,26 @@ group WpfUI
 
     nuget Chromely
     nuget FSharp.Control.Reactive
-    nuget FSharp.Core
     nuget ModernWpfUI = 0.9.1 # build error in 0.9.2
     nuget ReactiveUI.Fody
     nuget ReactiveUI.WPF
     nuget SharpVectors.Reloaded
+
+group UIV2
+    source https://api.nuget.org/v3/index.json
+
+    # use NuGet-like strategy because this package will be used preferrably from projects that use NuGet
+    strategy: min
+
+    storage: none
+
+    nuget Avalonia
+    nuget Avalonia.Desktop
+    nuget Avalonia.Diagnostics
+    nuget Avalonia.ReactiveUI
+    nuget Avalonia.Svg.Skia
+    nuget ReactiveUI.Fody
+    nuget XamlNameReferenceGenerator
 
 group Test
     source https://api.nuget.org/v3/index.json
@@ -36,4 +52,3 @@ group Test
     storage: none
 
     nuget Expecto
-    nuget FSharp.Core

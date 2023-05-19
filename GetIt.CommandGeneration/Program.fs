@@ -250,8 +250,8 @@ let commands =
             Result = { Type = typeof<unit>; Description = "" }
             Body =
                 [
-                    "let x = rand.Next(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)"
-                    "let y = rand.Next(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)"
+                    "let x = RandomNumberGenerator.GetInt32(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)"
+                    "let y = RandomNumberGenerator.GetInt32(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)"
                     "moveToXY player (float x) (float y)"
                 ]
             }
@@ -1154,8 +1154,6 @@ let main _argv =
         |> List.map (fun line -> line.TrimEnd())
         |> List.append
             [ "module private Raw ="
-              "    let private rand = Random()"
-              ""
               "    let private touchesTopOrBottomEdge (player: GetIt.Player) ="
               "        player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom"
               ""
@@ -1275,10 +1273,12 @@ let main _argv =
               "type PlayerExtensions() =" ]
 
     let prelude =
-        [ "namespace GetIt"
-          ""
-          "open System"
-          "open System.Threading"
+        [
+            "namespace GetIt"
+            ""
+            "open System"
+            "open System.Security.Cryptography"
+            "open System.Threading"
         ]
     let lines =
         [

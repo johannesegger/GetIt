@@ -20,4 +20,6 @@
     <PackageReference Include="FSharp.Data" Version="3.3.3" />
     <PackageReference Include="Polly" Version="7.2.0" />
   </ItemGroup>
+
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

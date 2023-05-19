@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace GetIt.Sample
 {
@@ -174,10 +175,9 @@ namespace GetIt.Sample
                     .WithPosition(Game.SceneBounds.Right - 20, 0),
                 controlRightPlayer);
 
-            var rand = new Random();
             void controlBall(Player player)
             {
-                player.SetDirection(rand.Next(360));
+                player.SetDirection(RandomNumberGenerator.GetInt32(360));
                 while (true)
                 {
                     player.MoveInDirection(10);
@@ -218,7 +218,6 @@ namespace GetIt.Sample
             string input = Turtle.Ask("How old are you?");
             while (!int.TryParse(input, out age))
             {
-                Turtle.Sleep(500);
                 input = Turtle.Ask("Are you kidding? That's not a number. How old are you?");
             }
             Turtle.Say($"{age}? You're looking good for your age!");
@@ -664,7 +663,6 @@ namespace GetIt.Sample
             Turtle.ShutUp();
             Turtle.MoveTo(0, Game.SceneBounds.Top - 20);
             Turtle.TurnDown();
-            var generator = new Random();
 
             var lives = 3;
             var score = 0;
@@ -674,9 +672,9 @@ namespace GetIt.Sample
                 .Select(i =>
                 {
                     int getRangeY(int i) => (int)(Game.SceneBounds.Size.Height / enemyCount * i + Game.SceneBounds.Bottom);
-                    double generateYPosition() => generator.Next(getRangeY(i), getRangeY(i + 1));
+                    double generateYPosition() => RandomNumberGenerator.GetInt32(getRangeY(i), getRangeY(i + 1));
 
-                    var speed = generator.Next(5, 15);
+                    var speed = RandomNumberGenerator.GetInt32(5, 15);
 
                     if (i % 2 == 0)
                     {
@@ -759,6 +757,8 @@ namespace GetIt.Sample
                     lives--;
                     Turtle.MoveTo(0, Game.SceneBounds.Top - 20);
                 }
+
+                Game.Sleep(50);
             }
 
             Turtle.ShutUp();

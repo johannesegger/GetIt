@@ -1,5 +1,4 @@
 group Controller
 ColorCode.Html
 FSharp.Control.Reactive
-FSharp.Core
 Fue

@@ -1,11 +1,10 @@
 namespace GetIt
 
 open System
+open System.Security.Cryptography
 open System.Threading
 
 module private Raw =
-    let private rand = Random()
-
     let private touchesTopOrBottomEdge (player: GetIt.Player) =
         player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom
 
@@ -44,8 +43,8 @@ module private Raw =
             (Math.Sin(directionRadians) * steps)
 
     let moveToRandomPosition (player: GetIt.Player) =
-        let x = rand.Next(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)
-        let y = rand.Next(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)
+        let x = RandomNumberGenerator.GetInt32(int (Game.getCurrentModel().SceneBounds.Left), int (Game.getCurrentModel().SceneBounds.Right) + 1)
+        let y = RandomNumberGenerator.GetInt32(int (Game.getCurrentModel().SceneBounds.Bottom), int (Game.getCurrentModel().SceneBounds.Top) + 1)
         moveToXY player (float x) (float y)
 
     let setDirection (player: GetIt.Player) (angle: GetIt.Degrees) =

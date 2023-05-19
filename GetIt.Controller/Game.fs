@@ -39,12 +39,23 @@ module internal Game =
         doWithCommunicationState (fun s -> fn s.MutableModel)
 
     let showScene sceneSize =
-        if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
-            raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
+        match Environment.GetEnvironmentVariable "GET_IT_SOCKET_URL" |> Option.ofObj with
+        | Some socketUrl ->
+            // TODO this feels ugly
+            GetIt.UI.Container.Program.main [||]
+            |> Environment.Exit
+            failwith "Unreachable"
+        | None ->
+            if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
+                raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
 
-        let state = UICommunication.showScene sceneSize
-        communicationState <- Some state
-        Disposable.create disposeCommunicationState
+            let state = UICommunication.showScene sceneSize
+            state.CancellationToken.Register(fun () ->
+                printfn "Shutting down controller process"
+                Environment.Exit 0
+            ) |> ignore
+            communicationState <- Some state
+            Disposable.create disposeCommunicationState
 
     let addPlayer playerData = doWithCommunicationState (UICommunication.addPlayer playerData)
     let removePlayer playerId = doWithCommunicationState (UICommunication.removePlayer playerId)
@@ -53,7 +64,7 @@ module internal Game =
     let clearScene () =  doWithCommunicationState UICommunication.clearScene
     let startBatch () = doWithCommunicationState UICommunication.startBatch
     let applyBatch () = doWithCommunicationState UICommunication.applyBatch
-    let makeScreenshot () = doWithCommunicationState (UICommunication.makeScreenshot UICommunication.ScreenshotCaptureRegion.FullWindow)
+    let makeScreenshot () = doWithCommunicationState UICommunication.makeScreenshot
     let setPosition playerId position = doWithCommunicationState (UICommunication.setPosition playerId position)
     let changePosition playerId position = doWithCommunicationState (UICommunication.changePosition playerId position)
     let setDirection playerId angle = doWithCommunicationState (UICommunication.setDirection playerId angle)

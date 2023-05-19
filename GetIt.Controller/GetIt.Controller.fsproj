@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
     <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
+    <ProjectReference Include="..\GetIt.UI.Container\GetIt.UI.Container.fsproj" />
   </ItemGroup>
 
   <Import Project="..\.paket\Paket.Restore.targets" />

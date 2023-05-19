@@ -26,6 +26,7 @@ type internal ControllerMsg =
     | BringToFront of PlayerId
     | SetVisibility of PlayerId * bool
     | ToggleVisibility of PlayerId
+    | CaptureScene
     | StartBatch
     | ApplyBatch
 
@@ -33,6 +34,7 @@ type internal UIMsg =
     | SetSceneBounds of Rectangle
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
+    | CapturedScene of PngImage
 
 type internal ControllerToUIMsg =
     | ControllerMsg of Guid * ControllerMsg

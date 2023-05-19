@@ -1,10 +1,20 @@
+module GetIt.UI.Container.Program
+
+open Avalonia
+open Avalonia.ReactiveUI
+open FSharp.Control.Reactive
 open GetIt
-open GetIt.UI
+open GetIt.UIV2
+open GetIt.UIV2.ViewModels
+open global.ReactiveUI
 open System
 open System.Net.WebSockets
 open System.Reactive.Concurrency
 open System.Threading
 open System.Windows
+open Avalonia.Controls.ApplicationLifetimes
+open Avalonia.Controls
+open Avalonia.Threading
 
 let tryGetEnvVar = Environment.GetEnvironmentVariable >> Option.ofObj
 
@@ -34,19 +44,18 @@ let main argv =
     let socketUrl = tryGetEnvVar "GET_IT_SOCKET_URL" |> Option.bind tryParseUrl
     match socketUrl with
     | Some socketUrl ->
-        let mainViewModel = MainViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
-        let app = Application(MainWindow = MainWindow(DataContext = mainViewModel))
-        app.MainWindow.Show()
-
+        let mainViewModel = MainWindowViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
         use connection = new ClientWebSocket()
         connection.ConnectAsync(socketUrl, CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
         try
             let (wsConnection, wsSubject) = ReactiveWebSocket.setup connection
             use __ = wsConnection
-            let uiScheduler = DispatcherScheduler(app.Dispatcher)
-            use __ = MessageProcessing.run uiScheduler mainViewModel wsSubject
-
-            app.Run()
+            use __ = MessageProcessing.run AvaloniaScheduler.Instance mainViewModel wsSubject
+            AppBuilder.Configure<App>(fun () -> App(ViewModel = mainViewModel))
+                .UsePlatformDetect()
+                .LogToTrace(Logging.LogEventLevel.Debug)
+                .UseReactiveUI()
+                .StartWithClassicDesktopLifetime(argv)
         finally
             if connection.State = WebSocketState.Open then
                 connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously

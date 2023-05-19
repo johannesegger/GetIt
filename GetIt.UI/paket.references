@@ -1,5 +1,5 @@
-group WpfUI
 FSharp.Core
+group WpfUI
 ReactiveUI.Fody
 ReactiveUI.WPF
 SharpVectors.Reloaded

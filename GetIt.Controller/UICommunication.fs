@@ -32,11 +32,7 @@ module internal UICommunication =
         let serviceCollection = ServiceCollection()
         serviceCollection.AddLogging(fun config ->
             config
-#if DEBUG
-                .AddFilter(fun _ -> true)
-#else
-                .AddFilter(fun level -> level >= LogLevel.Error)
-#endif
+                .SetMinimumLevel(LogLevel.Debug)
                 .AddSimpleConsole(fun options ->
                     options.SingleLine <- true
                     options.IncludeScopes <- true
@@ -47,27 +43,7 @@ module internal UICommunication =
         serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
 
     let private startUI (logger: ILogger) onExit sceneSize socketUrl =
-        let uiContainerPath =
-            let toOptionIfFileExists v = if File.Exists v then Some v else None
-            let fileName = "GetIt.UI.Container.exe"
-            Environment.GetEnvironmentVariable "GET_IT_UI_CONTAINER_DIRECTORY"
-            |> Option.ofObj
-            |> Option.map (fun d -> Path.Combine(d, fileName))
-#if DEBUG
-            // Ensure that UI container is built using `dotnet build .\GetIt.UI.Container\`
-            |> Option.orElse (Path.Combine(".", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists)
-            |> Option.orElseWith (fun () ->
-                let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                Path.Combine(thisAssemblyDir, "..", "..", "..", "..", "GetIt.UI.Container", "bin", "Debug", "net6.0-windows10.0.19041", fileName) |> toOptionIfFileExists
-            )
-#else
-            |> Option.orElseWith (fun () ->
-                let thisAssemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                Path.Combine(thisAssemblyDir, "tools", "GetIt.UI.Container", fileName) |> toOptionIfFileExists
-            )
-#endif
-            |> Option.defaultValue fileName
-            |> Path.GetFullPath
+        let uiContainerPath = Environment.ProcessPath
         let startInfo =
             ProcessStartInfo(
                 uiContainerPath,
@@ -166,7 +142,8 @@ module internal UICommunication =
             | Ok (UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg)) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
             | Ok (UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg))
-            | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg)) ->
+            | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg))
+            | Ok (UIToControllerMsg.UIMsg (CapturedScene _ as uiMsg)) ->
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
             | Error e ->
                 logger.LogError("Can't deserialize UI response: {error}", e)
@@ -182,8 +159,9 @@ module internal UICommunication =
 
         logger.LogDebug("UI process submitted scene bounds.")
 
-        if uiProcess.MainWindowHandle = IntPtr.Zero
-        then raise (GetItException "UI doesn't have a window")
+        SpinWait.SpinUntil(fun () -> uiProcess.MainWindowHandle <> IntPtr.Zero)
+
+        logger.LogDebug("Found main window handle of UI process.")
 
         inputEvents
         |> Observable.subscribe (function
@@ -233,20 +211,20 @@ module internal UICommunication =
         }
 
     let private sendMessage state message =
-        use waitHandle = new ManualResetEventSlim()
+        // use waitHandle = new ManualResetEventSlim()
         let messageId = Guid.NewGuid()
-        use __ =
-            state.ResponseSubject
-            |> Observable.firstIf (fun r ->
-                match r with
-                | Ok (ControllerMsgConfirmation msgId) when msgId = messageId -> true
-                | _ -> false
-            )
-            |> Observable.subscribe (fun p ->
-                waitHandle.Set()
-            )
+        // use __ =
+        //     state.ResponseSubject
+        //     |> Observable.firstIf (fun r ->
+        //         match r with
+        //         | Ok (ControllerMsgConfirmation msgId) when msgId = messageId -> true
+        //         | _ -> false
+        //     )
+        //     |> Observable.subscribe (fun p ->
+        //         waitHandle.Set()
+        //     )
         state.CommandSubject.OnNext (messageId, message)
-        waitHandle.Wait(state.CancellationToken)
+        // waitHandle.Wait(state.CancellationToken)
 
     let private sendMessageAndWaitForResponse state msg responseFilter =
         let mutable response = None
@@ -284,18 +262,11 @@ module internal UICommunication =
     let clearScene state =
         sendMessage state ClearScene
 
-    type ScreenshotCaptureRegion = FullWindow | WindowContent
-
-    let makeScreenshot region state =
-        if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
-            let region' =
-                match region with
-                | FullWindow -> Windows.CaptureRegion.FullWindow
-                | WindowContent -> Windows.CaptureRegion.WindowContent
-            Thread.Sleep 500 // calm down
-            Windows.ScreenCapture.captureWindow state.UIWindowProcess.MainWindowHandle region'
-        else
-            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+    let makeScreenshot state =
+        sendMessageAndWaitForResponse
+            state
+            CaptureScene
+            (fst >> function | UIMsg (CapturedScene scene) -> Some scene | _ -> None)
 
     let startBatch state =
         sendMessage state StartBatch

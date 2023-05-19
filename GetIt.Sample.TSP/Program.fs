@@ -24,8 +24,8 @@ let main argv =
     use __ = Game.OnKeyDown(KeyboardKey.Escape, fun _ -> cts.Cancel())
 
     let problem = GetIt.Sample.TSP.Samples.berlin52
-    Turtle.Say ($"Trying to solve %s{problem.Name} with %d{problem.Coordinates.Length} cities.\nPress <Space> to start.");
-    Game.WaitForKeyDown(KeyboardKey.Space);
+    Turtle.Say ($"Trying to solve %s{problem.Name} with %d{problem.Coordinates.Length} cities.\nPress <Space> to start.")
+    Game.WaitForKeyDown(KeyboardKey.Space)
 
     let rand = Random()
 

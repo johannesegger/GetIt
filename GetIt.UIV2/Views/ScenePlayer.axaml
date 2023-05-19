@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:GetIt.UIV2"
+             xmlns:vm="using:GetIt.UIV2.ViewModels"
+             xmlns:s="using:System"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             d:DataContext="{x:Static local:DesignTimeData.Player}"
+             x:Class="GetIt.UIV2.Views.ScenePlayer">
+    <Canvas>
+        <Image Source="{Binding Image}" Width="{Binding Size.Width}" Height="{Binding Size.Height}">
+            <Image.RenderTransform>
+                <TransformGroup>
+                    <RotateTransform Angle="{Binding Rotation}" />
+                    <TranslateTransform X="{Binding Offset.X}" Y="{Binding Offset.Y}" />
+                </TransformGroup>
+            </Image.RenderTransform>
+        </Image>
+        <Grid DataContext="{Binding SpeechBubble}"
+              DataContextChanged="SpeechBubbleBorder_DataContextChanged"
+              IsVisible="{Binding ., Converter={x:Static ObjectConverters.IsNotNull}}"
+              PropertyChanged="SpeechBubbleBorder_PropertyChanged">
+            <Grid.RenderTransform>
+                <TranslateTransform X="{Binding Offset.X}" Y="{Binding Offset.Y}" />
+            </Grid.RenderTransform>
+            <Path Data="{Binding Geometry}"
+                  Stroke="#33000000"
+                  Fill="#ccf0f0f0"
+                  StrokeThickness="2">
+                <Path.RenderTransform>
+                    <ScaleTransform ScaleX="{Binding ScaleX}" />
+                </Path.RenderTransform>
+            </Path>
+            <ContentControl Content="{Binding .}"
+                            Margin="15 15 15 30"
+                            MinWidth="50"
+                            MaxWidth="200">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="{x:Type vm:SaySpeechBubbleViewModel}">
+                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:AskTextSpeechBubbleViewModel}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
+                            <TextBox Text="{Binding Answer}"
+                                     Initialized="SpeechBubbleTextAnswer_Initialized"
+                                     DataContextChanged="SpeechBubbleTextAnswer_DataContextChanged">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Command="{Binding ConfirmCommand}" Gesture="Enter" />
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                        </StackPanel>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:AskBoolSpeechBubbleViewModel}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" LineHeight="20" />
+                            <UniformGrid Rows="1">
+                                <Button Content="✔"
+                                        Command="{Binding ConfirmCommand}"
+                                        Foreground="PaleGreen"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0 0 5 0">
+                                    <Button.CommandParameter>
+                                        <s:Boolean>True</s:Boolean>
+                                    </Button.CommandParameter>
+                                </Button>
+                                <Button Content="❌"
+                                        Command="{Binding ConfirmCommand}"
+                                        Foreground="Tomato"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="5 0 0 0">
+                                    <Button.CommandParameter>
+                                        <s:Boolean>False</s:Boolean>
+                                    </Button.CommandParameter>
+                                </Button>
+                            </UniformGrid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+        </Grid>
+    </Canvas>
+</UserControl>

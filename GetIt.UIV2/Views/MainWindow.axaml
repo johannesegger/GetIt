@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:GetIt.UIV2"
+        xmlns:views="using:GetIt.UIV2.Views"
+        xmlns:vm="using:GetIt.UIV2.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="{Binding SceneSize.Width}" d:DesignHeight="{Binding SceneSize.Height}"
+        x:Class="GetIt.UIV2.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        d:DataContext="{x:Static local:DesignTimeData.Main}"
+        Title="{Binding Title}"
+        SizeToContent="{Binding SizeToContent}"
+        Icon="/Assets/icon.ico"
+        WindowState="{Binding WindowState}">
+    <DockPanel>
+        <ScrollViewer DockPanel.Dock="Bottom" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Width="{Binding SceneSize.Width}">
+            <Border Background="LightGray" Padding="20 10" IsVisible="{Binding ShowInfoBar}">
+                <ItemsControl Items="{Binding Players}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                                <Image Source="{Binding Image}" Width="30" Height="30" Margin="0 0 10 0">
+                                    <Image.RenderTransform>
+                                        <RotateTransform Angle="{Binding Rotation}" />
+                                    </Image.RenderTransform>
+                                </Image>
+                                <TextBlock VerticalAlignment="Center" Text="{Binding InfoText}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+        </ScrollViewer>
+
+        <Border PropertyChanged="Scene_PropertyChanged">
+            <Canvas ClipToBounds="True"
+                    Width="{Binding SceneSize.Width}"
+                    Height="{Binding SceneSize.Height}">
+                <Canvas.Background>
+                    <ImageBrush Source="{Binding BackgroundBitmapImage}" Stretch="UniformToFill" />
+                </Canvas.Background>
+                <ItemsControl Items="{Binding PenLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Line StartPoint="{Binding StartPoint}" EndPoint="{Binding EndPoint}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas ClipToBounds="False" Width="{Binding $parent[Canvas].Width}" Height="{Binding $parent[Canvas].Height}"></Canvas>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <ItemsControl Name="players" Items="{Binding Players}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas Width="{Binding $parent[Canvas].Width}" Height="{Binding $parent[Canvas].Height}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <views:ScenePlayer IsVisible="{Binding IsVisible}"
+                                Width="{Binding $parent[Canvas].Width}"
+                                Height="{Binding $parent[Canvas].Height}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.Styles>
+                        <Style Selector="ItemsControl > ContentPresenter">
+                            <Setter Property="ZIndex" Value="{Binding ZIndex}"/>
+                        </Style>
+                    </ItemsControl.Styles>
+                </ItemsControl>
+            </Canvas>
+        </Border>
+    </DockPanel>
+</Window>

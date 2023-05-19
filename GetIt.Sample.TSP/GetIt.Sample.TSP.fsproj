@@ -15,4 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
   </ItemGroup>
+
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -90,82 +90,12 @@ module internal Win32 =
     [<DllImport("user32.dll")>]
     extern bool UnregisterClass(uint16 classAtom, IntPtr hInstance)
 
-    [<DllImport("user32.dll")>]
-    extern bool SetForegroundWindow(IntPtr hWnd)
-
-    type ShowWindowCommand =
-        | SW_HIDE = 0
-        | SW_SHOWNORMAL = 1
-        | SW_SHOWMINIMIZED = 2
-        | SW_SHOWMAXIMIZED = 3
-        | SW_SHOWNOACTIVATE = 4
-        | SW_SHOW = 5
-        | SW_MINIMIZE = 6
-        | SW_SHOWMINNOACTIVE = 7
-        | SW_SHOWNA = 8
-        | SW_RESTORE = 9
-        | SW_SHOWDEFAULT = 10
-        | SW_FORCEMINIMIZE = 11
-
-    [<DllImport("user32.dll")>]
-    extern bool ShowWindow(IntPtr hWnd, ShowWindowCommand nCmdShow)
-
     [<Struct; StructLayout(LayoutKind.Sequential)>]
     type Rect =
         val mutable Left: int
         val mutable Top: int
         val mutable Right: int
         val mutable Bottom: int
-
-    [<DllImport("user32.dll", SetLastError=true)>]
-    extern bool GetWindowRect(IntPtr hWnd, Rect& rect)
-
-    type DWMWINDOWATTRIBUTE =
-        | NCRenderingEnabled = 1u
-        | NCRenderingPolicy = 2u
-        | TransitionsForceDisabled = 3u
-        | AllowNCPaint = 4u
-        | CaptionButtonBounds = 5u
-        | NonClientRtlLayout = 6u
-        | ForceIconicRepresentation = 7u
-        | Flip3DPolicy = 8u
-        | ExtendedFrameBounds = 9u
-        | HasIconicBitmap = 10u
-        | DisallowPeek = 11u
-        | ExcludedFromPeek = 12u
-        | Cloak = 13u
-        | Cloaked = 14u
-        | FreezeRepresentation = 15u
-
-    [<DllImport("dwmapi.dll")>]
-    extern int DwmGetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, Rect& pvAttribute, int cbAttribute)
-
-    [<DllImport("user32.dll", SetLastError=true)>]
-    extern bool GetClientRect(IntPtr hWnd, Rect& rect)
-
-    [<DllImport("user32.dll", SetLastError=true)>]
-    extern bool ClientToScreen(IntPtr hWnd, WinPoint& point)
-
-    [<DllImport("gdi32.dll")>]
-    extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop)
-    [<DllImport("gdi32.dll")>]
-    extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight)
-    [<DllImport("gdi32.dll")>]
-    extern IntPtr CreateCompatibleDC(IntPtr hDC)
-    [<DllImport("gdi32.dll")>]
-    extern bool DeleteDC(IntPtr hDC)
-    [<DllImport("gdi32.dll")>]
-    extern bool DeleteObject(IntPtr hObject)
-    [<DllImport("gdi32.dll")>]
-    extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject)
-
-    [<DllImport("user32.dll")>]
-    extern IntPtr GetWindowDC(IntPtr hWnd)
-    [<DllImport("user32.dll")>]
-    extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC)
-
-    [<DllImport("user32.dll")>]
-    extern bool SetProcessDpiAwarenessContext(int value)
 
     type WindowPlacementFlags =
         | WPF_ASYNCWINDOWPLACEMENT = 0x04u
