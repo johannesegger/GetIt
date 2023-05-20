@@ -50,6 +50,7 @@ module internal Game =
                 raise (GetItException "Connection to UI already set up. Do you call `Game.ShowScene()` multiple times?")
 
             let state = UICommunication.showScene sceneSize
+            // Ensure controller process is stopped, even if we have e.g. an endless loop
             state.CancellationToken.Register(fun () ->
                 printfn "Shutting down controller process"
                 Environment.Exit 0

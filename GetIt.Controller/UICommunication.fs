@@ -191,15 +191,6 @@ module internal UICommunication =
         )
         |> ds.Add
 
-#if !DEBUG
-        // Ensure controller process is stopped, even if we have e.g. an endless loop
-        Disposable.create (fun () ->
-            logger.LogInformation("Shutting down controller")
-            Environment.Exit(0)
-        )
-        |> ds.Add
-#endif
-
         d.Disposable <- new CompositeDisposable(ds |> Seq.rev)
         {
             Disposable = d
