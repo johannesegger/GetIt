@@ -48,8 +48,8 @@ jobs:
     - name: Build NuGet package
       run: .paket\paket.exe pack --build-config Release --minimum-from-lock-file --version ${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
       
-    - name: Add reference to ASP.NET Core packages
-      run: .\add-aspnetcore-reference.ps1 GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
+    - name: Fix NuGet package
+      run: .\fix-nupkg.ps1 GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
 
     - name: Create environment variables for dependent workflows
       run: |

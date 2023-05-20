@@ -11,6 +11,8 @@ $tempZipStream = New-Object System.IO.MemoryStream(,$zipBytes)
 $tempZipStream.CopyTo($zipStream)
 $zipStream.Position = 0
 $zipArchive = New-Object System.IO.Compression.ZipArchive($zipStream, [System.IO.Compression.ZipArchiveMode]::Update, $true)
+
+# Add ASP.NET Core reference
 $zipEntry = $zipArchive.GetEntry("GetIt.nuspec")
 
 $entryStream = $zipEntry.Open()
@@ -51,6 +53,12 @@ $entryStream.SetLength($formattedXmlStream.Length)
 $formattedXmlStream.CopyTo($entryStream)
 $entryStream.Close()
 
-$zipArchive.Dispose()
+# Remove *.exe
+foreach ($path in @("lib/net6.0/GetIt.UI.Container.exe", "lib/net6.0/GetIt.UIV2.exe")) {
+    $zipEntry = $zipArchive.GetEntry($path)
+    $zipEntry.Delete()
+}
 
+# Write package
+$zipArchive.Dispose()
 [System.IO.File]::WriteAllBytes($nupkgPath, $zipStream.ToArray())
