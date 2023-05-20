@@ -103,7 +103,6 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
         let captureSize = PixelSize.FromSize(mainWindow.Bounds.Size, scale = 1.)
         let captureDpi = new Vector(96, 96)
         use bitmap = new RenderTargetBitmap(captureSize, captureDpi)
-        Thread.Sleep(500) // calm down
         bitmap.Render(mainWindow)
         use targetStream = new MemoryStream()
         bitmap.Save(targetStream)
@@ -215,6 +214,7 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
         updatePlayer playerId (fun p -> p.IsVisible <- not p.IsVisible)
         , None
     | CaptureScene ->
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs(Avalonia.Threading.DispatcherPriority.Layout)
         let image = captureScene ()
         model, Some (CapturedScene image)
     | StartBatch ->
