@@ -9,6 +9,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        this.Opened += (s, e) =>
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                vm.IsLoaded = true;
+            }
+        };
     }
 
     public void Scene_PropertyChanged(object sender, AvaloniaPropertyChangedEventArgs e)

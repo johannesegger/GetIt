@@ -34,6 +34,8 @@ class MainWindowViewModel : ViewModelBase
     [Reactive]
     public SizeToContent SizeToContent { get; set; }
     [Reactive]
+    public bool IsLoaded { get; set; }
+    [Reactive]
     public SvgSource? BackgroundImage { get; set; }
     private readonly ObservableAsPropertyHelper<IBitmap?> backgroundBitmapImage;
     public IBitmap? BackgroundBitmapImage => backgroundBitmapImage.Value;

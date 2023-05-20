@@ -244,8 +244,9 @@ let private processControllerMessage (mainViewModel: MainWindowViewModel) model 
 let run scheduler (mainViewModel: MainWindowViewModel) (messageSubject: ISubject<_, _>) =
     let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
     [
-        mainViewModel.WhenAnyValue(fun p -> p.SceneSize)
-        |> Observable.map(fun v -> UIMsg (SetSceneBounds({ Position = { X = -v.Width / 2.; Y = -v.Height / 2. }; Size = v })))
+        mainViewModel.WhenAnyValue(fun p -> p.IsLoaded)
+        |> Observable.firstIf id
+        |> Observable.map(fun v -> UIMsg (SetSceneBounds mainViewModel.SceneBounds))
 
         mainViewModel.Players.ToObservableChangeSet<_>().ToCollection()
         |> Observable.switchMap (fun players ->
