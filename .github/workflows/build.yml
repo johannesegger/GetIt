@@ -39,9 +39,6 @@ jobs:
     - name: Build GetIt.Controller
       run: dotnet build .\GetIt.Controller -c Release
 
-    - name: Build GetIt.UI.Container
-      run: dotnet publish .\GetIt.UI.Container -r win10-x64 -c Release --no-self-contained -p:DebugType=None
-
 # Tests don't work (because it starts a UI?)
 #    - name: Run tests
 #      run: dotnet run --project GetIt.Test
@@ -49,11 +46,8 @@ jobs:
 #        GET_IT_UI_CONTAINER_DIRECTORY: .\GetIt.UI.Container\bin\Release\net6.0-windows10.0.19041\win10-x64\publish
             
     - name: Build NuGet package
-      run: .paket\paket.exe pack --build-config Release --minimum-from-lock-file --version ${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
+      run: dotnet pack --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
       
-    - name: Add reference to ASP.NET Core packages
-      run: .\add-aspnetcore-reference.ps1 GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
-
     - name: Create environment variables for dependent workflows
       run: |
         echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
@@ -64,7 +58,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: nuget-package
-        path: GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
+        path: nuget\GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
 
     - name: Publish .env file as artifact
       uses: actions/upload-artifact@v3

@@ -1,8 +1,0 @@
-group UIV2
-Avalonia
-Avalonia.Desktop
-Avalonia.Diagnostics
-Avalonia.ReactiveUI
-Avalonia.Svg.Skia
-ReactiveUI.Fody
-XamlNameReferenceGenerator
