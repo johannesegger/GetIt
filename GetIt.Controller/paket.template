@@ -3,11 +3,11 @@ id GetIt
 title GetIt
 authors JEgger
 owners JEgger
-licenseUrl http://opensource.org/licenses/MIT
+licenseExpression MIT
 projectUrl https://github.com/johannesegger/GetIt
 requireLicenseAcceptance false
 description .NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.
-icon images\icon-128x128.png
+iconUrl images/icon-128x128.png
 include-referenced-projects true
 include-pdbs true
 files
