@@ -47,6 +47,7 @@ module internal UICommunication =
         let startInfo =
             ProcessStartInfo(
                 uiContainerPath,
+                Environment.CommandLine,
                 WorkingDirectory = Path.GetDirectoryName uiContainerPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
