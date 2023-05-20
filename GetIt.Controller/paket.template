@@ -12,5 +12,4 @@ include-referenced-projects true
 include-pdbs true
 files
   GetIt.targets ==> build
-  ../GetIt.UI.Container/bin/Release/net6.0-windows10.0.19041/win10-x64/publish ==> tools/GetIt.UI.Container
   ../assets/icon-128x128.png ==> images

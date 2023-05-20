@@ -39,9 +39,6 @@ jobs:
     - name: Build GetIt.Controller
       run: dotnet build .\GetIt.Controller -c Release
 
-    - name: Build GetIt.UI.Container
-      run: dotnet publish .\GetIt.UI.Container -r win10-x64 -c Release --no-self-contained -p:DebugType=None
-
 # Tests don't work (because it starts a UI?)
 #    - name: Run tests
 #      run: dotnet run --project GetIt.Test
