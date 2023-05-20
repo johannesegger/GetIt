@@ -7,7 +7,7 @@ licenseExpression MIT
 projectUrl https://github.com/johannesegger/GetIt
 requireLicenseAcceptance false
 description .NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.
-iconUrl images/icon-128x128.png
+icon images\icon-128x128.png
 include-referenced-projects true
 include-pdbs true
 files
