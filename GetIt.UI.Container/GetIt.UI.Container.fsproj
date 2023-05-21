@@ -12,5 +12,4 @@
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
     <ProjectReference Include="..\GetIt.UIV2\GetIt.UIV2.csproj" />
   </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

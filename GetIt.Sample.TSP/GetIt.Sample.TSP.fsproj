@@ -13,8 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
     <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
   </ItemGroup>
 
-  <Import Project="..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.300" />
+  </ItemGroup>
+
 </Project>

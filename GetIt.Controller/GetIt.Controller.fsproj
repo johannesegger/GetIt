@@ -4,6 +4,17 @@
     <TargetFramework>net6.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>GetIt</PackageId>
+    <Title>GetIt</Title>
+    <Authors>JEgger</Authors>
+    <Owners>JEgger</Owners>
+    <Description>.NET library to help introduce programming in a funnier way. Inspired by Scratch and Turtle graphics.</Description>
+    <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <ProjectUrl>https://github.com/johannesegger/GetIt</ProjectUrl>
+    <PackageIcon>images\icon-128x128.png</PackageIcon>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,14 +29,52 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="GetIt.targets" Pack="true" PackagePath="build\" />
+    <Content Include="..\assets\icon-128x128.png" Pack="true" PackagePath="images\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
-    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
-    <ProjectReference Include="..\GetIt.UI.Container\GetIt.UI.Container.fsproj" />
+    <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" PrivateAssets="All" />
+    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" PrivateAssets="All" />
+    <ProjectReference Include="..\GetIt.UI.Container\GetIt.UI.Container.fsproj" PrivateAssets="All" />
   </ItemGroup>
 
-  <Import Project="..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.300" />
+    <PackageReference Include="ColorCode.Html" Version="2.0.14" />
+    <PackageReference Include="Fue" Version="2.2.0" />
+    <!-- Package references of dependent projects are replicated here to get `dotnet pack` to work -->
+    <!-- GetIt.Common -->
+    <PackageReference Include="FSharp.Control.Reactive" Version="5.0.5" />
+    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
+    <!-- GetIt.Windows -->
+    <PackageReference Include="SharpLibWin32" Version="0.2.1" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <!-- GetIt.UIV2 -->
+    <PackageReference Include="Avalonia" Version="0.10.21" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.21" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="0.10.21" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.21" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="0.10.18" />
+    <!-- <PackageReference Include="ReactiveUI.Fody" Version="18.4.44" /> -->
+    <PackageReference Include="ReactiveUI" Version="18.4.44" />
+    <!-- <PackageReference Include="XamlNameReferenceGenerator" Version="1.6.1" /> -->
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferencesInNuGetPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+  <Target Name="IncludeProjectReferencesInNuGetPackage">
+    <ItemGroup>
+      <BuildOutputInPackage Include="$(OutputPath)GetIt.Common.dll" />
+      <BuildOutputInPackage Include="$(OutputPath)GetIt.Windows.dll" />
+      <BuildOutputInPackage Include="$(OutputPath)GetIt.UI.Container.dll" />
+      <BuildOutputInPackage Include="$(OutputPath)GetIt.UIV2.dll" />
+    </ItemGroup>
+  </Target>
+
 </Project>
