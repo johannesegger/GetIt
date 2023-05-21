@@ -46,7 +46,7 @@ jobs:
 #        GET_IT_UI_CONTAINER_DIRECTORY: .\GetIt.UI.Container\bin\Release\net6.0-windows10.0.19041\win10-x64\publish
             
     - name: Build NuGet package
-      run: dotnet pack --no-build --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
+      run: dotnet pack --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
       
     - name: Create environment variables for dependent workflows
       run: |
