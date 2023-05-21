@@ -46,11 +46,8 @@ jobs:
 #        GET_IT_UI_CONTAINER_DIRECTORY: .\GetIt.UI.Container\bin\Release\net6.0-windows10.0.19041\win10-x64\publish
             
     - name: Build NuGet package
-      run: .paket\paket.exe pack --build-config Release --minimum-from-lock-file --version ${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
+      run: dotnet pack --no-build --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
       
-    - name: Fix NuGet package
-      run: .\fix-nupkg.ps1 GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
-
     - name: Create environment variables for dependent workflows
       run: |
         echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
@@ -61,7 +58,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: nuget-package
-        path: GetIt.Controller/GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
+        path: nuget\GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg
 
     - name: Publish .env file as artifact
       uses: actions/upload-artifact@v3
