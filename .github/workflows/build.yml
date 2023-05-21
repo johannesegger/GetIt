@@ -39,11 +39,8 @@ jobs:
     - name: Build GetIt.Controller
       run: dotnet build .\GetIt.Controller -c Release
 
-# Tests don't work (because it starts a UI?)
-#    - name: Run tests
-#      run: dotnet run --project GetIt.Test
-#      env:
-#        GET_IT_UI_CONTAINER_DIRECTORY: .\GetIt.UI.Container\bin\Release\net6.0-windows10.0.19041\win10-x64\publish
+    - name: Run tests
+      run: dotnet run --project GetIt.Test
             
     - name: Build NuGet package
       run: dotnet pack --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
