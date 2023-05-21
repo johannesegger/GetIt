@@ -52,3 +52,4 @@ jobs:
         uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ needs.set-env.outputs.app_version }}
+          tag_exists_error: false
