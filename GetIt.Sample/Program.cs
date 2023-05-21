@@ -11,6 +11,7 @@ namespace GetIt.Sample
         static void Main(string[] args)
         {
             TurtleGraphics();
+            // EndlessLoop();
             // TemporaryKeyboardEventHandlers();
             // MouseEnterHandlers();
             // MouseClickHandler();
@@ -54,6 +55,19 @@ namespace GetIt.Sample
                 n++;
 
                 Turtle.Sleep(50);
+            }
+        }
+
+        private static void EndlessLoop()
+        {
+            Game.ShowSceneAndAddTurtle();
+
+            Turtle.Say("Close the window and check if the controller process shuts down.", 2);
+
+            while (true)
+            {
+                Turtle.MoveInDirection(10);
+                Turtle.RotateClockwise(5);
             }
         }
 
