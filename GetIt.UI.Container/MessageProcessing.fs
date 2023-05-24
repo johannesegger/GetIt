@@ -246,7 +246,8 @@ let run scheduler (mainViewModel: MainWindowViewModel) (messageSubject: ISubject
     [
         mainViewModel.WhenAnyValue(fun p -> p.IsLoaded)
         |> Observable.firstIf id
-        |> Observable.map(fun v -> UIMsg (SetSceneBounds mainViewModel.SceneBounds))
+        |> Observable.switchMap (fun _ -> mainViewModel.WhenAnyValue(fun p -> p.SceneBounds))
+        |> Observable.map(fun v -> UIMsg (SetSceneBounds v))
 
         mainViewModel.Players.ToObservableChangeSet<_>().ToCollection()
         |> Observable.switchMap (fun players ->

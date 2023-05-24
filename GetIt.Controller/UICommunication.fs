@@ -141,6 +141,7 @@ module internal UICommunication =
         |> Observable.subscribe (function
             | Ok (ControllerMsgConfirmation _) -> ()
             | Ok (UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg)) ->
+                logger.LogInformation("Received new scene bounds {SceneBounds}", sceneBounds)
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
             | Ok (UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg))
             | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg))

@@ -12,6 +12,7 @@ namespace GetIt.Sample
         {
             TurtleGraphics();
             // EndlessLoop();
+            // StayAtBottom();
             // TemporaryKeyboardEventHandlers();
             // MouseEnterHandlers();
             // MouseClickHandler();
@@ -68,6 +69,17 @@ namespace GetIt.Sample
             {
                 Turtle.MoveInDirection(10);
                 Turtle.RotateClockwise(5);
+            }
+        }
+
+        private static void StayAtBottom()
+        {
+            Game.ShowSceneAndAddTurtle();
+            Turtle.Say("Resize the window - I will always stay in the left bottom edge.");
+            while (true)
+            {
+                Turtle.MoveTo(Game.SceneBounds.Left, Game.SceneBounds.Bottom);
+                Turtle.Sleep(100);
             }
         }
 
