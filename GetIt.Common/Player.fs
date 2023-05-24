@@ -39,6 +39,9 @@ module internal OneOfMany =
     let next v =
         { v with CurrentIndex = (v.CurrentIndex + 1) % v.Items.Length }
 
+    let map fn v =
+        { CurrentIndex = v.CurrentIndex; Items = Array.map fn v.Items }
+
 
 /// Defines a player.
 /// The player doesn't necessarily have been added to the scene.

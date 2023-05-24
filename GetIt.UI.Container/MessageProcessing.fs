@@ -13,12 +13,16 @@ open GetIt.UIV2.ViewModels
 open global.ReactiveUI
 open System.IO
 open System.Reactive.Subjects
-open System.Threading
 open Thoth.Json.Net
+
+type LoadedSvgImage = {
+    Size: Size
+    Image: SvgSource
+}
 
 type PlayerData = {
     SizeFactor: float
-    Costumes: OneOfMany<SvgImage>
+    Costumes: OneOfMany<LoadedSvgImage>
     Pen: GetIt.Pen
 }
 
@@ -80,8 +84,8 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
         Map.tryFind playerId model.Players
         |> Option.map (fun playerData ->
             let sizeFactor = fn playerData.SizeFactor
-            let image = OneOfMany.current playerData.Costumes
-            let model = updatePlayer playerId (fun player -> player.Size <- image.Size * sizeFactor)
+            let costume = OneOfMany.current playerData.Costumes
+            let model = updatePlayer playerId (fun player -> player.Size <- costume.Size * sizeFactor)
             { model with Players = Map.add playerId { playerData with SizeFactor = sizeFactor } model.Players }
         )
         |> Option.defaultValue model
@@ -120,7 +124,9 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
         sendToBack playerId mainViewModel.Players
         let playerData = {
             SizeFactor = playerData.SizeFactor
-            Costumes = playerData.Costumes
+            Costumes =
+                playerData.Costumes
+                |> OneOfMany.map (fun v -> { Size =  v.Size; Image = convertSvgImage v })
             Pen = playerData.Pen
         }
         { model with Players = Map.add playerId playerData model.Players }
@@ -192,7 +198,7 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
             let costumes = OneOfMany.next playerData.Costumes
             let costume = OneOfMany.current costumes
             let model = updatePlayer playerId (fun player ->
-                player.Image <- new Svg.Skia.SvgImage(Source = convertSvgImage costume) :> IImage
+                player.Image <- new Svg.Skia.SvgImage(Source = costume.Image) :> IImage
                 player.Size <- costume.Size * playerData.SizeFactor
             )
             { model with Players = Map.add playerId { playerData with Costumes = costumes } model.Players }
