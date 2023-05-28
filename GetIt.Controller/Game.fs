@@ -39,11 +39,11 @@ module internal Game =
         doWithCommunicationState (fun s -> fn s.MutableModel)
 
     let showScene sceneSize =
-        match Environment.GetEnvironmentVariable "GET_IT_SOCKET_URL" |> Option.ofObj with
-        | Some socketUrl ->
+        match Environment.GetEnvironmentVariable "GET_IT_SERVER_ADDRESS" |> Option.ofObj with
+        | Some _ ->
             // TODO this feels ugly
             GetIt.UI.Container.Program.main [||]
-            |> Environment.Exit
+            |> exit
             failwith "Unreachable"
         | None ->
             if Interlocked.CompareExchange(&showSceneCalled, 1, 0) <> 0 then
@@ -51,10 +51,7 @@ module internal Game =
 
             let state = UICommunication.showScene sceneSize
             // Ensure controller process is stopped, even if we have e.g. an endless loop
-            state.CancellationToken.Register(fun () ->
-                printfn "Shutting down controller process"
-                Environment.Exit 0
-            ) |> ignore
+            state.CancellationToken.Register(fun () -> exit 0) |> ignore
             communicationState <- Some state
             Disposable.create disposeCommunicationState
 

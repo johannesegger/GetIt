@@ -2,12 +2,13 @@ namespace GetIt
 
 open FSharp.Control
 open FSharp.Control.Reactive
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open System
 open System.ComponentModel
 open System.Diagnostics
 open System.IO
+open System.Net
+open System.Net.Sockets
 open System.Reactive
 open System.Reactive.Linq
 open System.Reactive.Disposables
@@ -20,8 +21,7 @@ module internal UICommunication =
     type CommunicationState =
         {
             Disposable: IDisposable
-            CommandSubject: Subject<Guid * ControllerMsg>
-            ResponseSubject: Subject<Result<UIToControllerMsg, string>>
+            ClientMessages: ISubject<ControllerToUIMsg, Result<UIToControllerMsg, string>>
             UIWindowProcess: Process
             MutableModel: MutableModel
             CancellationToken: CancellationToken
@@ -29,9 +29,8 @@ module internal UICommunication =
         interface IDisposable with member x.Dispose () = x.Disposable.Dispose()
 
     let private getLoggerFactory () =
-        let serviceCollection = ServiceCollection()
-        serviceCollection.AddLogging(fun config ->
-            config
+        LoggerFactory.Create(fun builder ->
+            builder
                 .SetMinimumLevel(LogLevel.Debug)
                 .AddSimpleConsole(fun options ->
                     options.SingleLine <- true
@@ -39,10 +38,9 @@ module internal UICommunication =
                     options.TimestampFormat <- "[HH:mm:ss] "
                 )
             |> ignore
-        ) |> ignore
-        serviceCollection.BuildServiceProvider().GetService<ILoggerFactory>()
+        )
 
-    let private startUI (logger: ILogger) onExit sceneSize socketUrl =
+    let private startUI (logger: ILogger) onExit sceneSize (serverAddress: IPEndPoint) =
         let uiContainerPath = Environment.ProcessPath
         let startInfo =
             ProcessStartInfo(
@@ -58,7 +56,7 @@ module internal UICommunication =
                 "GET_IT_SCENE_SIZE", sprintf "%dx%d" (int sceneSize.Width) (int sceneSize.Height)
             | Maximized ->
                 "GET_IT_START_MAXIMIZED", "1"
-            "GET_IT_SOCKET_URL", socketUrl
+            "GET_IT_SERVER_ADDRESS", serverAddress.ToString()
         ]
         |> List.iter startInfo.EnvironmentVariables.Add
 
@@ -78,7 +76,7 @@ module internal UICommunication =
 
         proc.EnableRaisingEvents <- true
         proc.Exited.Subscribe (fun _ ->
-            logger.LogInformation("UI process exited with code {exitCode}", proc.ExitCode)
+            logger.LogDebug("UI process exited with code {exitCode}", proc.ExitCode)
             onExit ()
         )
         |> d.Add
@@ -115,33 +113,42 @@ module internal UICommunication =
         let cd = new CancellationDisposable()
         ds.Add cd
 
-        let controllerMsgs = new Subject<_>()
-        let uiMsgs = new Subject<_>()
-        let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
-        let messages = Subject.Create<_, _>(
-            Observer.Create(Decode.fromString decoder >> uiMsgs.OnNext),
-            controllerMsgs |> Observable.map (ControllerMsg >> encode >> Encode.toString 0)
-        )
-
         let loggerFactory = getLoggerFactory ()
         ds.Add loggerFactory
 
         let logger = loggerFactory.CreateLogger("UICommunication")
 
-        let (socketUrl, serverDisposable) = WebSocketServer.start messages loggerFactory |> Async.RunSynchronously
-        ds.Add serverDisposable
+        let tcpServer = TcpListener(IPAddress.Loopback, 0)
+        ds.Add (Disposable.create tcpServer.Stop)
+        tcpServer.Start()
+        let serverAddress = tcpServer.LocalEndpoint :?> IPEndPoint
 
         let uiLogger = loggerFactory.CreateLogger("UI process")
-        let (uiProcess, uiProcessDisposables) = startUI uiLogger (fun () -> d.Dispose()) sceneSize socketUrl
+        let (uiProcess, uiProcessDisposables) = startUI uiLogger (fun () -> d.Dispose()) sceneSize serverAddress
         ds.Add uiProcessDisposables
+
+        logger.LogDebug("Waiting for TCP client")
+        let tcpClient = tcpServer.AcceptTcpClient()
+        ds.Add tcpClient
+        logger.LogDebug("TCP client connected")
+
+        let tcpClientStream = tcpClient.GetStream()
+        ds.Add tcpClientStream
+        let messageSubject = Subject.fromStream tcpClientStream
+
+        let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+        let clientMessages = Subject.Create<_, _>(
+            Observer.Create<ControllerToUIMsg>(encode >> Encode.toString 0 >> messageSubject.OnNext),
+            messageSubject |> Observable.map (Decode.fromString decoder)
+        )
 
         let mutableModel = MutableModel.create ()
 
-        uiMsgs
+        clientMessages
         |> Observable.subscribe (function
             | Ok (ControllerMsgConfirmation _) -> ()
             | Ok (UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg)) ->
-                logger.LogInformation("Received new scene bounds {SceneBounds}", sceneBounds)
+                logger.LogDebug("Received new scene bounds {SceneBounds}", sceneBounds)
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
             | Ok (UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg))
             | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg))
@@ -196,28 +203,14 @@ module internal UICommunication =
         d.Disposable <- new CompositeDisposable(ds |> Seq.rev)
         {
             Disposable = d
-            CommandSubject = controllerMsgs
-            ResponseSubject = uiMsgs
+            ClientMessages = clientMessages
             UIWindowProcess = uiProcess
             MutableModel = mutableModel
             CancellationToken = cd.Token
         }
 
     let private sendMessage state message =
-        // use waitHandle = new ManualResetEventSlim()
-        let messageId = Guid.NewGuid()
-        // use __ =
-        //     state.ResponseSubject
-        //     |> Observable.firstIf (fun r ->
-        //         match r with
-        //         | Ok (ControllerMsgConfirmation msgId) when msgId = messageId -> true
-        //         | _ -> false
-        //     )
-        //     |> Observable.subscribe (fun p ->
-        //         waitHandle.Set()
-        //     )
-        state.CommandSubject.OnNext (messageId, message)
-        // waitHandle.Wait(state.CancellationToken)
+        state.ClientMessages.OnNext (ControllerMsg message)
 
     let private sendMessageAndWaitForResponse state msg responseFilter =
         let mutable response = None

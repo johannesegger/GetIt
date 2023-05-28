@@ -13,7 +13,6 @@ open GetIt.UIV2.ViewModels
 open global.ReactiveUI
 open System.IO
 open System.Reactive.Subjects
-open Thoth.Json.Net
 
 type LoadedSvgImage = {
     Size: Size
@@ -247,8 +246,7 @@ let private processControllerMessage (mainViewModel: MainWindowViewModel) model 
             { model with Batching = { model.Batching with Messages = msg :: model.Batching.Messages } }
             , None
 
-let run scheduler (mainViewModel: MainWindowViewModel) (messageSubject: ISubject<_, _>) =
-    let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+let run scheduler (mainViewModel: MainWindowViewModel) (serverMessages: ISubject<_, _>) =
     [
         mainViewModel.WhenAnyValue(fun p -> p.IsLoaded)
         |> Observable.firstIf id
@@ -271,29 +269,16 @@ let run scheduler (mainViewModel: MainWindowViewModel) (messageSubject: ISubject
             |> Observable.mergeSeq
         )
 
-        messageSubject
-        |> Observable.choose (fun message ->
-            match Decode.fromString decoder message with
-            | Ok message -> Some message
-            | Error p ->
-                #if DEBUG
-                eprintfn "Deserializing message failed: %s, Message: %s" p message
-                #endif
-                None
-        )
+        serverMessages
+        |> Observable.choose Result.toOption
         |> Observable.observeOn scheduler
         |> Observable.scanInit (Model.zero, None) (fun (model, _) msg ->
             match msg with
-            | ControllerMsg (msgId, controllerMessage) ->
+            | ControllerMsg controllerMessage ->
                 let model, responseMessage = processControllerMessage mainViewModel model controllerMessage
-                let responseMessage =
-                    responseMessage
-                    |> Option.map UIMsg
-                    |> Option.defaultValue (ControllerMsgConfirmation msgId)
-                model, Some responseMessage
+                model, (responseMessage |> Option.map UIMsg)
         )
         |> Observable.choose snd
     ]
     |> Observable.mergeSeq
-    |> Observable.map (encode >> Encode.toString 0)
-    |> Observable.subscribeObserver messageSubject
+    |> Observable.subscribeObserver serverMessages

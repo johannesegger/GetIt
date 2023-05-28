@@ -20,7 +20,6 @@
   <ItemGroup>
     <Compile Include="Assembly.fs" />
     <Compile Include="Model.fs" />
-    <Compile Include="WebSocketServer.fs" />
     <Compile Include="UICommunication.fs" />
     <Compile Include="PrintConfig.fs" />
     <Compile Include="Player.fs" />
@@ -31,10 +30,6 @@
   <ItemGroup>
     <Content Include="GetIt.targets" Pack="true" PackagePath="build\" />
     <Content Include="..\assets\icon-128x128.png" Pack="true" PackagePath="images\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +45,7 @@
     <!-- Package references of dependent projects are replicated here to get `dotnet pack` to work -->
     <!-- GetIt.Common -->
     <PackageReference Include="FSharp.Control.Reactive" Version="5.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
     <!-- GetIt.Windows -->
     <PackageReference Include="SharpLibWin32" Version="0.2.1" />

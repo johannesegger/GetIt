@@ -2,19 +2,18 @@ module GetIt.UI.Container.Program
 
 open Avalonia
 open Avalonia.ReactiveUI
+open Avalonia.Threading
 open FSharp.Control.Reactive
 open GetIt
 open GetIt.UIV2
 open GetIt.UIV2.ViewModels
 open global.ReactiveUI
 open System
-open System.Net.WebSockets
-open System.Reactive.Concurrency
-open System.Threading
-open System.Windows
-open Avalonia.Controls.ApplicationLifetimes
-open Avalonia.Controls
-open Avalonia.Threading
+open System.Net.Sockets
+open System.Net
+open System.Reactive
+open System.Reactive.Subjects
+open Thoth.Json.Net
 
 let tryGetEnvVar = Environment.GetEnvironmentVariable >> Option.ofObj
 
@@ -31,8 +30,8 @@ let tryParseSize (text: string) =
     | Some width, Some height -> Some (width, height)
     | _ -> None
 
-let tryParseUrl (text: string) =
-    match Uri.TryCreate(text, UriKind.Absolute) with
+let tryParseIPEndPoint (text: string) =
+    match IPEndPoint.TryParse(text) with
     | (true, v) -> Some v
     | _ -> None
 
@@ -41,24 +40,28 @@ let tryParseUrl (text: string) =
 let main argv =
     let (sceneWidth, sceneHeight) = tryGetEnvVar "GET_IT_SCENE_SIZE" |> Option.bind tryParseSize |> Option.defaultValue (800, 600)
     let startMaximized = tryGetEnvVar "GET_IT_START_MAXIMIZED" |> Option.isSome
-    let socketUrl = tryGetEnvVar "GET_IT_SOCKET_URL" |> Option.bind tryParseUrl
-    match socketUrl with
-    | Some socketUrl ->
+    let serverAddress = tryGetEnvVar "GET_IT_SERVER_ADDRESS" |> Option.bind tryParseIPEndPoint
+    match serverAddress with
+    | Some serverAddress ->
+        use connection = new TcpClient()
+        connection.ConnectAsync(serverAddress) |> Async.AwaitTask |> Async.RunSynchronously
+        use connectionStream = connection.GetStream()
+
+        let messageSubject = Subject.fromStream connectionStream
+        let (encode, decoder) = Encode.Auto.generateEncoder(), Decode.Auto.generateDecoder()
+        let serverMessages = Subject.Create<_, _>(
+            Observer.Create<UIToControllerMsg>(encode >> Encode.toString 0 >> messageSubject.OnNext),
+            messageSubject |> Observable.map (Decode.fromString decoder)
+        )
+
         let mainViewModel = MainWindowViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
-        use connection = new ClientWebSocket()
-        connection.ConnectAsync(socketUrl, CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
-        try
-            let (wsConnection, wsSubject) = ReactiveWebSocket.setup connection
-            use __ = wsConnection
-            use __ = MessageProcessing.run AvaloniaScheduler.Instance mainViewModel wsSubject
-            AppBuilder.Configure<App>(fun () -> App(ViewModel = mainViewModel))
-                .UsePlatformDetect()
-                .LogToTrace(Logging.LogEventLevel.Debug)
-                .UseReactiveUI()
-                .StartWithClassicDesktopLifetime(argv)
-        finally
-            if connection.State = WebSocketState.Open then
-                connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shut down process", CancellationToken.None) |> Async.AwaitTask |> Async.RunSynchronously
+        use __ = MessageProcessing.run AvaloniaScheduler.Instance mainViewModel serverMessages
+
+        AppBuilder.Configure<App>(fun () -> App(ViewModel = mainViewModel))
+            .UsePlatformDetect()
+            .LogToTrace(Logging.LogEventLevel.Debug)
+            .UseReactiveUI()
+            .StartWithClassicDesktopLifetime(argv)
     | _ ->
-        eprintfn "Missing or invalid environment variable \"GET_IT_SOCKET_URL\"."
+        eprintfn "Missing or invalid environment variable \"GET_IT_SERVER_ADDRESS\"."
         1

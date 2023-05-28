@@ -37,7 +37,7 @@ type internal UIMsg =
     | CapturedScene of PngImage
 
 type internal ControllerToUIMsg =
-    | ControllerMsg of Guid * ControllerMsg
+    | ControllerMsg of ControllerMsg
 
 type internal UIToControllerMsg =
     | ControllerMsgConfirmation of Guid

@@ -18,7 +18,7 @@
     <Compile Include="Input.fs" />
     <Compile Include="Misc.fs" />
     <Compile Include="Messages.fs" />
-    <Compile Include="ReactiveWebSocket.fs" />
+    <Compile Include="Subject.fs" />
   </ItemGroup>
 
   <ItemGroup>
