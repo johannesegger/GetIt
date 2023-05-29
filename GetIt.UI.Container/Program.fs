@@ -14,6 +14,7 @@ open System.Net
 open System.Reactive
 open System.Reactive.Subjects
 open Thoth.Json.Net
+open Avalonia.Controls.ApplicationLifetimes
 
 let tryGetEnvVar = Environment.GetEnvironmentVariable >> Option.ofObj
 
@@ -56,6 +57,15 @@ let main argv =
 
         let mainViewModel = MainWindowViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
         use __ = MessageProcessing.run AvaloniaScheduler.Instance mainViewModel serverMessages
+
+        use __ =
+            serverMessages
+            |> Observable.observeOn AvaloniaScheduler.Instance
+            |> Observable.finallyDo (fun () ->
+                let lifetime = (App.Current.ApplicationLifetime :?> ClassicDesktopStyleApplicationLifetime)
+                lifetime.MainWindow.Close()
+            )
+            |> Observable.subscribe ignore
 
         AppBuilder.Configure<App>(fun () -> App(ViewModel = mainViewModel))
             .UsePlatformDetect()
