@@ -623,7 +623,7 @@ let tests =
 
 [<EntryPoint>]
 let main args =
-    match Environment.GetEnvironmentVariable "GET_IT_SOCKET_URL" |> Option.ofObj with
-    | Some socketUrl ->
+    match Environment.GetEnvironmentVariable "GET_IT_SERVER_ADDRESS" |> Option.ofObj with
+    | Some _ ->
         GetIt.UI.Container.Program.main [||]
     | None -> runTestsWithCLIArgs [] args tests
