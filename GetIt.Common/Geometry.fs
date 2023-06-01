@@ -130,7 +130,7 @@ module internal Size =
 /// Defines a rectangle in a two-dimensional coordinate system.
 type Rectangle =
     {
-        /// The position of the rectangle.
+        /// The left bottom edge of the rectangle.
         Position: Position
         /// The size of the rectangle.
         Size: Size
