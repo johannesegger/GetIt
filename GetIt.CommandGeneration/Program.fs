@@ -396,7 +396,10 @@ let commands =
                     }
                 ]
             Result = { Type = typeof<bool>; Description = "True, if the player touches an edge, otherwise false." }
-            Body = [ "touchesLeftOrRightEdge player || touchesTopOrBottomEdge player" ]
+            Body = [
+                "Game.getCurrentModel().SceneBounds"
+                "|> Rectangle.containsRectangle player.Bounds"
+            ]
         }
 
         {
@@ -442,8 +445,8 @@ let commands =
             Result = { Type = typeof<unit>; Description = "" }
             Body =
                 [
-                    "if touchesTopOrBottomEdge player then setDirection player (Degrees.zero - player.Direction)"
-                    "elif touchesLeftOrRightEdge player then setDirection player (Degrees.op_Implicit 180. - player.Direction)"
+                    "Movement.bounceOffWall (Game.getCurrentModel().SceneBounds) (player.Bounds, player.Direction)"
+                    "|> Option.iter (setDirection player)"
                 ]
             }
 
@@ -1153,13 +1156,7 @@ let main _argv =
         |> List.collect id
         |> List.map (fun line -> line.TrimEnd())
         |> List.append
-            [ "module private Raw ="
-              "    let private touchesTopOrBottomEdge (player: GetIt.Player) ="
-              "        player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom"
-              ""
-              "    let private touchesLeftOrRightEdge (player: GetIt.Player) ="
-              "        player.Bounds.Right > Game.getCurrentModel().SceneBounds.Right || player.Bounds.Left < Game.getCurrentModel().SceneBounds.Left"
-              "" ]
+            [ "module private Raw =" ]
 
     let defaultTurtleFuncs =
         commands

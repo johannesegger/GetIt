@@ -153,3 +153,24 @@ module internal Rectangle =
         rectangle.Right >= position.X &&
         rectangle.Top >= position.Y &&
         rectangle.Bottom <= position.Y
+
+    let containsRectangle (inner: Rectangle) (outer: Rectangle) =
+        inner.Left >= outer.Left &&
+        inner.Right <= outer.Right &&
+        inner.Top <= outer.Top &&
+        inner.Bottom >= outer.Bottom
+
+module internal Movement =
+    let bounceOffWall (wall: Rectangle) (object: Rectangle, direction: Degrees) =
+        let newDirection =
+            if object.Top > wall.Top && direction > Degrees 0. && direction < Degrees 180. then Degrees.zero - direction
+            elif object.Bottom < wall.Bottom && direction > Degrees 180. then Degrees.zero - direction
+            else direction
+        
+        let newDirection =
+            if object.Left < wall.Left && newDirection > Degrees 90. && newDirection < Degrees 270. then Degrees 180. - newDirection
+            elif object.Right > wall.Right && (newDirection < Degrees 90. || newDirection > Degrees 270.) then Degrees 180. - newDirection
+            else newDirection
+
+        if direction <> newDirection then Some newDirection
+        else None

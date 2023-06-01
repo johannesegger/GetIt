@@ -59,6 +59,23 @@ namespace GetIt.Sample
             }
         }
 
+        private static void Wall()
+        {
+            Game.ShowSceneAndAddTurtle();
+            Turtle.SetDirection(RandomNumberGenerator.GetInt32(360));
+            while (true)
+            {
+                Turtle.MoveInDirection(RandomNumberGenerator.GetInt32(5, 15));
+                if (Turtle.TouchesEdge())
+                {
+                    Turtle.Say("Ouch", 0.5);
+                }
+                Turtle.BounceOffWall();
+                Turtle.NextCostume();
+                // Game.WaitForKeyDown(KeyboardKey.Space);
+            }
+        }
+
         private static void EndlessLoop()
         {
             Game.ShowSceneAndAddTurtle();

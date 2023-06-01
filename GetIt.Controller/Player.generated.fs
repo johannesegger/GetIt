@@ -5,12 +5,6 @@ open System.Security.Cryptography
 open System.Threading
 
 module private Raw =
-    let private touchesTopOrBottomEdge (player: GetIt.Player) =
-        player.Bounds.Top > Game.getCurrentModel().SceneBounds.Top || player.Bounds.Bottom < Game.getCurrentModel().SceneBounds.Bottom
-
-    let private touchesLeftOrRightEdge (player: GetIt.Player) =
-        player.Bounds.Right > Game.getCurrentModel().SceneBounds.Right || player.Bounds.Left < Game.getCurrentModel().SceneBounds.Left
-
     let moveTo (player: GetIt.Player) (position: GetIt.Position) =
         Game.setPosition player.PlayerId position
 
@@ -69,7 +63,9 @@ module private Raw =
         rotateClockwise player -angle
 
     let touchesEdge (player: GetIt.Player) =
-        touchesLeftOrRightEdge player || touchesTopOrBottomEdge player
+        Game.getCurrentModel().SceneBounds
+        |> Rectangle.containsRectangle player.Bounds
+        |> not
 
     let touchesPlayer (player: GetIt.Player) (other: GetIt.Player) =
         let maxLeftX = Math.Max(player.Bounds.Left, other.Bounds.Left)
@@ -79,8 +75,8 @@ module private Raw =
         maxLeftX < minRightX && maxBottomY < minTopY
 
     let bounceOffWall (player: GetIt.Player) =
-        if touchesTopOrBottomEdge player then setDirection player (Degrees.zero - player.Direction)
-        elif touchesLeftOrRightEdge player then setDirection player (Degrees.op_Implicit 180. - player.Direction)
+        Movement.bounceOffWall (Game.getCurrentModel().SceneBounds) (player.Bounds, player.Direction)
+        |> Option.iter (setDirection player)
 
     let sleep (player: GetIt.Player) (duration: System.TimeSpan) =
         Thread.Sleep duration
