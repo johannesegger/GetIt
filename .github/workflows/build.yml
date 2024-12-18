@@ -47,6 +47,7 @@ jobs:
       
     - name: Create environment variables for dependent workflows
       run: |
+        echo "${{ github.workspace }}"
         ls
         echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
         echo "package_name=GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg" >> .env
