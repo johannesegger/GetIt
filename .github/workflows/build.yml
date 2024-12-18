@@ -47,6 +47,7 @@ jobs:
       
     - name: Create environment variables for dependent workflows
       run: |
+        ls
         echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
         echo "package_name=GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg" >> .env
         (Get-Content .\.env) -join "`n" | Set-Content -NoNewline .\.env # fix line ending
