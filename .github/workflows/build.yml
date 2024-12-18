@@ -47,11 +47,9 @@ jobs:
       
     - name: Create environment variables for dependent workflows
       run: |
-        echo "${{ github.workspace }}"
-        ls
-        echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .env
-        echo "package_name=GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg" >> .env
-        (Get-Content .\.env) -join "`n" | Set-Content -NoNewline .\.env # fix line ending
+        echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .\env
+        echo "package_name=GetIt.${{ steps.gitversion.outputs.nuGetVersion }}.nupkg" >> .\env
+        (Get-Content .\env) -join "`n" | Set-Content -NoNewline .\env # fix line ending
 
     - name: Publish NuGet package as artifact
       uses: actions/upload-artifact@v3
@@ -63,4 +61,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: shared-env
-        path: .env
+        path: .\env
