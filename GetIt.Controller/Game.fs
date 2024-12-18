@@ -234,7 +234,23 @@ type Game() =
         do
             use d = Disposable.create (fun () -> try File.Delete(pdfPath) with _ -> ())
 
-            let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -print-settings \"duplex,color\" -silent -exit-when-done \"%s\"" printConfig.PrinterName pdfPath)
+            let printSettingsArguments =
+                String.concat "," [
+                    match printConfig.PrinterSettings.Duplex with
+                    | Some true -> "duplex"
+                    | Some false -> "simplex"
+                    | None -> ()
+
+                    match printConfig.PrinterSettings.Color with
+                    | Some true -> "color"
+                    | Some false -> "monochrome"
+                    | None -> ()
+
+                    match printConfig.PrinterSettings.SourceTrayName with
+                    | Some trayName -> $"bin=%s{trayName.Value}"
+                    | None -> ()
+                ]
+            let sumatraStartInfo = ProcessStartInfo("sumatrapdf", sprintf "-print-to \"%s\" -print-settings \"%s\" -silent -exit-when-done \"%s\"" printConfig.PrinterName printSettingsArguments pdfPath)
             let exitCode =
                 try
                     use sumatraProcess = Process.Start(sumatraStartInfo)
