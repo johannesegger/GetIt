@@ -12,16 +12,16 @@ jobs:
       package_name: ${{ steps.read_shared_env.outputs.package_name }}
 
     steps:
-      - name: Download .env file from build workflow
+      - name: Download env file from build workflow
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: build.yml
           workflow_conclusion: success
           name: shared-env
 
-      - name: Read .env file
+      - name: Read env file
         id: read_shared_env
-        run: cat .env >> $GITHUB_OUTPUT
+        run: cat env >> $GITHUB_OUTPUT
 
   nuget-publish:
     needs: set-env
