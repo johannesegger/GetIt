@@ -8,11 +8,11 @@ module MacOSNative =
     type CGPoint =
         val mutable x: double
         val mutable y: double
-    [<DllImport("CoreGraphics.framework/CoreGraphics")>]
+    [<DllImport("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")>]
     extern IntPtr CGEventCreate(IntPtr source)
-    [<DllImport("CoreGraphics.framework/CoreGraphics")>]
+    [<DllImport("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")>]
     extern CGPoint CGEventGetLocation(IntPtr event)
-    [<DllImport("CoreFoundation.framework/CoreFoundation")>]
+    [<DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")>]
     extern void CFRelease(IntPtr cf)
 
     let getCurrentMousePosition () =
