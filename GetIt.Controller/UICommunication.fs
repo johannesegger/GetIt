@@ -85,28 +85,19 @@ module internal UICommunication =
 
         (proc, d :> IDisposable)
 
-    let private inputEvents =
-        Observable.Create (fun (obs: IObserver<InputEvent>) ->
-            let observable = Windows.DeviceEvents.observable
+    let private keepProcessAlive () =
+        let waitHandle = new ManualResetEventSlim()
 
-            let d1 =
-                observable
-                |> Observable.choose (function | MouseMove _ as x -> Some x | _ -> None)
-                |> Observable.sample (TimeSpan.FromMilliseconds 50.)
-                |> Observable.subscribeObserver obs
+        let messageLoopThread = Thread(fun () -> waitHandle.Wait())
+        messageLoopThread.Name <- "KeepProcessAlive"
+        messageLoopThread.IsBackground <- false
+        messageLoopThread.Start()
 
-            let d2 =
-                observable
-                |> Observable.choose (function | MouseMove _ -> None | x -> Some x )
-                |> Observable.subscribeObserver obs
-
-            d1
-            |> Disposable.compose d2
-        )
+        Disposable.create waitHandle.Set
 
     let showScene (sceneSize: SceneSize) =
-        if not <| RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
-            raise (GetItException (sprintf "Operating system \"%s\" is not supported." RuntimeInformation.OSDescription))
+        if not <| Seq.exists RuntimeInformation.IsOSPlatform [ OSPlatform.Windows; OSPlatform.OSX ] then
+            raise (GetItException $"Operating system \"%s{RuntimeInformation.OSDescription}\" is not supported.")
 
         let d = new SingleAssignmentDisposable()
         let ds = new CompositeDisposable()
@@ -150,6 +141,15 @@ module internal UICommunication =
             | Ok (UIToControllerMsg.UIMsg (SetSceneBounds sceneBounds as uiMsg)) ->
                 logger.LogDebug("Received new scene bounds {SceneBounds}", sceneBounds)
                 MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with SceneBounds = sceneBounds }) mutableModel
+            | Ok (UIToControllerMsg.UIMsg (MouseMove position as uiMsg)) ->
+                MutableModel.updateCurrent (fun model ->
+                    UIMsg uiMsg, { model with MouseState = { model.MouseState with Position = position } }) mutableModel
+            | Ok (UIToControllerMsg.UIMsg (MouseClick _ as uiMsg)) ->
+                MutableModel.updateCurrent (fun model -> UIMsg uiMsg, model) mutableModel
+            | Ok (UIToControllerMsg.UIMsg (KeyDown key as uiMsg)) ->
+                MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
+            | Ok (UIToControllerMsg.UIMsg (KeyUp key as uiMsg)) ->
+                MutableModel.updateCurrent (fun model -> UIMsg uiMsg, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }) mutableModel
             | Ok (UIToControllerMsg.UIMsg (AnswerStringQuestion _ as uiMsg))
             | Ok (UIToControllerMsg.UIMsg (AnswerBoolQuestion _ as uiMsg))
             | Ok (UIToControllerMsg.UIMsg (CapturedScene _ as uiMsg)) ->
@@ -159,45 +159,22 @@ module internal UICommunication =
         )
         |> ds.Add
 
-        logger.LogDebug("Waiting for UI process to submit scene bounds.")
+        logger.LogDebug "Waiting for UI process to submit scene bounds and mouse position."
 
-        mutableModel.Subject
-        |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
-        |> Observable.first
+        Observable.mergeSeq [
+            mutableModel.Subject
+            |> Observable.choose (fst >> function | UIMsg (SetSceneBounds _) -> Some () | _ -> None)
+            |> Observable.first
+
+            mutableModel.Subject
+            |> Observable.choose (fst >> function | UIMsg (MouseMove _) -> Some () | _ -> None)
+            |> Observable.first
+        ]
         |> Observable.wait
 
-        logger.LogDebug("UI process submitted scene bounds.")
+        logger.LogDebug "UI process submitted scene bounds and mouse position."
 
-        SpinWait.SpinUntil(fun () -> uiProcess.MainWindowHandle <> IntPtr.Zero)
-
-        logger.LogDebug("Found main window handle of UI process.")
-
-        inputEvents
-        |> Observable.subscribe (function
-            | MouseMove position as msg ->
-                try
-                    let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle position
-                    MutableModel.updateCurrent (fun model ->
-                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                        Other, { model with MouseState = { model.MouseState with Position = scenePosition } }) mutableModel
-                with
-                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
-                    | :? Win32Exception -> reraise ()
-            | MouseClick mouseClick as msg ->
-                try
-                    let clientPosition = Windows.DeviceEvents.screenToClient uiProcess.MainWindowHandle mouseClick.VirtualScreenPosition
-                    MutableModel.updateCurrent (fun model ->
-                        let scenePosition = { X = model.SceneBounds.Left + clientPosition.X; Y = model.SceneBounds.Top - clientPosition.Y }
-                        let mouseClick = { Button = mouseClick.Button; Position = scenePosition }
-                        ApplyMouseClick mouseClick, model) mutableModel
-                with
-                    | :? Win32Exception when uiProcess.MainWindowHandle = IntPtr.Zero -> ()
-                    | :? Win32Exception -> reraise ()
-            | KeyDown key as msg ->
-                MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.add key model.KeyboardState.KeysPressed } }) mutableModel
-            | KeyUp key as msg ->
-                MutableModel.updateCurrent (fun model -> Other, { model with KeyboardState = { model.KeyboardState with KeysPressed = Set.remove key model.KeyboardState.KeysPressed } }) mutableModel
-        )
+        keepProcessAlive ()
         |> ds.Add
 
         d.Disposable <- new CompositeDisposable(ds |> Seq.rev)

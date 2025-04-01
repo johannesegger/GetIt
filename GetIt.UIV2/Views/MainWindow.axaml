@@ -16,7 +16,7 @@
     <DockPanel>
         <ScrollViewer DockPanel.Dock="Bottom" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Width="{Binding SceneSize.Width}">
             <Border Background="LightGray" Padding="20 10" IsVisible="{Binding ShowInfoBar}">
-                <ItemsControl Items="{Binding Players}">
+                <ItemsControl ItemsSource="{Binding Players}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel Orientation="Horizontal" />
@@ -45,7 +45,7 @@
                 <Canvas.Background>
                     <ImageBrush Source="{Binding BackgroundBitmapImage}" Stretch="UniformToFill" />
                 </Canvas.Background>
-                <ItemsControl Items="{Binding PenLines}">
+                <ItemsControl ItemsSource="{Binding PenLines}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Line StartPoint="{Binding StartPoint}" EndPoint="{Binding EndPoint}" StrokeThickness="{Binding Thickness}" Stroke="{Binding Brush}" />
@@ -57,7 +57,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
-                <ItemsControl Name="players" Items="{Binding Players}">
+                <ItemsControl Name="players" ItemsSource="{Binding Players}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas Width="{Binding $parent[Canvas].Width}" Height="{Binding $parent[Canvas].Height}" />

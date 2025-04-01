@@ -1,6 +1,7 @@
 module internal GetIt.UI.Container.MessageProcessing
 
 open Avalonia
+open Avalonia.Controls
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Media
 open Avalonia.Media.Imaging
@@ -11,8 +12,11 @@ open FSharp.Control.Reactive
 open GetIt
 open GetIt.UIV2.ViewModels
 open global.ReactiveUI
+open System
 open System.IO
 open System.Reactive.Subjects
+open System.Threading
+open System.Threading.Tasks
 
 type LoadedSvgImage = {
     Size: Size
@@ -44,9 +48,7 @@ module Model =
         }
 
 let private convertSvgImage image =
-    let svg = new SvgSource()
-    svg.FromSvg(image.SvgData) |> ignore
-    svg
+    SvgSource.LoadFromSvg image.SvgData
 
 let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewModel) msg model =
     let updatePlayer playerId fn =
@@ -219,7 +221,7 @@ let rec private processControllerMessageDirectly (mainViewModel: MainWindowViewM
         updatePlayer playerId (fun p -> p.IsVisible <- not p.IsVisible)
         , None
     | CaptureScene ->
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs(Avalonia.Threading.DispatcherPriority.Layout)
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs(Avalonia.Threading.DispatcherPriority.Render)
         let image = captureScene ()
         model, Some (CapturedScene image)
     | StartBatch ->
@@ -246,7 +248,54 @@ let private processControllerMessage (mainViewModel: MainWindowViewModel) model 
             { model with Batching = { model.Batching with Messages = msg :: model.Batching.Messages } }
             , None
 
-let run scheduler (mainViewModel: MainWindowViewModel) (serverMessages: ISubject<_, _>) =
+let private tryGetKeyboardKey keyCode =
+    match keyCode with
+    | SharpHook.Native.KeyCode.VcSpace -> Some Space
+    | SharpHook.Native.KeyCode.VcEscape -> Some Escape
+    | SharpHook.Native.KeyCode.VcEnter -> Some Enter
+    | SharpHook.Native.KeyCode.VcUp -> Some Up
+    | SharpHook.Native.KeyCode.VcDown -> Some Down
+    | SharpHook.Native.KeyCode.VcLeft -> Some Left
+    | SharpHook.Native.KeyCode.VcRight -> Some Right
+    | SharpHook.Native.KeyCode.VcA -> Some A
+    | SharpHook.Native.KeyCode.VcB -> Some B
+    | SharpHook.Native.KeyCode.VcC -> Some C
+    | SharpHook.Native.KeyCode.VcD -> Some D
+    | SharpHook.Native.KeyCode.VcE -> Some E
+    | SharpHook.Native.KeyCode.VcF -> Some F
+    | SharpHook.Native.KeyCode.VcG -> Some G
+    | SharpHook.Native.KeyCode.VcH -> Some H
+    | SharpHook.Native.KeyCode.VcI -> Some I
+    | SharpHook.Native.KeyCode.VcJ -> Some J
+    | SharpHook.Native.KeyCode.VcK -> Some K
+    | SharpHook.Native.KeyCode.VcL -> Some L
+    | SharpHook.Native.KeyCode.VcM -> Some M
+    | SharpHook.Native.KeyCode.VcN -> Some N
+    | SharpHook.Native.KeyCode.VcO -> Some O
+    | SharpHook.Native.KeyCode.VcP -> Some P
+    | SharpHook.Native.KeyCode.VcQ -> Some Q
+    | SharpHook.Native.KeyCode.VcR -> Some R
+    | SharpHook.Native.KeyCode.VcS -> Some S
+    | SharpHook.Native.KeyCode.VcT -> Some T
+    | SharpHook.Native.KeyCode.VcU -> Some U
+    | SharpHook.Native.KeyCode.VcV -> Some V
+    | SharpHook.Native.KeyCode.VcW -> Some W
+    | SharpHook.Native.KeyCode.VcX -> Some X
+    | SharpHook.Native.KeyCode.VcY -> Some Y
+    | SharpHook.Native.KeyCode.VcZ -> Some Z
+    | SharpHook.Native.KeyCode.Vc0 -> Some Digit0
+    | SharpHook.Native.KeyCode.Vc1 -> Some Digit1
+    | SharpHook.Native.KeyCode.Vc2 -> Some Digit2
+    | SharpHook.Native.KeyCode.Vc3 -> Some Digit3
+    | SharpHook.Native.KeyCode.Vc4 -> Some Digit4
+    | SharpHook.Native.KeyCode.Vc5 -> Some Digit5
+    | SharpHook.Native.KeyCode.Vc6 -> Some Digit6
+    | SharpHook.Native.KeyCode.Vc7 -> Some Digit7
+    | SharpHook.Native.KeyCode.Vc8 -> Some Digit8
+    | SharpHook.Native.KeyCode.Vc9 -> Some Digit9
+    | _ -> None
+
+let run scheduler (mainWindow: Window) (mainViewModel: MainWindowViewModel) (serverMessages: ISubject<_, _>) =
     [
         mainViewModel.WhenAnyValue(fun p -> p.IsLoaded)
         |> Observable.firstIf id
@@ -267,6 +316,54 @@ let run scheduler (mainViewModel: MainWindowViewModel) (serverMessages: ISubject
                 |> Observable.mergeInner
             )
             |> Observable.mergeSeq
+        )
+
+        Observable.fromEventHandler mainWindow.Loaded.AddHandler mainWindow.Loaded.RemoveHandler
+        |> Observable.map (fun _e ->
+            let x, y = InputEvents.getCurrentMousePosition ()
+            let clientPoint = mainWindow.PointToClient(PixelPoint(int x, int y))
+            let position = { X = mainViewModel.SceneBounds.Left + clientPoint.X; Y = mainViewModel.SceneBounds.Top - clientPoint.Y }
+            UIMsg (MouseMove position)
+        )
+
+        Observable.fromEventHandler mainWindow.Loaded.AddHandler mainWindow.Loaded.RemoveHandler
+        |> Observable.first
+        |> Observable.bind (fun e ->
+            System.Reactive.Linq.Observable.Create(fun (obs: IObserver<_>) (ct: CancellationToken) ->
+                task {
+                    use hook = new SharpHook.SimpleGlobalHook()
+                    use _ = ct.Register (fun () -> hook.Dispose())
+                    use _ = hook.MouseClicked.Subscribe (fun e ->
+                        let button =
+                            if e.Data.Button = SharpHook.Native.MouseButton.Button1 then Some Primary
+                            elif e.Data.Button = SharpHook.Native.MouseButton.Button2 then Some Secondary
+                            else None
+                        match button with
+                        | Some button ->
+                            let clientPoint = mainWindow.PointToClient(PixelPoint(int e.Data.X, int e.Data.Y))
+                            let position = { X = mainViewModel.SceneBounds.Left + clientPoint.X; Y = mainViewModel.SceneBounds.Top - clientPoint.Y }
+                            obs.OnNext (UIMsg (MouseClick { Button = button; Position = position }))
+                        | None -> ()
+                    )
+                    use _ = hook.MouseMoved.Subscribe (fun e ->
+                        let screenPoint = PixelPoint(int e.Data.X, int e.Data.Y)
+                        let clientPoint = mainWindow.PointToClient screenPoint
+                        let position = { X = mainViewModel.SceneBounds.Left + clientPoint.X; Y = mainViewModel.SceneBounds.Top - clientPoint.Y }
+                        obs.OnNext (UIMsg (MouseMove position))
+                    )
+                    use _ = hook.KeyPressed.Subscribe (fun v ->
+                        match tryGetKeyboardKey v.Data.KeyCode with
+                        | Some key -> obs.OnNext (UIMsg (KeyDown key))
+                        | None -> ()
+                    )
+                    use _ = hook.KeyReleased.Subscribe (fun v ->
+                        match tryGetKeyboardKey v.Data.KeyCode with
+                        | Some key -> obs.OnNext (UIMsg (KeyUp key))
+                        | None -> ()
+                    )
+                    do! hook.RunAsync()
+                } :> Task
+            )
         )
 
         serverMessages

@@ -15,6 +15,7 @@ using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using SkiaSharp;
 using Svg.Model;
+using Svg.Skia;
 
 namespace GetIt.UIV2.ViewModels;
 
@@ -37,8 +38,8 @@ class MainWindowViewModel : ViewModelBase
     public bool IsLoaded { get; set; }
     [Reactive]
     public SvgSource? BackgroundImage { get; set; }
-    private readonly ObservableAsPropertyHelper<IBitmap?> backgroundBitmapImage;
-    public IBitmap? BackgroundBitmapImage => backgroundBitmapImage.Value;
+    private readonly ObservableAsPropertyHelper<IImage?> backgroundBitmapImage;
+    public IImage? BackgroundBitmapImage => backgroundBitmapImage.Value;
     private readonly ObservableAsPropertyHelper<bool> showInfoBar;
     public bool ShowInfoBar => showInfoBar.Value;
     public ObservableCollection<PlayerViewModel> Players { get; } = new ObservableCollection<PlayerViewModel>();
@@ -67,7 +68,9 @@ class MainWindowViewModel : ViewModelBase
                     (float)sceneSize.Width / background.Picture.CullRect.Width,
                     (float)sceneSize.Height / background.Picture.CullRect.Height
                 );
-                background.Save(pngStream, background: SKColor.Empty, SKEncodedImageFormat.Png, quality: 100, scale, scale);
+                background.Picture.ToImage(
+                    pngStream, background: SKColor.Empty, SKEncodedImageFormat.Png, quality: 100, scale, scale,
+                    SKImageInfo.PlatformColorType, SKAlphaType.Unpremul, SKColorSpace.CreateSrgb());
                 pngStream.Position = 0;
                 return new Bitmap(pngStream);
             })

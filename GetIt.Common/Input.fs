@@ -1,7 +1,5 @@
 namespace GetIt
 
-open System
-
 /// Defines some common keys on a keyboard.
 type KeyboardKey =
     | Space
@@ -68,12 +66,6 @@ type MouseClick =
         Position: Position
     }
 
-type internal VirtualScreenMouseClick =
-    {
-        Button: MouseButton
-        VirtualScreenPosition: Position
-    }
-
 type internal MouseState =
     {
         Position: Position
@@ -84,9 +76,3 @@ module internal MouseState =
         {
             Position = Position.zero
         }
-
-type internal InputEvent =
-    | KeyDown of KeyboardKey
-    | KeyUp of KeyboardKey
-    | MouseMove of virtualScreenPosition: Position
-    | MouseClick of VirtualScreenMouseClick

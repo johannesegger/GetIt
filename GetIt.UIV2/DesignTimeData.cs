@@ -53,15 +53,13 @@ static class DesignTimeData
     {
         return new Avalonia.Svg.Skia.SvgImage
         {
-            Source = SvgSource.Load<SvgSource>(Path.Combine(GetProjectDir(), "assets", "Turtle1.svg"), baseUri: null)
+            Source = SvgSource.Load(Path.Combine(GetProjectDir(), "assets", "Turtle1.svg"), baseUri: null)
         };
     }
 
     private static SvgSource LoadBackground()
     {
-        var svg = new SvgSource();
-        svg.FromSvg(Background.Baseball1.SvgData);
-        return svg;
+        return SvgSource.LoadFromSvg(Background.Baseball1.SvgData)!;
     }
 
     private static string GetProjectDir([System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")

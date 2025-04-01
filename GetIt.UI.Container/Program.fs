@@ -12,6 +12,7 @@ open System
 open System.Net.Sockets
 open System.Net
 open System.Reactive
+open System.Reactive.Disposables
 open System.Reactive.Subjects
 open Thoth.Json.Net
 open Avalonia.Controls.ApplicationLifetimes
@@ -55,9 +56,6 @@ let main argv =
             messageSubject |> Observable.map (Decode.fromString decoder)
         )
 
-        let mainViewModel = MainWindowViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
-        use __ = MessageProcessing.run AvaloniaScheduler.Instance mainViewModel serverMessages
-
         use __ =
             serverMessages
             |> Observable.observeOn AvaloniaScheduler.Instance
@@ -67,11 +65,18 @@ let main argv =
             )
             |> Observable.subscribe ignore
 
+        let mainViewModel = MainWindowViewModel({ Width = float sceneWidth; Height = float sceneHeight }, startMaximized)
+        use messageProcessingDisposable = new SingleAssignmentDisposable()
+
         AppBuilder.Configure<App>(fun () -> App(ViewModel = mainViewModel))
             .UsePlatformDetect()
             .LogToTrace(Logging.LogEventLevel.Debug)
             .UseReactiveUI()
-            .StartWithClassicDesktopLifetime(argv)
+            .StartWithClassicDesktopLifetime(argv, Action<_>(fun (lifetime: IClassicDesktopStyleApplicationLifetime) ->
+                lifetime.Startup.AddHandler (EventHandler<_>(fun _sender _e ->
+                    messageProcessingDisposable.Disposable <- MessageProcessing.run AvaloniaScheduler.Instance lifetime.MainWindow mainViewModel serverMessages
+                ))
+            ))
     | _ ->
         eprintfn "Missing or invalid environment variable \"GET_IT_SERVER_ADDRESS\"."
         1

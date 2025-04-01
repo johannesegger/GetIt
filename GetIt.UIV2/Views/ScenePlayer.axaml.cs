@@ -21,7 +21,7 @@ public partial class ScenePlayer : UserControl
     {
         if (((IDataContextProvider)sender).DataContext is SpeechBubbleViewModel speechBubble)
         {
-            var element = (IVisual)sender;
+            var element = (Visual)sender;
             speechBubble.Size = new Size(element.Bounds.Width, element.Bounds.Height);
         }
     }

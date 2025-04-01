@@ -32,6 +32,10 @@ type internal ControllerMsg =
 
 type internal UIMsg =
     | SetSceneBounds of Rectangle
+    | KeyDown of KeyboardKey
+    | KeyUp of KeyboardKey
+    | MouseMove of Position
+    | MouseClick of MouseClick
     | AnswerStringQuestion of PlayerId * string
     | AnswerBoolQuestion of PlayerId * bool
     | CapturedScene of PngImage

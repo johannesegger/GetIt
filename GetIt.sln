@@ -14,8 +14,6 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GetIt.Controller", "GetIt.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetIt.Sample", "GetIt.Sample\GetIt.Sample.csproj", "{59FEDD02-3587-45C9-88F2-2F290469430D}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GetIt.Windows", "GetIt.Windows\GetIt.Windows.fsproj", "{B9B76D50-821C-4F63-B09F-636625FF7889}"
-EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GetIt.CommandGeneration", "GetIt.CommandGeneration\GetIt.CommandGeneration.fsproj", "{D5B95D92-B19E-409C-A7C0-74D8F7213E30}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GetIt.AssetGeneration", "GetIt.AssetGeneration\GetIt.AssetGeneration.fsproj", "{1C7C7921-5A9A-41A7-B2B2-CA05119011C8}"

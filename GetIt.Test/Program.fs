@@ -2,50 +2,98 @@ module internal Program
 
 open Expecto
 open GetIt
+open SkiaSharp
+open System
 open System.Drawing
 open System.IO
-open System
+
+module internal Win32 =
+    open System.Runtime.InteropServices
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type WinPoint =
+        val mutable x: int
+        val mutable y: int
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type Rect =
+        val mutable Left: int
+        val mutable Top: int
+        val mutable Right: int
+        val mutable Bottom: int
+
+    type WindowPlacementFlags =
+        | WPF_ASYNCWINDOWPLACEMENT = 0x04u
+        | WPF_RESTORETOMAXIMIZED = 0x02u
+        | WPF_SETMINPOSITION = 0x01u
+
+    type WindowPlacementShowCommand =
+        | SW_HIDE = 0u
+        | SW_MAXIMIZE = 3u
+        | SW_MINIMIZE = 6u
+        | SW_RESTORE = 9u
+        | SW_SHOW = 5u
+        | SW_SHOWMAXIMIZED = 3u
+        | SW_SHOWMINIMIZED = 2u
+        | SW_SHOWMINNOACTIVE = 7u
+        | SW_SHOWNA = 8u
+        | SW_SHOWNOACTIVATE = 4u
+        | SW_SHOWNORMAL = 1u
+
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type WINDOWPLACEMENT =
+        val mutable Length: uint32
+        val mutable Flags: WindowPlacementFlags
+        val mutable ShowCmd: WindowPlacementShowCommand
+        val mutable PtMinPosition: WinPoint
+        val mutable PtMaxPosition: WinPoint
+        val mutable RcNormalPosition: Rect
+        val mutable RcDevice: Rect
+
+    [<DllImport("user32.dll", SetLastError = true)>]
+    extern bool GetWindowPlacement(IntPtr hWnd, WINDOWPLACEMENT& lpwndpl)
 
 let private getScreenshot communicationState =
     let (PngImage imageData) = UICommunication.makeScreenshot communicationState
     // File.WriteAllBytes(sprintf "%s-%d.png" (System.DateTime.Now.ToString("yyyyMMdd-HHmmss.fffffff")) communicationState.UIWindowProcess.Id, imageData)
-    use imageStream = new MemoryStream(imageData)
-    new Bitmap(imageStream)
+    let image = SKImage.FromEncodedData imageData
+    let bitmap = SKBitmap.FromImage image
+    bitmap
 
-let getColor (color: Color) = (color.R, color.G, color.B, color.A)
+let getColor (color: SKColor) = (color.Red, color.Green, color.Blue, color.Alpha)
 
 module Coordinates =
     let private infoHeight = 50
-    let sceneCenter (image: Bitmap) =
-        (image.Width / 2, (image.Height - infoHeight) / 2)
+    let sceneCenter (image: SKBitmap) =
+        image.Width / 2, (image.Height - infoHeight) / 2
     let relativeToSceneCenter (xOffset, yOffset) image =
         let (x, y) = sceneCenter image
-        (x + xOffset, y + yOffset)
-    let range leftTop rightBottom (image: Bitmap) =
+        x + xOffset, y + yOffset
+    let range leftTop rightBottom (image: SKBitmap) =
         let (left, top) = leftTop image
         let (right, bottom) = rightBottom image
         [
             for x in [left .. right - 1] do
             for y in [top .. bottom - 1] -> (x, y)
         ]
-    let fullScene (image: Bitmap) =
+    let fullScene (image: SKBitmap) =
         range (fun image -> (0, 0)) (fun image -> (image.Width, image.Height - infoHeight)) image
-    let infoSection (image: Bitmap) =
+    let infoSection (image: SKBitmap) =
         range (fun image -> (0, image.Height - infoHeight + 1)) (fun image -> (image.Width, image.Height)) image
 
-let getPixelAt coordinates (image: Bitmap) =
+let getPixelAt coordinates (image: SKBitmap) =
     coordinates image
     |> image.GetPixel
     |> getColor
 
-let getPixelsAt coordinates (image: Bitmap) =
+let getPixelsAt coordinates (image: SKBitmap) =
     (Map.empty, coordinates image)
     ||> List.fold (fun state coords ->
         let color = image.GetPixel coords |> getColor
         Map.add coords color state
     )
 
-let createEmptyImage (image: Bitmap) = Map.empty
+let createEmptyImage (image: SKBitmap) = Map.empty
 
 let setAllScenePixels color imageFn image =
     (imageFn image, Coordinates.fullScene image)
@@ -73,10 +121,10 @@ module Map =
             | None -> result
         )
 
-let white = getColor Color.White
-let red = getColor Color.Red
-let blue = getColor Color.Blue
-let black = getColor Color.Black
+let white = getColor SKColors.White
+let red = getColor SKColors.Red
+let blue = getColor SKColors.Blue
+let black = getColor SKColors.Black
 
 let defaultSceneSize = SpecificSize { Width = 600.; Height = 400. }
 
@@ -338,7 +386,7 @@ let tests =
 
             test "Costume from file" {
                 use state = UICommunication.showScene defaultSceneSize
-                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.Load (__SOURCE_DIRECTORY__ + "\\data\\rect-costume.svg"))) state
+                let playerId = UICommunication.addPlayer (PlayerData.Create(SvgImage.Load (Path.Combine(__SOURCE_DIRECTORY__, "data", "rect-costume.svg")))) state
                 let image = getScreenshot state
                 let actualColors = getPixelsAt Coordinates.fullScene image
                 let expectedColors =
@@ -485,11 +533,11 @@ let tests =
 
             test "Maximized" {
                 use state = UICommunication.showScene Maximized
-                let mutable result = Windows.Win32.WINDOWPLACEMENT()
+                let mutable result = Win32.WINDOWPLACEMENT()
                 result.Length <- uint32 <| System.Runtime.InteropServices.Marshal.SizeOf(result)
-                if not <| Windows.Win32.GetWindowPlacement(state.UIWindowProcess.MainWindowHandle, &result)
+                if not <| Win32.GetWindowPlacement(state.UIWindowProcess.MainWindowHandle, &result)
                 then raise (System.ComponentModel.Win32Exception("Failed to get window placement (GetWindowPlacement returned false)"))
-                Expect.isTrue (result.ShowCmd.HasFlag(Windows.Win32.WindowPlacementShowCommand.SW_MAXIMIZE)) "Window should be maximized"
+                Expect.isTrue (result.ShowCmd.HasFlag(Win32.WindowPlacementShowCommand.SW_MAXIMIZE)) "Window should be maximized"
             }
         ]
 

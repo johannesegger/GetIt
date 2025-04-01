@@ -41,6 +41,7 @@ namespace GetIt.Sample
         private static void TurtleGraphics()
         {
             Game.ShowSceneAndAddTurtle();
+            Game.SetBackground(Background.Baseball1);
 
             Turtle.MoveTo(0, 0);
             Turtle.SetPenWeight(1.5);
@@ -761,7 +762,7 @@ namespace GetIt.Sample
             while (lives > 0)
             {
                 Turtle.Say($"Score: {score}\nLives: {lives}");
-                
+
                 using var __ = Game.BatchCommands();
                 foreach (var enemy in enemies)
                 {

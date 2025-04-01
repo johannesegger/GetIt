@@ -5,11 +5,15 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="InputEvents.fs" />
     <Compile Include="MessageProcessing.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
     <ProjectReference Include="..\GetIt.UIV2\GetIt.UIV2.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SharpHook" Version="5.3.9" />
   </ItemGroup>
 </Project>

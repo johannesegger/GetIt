@@ -13,7 +13,6 @@ type internal Model =
     }
 
 type internal ModelChangeEvent =
-    | ApplyMouseClick of MouseClick
     | UIMsg of UIMsg
     | Other
 
@@ -112,7 +111,7 @@ module internal MutableModel =
         x.Subject
         |> Observable.choose (fun (evt, model) ->
             match evt with
-            | ApplyMouseClick mouseClick when Rectangle.contains mouseClick.Position model.SceneBounds ->
+            | UIMsg (MouseClick mouseClick) when Rectangle.contains mouseClick.Position model.SceneBounds ->
                 Some mouseClick
             | _ -> None
         )
@@ -123,7 +122,7 @@ module internal MutableModel =
         x.Subject
         |> Observable.choose (fun (evt, model) ->
             match evt, Map.tryFind playerId model.Players with
-            | ApplyMouseClick mouseClick, Some player when Rectangle.contains mouseClick.Position player.Bounds ->
+            | UIMsg (MouseClick mouseClick), Some player when Rectangle.contains mouseClick.Position player.Bounds ->
                 Some mouseClick
             | _ -> None
         )

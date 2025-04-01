@@ -34,7 +34,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" PrivateAssets="All" />
-    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" PrivateAssets="All" />
     <ProjectReference Include="..\GetIt.UI.Container\GetIt.UI.Container.fsproj" PrivateAssets="All" />
   </ItemGroup>
 
@@ -42,23 +41,21 @@
     <PackageReference Update="FSharp.Core" Version="7.0.300" />
     <PackageReference Include="ColorCode.Html" Version="2.0.14" />
     <PackageReference Include="Fue" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     <!-- Package references of dependent projects are replicated here to get `dotnet pack` to work -->
     <!-- GetIt.Common -->
-    <PackageReference Include="FSharp.Control.Reactive" Version="5.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="FSharp.Control.Reactive" Version="6.1.2" />
     <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
-    <!-- GetIt.Windows -->
-    <PackageReference Include="SharpLibWin32" Version="0.2.1" />
-    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <!-- GetIt.UI.Container -->
+    <PackageReference Include="SharpHook" Version="5.3.9" />
     <!-- GetIt.UIV2 -->
-    <PackageReference Include="Avalonia" Version="0.10.21" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.21" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="0.10.21" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.21" />
-    <PackageReference Include="Avalonia.Svg.Skia" Version="0.10.18" />
-    <PackageReference Include="ReactiveUI.Fody" Version="18.4.44" />
-    <PackageReference Include="ReactiveUI" Version="18.4.44" />
-    <PackageReference Include="XamlNameReferenceGenerator" Version="1.6.1" />
+    <PackageReference Include="Avalonia" Version="11.2.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.5" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.5" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.5" />
+    <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -67,7 +64,6 @@
   <Target Name="IncludeProjectReferencesInNuGetPackage">
     <ItemGroup>
       <BuildOutputInPackage Include="$(OutputPath)GetIt.Common.dll" />
-      <BuildOutputInPackage Include="$(OutputPath)GetIt.Windows.dll" />
       <BuildOutputInPackage Include="$(OutputPath)GetIt.UI.Container.dll" />
       <BuildOutputInPackage Include="$(OutputPath)GetIt.UIV2.dll" />
     </ItemGroup>

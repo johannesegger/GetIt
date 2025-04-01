@@ -12,12 +12,12 @@
   <ItemGroup>
     <ProjectReference Include="..\GetIt.Common\GetIt.Common.fsproj" />
     <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
-    <ProjectReference Include="..\GetIt.Windows\GetIt.Windows.fsproj" />
     <ProjectReference Include="..\GetIt.UI.Container\GetIt.UI.Container.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.300" />
     <PackageReference Include="Expecto" Version="9.0.4" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
   </ItemGroup>
 </Project>

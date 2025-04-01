@@ -7,20 +7,27 @@ namespace GetIt.UIV2;
 
 public class ViewLocator : IDataTemplate
 {
-    public IControl Build(object data)
+    public Control Build(object? data)
     {
-        var name = data.GetType().FullName!.Replace("ViewModel", "View");
-        var type = Type.GetType(name);
-
-        if (type != null)
+        if (data == null)
         {
-            return (Control)Activator.CreateInstance(type)!;
+            return new TextBlock { Text = "View not found - data was null." };
         }
-        
-        return new TextBlock { Text = "Not Found: " + name };
+        string? viewModelTypeName = data.GetType().FullName;
+        if (viewModelTypeName == null)
+        {
+            return new TextBlock { Text = "View not found - View model type name was null." };
+        }
+
+        var type = Type.GetType(viewModelTypeName.Replace("ViewModel", "View"));
+        if (type == null)
+        {
+            return new TextBlock { Text = $"View not found for {viewModelTypeName}." };
+        }
+        return (Control)Activator.CreateInstance(type)!;
     }
 
-    public bool Match(object data)
+    public bool Match(object? data)
     {
         return data is ViewModelBase;
     }
