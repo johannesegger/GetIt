@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>GetIt</PackageId>
@@ -38,7 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.300" />
     <PackageReference Include="ColorCode.Html" Version="2.0.14" />
     <PackageReference Include="Fue" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />

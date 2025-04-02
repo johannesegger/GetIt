@@ -7,7 +7,7 @@ open Thoth.Json.Net
 type TrayName = private TrayName of string with
     member this.Value with get () = let (TrayName name) = this in name
 module TrayName =
-    let tryParse v =
+    let tryParse (v: string) =
         if Regex.IsMatch(v, "^[A-Za-z0-9.\-_ ]+$") then Some (TrayName v)
         else None
 
