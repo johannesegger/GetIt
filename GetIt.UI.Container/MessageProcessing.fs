@@ -250,49 +250,49 @@ let private processControllerMessage (mainViewModel: MainWindowViewModel) model 
 
 let private tryGetKeyboardKey keyCode =
     match keyCode with
-    | SharpHook.Native.KeyCode.VcSpace -> Some Space
-    | SharpHook.Native.KeyCode.VcEscape -> Some Escape
-    | SharpHook.Native.KeyCode.VcEnter -> Some Enter
-    | SharpHook.Native.KeyCode.VcUp -> Some Up
-    | SharpHook.Native.KeyCode.VcDown -> Some Down
-    | SharpHook.Native.KeyCode.VcLeft -> Some Left
-    | SharpHook.Native.KeyCode.VcRight -> Some Right
-    | SharpHook.Native.KeyCode.VcA -> Some A
-    | SharpHook.Native.KeyCode.VcB -> Some B
-    | SharpHook.Native.KeyCode.VcC -> Some C
-    | SharpHook.Native.KeyCode.VcD -> Some D
-    | SharpHook.Native.KeyCode.VcE -> Some E
-    | SharpHook.Native.KeyCode.VcF -> Some F
-    | SharpHook.Native.KeyCode.VcG -> Some G
-    | SharpHook.Native.KeyCode.VcH -> Some H
-    | SharpHook.Native.KeyCode.VcI -> Some I
-    | SharpHook.Native.KeyCode.VcJ -> Some J
-    | SharpHook.Native.KeyCode.VcK -> Some K
-    | SharpHook.Native.KeyCode.VcL -> Some L
-    | SharpHook.Native.KeyCode.VcM -> Some M
-    | SharpHook.Native.KeyCode.VcN -> Some N
-    | SharpHook.Native.KeyCode.VcO -> Some O
-    | SharpHook.Native.KeyCode.VcP -> Some P
-    | SharpHook.Native.KeyCode.VcQ -> Some Q
-    | SharpHook.Native.KeyCode.VcR -> Some R
-    | SharpHook.Native.KeyCode.VcS -> Some S
-    | SharpHook.Native.KeyCode.VcT -> Some T
-    | SharpHook.Native.KeyCode.VcU -> Some U
-    | SharpHook.Native.KeyCode.VcV -> Some V
-    | SharpHook.Native.KeyCode.VcW -> Some W
-    | SharpHook.Native.KeyCode.VcX -> Some X
-    | SharpHook.Native.KeyCode.VcY -> Some Y
-    | SharpHook.Native.KeyCode.VcZ -> Some Z
-    | SharpHook.Native.KeyCode.Vc0 -> Some Digit0
-    | SharpHook.Native.KeyCode.Vc1 -> Some Digit1
-    | SharpHook.Native.KeyCode.Vc2 -> Some Digit2
-    | SharpHook.Native.KeyCode.Vc3 -> Some Digit3
-    | SharpHook.Native.KeyCode.Vc4 -> Some Digit4
-    | SharpHook.Native.KeyCode.Vc5 -> Some Digit5
-    | SharpHook.Native.KeyCode.Vc6 -> Some Digit6
-    | SharpHook.Native.KeyCode.Vc7 -> Some Digit7
-    | SharpHook.Native.KeyCode.Vc8 -> Some Digit8
-    | SharpHook.Native.KeyCode.Vc9 -> Some Digit9
+    | SharpHook.Data.KeyCode.VcSpace -> Some Space
+    | SharpHook.Data.KeyCode.VcEscape -> Some Escape
+    | SharpHook.Data.KeyCode.VcEnter -> Some Enter
+    | SharpHook.Data.KeyCode.VcUp -> Some Up
+    | SharpHook.Data.KeyCode.VcDown -> Some Down
+    | SharpHook.Data.KeyCode.VcLeft -> Some Left
+    | SharpHook.Data.KeyCode.VcRight -> Some Right
+    | SharpHook.Data.KeyCode.VcA -> Some A
+    | SharpHook.Data.KeyCode.VcB -> Some B
+    | SharpHook.Data.KeyCode.VcC -> Some C
+    | SharpHook.Data.KeyCode.VcD -> Some D
+    | SharpHook.Data.KeyCode.VcE -> Some E
+    | SharpHook.Data.KeyCode.VcF -> Some F
+    | SharpHook.Data.KeyCode.VcG -> Some G
+    | SharpHook.Data.KeyCode.VcH -> Some H
+    | SharpHook.Data.KeyCode.VcI -> Some I
+    | SharpHook.Data.KeyCode.VcJ -> Some J
+    | SharpHook.Data.KeyCode.VcK -> Some K
+    | SharpHook.Data.KeyCode.VcL -> Some L
+    | SharpHook.Data.KeyCode.VcM -> Some M
+    | SharpHook.Data.KeyCode.VcN -> Some N
+    | SharpHook.Data.KeyCode.VcO -> Some O
+    | SharpHook.Data.KeyCode.VcP -> Some P
+    | SharpHook.Data.KeyCode.VcQ -> Some Q
+    | SharpHook.Data.KeyCode.VcR -> Some R
+    | SharpHook.Data.KeyCode.VcS -> Some S
+    | SharpHook.Data.KeyCode.VcT -> Some T
+    | SharpHook.Data.KeyCode.VcU -> Some U
+    | SharpHook.Data.KeyCode.VcV -> Some V
+    | SharpHook.Data.KeyCode.VcW -> Some W
+    | SharpHook.Data.KeyCode.VcX -> Some X
+    | SharpHook.Data.KeyCode.VcY -> Some Y
+    | SharpHook.Data.KeyCode.VcZ -> Some Z
+    | SharpHook.Data.KeyCode.Vc0 -> Some Digit0
+    | SharpHook.Data.KeyCode.Vc1 -> Some Digit1
+    | SharpHook.Data.KeyCode.Vc2 -> Some Digit2
+    | SharpHook.Data.KeyCode.Vc3 -> Some Digit3
+    | SharpHook.Data.KeyCode.Vc4 -> Some Digit4
+    | SharpHook.Data.KeyCode.Vc5 -> Some Digit5
+    | SharpHook.Data.KeyCode.Vc6 -> Some Digit6
+    | SharpHook.Data.KeyCode.Vc7 -> Some Digit7
+    | SharpHook.Data.KeyCode.Vc8 -> Some Digit8
+    | SharpHook.Data.KeyCode.Vc9 -> Some Digit9
     | _ -> None
 
 let run scheduler (mainWindow: Window) (mainViewModel: MainWindowViewModel) (serverMessages: ISubject<_, _>) =
@@ -335,8 +335,8 @@ let run scheduler (mainWindow: Window) (mainViewModel: MainWindowViewModel) (ser
                     use _ = ct.Register (fun () -> hook.Dispose())
                     use _ = hook.MouseClicked.Subscribe (fun e ->
                         let button =
-                            if e.Data.Button = SharpHook.Native.MouseButton.Button1 then Some Primary
-                            elif e.Data.Button = SharpHook.Native.MouseButton.Button2 then Some Secondary
+                            if e.Data.Button = SharpHook.Data.MouseButton.Button1 then Some Primary
+                            elif e.Data.Button = SharpHook.Data.MouseButton.Button2 then Some Secondary
                             else None
                         match button with
                         | Some button ->

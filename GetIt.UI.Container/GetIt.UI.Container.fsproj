@@ -14,6 +14,6 @@
     <ProjectReference Include="..\GetIt.UIV2\GetIt.UIV2.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="SharpHook" Version="5.3.9" />
+    <PackageReference Include="SharpHook" Version="7.1.1" />
   </ItemGroup>
 </Project>

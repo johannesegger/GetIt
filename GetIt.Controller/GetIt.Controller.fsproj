@@ -38,22 +38,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ColorCode.Html" Version="2.0.14" />
+    <PackageReference Include="ColorCode.Html" Version="2.0.15" />
     <PackageReference Include="Fue" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.5" />
     <!-- Package references of dependent projects are replicated here to get `dotnet pack` to work -->
     <!-- GetIt.Common -->
     <PackageReference Include="FSharp.Control.Reactive" Version="6.1.2" />
-    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
+    <PackageReference Include="Thoth.Json.Net" Version="12.0.0" />
     <!-- GetIt.UI.Container -->
-    <PackageReference Include="SharpHook" Version="5.3.9" />
+    <PackageReference Include="SharpHook" Version="7.1.1" />
     <!-- GetIt.UIV2 -->
-    <PackageReference Include="Avalonia" Version="11.2.5" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.5" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.5" />
-    <PackageReference Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.5" />
+    <PackageReference Include="Avalonia" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.13" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
     <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
   </ItemGroup>
 

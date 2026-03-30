@@ -17,8 +17,5 @@
     <ProjectReference Include="..\GetIt.Controller\GetIt.Controller.fsproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.300" />
-  </ItemGroup>
 
 </Project>
