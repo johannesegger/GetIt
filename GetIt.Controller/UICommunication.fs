@@ -109,7 +109,7 @@ module internal UICommunication =
 
         let logger = loggerFactory.CreateLogger("UICommunication")
 
-        let tcpServer = TcpListener(IPAddress.Loopback, 0)
+        let tcpServer = new TcpListener(IPAddress.Loopback, 0)
         ds.Add (Disposable.create tcpServer.Stop)
         tcpServer.Start()
         let serverAddress = tcpServer.LocalEndpoint :?> IPEndPoint
