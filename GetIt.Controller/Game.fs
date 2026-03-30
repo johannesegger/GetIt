@@ -277,7 +277,7 @@ type Game() =
     /// Pauses execution of the current thread for a given time.
     /// </summary>
     /// <param name="durationInMilliseconds">The length of the pause in milliseconds.</param>
-    static member Sleep durationInMilliseconds =
+    static member Sleep (durationInMilliseconds : float) =
         Game.Sleep (TimeSpan.FromMilliseconds durationInMilliseconds)
 
     /// <summary>
