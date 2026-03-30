@@ -36,7 +36,7 @@ let main argv =
         let! entries = async {
             use! stream = httpClient.GetStreamAsync(url) |> Async.AwaitTask
             use zipStream = new GZipStream(stream, CompressionMode.Decompress)
-            use archive = new TarInputStream(zipStream)
+            use archive = new TarInputStream(zipStream, Encoding.UTF8)
             return
                 [
                     let mutable entry = archive.GetNextEntry()
