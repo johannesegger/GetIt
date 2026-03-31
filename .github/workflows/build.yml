@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
 
@@ -39,10 +39,10 @@ jobs:
 
     - name: Run tests
       run: dotnet run --project GetIt.Test
-            
+
     - name: Build NuGet package
       run: dotnet pack --configuration Release --output .\nuget -p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersion }} .\GetIt.Controller
-      
+
     - name: Create environment variables for dependent workflows
       run: |
         echo "app_version=${{ steps.gitversion.outputs.fullSemVer }}" > .\env
