@@ -22,7 +22,7 @@ public partial class MainWindow : Window
     {
         if (e.Property.Name == nameof(Border.Bounds))
         {
-            if (sender is Visual element && element.DataContext is MainWindowViewModel mainViewModel)
+            if (sender is Visual element && element.DataContext is MainWindowViewModel mainViewModel && mainViewModel.IsLoaded)
             {
                 mainViewModel.SceneSize = new Size(element.Bounds.Width, element.Bounds.Height);
             }
